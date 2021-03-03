@@ -1,0 +1,1 @@
+.\Deploy-AzTemplate.ps1 -ArtifactStagingDirectory .\eap73-rhel8-byos-multivm -ResourceGroupLocation westus -dev -UploadArtifacts
