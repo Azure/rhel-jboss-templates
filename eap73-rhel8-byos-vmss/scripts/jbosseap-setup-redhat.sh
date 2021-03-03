@@ -44,22 +44,11 @@ CONTAINER_NAME=${16}
 STORAGE_ACCESS_KEY=$(echo "${17}" | openssl enc -d -base64)
 IP_ADDR=$(hostname -I)
 
-echo "JBOSS_EAP_USER: ${JBOSS_EAP_USER}" | adddate >> /var/log/jbosseap.install.log
-echo "JBOSS_EAP_PASSWORD: ${JBOSS_EAP_PASSWORD}" | adddate >> /var/log/jbosseap.install.log
-echo "RHSM_USER: ${RHSM_USER}" | adddate >> /var/log/jbosseap.install.log
-echo "RHSM_PASSWORD: ${RHSM_PASSWORD}" | adddate >> /var/log/jbosseap.install.log
-echo "RHSM_POOL: ${RHSM_POOL}" | adddate >> /var/log/jbosseap.install.log
-echo "RHEL_POOL: ${RHEL_POOL}" | adddate >> /var/log/jbosseap.install.log
-echo "IP_ADDR: ${IP_ADDR}" | adddate >> /var/log/jbosseap.install.log
-echo "STORAGE_ACCOUNT_NAME: ${STORAGE_ACCOUNT_NAME}" | adddate >> /var/log/jbosseap.install.log
-echo "CONTAINER_NAME: ${CONTAINER_NAME}" | adddate >> /var/log/jbosseap.install.log
-echo "STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}" | adddate >> /var/log/jbosseap.install.log
-
-# echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | adddate >> /var/log/jbosseap.install.log
-# echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.3-on-RHEL8.0" | adddate >> /var/log/jbosseap.install.log
-# echo "Storage Account Name: " ${STORAGE_ACCOUNT_NAME} | adddate >> /var/log/jbosseap.install.log
-# echo "Storage Container Name: " ${CONTAINER_NAME} | adddate >> /var/log/jbosseap.install.log
-# echo "RHSM_USER: " ${RHSM_USER} | adddate >> /var/log/jbosseap.install.log
+echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | adddate >> /var/log/jbosseap.install.log
+echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.3-on-RHEL8.0" | adddate >> /var/log/jbosseap.install.log
+echo "Storage Account Name: " ${STORAGE_ACCOUNT_NAME} | adddate >> /var/log/jbosseap.install.log
+echo "Storage Container Name: " ${CONTAINER_NAME} | adddate >> /var/log/jbosseap.install.log
+echo "RHSM_USER: " ${RHSM_USER} | adddate >> /var/log/jbosseap.install.log
 
 ####################### Configuring firewall for ports
 echo "Configure firewall for ports 8080, 9990, 45700, 7600" | adddate >> /var/log/jbosseap.install.log

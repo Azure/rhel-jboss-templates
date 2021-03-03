@@ -44,16 +44,6 @@ STORAGE_ACCESS_KEY=$(echo "${16}" | openssl enc -d -base64)
 RHEL_POOL=${17} # kept at the end because it is possible that customer won't provide this.
 IP_ADDR=$(hostname -I)
 
-
-echo "JBOSS_EAP_USER - $JBOSS_EAP_USER"
-echo "JBOSS_EAP_PASSWORD - $JBOSS_EAP_PASSWORD"
-echo "RHSM_USER - $RHSM_USER"
-echo "RHSM_PASSWORD - $RHSM_PASSWORD"
-echo "EAP_POOL - $EAP_POOL"
-echo "RHEL_POOL - $RHEL_POOL"
-echo "STORAGE_ACCOUNT_NAME - $STORAGE_ACCOUNT_NAME"
-echo "CONTAINER_NAME - $CONTAINER_NAME"
-
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | adddate >> /var/log/jbosseap.install.log
 echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.3-on-RHEL8.0" | adddate >> /var/log/jbosseap.install.log
 echo "Storage Account Name: " ${STORAGE_ACCOUNT_NAME} | adddate >> /var/log/jbosseap.install.log
