@@ -247,15 +247,10 @@
       }
     },
     "imageReference": {
-      "publisher": "redhat",
-      "offer": "rhel-byos",
-      "sku": "rhel-lvm83",
-      "version": "latest"
-    },
-    "plan": {
-      "name": "rhel-lvm83",
-      "publisher": "redhat",
-      "product": "rhel-byos"
+        "publisher": "RedHat",
+        "offer": "RHEL",
+        "sku": "8_3",
+        "version": "latest"
     },
     "scriptFolder": "scripts",
     "fileToBeDownloaded": "eap-session-replication.war",
@@ -376,7 +371,6 @@
       "apiVersion": "2019-12-01",
       "name": "[concat(variables('vmName'), copyIndex())]",
       "location": "[parameters('location')]",
-      "plan": "[variables('plan')]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[parameters('numberOfInstances')]"
