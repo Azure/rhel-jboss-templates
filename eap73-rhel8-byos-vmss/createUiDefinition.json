@@ -201,11 +201,12 @@
                     },
                     {
                         "name": "rhsmUserName",
-                        "type": "Microsoft.Compute.UserNameTextBox",
+                        "type": "Microsoft.Common.TextBox",
                         "label": "RHSM username",
-                        "osPlatform": "Linux",
                         "constraints": {
-                            "required": true
+                            "required": true,
+                            "regex": "^[a-zA-Z0-9+_.-]{1,30}(@[a-zA-Z0-9.-]+){0,1}$",
+                            "validationMessage": "Please enter a valid Red Hat Subscription Manager user id"
                         },
                         "toolTip": "Provide User name for Red Hat subscription Manager"
                     },
