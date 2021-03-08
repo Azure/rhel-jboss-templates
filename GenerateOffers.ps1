@@ -8,5 +8,5 @@ foreach ($offerName in $offerNames) {
         CompressionLevel = "Fastest"
         DestinationPath  = "$offerDropLocation\$offerName.zip"
     }
-    Compress-Archive @compress
+    Compress-Archive @compress -Force
 }
