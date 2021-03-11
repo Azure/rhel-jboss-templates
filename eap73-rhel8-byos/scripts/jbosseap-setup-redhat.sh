@@ -28,13 +28,13 @@ echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWOR
 subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD >> /var/log/jbosseap.install.log 2>&1
 flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Subscription Manager Registration Failed" | adddate >> /var/log/jbosseap.install.log; exit $flag;  fi
 
-echo "Subscribing the system to get access to JBoss EAP 7.3 repos" | adddate >> /var/log/jbosseap.install.log
+echo "Subscribing the system to get access to JBoss EAP 7.3 repos ($RHSM_EAPPOOL)" | adddate >> /var/log/jbosseap.install.log
 echo "subscription-manager attach --pool=EAP_POOL" | adddate  >> /var/log/jbosseap.install.log
 subscription-manager attach --pool=${RHSM_EAPPOOL} >> /var/log/jbosseap.install.log 2>&1
 flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" | adddate  >> /var/log/jbosseap.install.log; exit $flag;  fi
 
 if [ "$RHSM_EAPPOOL" != "$RHSM_RHELPOOL" ]; then
-    echo "Subscribing the system to get access to RHEL repos" | adddate >> /var/log/jbosseap.install.log
+    echo "Subscribing the system to get access to RHEL repos ($RHSM_RHELPOOL)" | adddate >> /var/log/jbosseap.install.log
     subscription-manager attach --pool=${RHSM_RHELPOOL} >> /var/log/jbosseap.install.log 2>&1
     flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for RHEL Failed" | adddate  >> /var/log/jbosseap.install.log; exit $flag;  fi
 else

@@ -116,7 +116,7 @@
                         "name": "bootDiagnostics",
                         "type": "Microsoft.Common.OptionsGroup",
                         "label": "Boot diagnostics",
-                        "defaultValue": "On",
+                        "defaultValue": "on",
                         "toolTip": "Capture serial console outputs and screenshots of the virtual machine running on a host to help diagnose startup issues",
                         "constraints": {
                           "allowedValues": [

@@ -331,7 +331,7 @@
                 "diagnosticsProfile": {
                     "bootDiagnostics": {
                         "enabled": "[if(equals(parameters('bootDiagnostics'), 'on'), 'true', 'false')]",
-                        "storageUri": "[reference(resourceId(parameters('storageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2017-10-01').primaryEndpoints.blob]"
+                        "storageUri": "[reference(resourceId(parameters('storageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').primaryEndpoints.blob]"
                     }
                 }
             }
@@ -355,7 +355,13 @@
                     ]
                 },
                 "protectedSettings": {
-                    "commandToExecute": "[concat('sh jbosseap-setup-redhat.sh',' ',parameters('jbossEAPUserName'),' ',variables('singlequote'),parameters('jbossEAPPassword'),variables('singlequote'),' ',parameters('rhsmUserName'),' ',variables('singlequote'),parameters('rhsmPassword'),variables('singlequote'),' ', parameters('rhsmPoolEAP'), ' ', parameters('rhsmPoolRHEL'))]"
+                   "commandToExecute": "[format('sh jbosseap-setup-redhat.sh ''{0}'' ''{1}'' ''{2}'' {3} ''{4}'' ''{5}''', 
+                    parameters('jbossEAPUserName'), 
+                    parameters('jbossEAPPassword'),
+                    parameters('rhsmUserName'),
+                    parameters('rhsmPassword'),
+                    parameters('rhsmPoolEAP'),
+                    parameters('rhsmPoolRHEL'))]"
                 }
             }
         }

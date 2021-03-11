@@ -342,11 +342,11 @@
                     ]
                 },
                 "protectedSettings": {
-                    "commandToExecute": "[concat('sh jbosseap-setup-redhat.sh ',
-                    parameters('jbossEAPUserName'), ' ',
-                    variables('singlequote'), parameters('jbossEAPPassword'), variables('singlequote'), ' ',
-                    parameters('rhsmUserName'), ' ',
-                    variables('singlequote'), parameters('rhsmPassword'), variables('singlequote'), ' ', 
+                    "commandToExecute": "[format('sh jbosseap-setup-redhat.sh ''{0}'' ''{1}'' ''{2}'' {3} ''{4}''', 
+                    parameters('jbossEAPUserName'), 
+                    parameters('jbossEAPPassword'),
+                    parameters('rhsmUserName'),
+                    parameters('rhsmPassword'),
                     parameters('rhsmPoolEAP'))]"
                 }
             }
