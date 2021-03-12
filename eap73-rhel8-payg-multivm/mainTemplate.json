@@ -211,7 +211,7 @@
 
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/jboss-eap-clustered-multivm-rhel/",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
@@ -247,10 +247,10 @@
       }
     },
     "imageReference": {
-        "publisher": "RedHat",
-        "offer": "RHEL",
-        "sku": "8_3",
-        "version": "latest"
+      "publisher": "RedHat",
+      "offer": "RHEL",
+      "sku": "8_3",
+      "version": "latest"
     },
     "scriptFolder": "scripts",
     "fileToBeDownloaded": "eap-session-replication.war",
