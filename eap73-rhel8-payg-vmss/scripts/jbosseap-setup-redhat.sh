@@ -37,11 +37,10 @@ JBOSS_EAP_USER=$9
 JBOSS_EAP_PASSWORD=${10}
 RHSM_USER=${11}
 RHSM_PASSWORD=${12}
-RHSM_POOL=${13}  # have not passed rhel pool
+RHSM_POOL=${13}
 STORAGE_ACCOUNT_NAME=${14}
 CONTAINER_NAME=${15}
 STORAGE_ACCESS_KEY=$(echo "${16}" | openssl enc -d -base64)
-RHEL_POOL=${17}
 IP_ADDR=$(hostname -I)
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | adddate >> /var/log/jbosseap.install.log
@@ -79,12 +78,6 @@ echo "Subscribing the system to get access to JBoss EAP repos" | adddate >> /var
 echo "subscription-manager attach --pool=EAP_POOL" | adddate >> /var/log/jbosseap.install.log
 subscription-manager attach --pool=${RHSM_POOL} >> /var/log/jbosseap.install.log 2>&1
 flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" | adddate >> /var/log/jbosseap.install.log; exit $flag;  fi
-#######################
-####################### Attach RHEL Pool
-echo "Attaching Pool ID for RHEL OS" | adddate >> /var/log/jbosseap.install.log
-echo "subscription-manager attach --pool=RHEL_POOL" | adddate  >> /var/log/jbosseap.install.log
-subscription-manager attach --pool=${RHEL_POOL} >> /var/log/jbosseap.install.log 2>&1
-flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for RHEL Failed" | adddate >> /var/log/jbosseap.install.log; exit $flag;  fi
 #######################
 
 ####################### Install openjdk: is it needed? it should be installed with eap7.3

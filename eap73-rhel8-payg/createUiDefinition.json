@@ -224,17 +224,6 @@
                             "regex": "^[a-f0-9A-F]{32,32}$",
                             "validationMessage": "The RHSM Pool ID must be 32 characters long and should contain only alphabets between a to f and numbers."
                         }
-                    },
-                    {
-                        "name": "rhsmPoolRHEL",
-                        "type": "Microsoft.Common.TextBox",
-                        "label": "RHSM Pool ID with RHEL entitlement",
-                        "toolTip": "Red Hat Subscription Manager Pool ID (Should have RHEL entitlement)",
-                        "constraints": {
-                            "required": true,
-                            "regex": "^[a-f0-9A-F]{32,32}$",
-                            "validationMessage": "The RHSM Pool ID must be 32 characters long and should contain only alphabets between a to f and numbers."
-                        }
                     }
                 ]
             }
@@ -265,8 +254,7 @@
             "jbossEAPPassword": "[steps('jbossEAPSettings').jbossEAPPassword]",
             "rhsmUserName": "[steps('jbossEAPSettings').rhsmUserName]",
             "rhsmPassword": "[steps('jbossEAPSettings').rhsmPassword]",
-            "rhsmPoolEAP": "[steps('jbossEAPSettings').rhsmPoolEAP]",
-            "rhsmPoolRHEL": "[steps('jbossEAPSettings').rhsmPoolRHEL]"
+            "rhsmPoolEAP": "[steps('jbossEAPSettings').rhsmPoolEAP]"
         }
     }
 }

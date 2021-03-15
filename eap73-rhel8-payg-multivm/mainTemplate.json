@@ -63,13 +63,6 @@
         "description": "Red Hat Subscription Manager Pool ID (Should have EAP entitlement)"
       }
     },
-    "rhsmPoolRHEL": {
-      "type": "string",
-      "metadata": {
-        "description": "Red Hat Subscription Manager Pool ID (Should have RHEL entitlement). Mandartory if you select the BYOS RHEL OS License Type"
-      },
-      "defaultValue": ""
-    },
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_DS2_v2",
@@ -218,7 +211,7 @@
 
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/rhel-jboss-templates/master/eap73-rhel8-byos-multivm/",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/rhel-jboss-templates/master/eap73-rhel8-payg-multivm/",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       }
@@ -254,15 +247,10 @@
       }
     },
     "imageReference": {
-      "publisher": "redhat",
-      "offer": "rhel-byos",
-      "sku": "rhel-lvm83",
+      "publisher": "RedHat",
+      "offer": "RHEL",
+      "sku": "8_3",
       "version": "latest"
-    },
-    "plan": {
-      "name": "rhel-lvm83",
-      "publisher": "redhat",
-      "product": "rhel-byos"
     },
     "scriptFolder": "scripts",
     "fileToBeDownloaded": "eap-session-replication.war",
@@ -383,7 +371,6 @@
       "apiVersion": "2019-12-01",
       "name": "[concat(variables('vmName'), copyIndex())]",
       "location": "[parameters('location')]",
-      "plan": "[variables('plan')]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[parameters('numberOfInstances')]"
@@ -453,7 +440,7 @@
               ]
             },
             "protectedSettings": {
-              "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} ''{1}'' ''{2}'' ''{3}'' ''{4}'' ''{5}'' ''{6}'' ''{7}'' ''{8}'' ''{9}''', 
+              "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} ''{1}'' ''{2}'' ''{3}'' ''{4}'' ''{5}'' ''{6}'' ''{7}'' ''{8}''',
               variables('scriptArgs'), 
               parameters('jbossEAPUserName'), 
               parameters('jbossEAPPassword'), 
@@ -462,8 +449,7 @@
               parameters('rhsmPoolEAP'),
               parameters('eapStorageAccountName'), 
               variables('containerName'), 
-              base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('eapStorageAccountName')), '2019-04-01').keys[0].value),
-              parameters('rhsmPoolRHEL'))]"
+              base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('eapStorageAccountName')), '2019-04-01').keys[0].value))]"
             }
           }
         }

@@ -37,11 +37,10 @@ JBOSS_EAP_USER=$9
 JBOSS_EAP_PASSWORD=${10}
 RHSM_USER=${11}
 RHSM_PASSWORD=${12}
-RHSM_POOL=${13}  # have not passed rhel pool
+EAP_POOL=${13}
 STORAGE_ACCOUNT_NAME=${14}
 CONTAINER_NAME=${15}
 STORAGE_ACCESS_KEY=$(echo "${16}" | openssl enc -d -base64)
-RHEL_POOL=${17}
 IP_ADDR=$(hostname -I)
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | adddate >> /var/log/jbosseap.install.log
@@ -49,6 +48,8 @@ echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.3-on-RHEL8.0" | adddat
 echo "Storage Account Name: " ${STORAGE_ACCOUNT_NAME} | adddate >> /var/log/jbosseap.install.log
 echo "Storage Container Name: " ${CONTAINER_NAME} | adddate >> /var/log/jbosseap.install.log
 echo "RHSM_USER: " ${RHSM_USER} | adddate >> /var/log/jbosseap.install.log
+
+echo "Folder where script is executing ${pwd}" | adddate >> /var/log/jbosseap.install.log
 
 ####################### Configuring firewall for ports
 echo "Configure firewall for ports 8080, 9990, 45700, 7600" | adddate >> /var/log/jbosseap.install.log
@@ -61,8 +62,10 @@ echo "firewall-cmd --zone=public --add-port=45700/tcp --permanent" | adddate >> 
 sudo firewall-cmd  --zone=public --add-port=45700/tcp --permanent  | adddate >> /var/log/jbosseap.install.log 2>&1
 echo "firewall-cmd --zone=public --add-port=7600/tcp  --permanent"  | adddate >> /var/log/jbosseap.install.log
 sudo firewall-cmd  --zone=public --add-port=7600/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
+
 echo "firewall-cmd --reload" | adddate >> /var/log/jbosseap.install.log
 sudo firewall-cmd  --reload  | adddate >> /var/log/jbosseap.install.log 2>&1
+
 echo "iptables-save" | adddate >> /var/log/jbosseap.install.log
 sudo iptables-save   | adddate >> /var/log/jbosseap.install.log 2>&1
 ####################### 
@@ -74,17 +77,14 @@ echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWOR
 subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD >> /var/log/jbosseap.install.log 2>&1
 flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Manager Registration Failed" | adddate >> /var/log/jbosseap.install.log; exit $flag;  fi
 #######################
+
+sleep 20
+
 ####################### Attach EAP Pool
 echo "Subscribing the system to get access to JBoss EAP repos" | adddate >> /var/log/jbosseap.install.log
 echo "subscription-manager attach --pool=EAP_POOL" | adddate >> /var/log/jbosseap.install.log
-subscription-manager attach --pool=${RHSM_POOL} >> /var/log/jbosseap.install.log 2>&1
+subscription-manager attach --pool=${EAP_POOL} >> /var/log/jbosseap.install.log 2>&1
 flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" | adddate >> /var/log/jbosseap.install.log; exit $flag;  fi
-#######################
-####################### Attach RHEL Pool
-echo "Attaching Pool ID for RHEL OS" | adddate >> /var/log/jbosseap.install.log
-echo "subscription-manager attach --pool=RHEL_POOL" | adddate  >> /var/log/jbosseap.install.log
-subscription-manager attach --pool=${RHEL_POOL} >> /var/log/jbosseap.install.log 2>&1
-flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for RHEL Failed" | adddate >> /var/log/jbosseap.install.log; exit $flag;  fi
 #######################
 
 ####################### Install openjdk: is it needed? it should be installed with eap7.3
@@ -92,7 +92,6 @@ echo "Install openjdk, wget, git, unzip, vim" | adddate >> /var/log/jbosseap.ins
 echo "sudo yum install java-1.8.0-openjdk wget unzip vim git -y" | adddate >> /var/log/jbosseap.install.log
 sudo yum install wget unzip vim git -y | adddate >> /var/log/jbosseap.install.log 2>&1 #java-1.8.0-openjdk
 ####################### 
-
 
 ####################### Install JBoss EAP 7.3
 echo "subscription-manager repos --enable=jb-eap-7.3-for-rhel-8-x86_64-rpms" | adddate >> /var/log/jbosseap.install.log

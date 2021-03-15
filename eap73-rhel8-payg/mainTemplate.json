@@ -161,16 +161,8 @@
                 "description": "Red Hat Subscription Manager Pool ID (Should have EAP entitlement)"
             }
         },
-        "rhsmPoolRHEL": {
-            "type": "string",
-            "maxLength": 32,
-            "minLength": 32,
-            "metadata": {
-                "description": "Red Hat Subscription Manager Pool ID (Should have RHEL entitlement)"
-            }
-        },
         "_artifactsLocation": {
-            "defaultValue": "https://raw.githubusercontent.com/Azure/rhel-jboss-templates/master/eap73-rhel8-byos/",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/rhel-jboss-templates/master/eap73-rhel8-payg/",
             "type": "String",
             "metadata": {
                 "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated"
@@ -288,11 +280,6 @@
             "apiVersion": "2019-12-01",
             "name": "[parameters('vmName')]",
             "location": "[parameters('location')]",
-            "plan": {
-                "name": "rhel-lvm83",
-                "publisher": "redhat",
-                "product": "rhel-byos"
-            },
             "dependsOn": [
                 "[parameters('storageAccountName')]",
                 "[variables('networkSecurityGroupName')]",
@@ -310,9 +297,9 @@
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "publisher": "redhat",
-                        "offer": "rhel-byos",
-                        "sku": "rhel-lvm83",
+                        "publisher": "RedHat",
+                        "offer": "RHEL",
+                        "sku": "8_3",
                         "version": "latest"
                     },
                     "osDisk": {
@@ -331,7 +318,7 @@
                 "diagnosticsProfile": {
                     "bootDiagnostics": {
                         "enabled": "[if(equals(parameters('bootDiagnostics'), 'on'), 'true', 'false')]",
-                        "storageUri": "[reference(resourceId(parameters('storageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').primaryEndpoints.blob]"
+                        "storageUri": "[reference(resourceId(parameters('storageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2017-10-01').primaryEndpoints.blob]"
                     }
                 }
             }
@@ -355,13 +342,12 @@
                     ]
                 },
                 "protectedSettings": {
-                   "commandToExecute": "[format('sh jbosseap-setup-redhat.sh ''{0}'' ''{1}'' ''{2}'' {3} ''{4}'' ''{5}''', 
+                    "commandToExecute": "[format('sh jbosseap-setup-redhat.sh ''{0}'' ''{1}'' ''{2}'' {3} ''{4}''', 
                     parameters('jbossEAPUserName'), 
                     parameters('jbossEAPPassword'),
                     parameters('rhsmUserName'),
                     parameters('rhsmPassword'),
-                    parameters('rhsmPoolEAP'),
-                    parameters('rhsmPoolRHEL'))]"
+                    parameters('rhsmPoolEAP'))]"
                 }
             }
         }
