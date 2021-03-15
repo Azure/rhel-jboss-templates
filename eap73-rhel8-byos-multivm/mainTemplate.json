@@ -270,19 +270,6 @@
   },
   "resources": [
     {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
-      "name": "pid-cd2e401b-4058-4808-9453-5ad17e5a90dc",
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "resources": []
-        }
-      }
-    },
-    {
       "condition": "[equals(parameters('bootStorageNewOrExisting'), 'new')]",
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2019-06-01",

@@ -177,7 +177,6 @@
         }
     },
     "variables": {
-        "singlequote": "'",
         "nicName": "[concat(uniquestring(resourceGroup().id), '-nic')]",
         "networkSecurityGroupName": "jbosseap-nsg",
         "linuxConfiguration": {
@@ -193,19 +192,6 @@
         }
     },
     "resources": [
-        {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-05-01",
-            "name": "pid-23ee2232-4f34-4294-b766-27d74e582abf",
-            "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "resources": []
-                }
-            }
-        },
         {
             "condition": "[equals(parameters('storageNewOrExisting'), 'new')]",
             "type": "Microsoft.Storage/storageAccounts",
