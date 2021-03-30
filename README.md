@@ -12,8 +12,9 @@ This repo has been created using the sample templates from https://github.com/Az
 ## Deploying from local machine
 
 create a parameters file  
-.<offer name>
-|-azuredeploy.parameters.dev.json
+
+    .<offer name>
+        |-azuredeploy.parameters.dev.json
 
 This file should contain values for all the parameters
 
