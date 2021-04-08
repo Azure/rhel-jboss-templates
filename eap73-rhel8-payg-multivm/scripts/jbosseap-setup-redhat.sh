@@ -41,7 +41,7 @@ EAP_POOL=${13}
 STORAGE_ACCOUNT_NAME=${14}
 CONTAINER_NAME=${15}
 STORAGE_ACCESS_KEY=$(echo "${16}" | openssl enc -d -base64)
-IP_ADDR=$(hostname -I)
+IP_ADDR=0.0.0.0
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | adddate >> /var/log/jbosseap.install.log
 echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.3-on-RHEL8.0" | adddate >> /var/log/jbosseap.install.log
