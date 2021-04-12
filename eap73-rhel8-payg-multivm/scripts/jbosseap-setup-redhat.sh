@@ -128,13 +128,22 @@ sed -i 's/jboss.bind.address:127.0.0.1/jboss.bind.address:0.0.0.0/g'  $EAP_HOME/
 echo "sed -i 's/jboss.bind.address.private:127.0.0.1/jboss.bind.address.private:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml" | adddate >> /var/log/jbosseap.install.log
 sed -i 's/jboss.bind.address.private:127.0.0.1/jboss.bind.address.private:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml | adddate >> /var/log/jbosseap.install.log 2>&1
 
+####################### Start the JBoss server now
 echo "Start JBoss server" | adddate >> /var/log/jbosseap.install.log
 echo "$EAP_HOME/wildfly/bin/standalone.sh -bprivate $IP_ADDR -b $IP_ADDR -bmanagement $IP_ADDR --server-config=standalone-azure-ha.xml -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME -Djboss.jgroups.azure_ping.storage_access_key=STORAGE_ACCESS_KEY -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME -Djava.net.preferIPv4Stack=true &" | adddate >> /var/log/jbosseap.install.log
 $EAP_HOME/wildfly/bin/standalone.sh -bprivate $IP_ADDR -b $IP_ADDR -bmanagement $IP_ADDR --server-config=standalone-azure-ha.xml -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME -Djava.net.preferIPv4Stack=true | adddate >> /var/log/jbosseap.install.log 2>&1 &
 sleep 20
+####################### 
 
+####################### Setup JBoss server to start on boot
+echo "export IP_ADDR=\$(hostname -I)" >> /bin/jbossservice.sh
 echo "export EAP_HOME="/opt/rh/eap7/root/usr/share"" >> /bin/jbossservice.sh
-echo "$EAP_HOME/wildfly/bin/standalone.sh -bprivate $IP_ADDR -b $IP_ADDR -bmanagement $IP_ADDR --server-config=standalone-azure-ha.xml -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME -Djava.net.preferIPv4Stack=true &" >> /bin/jbossservice.sh
+
+echo "export STORAGE_ACCOUNT_NAME=$STORAGE_ACCOUNT_NAME" >> /bin/jbossservice.sh
+echo "export STORAGE_ACCESS_KEY=$STORAGE_ACCESS_KEY" >> /bin/jbossservice.sh
+echo "export CONTAINER_NAME=$CONTAINER_NAME" >> /bin/jbossservice.sh
+
+echo "\$EAP_HOME/wildfly/bin/standalone.sh -bprivate \$IP_ADDR -b \$IP_ADDR -bmanagement \$IP_ADDR --server-config=standalone-azure-ha.xml -Djboss.jgroups.azure_ping.storage_account_name=\$STORAGE_ACCOUNT_NAME -Djboss.jgroups.azure_ping.storage_access_key=\$STORAGE_ACCESS_KEY -Djboss.jgroups.azure_ping.container=\$CONTAINER_NAME -Djava.net.preferIPv4Stack=true &" >> /bin/jbossservice.sh
 chmod +x /bin/jbossservice.sh
 
 yum install cronie cronie-anacron | adddate >> /var/log/jbosseap.install.log 2>&1
@@ -142,6 +151,7 @@ service crond start | adddate >> /var/log/jbosseap.install.log 2>&1
 chkconfig crond on | adddate >> /var/log/jbosseap.install.log 2>&1
 echo "@reboot sleep 90 && /bin/jbossservice.sh" >>  /var/spool/cron/root
 chmod 600 /var/spool/cron/root
+####################### 
 
 echo "Deploy an application" | adddate >> /var/log/jbosseap.install.log
 echo "wget -O eap-session-replication.war $fileUrl" | adddate >> /var/log/jbosseap.install.log
