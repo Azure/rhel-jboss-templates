@@ -42,7 +42,7 @@ STORAGE_ACCOUNT_NAME=${14}
 CONTAINER_NAME=${15}
 STORAGE_ACCESS_KEY=$(echo "${16}" | openssl enc -d -base64)
 RHEL_POOL=${17} # kept at the end because it is possible that customer won't provide this.
-IP_ADDR=0.0.0.0
+IP_ADDR=$(hostname -I)
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | adddate >> /var/log/jbosseap.install.log
 echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.3-on-RHEL8.0" | adddate >> /var/log/jbosseap.install.log
@@ -59,8 +59,8 @@ echo "firewall-cmd --zone=public --add-port=8080/tcp  --permanent"  | adddate >>
 sudo firewall-cmd  --zone=public --add-port=8080/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
 echo "firewall-cmd --zone=public --add-port=9990/tcp  --permanent"  | adddate >> /var/log/jbosseap.install.log
 sudo firewall-cmd  --zone=public --add-port=9990/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
-echo "firewall-cmd --zone=public --add-port=45700/tcp --permanent" | adddate >> /var/log/jbosseap.install.log
-sudo firewall-cmd  --zone=public --add-port=45700/tcp --permanent  | adddate >> /var/log/jbosseap.install.log 2>&1
+echo "firewall-cmd --zone=public --add-port=45700/tcp --permanent"  | adddate >> /var/log/jbosseap.install.log
+sudo firewall-cmd  --zone=public --add-port=45700/tcp --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
 echo "firewall-cmd --zone=public --add-port=7600/tcp  --permanent"  | adddate >> /var/log/jbosseap.install.log
 sudo firewall-cmd  --zone=public --add-port=7600/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
 
@@ -74,7 +74,7 @@ sudo iptables-save   | adddate >> /var/log/jbosseap.install.log 2>&1
 echo "Initial JBoss EAP setup" | adddate >> /var/log/jbosseap.install.log
 ####################### Register to subscription Manager
 echo "Register subscription manager" | adddate >> /var/log/jbosseap.install.log
-echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | adddate >> /var/log/jbosseap.install.log
+echo "subscription-manager register --username $RHSM_USER --password RHSM_PASSWORD" | adddate >> /var/log/jbosseap.install.log
 subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD >> /var/log/jbosseap.install.log 2>&1
 flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Manager Registration Failed" | adddate >> /var/log/jbosseap.install.log; exit $flag;  fi
 #######################
@@ -138,13 +138,23 @@ sed -i 's/jboss.bind.address:127.0.0.1/jboss.bind.address:0.0.0.0/g'  $EAP_HOME/
 echo "sed -i 's/jboss.bind.address.private:127.0.0.1/jboss.bind.address.private:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml" | adddate >> /var/log/jbosseap.install.log
 sed -i 's/jboss.bind.address.private:127.0.0.1/jboss.bind.address.private:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml | adddate >> /var/log/jbosseap.install.log 2>&1
 
+
+####################### Start the JBoss server now
 echo "Start JBoss server" | adddate >> /var/log/jbosseap.install.log
 echo "$EAP_HOME/wildfly/bin/standalone.sh -bprivate $IP_ADDR -b $IP_ADDR -bmanagement $IP_ADDR --server-config=standalone-azure-ha.xml -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME -Djboss.jgroups.azure_ping.storage_access_key=STORAGE_ACCESS_KEY -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME -Djava.net.preferIPv4Stack=true &" | adddate >> /var/log/jbosseap.install.log
 $EAP_HOME/wildfly/bin/standalone.sh -bprivate $IP_ADDR -b $IP_ADDR -bmanagement $IP_ADDR --server-config=standalone-azure-ha.xml -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME -Djava.net.preferIPv4Stack=true | adddate >> /var/log/jbosseap.install.log 2>&1 &
 sleep 20
+####################### 
 
+####################### Setup JBoss server to start on boot
+echo "export IP_ADDR=\$(hostname -I)" >> /bin/jbossservice.sh
 echo "export EAP_HOME="/opt/rh/eap7/root/usr/share"" >> /bin/jbossservice.sh
-echo "$EAP_HOME/wildfly/bin/standalone.sh -bprivate $IP_ADDR -b $IP_ADDR -bmanagement $IP_ADDR --server-config=standalone-azure-ha.xml -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME -Djava.net.preferIPv4Stack=true &" >> /bin/jbossservice.sh
+
+echo "export STORAGE_ACCOUNT_NAME=$STORAGE_ACCOUNT_NAME" >> /bin/jbossservice.sh
+echo "export STORAGE_ACCESS_KEY=$STORAGE_ACCESS_KEY" >> /bin/jbossservice.sh
+echo "export CONTAINER_NAME=$CONTAINER_NAME" >> /bin/jbossservice.sh
+
+echo "\$EAP_HOME/wildfly/bin/standalone.sh -bprivate \$IP_ADDR -b \$IP_ADDR -bmanagement \$IP_ADDR --server-config=standalone-azure-ha.xml -Djboss.jgroups.azure_ping.storage_account_name=\$STORAGE_ACCOUNT_NAME -Djboss.jgroups.azure_ping.storage_access_key=\$STORAGE_ACCESS_KEY -Djboss.jgroups.azure_ping.container=\$CONTAINER_NAME -Djava.net.preferIPv4Stack=true &" >> /bin/jbossservice.sh
 chmod +x /bin/jbossservice.sh
 
 yum install cronie cronie-anacron | adddate >> /var/log/jbosseap.install.log 2>&1
@@ -152,6 +162,7 @@ service crond start | adddate >> /var/log/jbosseap.install.log 2>&1
 chkconfig crond on | adddate >> /var/log/jbosseap.install.log 2>&1
 echo "@reboot sleep 90 && /bin/jbossservice.sh" >>  /var/spool/cron/root
 chmod 600 /var/spool/cron/root
+####################### 
 
 echo "Deploy an application" | adddate >> /var/log/jbosseap.install.log
 echo "wget -O eap-session-replication.war $fileUrl" | adddate >> /var/log/jbosseap.install.log
