@@ -6,7 +6,7 @@ adddate() {
     done
 }
 openport() {
-    $port = $1
+    port=$1
 
     echo "firewall-cmd --zone=public --add-port=$port/tcp  --permanent"  | adddate >> /var/log/jbosseap.install.log
     sudo firewall-cmd  --zone=public --add-port=$port/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
@@ -65,18 +65,21 @@ echo -e "\t public:inet-address"        | adddate >> /var/log/jbosseap.install.l
 echo -e "\t private:inet-address"       | adddate >> /var/log/jbosseap.install.log
 echo -e "\t webservices:wsdl-host"      | adddate >> /var/log/jbosseap.install.log
 
-$EAP_HOME/bin/jboss-cli.sh --echo-command \
-"embed-server --std-out=echo  --server-config=standalone.xml",\
-'/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
-'/interface=management:write-attribute(name=inet-address, value="${jboss.bind.address.management:0.0.0.0}")',\
-'/interface=public:write-attribute(name=inet-address, value="${jboss.bind.address:0.0.0.0}")',\
-'/interface=private:write-attribute(name=inet-address, value="${jboss.bind.address.private:0.0.0.0}")',\
-'/subsystem=webservices:write-attribute(name=wsdl-host, value="${jboss.bind.address:0.0.0.0}")' | adddate >> /var/log/jbosseap.install.log 2>&1
+# $EAP_HOME/bin/jboss-cli.sh --echo-command \
+# "embed-server --std-out=echo  --server-config=standalone.xml",\
+# '/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
+# '/interface=management:write-attribute(name=inet-address, value="${jboss.bind.address.management:0.0.0.0}")',\
+# '/interface=public:write-attribute(name=inet-address, value="${jboss.bind.address:0.0.0.0}")',\
+# '/interface=private:write-attribute(name=inet-address, value="${jboss.bind.address.private:0.0.0.0}")',\
+# '/subsystem=webservices:write-attribute(name=wsdl-host, value="${jboss.bind.address:0.0.0.0}")' | adddate >> /var/log/jbosseap.install.log 2>&1
 
 ####################### Start the JBoss server and setup eap service
 echo "Start JBoss-EAP service"                  | adddate >> /var/log/jbosseap.install.log
 echo "systemctl enable eap7-standalone.service" | adddate >> /var/log/jbosseap.install.log
 systemctl enable eap7-standalone.service        | adddate >> /var/log/jbosseap.install.log 2>&1
+
+echo "echo WILDFLY_OPTS=-Djboss.bind.address.management=0.0.0.0 >> ${EAP_RPM_CONF_STANDALONE}" | adddate >> /var/log/jbosseap.install.log
+echo 'WILDFLY_OPTS="-Djboss.bind.address.management=0.0.0.0"' >> ${EAP_RPM_CONF_STANDALONE} | adddate >> /var/log/jbosseap.install.log 2>&1
 
 echo "systemctl restart eap7-standalone.service"| adddate >> /var/log/jbosseap.install.log
 systemctl restart eap7-standalone.service       | adddate >> /var/log/jbosseap.install.log 2>&1

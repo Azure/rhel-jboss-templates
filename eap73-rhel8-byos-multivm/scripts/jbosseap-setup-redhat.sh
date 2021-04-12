@@ -7,7 +7,7 @@ adddate() {
 }
 
 openport() {
-    $port = $1
+    port=$1
 
     echo "firewall-cmd --zone=public --add-port=$port/tcp  --permanent"  | adddate >> /var/log/jbosseap.install.log
     sudo firewall-cmd  --zone=public --add-port=$port/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
