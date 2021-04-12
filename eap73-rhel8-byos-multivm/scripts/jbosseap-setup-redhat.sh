@@ -138,11 +138,11 @@ echo "sed -i 's/stack="udp"/stack="tcp"/g'  $EAP_HOME/wildfly/standalone/configu
 sed -i 's/stack="udp"/stack="tcp"/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml | adddate >> /var/log/jbosseap.install.log 2>&1
 
 echo "Updating standalone-azure-ha.xml" | adddate >> /var/log/jbosseap.install.log
-echo -e "\t stack UDP to TCP"
-echo -e "\t management:inet-address"
-echo -e "\t public:inet-address"
-echo -e "\t private:inet-address"
-echo -e "\t webservices:wsdl-host"
+echo -e "\t stack UDP to TCP"           | adddate >> /var/log/jbosseap.install.log
+echo -e "\t management:inet-address"    | adddate >> /var/log/jbosseap.install.log
+echo -e "\t public:inet-address"        | adddate >> /var/log/jbosseap.install.log
+echo -e "\t private:inet-address"       | adddate >> /var/log/jbosseap.install.log
+echo -e "\t webservices:wsdl-host"      | adddate >> /var/log/jbosseap.install.log
 
 $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 'embed-server --std-out=echo  --server-config=standalone-azure-ha.xml',\
