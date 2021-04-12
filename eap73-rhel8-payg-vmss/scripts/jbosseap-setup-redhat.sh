@@ -6,6 +6,13 @@ adddate() {
     done
 }
 
+openport() {
+    $port = $1
+
+    echo "firewall-cmd --zone=public --add-port=$port/tcp  --permanent"  | adddate >> /var/log/jbosseap.install.log
+    sudo firewall-cmd  --zone=public --add-port=$port/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
+}
+
 echo "Red Hat JBoss EAP Cluster Intallation Start " | adddate >> /var/log/jbosseap.install.log
 /bin/date +%H:%M:%S  >> /var/log/jbosseap.install.log
 
@@ -52,14 +59,14 @@ echo "RHSM_USER: " ${RHSM_USER} | adddate >> /var/log/jbosseap.install.log
 ####################### Configuring firewall for ports
 echo "Configure firewall for ports 8080, 9990, 45700, 7600" | adddate >> /var/log/jbosseap.install.log
 
-echo "firewall-cmd --zone=public --add-port=8080/tcp  --permanent"  | adddate >> /var/log/jbosseap.install.log
-sudo firewall-cmd  --zone=public --add-port=8080/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
-echo "firewall-cmd --zone=public --add-port=9990/tcp  --permanent"  | adddate >> /var/log/jbosseap.install.log
-sudo firewall-cmd  --zone=public --add-port=9990/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
-echo "firewall-cmd --zone=public --add-port=45700/tcp --permanent" | adddate >> /var/log/jbosseap.install.log
-sudo firewall-cmd  --zone=public --add-port=45700/tcp --permanent  | adddate >> /var/log/jbosseap.install.log 2>&1
-echo "firewall-cmd --zone=public --add-port=7600/tcp  --permanent"  | adddate >> /var/log/jbosseap.install.log
-sudo firewall-cmd  --zone=public --add-port=7600/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
+openport 9999
+openport 8443
+openport 8009
+openport 5445
+openport 8080
+openport 9990
+openport 45700
+openport 7600
 echo "firewall-cmd --reload" | adddate >> /var/log/jbosseap.install.log
 sudo firewall-cmd  --reload  | adddate >> /var/log/jbosseap.install.log 2>&1
 echo "iptables-save" | adddate >> /var/log/jbosseap.install.log
