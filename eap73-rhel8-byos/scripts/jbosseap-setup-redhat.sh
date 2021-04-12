@@ -58,7 +58,7 @@ yum groupinstall -y jboss-eap7 >> /var/log/jbosseap.install.log 2>&1
 flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" | adddate >> /var/log/jbosseap.install.log; exit $flag;  fi
 
 
-echo "Updating standalone-azure-ha.xml" | adddate >> /var/log/jbosseap.install.log
+echo "Updating standalone.xml" | adddate >> /var/log/jbosseap.install.log
 echo -e "\t stack UDP to TCP"           | adddate >> /var/log/jbosseap.install.log
 echo -e "\t management:inet-address"    | adddate >> /var/log/jbosseap.install.log
 echo -e "\t public:inet-address"        | adddate >> /var/log/jbosseap.install.log
@@ -66,7 +66,7 @@ echo -e "\t private:inet-address"       | adddate >> /var/log/jbosseap.install.l
 echo -e "\t webservices:wsdl-host"      | adddate >> /var/log/jbosseap.install.log
 
 $EAP_HOME/bin/jboss-cli.sh --echo-command \
-'embed-server --std-out=echo  --server-config="${EAP_RPM_CONF_STANDALONE}"',\
+"embed-server --std-out=echo  --server-config=standalone.xml",\
 '/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
 '/interface=management:write-attribute(name=inet-address, value="${jboss.bind.address.management:0.0.0.0}")',\
 '/interface=public:write-attribute(name=inet-address, value="${jboss.bind.address:0.0.0.0}")',\
