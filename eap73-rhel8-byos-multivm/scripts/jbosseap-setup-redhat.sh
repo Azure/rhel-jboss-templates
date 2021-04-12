@@ -130,13 +130,20 @@ echo "change the jgroups stack from UDP to TCP " | adddate >> /var/log/jbosseap.
 echo "sed -i 's/stack="udp"/stack="tcp"/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml" | adddate >> /var/log/jbosseap.install.log
 sed -i 's/stack="udp"/stack="tcp"/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml | adddate >> /var/log/jbosseap.install.log 2>&1
 
-echo "Update interfaces section update jboss.bind.address.management, jboss.bind.address and jboss.bind.address.private from 127.0.0.1 to 0.0.0.0" | adddate >> /var/log/jbosseap.install.log
-echo "sed -i 's/jboss.bind.address.management:127.0.0.1/jboss.bind.address.management:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml" | adddate >> /var/log/jbosseap.install.log
-sed -i 's/jboss.bind.address.management:127.0.0.1/jboss.bind.address.management:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml | adddate >> /var/log/jbosseap.install.log 2>&1
-echo "sed -i 's/jboss.bind.address:127.0.0.1/jboss.bind.address:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml" | adddate >> /var/log/jbosseap.install.log
-sed -i 's/jboss.bind.address:127.0.0.1/jboss.bind.address:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml | adddate >> /var/log/jbosseap.install.log 2>&1
-echo "sed -i 's/jboss.bind.address.private:127.0.0.1/jboss.bind.address.private:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml" | adddate >> /var/log/jbosseap.install.log
-sed -i 's/jboss.bind.address.private:127.0.0.1/jboss.bind.address.private:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml | adddate >> /var/log/jbosseap.install.log 2>&1
+echo "Updating standalone-azure-ha.xml" | adddate >> /var/log/jbosseap.install.log
+echo -e "\t stack UDP to TCP"
+echo -e "\t management:inet-address"
+echo -e "\t public:inet-address"
+echo -e "\t private:inet-address"
+echo -e "\t webservices:wsdl-host"
+
+$EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
+'embed-server --std-out=echo  --server-config=standalone-azure-ha.xml',\
+'/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
+'/interface=management:write-attribute(name=inet-address, value="${jboss.bind.address.management:0.0.0.0}")',\
+'/interface=public:write-attribute(name=inet-address, value="${jboss.bind.address:0.0.0.0}")',\
+'/interface=private:write-attribute(name=inet-address, value="${jboss.bind.address.private:0.0.0.0}")',\
+'/subsystem=webservices:write-attribute(name=wsdl-host, value="${jboss.bind.address:0.0.0.0}")' | adddate >> /var/log/jbosseap.install.log 2>&1
 
 
 ####################### Start the JBoss server now
