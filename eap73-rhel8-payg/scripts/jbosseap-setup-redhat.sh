@@ -6,6 +6,13 @@ adddate() {
     done
 }
 
+openport() {
+    $port = $1
+
+    echo "firewall-cmd --zone=public --add-port=$port/tcp  --permanent"  | adddate >> /var/log/jbosseap.install.log
+    sudo firewall-cmd  --zone=public --add-port=$port/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
+}
+
 JBOSS_EAP_USER=$1
 JBOSS_EAP_PASSWORD=$2
 RHSM_USER=$3
@@ -54,18 +61,17 @@ echo "systemctl status eap7-standalone.service" | adddate >> /var/log/jbosseap.i
 systemctl status eap7-standalone.service | adddate >> /var/log/jbosseap.install.log 2>&1
 
 # Open Red Hat software firewall for port 8080 and 9990:
-echo "firewall-cmd --zone=public --add-port=8080/tcp --permanent" | adddate >> /var/log/jbosseap.install.log
-firewall-cmd --zone=public --add-port=8080/tcp --permanent | adddate >> /var/log/jbosseap.install.log 2>&1
-echo "firewall-cmd --zone=public --add-port=9990/tcp --permanent" | adddate >> /var/log/jbosseap.install.log
-firewall-cmd --zone=public --add-port=9990/tcp --permanent | adddate  >> /var/log/jbosseap.install.log 2>&1
+openport 8080
+openport 9990
+openport 9999
+openport 8443
+openport 8009
+openport 5445
+openport 22
 echo "firewall-cmd --reload" | adddate >> /var/log/jbosseap.install.log
 firewall-cmd --reload | adddate >> /var/log/jbosseap.install.log 2>&1
-
-# Open Red Hat software firewall for port 22:
-echo "firewall-cmd --zone=public --add-port=22/tcp --permanent" | adddate >> /var/log/jbosseap.install.log
-firewall-cmd --zone=public --add-port=22/tcp --permanent | adddate >> /var/log/jbosseap.install.log 2>&1
-echo "firewall-cmd --reload" | adddate >> /var/log/jbosseap.install.log
-firewall-cmd --reload | adddate >> /var/log/jbosseap.install.log 2>&1
+echo "iptables-save" | adddate >> /var/log/jbosseap.install.log
+sudo iptables-save   | adddate >> /var/log/jbosseap.install.log 2>&1
 
 /bin/date +%H:%M:%S >> /var/log/jbosseap.install.log
 echo "Configuring JBoss EAP management user" | adddate >> /var/log/jbosseap.install.log
