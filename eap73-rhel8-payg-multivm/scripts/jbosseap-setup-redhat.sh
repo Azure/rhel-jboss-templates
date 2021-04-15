@@ -21,6 +21,8 @@ openport() {
 echo "Red Hat JBoss EAP Cluster Intallation Start " | log_info 
 /bin/date +%H:%M:%S  >> /var/log/jbosseap.install.log
 
+export EAP_LAUNCH_CONFIG="/opt/rh/eap7/root/usr/share/wildfly/bin/standalone.conf"
+echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"' >> ~/.bash_profile
 echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> ~/.bash_profile
 source ~/.bash_profile
 touch /etc/profile.d/eap_env.sh
@@ -125,14 +127,14 @@ systemctl restart sshd 2>log_err | log_info
 
 echo "Copy the standalone-azure-ha.xml from EAP_HOME/doc/wildfly/examples/configs folder to EAP_HOME/wildfly/standalone/configuration folder" | log_info 
 echo "cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/" | log_info 
-cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/ 2>log_err | log_info
+sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/ 2>log_err | log_info
 
 echo "Updating standalone-azure-ha.xml" | log_info
 echo -e "\t stack UDP to TCP"           | log_info
 echo -e "\t management:inet-address"    | log_info
 echo -e "\t public:inet-address"        | log_info
 
-$EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
+sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 'embed-server --std-out=echo  --server-config=standalone-azure-ha.xml',\
 '/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
 '/interface=management:write-attribute(name=inet-address, value="${jboss.bind.address.management:0.0.0.0}")',\

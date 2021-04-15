@@ -136,14 +136,14 @@ systemctl restart sshd 2>log_err | log_info
 
 echo "Copy the standalone-azure-ha.xml from EAP_HOME/doc/wildfly/examples/configs folder to EAP_HOME/wildfly/standalone/configuration folder" | log_info
 echo "cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/" | log_info
-cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/ 2>log_err | log_info 
+sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/ 2>log_err | log_info 
 
 echo "Updating standalone-azure-ha.xml" | log_info
 echo -e "\t stack UDP to TCP"           | log_info
 echo -e "\t management:inet-address"    | log_info
 echo -e "\t public:inet-address"        | log_info
 
-$EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
+sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 'embed-server --std-out=echo  --server-config=standalone-azure-ha.xml',\
 '/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
 '/interface=management:write-attribute(name=inet-address, value="${jboss.bind.address.management:0.0.0.0}")',\
@@ -181,7 +181,7 @@ echo "wget -O eap-session-replication.war $fileUrl" | log_info
 wget -O "eap-session-replication.war" "$fileUrl" >> /var/log/jbosseap.install.log 2>&1
 flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! Sample Application Download Failed" | log_info; exit $flag; fi
 echo "cp ./eap-session-replication.war $EAP_HOME/wildfly/standalone/deployments/" | log_info
-cp ./eap-session-replication.war $EAP_HOME/wildfly/standalone/deployments/ 2>log_err | log_info 
+cp ./eap-session-replication.war $EAP_HOME/wildfly/standalone/deployments/ 2>log_err | log_info
 echo "touch $EAP_HOME/wildfly/standalone/deployments/eap-session-replication.war.dodeploy" | log_info
 touch $EAP_HOME/wildfly/standalone/deployments/eap-session-replication.war.dodeploy 2>log_err | log_info 
 
