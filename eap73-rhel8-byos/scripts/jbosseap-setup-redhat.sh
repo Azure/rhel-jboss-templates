@@ -109,10 +109,10 @@ systemctl status eap7-standalone.service        2>log_err | log_info
 ####################### Open Red Hat software firewall for port 8080 and 9990:
 openport 8080
 openport 9990
-openport 9999
-openport 8443
-openport 8009
-openport 22
+openport 9999   # native management
+openport 8443   # HTTPS
+openport 8009   # AJP
+openport 22     # SSH
 echo "firewall-cmd --reload" | log_info 
 firewall-cmd --reload 2>log_err | log_info
 

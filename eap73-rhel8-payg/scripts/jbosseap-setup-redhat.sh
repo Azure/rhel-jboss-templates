@@ -90,7 +90,6 @@ echo "systemctl status eap7-standalone.service" | adddate >> /var/log/jbosseap.i
 systemctl status eap7-standalone.service        | adddate >> /var/log/jbosseap.install.log 2>&1
 ####################### 
 
-# Open Red Hat software firewall for port 8080 and 9990:
 openport 8080
 openport 9990
 openport 9999
