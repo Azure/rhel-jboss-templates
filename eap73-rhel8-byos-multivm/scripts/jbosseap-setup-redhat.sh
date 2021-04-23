@@ -146,7 +146,6 @@ echo -e "\t public:inet-address"        | log_info
 sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 'embed-server --std-out=echo  --server-config=standalone-azure-ha.xml',\
 '/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
-'/interface=management:write-attribute(name=inet-address, value="${jboss.bind.address.management:0.0.0.0}")',\
 '/interface=public:write-attribute(name=inet-address, value="${jboss.bind.address:0.0.0.0}")' 2>log_err | log_info 
 
 ####################### Configure the JBoss server and setup eap service
@@ -154,17 +153,19 @@ echo "Setting configurations in $EAP_RPM_CONF_STANDALONE"
 echo -e "\t-> WILDFLY_SERVER_CONFIG=standalone-azure-ha.xml" | log_info 
 echo 'WILDFLY_SERVER_CONFIG=standalone-azure-ha.xml' >> $EAP_RPM_CONF_STANDALONE 2>log_err | log_info
 
-echo -e "\t-> WILDFLY_OPTS=-Djboss.bind.address.management=0.0.0.0" | log_info 
-echo 'WILDFLY_OPTS="-Djboss.bind.address.management=0.0.0.0"' >> $EAP_RPM_CONF_STANDALONE 2>log_err | log_info
-
 echo "Setting configurations in $EAP_LAUNCH_CONFIG"
-echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.management=$(hostname -I)"' | log_info 
-echo 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.management=$(hostname -I)"' >> $EAP_LAUNCH_CONFIG 2>log_err | log_info
+echo -e "\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address=0.0.0.0" | log_info 
+echo -e "\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0" | log_info 
+echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' | log_info 
 
-echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME\"" >> $EAP_LAUNCH_CONFIG | log_info 
-echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY\"" >> $EAP_LAUNCH_CONFIG | log_info 
-echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME\"" >> $EAP_LAUNCH_CONFIG | log_info 
-echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djava.net.preferIPv4Stack=true\"" >> $EAP_LAUNCH_CONFIG | log_info 
+echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=0.0.0.0"' >> $EAP_RPM_CONF_STANDALONE 2>log_err | log_info
+echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0"' >> $EAP_RPM_CONF_STANDALONE 2>log_err | log_info
+echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' >> $EAP_LAUNCH_CONFIG 2>log_err | log_info
+echo -e 'JAVA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true"' >> $EAP_LAUNCH_CONFIG | log_info
+
+echo -e JAVA_OPTS='$JAVA_OPTS' -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME >> $EAP_LAUNCH_CONFIG | log_info 
+echo -e JAVA_OPTS='$JAVA_OPTS' -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY >> $EAP_LAUNCH_CONFIG | log_info 
+echo -e JAVA_OPTS='$JAVA_OPTS' -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME >> $EAP_LAUNCH_CONFIG | log_info 
 ####################### Start the JBoss server and setup eap service
 echo "Start JBoss-EAP service"                  | log_info
 echo "systemctl enable eap7-standalone.service" | log_info
