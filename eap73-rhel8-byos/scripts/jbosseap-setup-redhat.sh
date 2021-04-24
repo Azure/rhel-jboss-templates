@@ -82,14 +82,14 @@ echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=0.0.0.0"' | log_info
 echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0"' | log_info 
 echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' | log_info 
 
-echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=0.0.0.0"' >> $EAP_RPM_CONF_STANDALONE 2>log_err | log_info
-echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0"' >> $EAP_RPM_CONF_STANDALONE 2>log_err | log_info
+echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=0.0.0.0"' >> $EAP_LAUNCH_CONFIG 2>log_err | log_info
+echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0"' >> $EAP_LAUNCH_CONFIG 2>log_err | log_info
 echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' >> $EAP_LAUNCH_CONFIG 2>log_err | log_info
 echo -e 'JAVA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true"' >> $EAP_LAUNCH_CONFIG | log_info
 
-echo -e JAVA_OPTS='$JAVA_OPTS' -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME >> $EAP_LAUNCH_CONFIG | log_info 
-echo -e JAVA_OPTS='$JAVA_OPTS' -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY >> $EAP_LAUNCH_CONFIG | log_info 
-echo -e JAVA_OPTS='$JAVA_OPTS' -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME >> $EAP_LAUNCH_CONFIG | log_info 
+echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME\"" >> $EAP_LAUNCH_CONFIG | log_info 
+echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY\"" >> $EAP_LAUNCH_CONFIG | log_info 
+echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME\"" >> $EAP_LAUNCH_CONFIG | log_info 
 
 ####################### Start the JBoss server and setup eap service
 
