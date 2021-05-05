@@ -1,0 +1,3 @@
+<jboss-web>
+    <context-root>session-replication</context-root>
+</jboss-web>
