@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ Copyright 2006 Sun Microsystems, Inc. All rights reserved.
+ Use is subject to license terms.
+-->
+
+
+<web-app version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"> 
+
+  <display-name>pollo</display-name>
+  <distributable/>
+  <servlet>
+    <display-name>testHA.jsp</display-name>
+    <servlet-name>testHA.jsp</servlet-name>    
+    <jsp-file>/testHA.jsp</jsp-file>
+  </servlet>
+
+    <session-config>
+	<session-timeout>30</session-timeout>
+    </session-config>
+    <welcome-file-list>
+        <welcome-file>testHA.jsp</welcome-file>
+    </welcome-file-list>
+</web-app>
