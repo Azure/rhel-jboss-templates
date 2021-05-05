@@ -428,17 +428,7 @@
                     ]
                   },
                   "protectedSettings": {
-                    "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} ''{1}'' ''{2}'' ''{3}'' ''{4}'' ''{5}'' ''{6}'' ''{7}'' ''{8}'' ''{9}''', 
-                      variables('scriptArgs'), 
-                      parameters('jbossEAPUserName'), 
-                      parameters('jbossEAPPassword'),
-                      parameters('rhsmUserName'), 
-                      parameters('rhsmPassword'), 
-                      parameters('rhsmPoolEAP'),
-                      parameters('eapStorageAccountName'),
-                      variables('containerName'), 
-                      base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('eapStorageAccountName')), '2019-04-01').keys[0].value),
-                      parameters('rhsmPoolRHEL'))]"
+                    "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} ''{1}'' ''{2}'' ''{3}'' ''{4}'' ''{5}'' ''{6}'' ''{7}'' ''{8}'' ''{9}''',  variables('scriptArgs'),  parameters('jbossEAPUserName'),  parameters('jbossEAPPassword'), parameters('rhsmUserName'),  parameters('rhsmPassword'),  parameters('rhsmPoolEAP'), parameters('eapStorageAccountName'), variables('containerName'),  base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('eapStorageAccountName')), '2019-04-01').keys[0].value), parameters('rhsmPoolRHEL'))]"
                   }
                 }
               }

@@ -6,9 +6,18 @@ adddate() {
     done
 }
 
+openport() {
+    port=$1
+
+    echo "firewall-cmd --zone=public --add-port=$port/tcp  --permanent"  | adddate >> /var/log/jbosseap.install.log
+    sudo firewall-cmd  --zone=public --add-port=$port/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
+}
+
 echo "Red Hat JBoss EAP Cluster Intallation Start " | adddate >> /var/log/jbosseap.install.log
 /bin/date +%H:%M:%S  >> /var/log/jbosseap.install.log
 
+export EAP_LAUNCH_CONFIG="/opt/rh/eap7/root/usr/share/wildfly/bin/standalone.conf"
+echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"' >> ~/.bash_profile
 echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> ~/.bash_profile
 source ~/.bash_profile
 touch /etc/profile.d/eap_env.sh
@@ -53,14 +62,13 @@ echo "RHSM_USER: " ${RHSM_USER} | adddate >> /var/log/jbosseap.install.log
 ####################### Configuring firewall for ports
 echo "Configure firewall for ports 8080, 9990, 45700, 7600" | adddate >> /var/log/jbosseap.install.log
 
-echo "firewall-cmd --zone=public --add-port=8080/tcp  --permanent"  | adddate >> /var/log/jbosseap.install.log
-sudo firewall-cmd  --zone=public --add-port=8080/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
-echo "firewall-cmd --zone=public --add-port=9990/tcp  --permanent"  | adddate >> /var/log/jbosseap.install.log
-sudo firewall-cmd  --zone=public --add-port=9990/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
-echo "firewall-cmd --zone=public --add-port=45700/tcp --permanent" | adddate >> /var/log/jbosseap.install.log
-sudo firewall-cmd  --zone=public --add-port=45700/tcp --permanent  | adddate >> /var/log/jbosseap.install.log 2>&1
-echo "firewall-cmd --zone=public --add-port=7600/tcp  --permanent"  | adddate >> /var/log/jbosseap.install.log
-sudo firewall-cmd  --zone=public --add-port=7600/tcp  --permanent   | adddate >> /var/log/jbosseap.install.log 2>&1
+openport 9999
+openport 8443
+openport 8009
+openport 8080
+openport 9990
+openport 45700
+openport 7600
 echo "firewall-cmd --reload" | adddate >> /var/log/jbosseap.install.log
 sudo firewall-cmd  --reload  | adddate >> /var/log/jbosseap.install.log 2>&1
 echo "iptables-save" | adddate >> /var/log/jbosseap.install.log
@@ -115,43 +123,45 @@ systemctl restart sshd | adddate >> /var/log/jbosseap.install.log 2>&1
 
 echo "Copy the standalone-azure-ha.xml from EAP_HOME/doc/wildfly/examples/configs folder to EAP_HOME/wildfly/standalone/configuration folder" | adddate >> /var/log/jbosseap.install.log
 echo "cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/" | adddate >> /var/log/jbosseap.install.log
-cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/ | adddate >> /var/log/jbosseap.install.log 2>&1
+sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/ | adddate >> /var/log/jbosseap.install.log 2>&1
 
-echo "change the jgroups stack from UDP to TCP " | adddate >> /var/log/jbosseap.install.log
-echo "sed -i 's/stack="udp"/stack="tcp"/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml" | adddate >> /var/log/jbosseap.install.log
-sed -i 's/stack="udp"/stack="tcp"/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml | adddate >> /var/log/jbosseap.install.log 2>&1
+echo "Updating standalone-azure-ha.xml" | adddate >> /var/log/jbosseap.install.log
+echo -e "\t stack UDP to TCP"           | adddate >> /var/log/jbosseap.install.log
+echo -e "\t management:inet-address"    | adddate >> /var/log/jbosseap.install.log
+echo -e "\t public:inet-address"        | adddate >> /var/log/jbosseap.install.log
 
-echo "Update interfaces section update jboss.bind.address.management, jboss.bind.address and jboss.bind.address.private from 127.0.0.1 to 0.0.0.0" | adddate >> /var/log/jbosseap.install.log
-echo "sed -i 's/jboss.bind.address.management:127.0.0.1/jboss.bind.address.management:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml" | adddate >> /var/log/jbosseap.install.log
-sed -i 's/jboss.bind.address.management:127.0.0.1/jboss.bind.address.management:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml | adddate >> /var/log/jbosseap.install.log 2>&1
-echo "sed -i 's/jboss.bind.address:127.0.0.1/jboss.bind.address:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml" | adddate >> /var/log/jbosseap.install.log
-sed -i 's/jboss.bind.address:127.0.0.1/jboss.bind.address:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml | adddate >> /var/log/jbosseap.install.log 2>&1
-echo "sed -i 's/jboss.bind.address.private:127.0.0.1/jboss.bind.address.private:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml" | adddate >> /var/log/jbosseap.install.log
-sed -i 's/jboss.bind.address.private:127.0.0.1/jboss.bind.address.private:0.0.0.0/g'  $EAP_HOME/wildfly/standalone/configuration/standalone-azure-ha.xml | adddate >> /var/log/jbosseap.install.log 2>&1
+sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
+'embed-server --std-out=echo  --server-config=standalone-azure-ha.xml',\
+'/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")' | adddate >> /var/log/jbosseap.install.log 2>&1
 
-####################### Start the JBoss server now
-echo "Start JBoss server" | adddate >> /var/log/jbosseap.install.log
-echo "$EAP_HOME/wildfly/bin/standalone.sh -bprivate $IP_ADDR -b $IP_ADDR -bmanagement $IP_ADDR --server-config=standalone-azure-ha.xml -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME -Djboss.jgroups.azure_ping.storage_access_key=STORAGE_ACCESS_KEY -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME -Djava.net.preferIPv4Stack=true &" | adddate >> /var/log/jbosseap.install.log
-$EAP_HOME/wildfly/bin/standalone.sh -bprivate $IP_ADDR -b $IP_ADDR -bmanagement $IP_ADDR --server-config=standalone-azure-ha.xml -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME -Djava.net.preferIPv4Stack=true | adddate >> /var/log/jbosseap.install.log 2>&1 &
-sleep 20
-####################### 
+####################### Configure the JBoss server and setup eap service
+echo "Setting configurations in $EAP_RPM_CONF_STANDALONE"
+echo -e "\t-> WILDFLY_SERVER_CONFIG=standalone-azure-ha.xml" | log_info 
+echo 'WILDFLY_SERVER_CONFIG=standalone-azure-ha.xml' >> $EAP_RPM_CONF_STANDALONE 2>log_err | log_info
 
-####################### Setup JBoss server to start on boot
-echo "export IP_ADDR=\$(hostname -I)" >> /bin/jbossservice.sh
-echo "export EAP_HOME="/opt/rh/eap7/root/usr/share"" >> /bin/jbossservice.sh
+echo "Setting configurations in $EAP_LAUNCH_CONFIG"
+echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address=0.0.0.0' | log_info 
+echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0' | log_info 
+echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' | log_info 
+echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' | log_info 
 
-echo "export STORAGE_ACCOUNT_NAME=$STORAGE_ACCOUNT_NAME" >> /bin/jbossservice.sh
-echo "export STORAGE_ACCESS_KEY=$STORAGE_ACCESS_KEY" >> /bin/jbossservice.sh
-echo "export CONTAINER_NAME=$CONTAINER_NAME" >> /bin/jbossservice.sh
+echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=0.0.0.0"' >> $EAP_LAUNCH_CONFIG 2>log_err | log_info
+echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0"' >> $EAP_LAUNCH_CONFIG 2>log_err | log_info
+echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' >> $EAP_LAUNCH_CONFIG 2>log_err | log_info
+echo -e 'JAVA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true"' >> $EAP_LAUNCH_CONFIG | log_info
 
-echo "\$EAP_HOME/wildfly/bin/standalone.sh -bprivate \$IP_ADDR -b \$IP_ADDR -bmanagement \$IP_ADDR --server-config=standalone-azure-ha.xml -Djboss.jgroups.azure_ping.storage_account_name=\$STORAGE_ACCOUNT_NAME -Djboss.jgroups.azure_ping.storage_access_key=\$STORAGE_ACCESS_KEY -Djboss.jgroups.azure_ping.container=\$CONTAINER_NAME -Djava.net.preferIPv4Stack=true &" >> /bin/jbossservice.sh
-chmod +x /bin/jbossservice.sh
+echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME\"" >> $EAP_LAUNCH_CONFIG | log_info 
+echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY\"" >> $EAP_LAUNCH_CONFIG | log_info 
+echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME\"" >> $EAP_LAUNCH_CONFIG | log_info 
+####################### Start the JBoss server and setup eap service
+echo "Start JBoss-EAP service"                  | adddate >> /var/log/jbosseap.install.log
+echo "systemctl enable eap7-standalone.service" | adddate >> /var/log/jbosseap.install.log
+systemctl enable eap7-standalone.service        | adddate >> /var/log/jbosseap.install.log 2>&1
 
-yum install cronie cronie-anacron | adddate >> /var/log/jbosseap.install.log 2>&1
-service crond start | adddate >> /var/log/jbosseap.install.log 2>&1
-chkconfig crond on | adddate >> /var/log/jbosseap.install.log 2>&1
-echo "@reboot sleep 90 && /bin/jbossservice.sh" >>  /var/spool/cron/root
-chmod 600 /var/spool/cron/root
+echo "systemctl restart eap7-standalone.service"| adddate >> /var/log/jbosseap.install.log
+systemctl restart eap7-standalone.service       | adddate >> /var/log/jbosseap.install.log 2>&1
+echo "systemctl status eap7-standalone.service" | adddate >> /var/log/jbosseap.install.log
+systemctl status eap7-standalone.service        | adddate >> /var/log/jbosseap.install.log 2>&1
 ####################### 
 
 echo "Deploy an application" | adddate >> /var/log/jbosseap.install.log
