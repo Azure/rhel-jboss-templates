@@ -1,6 +1,14 @@
 Create a clustered JBoss EAP application with session replication
 ===================
 
+
+The source code of this application was fetched from [here](https://github.com/danieloh30/eap-session-replication). The only change we have made is in the [testHA.jsp](https://github.com/Azure/rhel-jboss-templates/blob/master/eap-session-replication/target/testHA.jsp) to add few images and provide few reference links. We have created a war file named [eap-session-replication.war](https://github.com/Azure/rhel-jboss-templates/blob/master/eap-session-replication/target/eap-session-replication.war) using these files and used this war file to deploy the sample application in the following Azure quickstart templates.
+
+* <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/jboss-eap-clustered-multivm-rhel" target="_blank"> JBoss EAP on RHEL (clustered VMs)</a>
+* <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/jboss-eap-clustered-vmss-rhel" target="_blank"> JBoss EAP on RHEL (clustered VMSS)</a>
+
+### You can follow the documentation below to use this application in your environment.
+
 You will deploy a clustered JBoss Enterprise Application Server with a simple web application that demonstrates session replication across the cluster.
 
 This is a very common use case for enterprise web applications that require user sessions to remain alive even if the server
