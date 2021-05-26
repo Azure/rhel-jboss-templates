@@ -11,6 +11,9 @@ This repo has been created using the sample templates from https://github.com/Az
 
 ## Deploying from local machine
 
+1. Run Connect-AzAccount to login
+2. Run Set-AzContext -Subscription \<subscriptionid>
+
 create a parameters file  
 
     .<offer name>
