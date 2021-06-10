@@ -90,10 +90,6 @@ $ArtifactsLocationSasTokenName = '_artifactsLocationSasToken'
 $ArtifactsLocationParameter = $TemplateJson | Select-Object -expand 'parameters' -ErrorAction Ignore | Select-Object -Expand $ArtifactsLocationName -ErrorAction Ignore
 $useAbsolutePathStaging = $($ArtifactsLocationParameter -ne $null)
 
-
-$JsonParameters = Get-Content $TemplateParametersFile -Raw | ConvertFrom-Json
-Write-Host $JsonParameters.vmName
-
 # if the switch is set or the standard parameter is present in the template, upload all artifacts
 if ($UploadArtifacts -Or $useAbsolutePathStaging) {
     # Convert relative paths to absolute paths if needed
