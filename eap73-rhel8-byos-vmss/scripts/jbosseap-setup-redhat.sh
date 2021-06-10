@@ -1,7 +1,7 @@
 #!/bin/sh
 log() {
     while IFS= read -r line; do
-        printf '%s %s\n' "$(date "+%Y-%m-%d %H:%M:%S")" "$line" >> /var/log/jbosseap.install.log
+        printf '%s %s\n' "$(date "+%Y-%m-%d %H:%M:%S")" "$line" | tee /var/log/jbosseap.install.log
     done
 }
 
