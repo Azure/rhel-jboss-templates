@@ -10,7 +10,6 @@ openport() {
 
     echo "firewall-cmd --zone=public --add-port=$port/tcp  --permanent" | log; flag=${PIPESTATUS[0]}
     sudo firewall-cmd  --zone=public --add-port=$port/tcp  --permanent  | log; flag=${PIPESTATUS[0]}
-    exit flag
 }
 
 JBOSS_EAP_USER=$1
@@ -32,7 +31,7 @@ echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.c
 
 echo "Initial JBoss EAP 7.3 setup" | log; flag=${PIPESTATUS[0]}
 echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
-subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD | log; flag=${PIPESTATUS[0]}
+subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Subscription Manager Registration Failed" >&2 ; exit $flag;  fi
 
 echo "Subscribing the system to get access to JBoss EAP 7.3 repos" | log; flag=${PIPESTATUS[0]}

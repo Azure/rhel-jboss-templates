@@ -10,7 +10,6 @@ openport() {
 
     echo "firewall-cmd --zone=public --add-port=$port/tcp  --permanent" | log; flag=${PIPESTATUS[0]}
     sudo firewall-cmd  --zone=public --add-port=$port/tcp  --permanent  | log; flag=${PIPESTATUS[0]}
-    exit flag
 }
 
 echo "Red Hat JBoss EAP Cluster Intallation Start " | log; flag=${PIPESTATUS[0]}
@@ -83,7 +82,7 @@ echo "Initial JBoss EAP setup" | log; flag=${PIPESTATUS[0]}
 ####################### Register to subscription Manager
 echo "Register subscription manager" | log; flag=${PIPESTATUS[0]}
 echo "subscription-manager register --username $RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
-subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD | log; flag=${PIPESTATUS[0]}
+subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Manager Registration Failed" >&2 ; exit $flag;  fi
 #######################
 
