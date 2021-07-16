@@ -39,7 +39,7 @@
             }
         },
         "vmSize": {
-            "defaultValue": "Standard_B1ms",
+            "defaultValue": "Standard_DS2_v2",
             "type": "String",
             "metadata": {
                 "description": "The size of the Virtual Machine"
@@ -77,11 +77,11 @@
                 "description": "Storage account type"
             }
         },
-        "storageAccountResourceGroup": {
-            "type": "string",
-            "defaultValue": "[resourceGroup().name]",
+        "storageAccountKind": {
+            "defaultValue": "Storage",
+            "type": "String",
             "metadata": {
-                "description": "Resource group of Boot Diagnostics Storage account"
+                "description": "Storage account kind"
             }
         },
         "virtualNetworkNewOrExisting": {
@@ -185,9 +185,9 @@
         }
     },
     "variables": {
-        "singlequote": "'",
         "nicName": "[concat(uniquestring(resourceGroup().id), '-nic')]",
         "networkSecurityGroupName": "jbosseap-nsg",
+        "bootDiagnosticsCheck": "[and(equals(parameters('storageNewOrExisting'), 'new'), equals(parameters('bootDiagnostics'),'on'))]",
         "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
@@ -202,7 +202,7 @@
     },
     "resources": [
         {
-            "condition": "[equals(parameters('storageNewOrExisting'), 'new')]",
+            "condition": "[variables('bootDiagnosticsCheck')]",
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2019-06-01",
             "name": "[parameters('storageAccountName')]",
@@ -210,7 +210,7 @@
             "sku": {
                 "name": "[parameters('storageAccountType')]"
             },
-            "kind": "Storage"
+            "kind": "[parameters('storageAccountKind')]"
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
@@ -276,12 +276,12 @@
             "name": "[parameters('vmName')]",
             "location": "[parameters('location')]",
             "plan": {
-                "name": "rhel-lvm83",
+                "name": "rhel-lvm84",
                 "publisher": "redhat",
                 "product": "rhel-byos"
             },
             "dependsOn": [
-                "[parameters('storageAccountName')]",
+                "[if(equals(parameters('bootDiagnostics'),'On'), parameters('storageAccountName'), variables('networkSecurityGroupName'))]",
                 "[variables('networkSecurityGroupName')]",
                 "[variables('nicName')]"
             ],
@@ -299,7 +299,7 @@
                     "imageReference": {
                         "publisher": "redhat",
                         "offer": "rhel-byos",
-                        "sku": "rhel-lvm83",
+                        "sku": "rhel-lvm84",
                         "version": "latest"
                     },
                     "osDisk": {
@@ -315,12 +315,7 @@
                         }
                     ]
                 },
-                "diagnosticsProfile": {
-                    "bootDiagnostics": {
-                        "enabled": "[if(equals(parameters('bootDiagnostics'), 'on'), 'true', 'false')]",
-                        "storageUri": "[reference(resourceId(parameters('storageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').primaryEndpoints.blob]"
-                    }
-                }
+                "diagnosticsProfile": "[if(equals(parameters('bootDiagnostics'),'On'), json(concat('{\"bootDiagnostics\": {\"enabled\": true,\"storageUri\": \"https://', parameters('storageAccountName'), '.blob.core.windows.net', '\"}}')), json(concat('{\"bootDiagnostics\": {\"enabled\": false}}')))]"
             }
         },
         {

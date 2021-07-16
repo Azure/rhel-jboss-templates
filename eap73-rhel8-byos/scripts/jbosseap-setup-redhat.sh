@@ -1,7 +1,7 @@
 #!/bin/sh
 log() {
     while IFS= read -r line; do
-        printf '%s %s\n' "$(date "+%Y-%m-%d %H:%M:%S")" "$line" | tee /var/log/jbosseap.install.log
+        printf '%s %s\n' "$(date "+%Y-%m-%d %H:%M:%S")" "$line" >> /var/log/jbosseap.install.log
     done
 }
 
@@ -33,17 +33,17 @@ echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.c
 echo "Initial JBoss EAP 7.3 setup" | log; flag=${PIPESTATUS[0]}
 echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
 subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force  | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo "ERROR! Red Hat Subscription Manager Registration Failed" >&2 ; exit $flag;  fi
+if [ $flag != 0 ] ; then echo "ERROR! Red Hat Subscription Manager Registration Failed" >&2 log; exit $flag;  fi
 
 echo "Subscribing the system to get access to JBoss EAP 7.3 repos ($RHSM_EAPPOOL)" | log; flag=${PIPESTATUS[0]}
 echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
 subscription-manager attach --pool=${RHSM_EAPPOOL} | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 ; exit $flag;  fi
+if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
 
 if [ "$RHSM_EAPPOOL" != "$RHSM_RHELPOOL" ]; then
     echo "Subscribing the system to get access to RHEL repos ($RHSM_RHELPOOL)" | log; flag=${PIPESTATUS[0]}
     subscription-manager attach --pool=${RHSM_RHELPOOL}  | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for RHEL Failed" >&2 ; exit $flag;  fi
+    if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for RHEL Failed" >&2 log; exit $flag;  fi
 else
     echo "Using the same pool to get access to RHEL repos" | log; flag=${PIPESTATUS[0]}
 fi
@@ -51,12 +51,12 @@ fi
 # Install JBoss EAP 7.3
 echo "subscription-manager repos --enable=jb-eap-7.3-for-rhel-8-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
 subscription-manager repos --enable=jb-eap-7.3-for-rhel-8-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 ; exit $flag;  fi
+if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
 
 echo "Installing JBoss EAP 7.3 repos" | log; flag=${PIPESTATUS[0]}
 echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
 yum groupinstall -y jboss-eap7        | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 ; exit $flag;  fi
+if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
 
 
 echo "Updating standalone.xml"      | log; flag=${PIPESTATUS[0]}
@@ -115,7 +115,7 @@ sudo iptables-save   | log; flag=${PIPESTATUS[0]}
 echo "Configuring JBoss EAP management user" | log; flag=${PIPESTATUS[0]}
 echo "$EAP_HOME/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
 $EAP_HOME/bin/add-user.sh -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'  | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 ; exit $flag;  fi 
+if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; exit $flag;  fi 
 
 # Seeing a race condition timing error so sleep to delay
 sleep 20
