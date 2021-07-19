@@ -276,7 +276,7 @@
             "name": "[parameters('vmName')]",
             "location": "[parameters('location')]",
             "plan": {
-                "name": "rhel-lvm84",
+                "name": "rhel-lvm83",
                 "publisher": "redhat",
                 "product": "rhel-byos"
             },
@@ -299,7 +299,7 @@
                     "imageReference": {
                         "publisher": "redhat",
                         "offer": "rhel-byos",
-                        "sku": "rhel-lvm84",
+                        "sku": "rhel-lvm83",
                         "version": "latest"
                     },
                     "osDisk": {
