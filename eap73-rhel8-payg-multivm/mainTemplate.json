@@ -165,15 +165,20 @@
         "description": "Name of the Storage Account."
       }
     },
+    "storageAccountKind": {
+      "defaultValue": "Storage",
+      "type": "String",
+      "metadata": {
+          "description": "Storage account kind"
+      }
+  },
     "bootStorageReplication": {
       "type": "string",
       "defaultValue": "Standard_LRS",
       "allowedValues": [
         "Standard_LRS",
-        "Standard_ZRS",
         "Standard_GRS",
-        "Standard_RAGRS",
-        "Premium_LRS"
+        "Standard_RAGRS"
       ],
       "metadata": {
         "description": "Select the Replication Strategy for the Storage account"
@@ -186,29 +191,6 @@
         "description": "Resource group of Boot Diagnostics Storage account"
       }
     },
-
-    "eapStorageAccountName": {
-      "type": "string",
-      "defaultValue": "[concat('jbosstrg', uniqueString(resourceGroup().id))]",
-      "metadata": {
-        "description": "Name of the Storage Account."
-      }
-    },
-    "eapstorageReplication": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_ZRS",
-        "Standard_GRS",
-        "Standard_RAGRS",
-        "Premium_LRS"
-      ],
-      "metadata": {
-        "description": "Select the Replication Strategy for the Storage account"
-      }
-    },
-
     "_artifactsLocation": {
       "type": "string",
       "defaultValue": "[deployment().properties.templateLink.uri]",
@@ -226,11 +208,14 @@
   },
   "variables": {
     "containerName": "eapblobcontainer",
+    "eapStorageAccountName": "[concat('jbosstrg', uniqueString(resourceGroup().id))]",
+    "eapstorageReplication": "Standard_LRS",
     "loadBalancersName": "jbosseap-lb",
     "vmName": "[parameters('vmName')]",
     "asName": "[parameters('asName')]",
     "skuName": "Aligned",
     "nicName": "jbosseap-server-nic",
+    "bootDiagnosticsCheck": "[and(equals(parameters('bootStorageNewOrExisting'), 'new'), equals(parameters('bootDiagnostics'),'on'))]",
     "backendPoolName": "jbosseap-server",
     "frontendName": "LoadBalancerFrontEnd",
     "healthProbeEAP": "eap-jboss-health",
@@ -258,7 +243,7 @@
   },
   "resources": [
     {
-      "condition": "[equals(parameters('bootStorageNewOrExisting'), 'new')]",
+      "condition": "[variables('bootDiagnosticsCheck')]",
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2019-06-01",
       "name": "[parameters('bootStorageAccountName')]",
@@ -266,7 +251,7 @@
       "sku": {
         "name": "[parameters('bootStorageReplication')]"
       },
-      "kind": "Storage",
+      "kind": "[parameters('storageAccountKind')]",
       "tags": {
         "QuickstartName": "JBoss EAP on RHEL (clustered, multi-VM)"
       }
@@ -274,18 +259,18 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2019-06-01",
-      "name": "[parameters('eapStorageAccountName')]",
+      "name": "[variables('eapStorageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "[parameters('eapStorageReplication')]"
+        "name": "[variables('eapStorageReplication')]"
       },
       "resources": [
         {
           "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
           "apiVersion": "2019-06-01",
-          "name": "[concat(parameters('eapStorageAccountName'), '/default/', variables('containerName'))]",
+          "name": "[concat(variables('eapStorageAccountName'), '/default/', variables('containerName'))]",
           "dependsOn": [
-            "[parameters('eapStorageAccountName')]"
+            "[variables('eapStorageAccountName')]"
           ],
           "properties": { "publicAccess": "None" }
         }
@@ -365,8 +350,8 @@
       "dependsOn": [
         "nicLoop",
         "[variables('asName')]",
-        "[parameters('bootStorageAccountName')]",
-        "[parameters('eapStorageAccountName')]"
+        "[if(equals(parameters('bootDiagnostics'),'on'), parameters('bootStorageAccountName'), parameters('virtualNetworkName'))]",
+        "[variables('eapStorageAccountName')]"
       ],
       "tags": {
         "QuickstartName": "JBoss EAP on RHEL (clustered, multi-VM)"
@@ -397,12 +382,7 @@
           },
           "imageReference": "[variables('imageReference')]"
         },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": "[if(equals(parameters('bootDiagnostics'), 'on'), 'true', 'false')]",
-            "storageUri": "[reference(resourceId(parameters('bootStorageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('bootStorageAccountName')), '2017-10-01').primaryEndpoints['blob']]"
-          }
-        }
+        "diagnosticsProfile": "[if(equals(parameters('bootDiagnostics'),'on'), json(concat('{\"bootDiagnostics\": {\"enabled\": true,\"storageUri\": \"https://', parameters('bootStorageAccountName'), '.blob.core.windows.net', '\"}}')), json(concat('{\"bootDiagnostics\": {\"enabled\": false}}')))]"
       },
       "resources": [
         {
@@ -427,7 +407,7 @@
               ]
             },
             "protectedSettings": {
-              "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} ''{1}'' ''{2}'' ''{3}'' ''{4}'' ''{5}'' ''{6}'' ''{7}'' ''{8}''', variables('scriptArgs'),  parameters('jbossEAPUserName'),  parameters('jbossEAPPassword'),  parameters('rhsmUserName'),  parameters('rhsmPassword'),  parameters('rhsmPoolEAP'), parameters('eapStorageAccountName'),  variables('containerName'),  base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('eapStorageAccountName')), '2019-04-01').keys[0].value))]"
+              "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} ''{1}'' ''{2}'' ''{3}'' ''{4}'' ''{5}'' ''{6}'' ''{7}'' ''{8}''', variables('scriptArgs'),  parameters('jbossEAPUserName'),  parameters('jbossEAPPassword'),  parameters('rhsmUserName'),  parameters('rhsmPassword'),  parameters('rhsmPoolEAP'), variables('eapStorageAccountName'),  variables('containerName'),  base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('eapStorageAccountName')), '2019-04-01').keys[0].value))]"
             }
           }
         }
