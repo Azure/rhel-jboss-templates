@@ -103,7 +103,7 @@ echo "$EAP_HOME/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'gues
 $EAP_HOME/bin/add-user.sh -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
 
 if [ $flag != 0 ]; then 
-    echo  "ERROR! JBoss EAP management user configuration Failed" | log; flag=${PIPESTATUS[0]}
+    echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; flag=${PIPESTATUS[0]}
     exit $flag;
 fi 
 
