@@ -1,7 +1,7 @@
 #!/bin/sh
 log() {
     while IFS= read -r line; do
-        printf '%s %s\n' "$(date "+%Y-%m-%d %H:%M:%S")" "$line" | tee /var/log/jbosseap.install.log
+        printf '%s %s\n' "$(date "+%Y-%m-%d %H:%M:%S")" "$line" >> /var/log/jbosseap.install.log
     done
 }
 
@@ -78,13 +78,13 @@ echo "Initial JBoss EAP setup" | log; flag=${PIPESTATUS[0]}
 echo "Register subscription manager" | log; flag=${PIPESTATUS[0]}
 echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
 subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Manager Registration Failed" >&2 ; exit $flag;  fi
+if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Manager Registration Failed" >&2 log; exit $flag;  fi
 #######################
 ####################### Attach EAP Pool
 echo "Subscribing the system to get access to JBoss EAP repos" | log; flag=${PIPESTATUS[0]}
 echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
 subscription-manager attach --pool=${RHSM_POOL} | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 ; exit $flag;  fi
+if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
 #######################
 
 ####################### Install openjdk: is it needed? it should be installed with eap7.3
@@ -97,12 +97,12 @@ sudo yum install wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.8.0-o
 ####################### Install JBoss EAP 7.3
 echo "subscription-manager repos --enable=jb-eap-7.3-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
 subscription-manager repos --enable=jb-eap-7.3-for-rhel-8-x86_64-rpms | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 ; exit $flag;  fi
+if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
 
 echo "Installing JBoss EAP 7.3 repos" | log; flag=${PIPESTATUS[0]}
 echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
 yum groupinstall -y jboss-eap7 | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 ; exit $flag;  fi
+if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
 
 echo "sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config" | log; flag=${PIPESTATUS[0]}
 sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]}
@@ -157,7 +157,7 @@ systemctl status eap7-standalone.service      | log; flag=${PIPESTATUS[0]}
 echo "Deploy an application" | log; flag=${PIPESTATUS[0]}
 echo "wget -O eap-session-replication.war $fileUrl" | log; flag=${PIPESTATUS[0]}
 wget -O "eap-session-replication.war" "$fileUrl" | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Sample Application Download Failed" >&2 ; exit $flag; fi
+if [ $flag != 0 ] ; then echo  "ERROR! Sample Application Download Failed" >&2 log; exit $flag; fi
 echo "cp ./eap-session-replication.war $EAP_HOME/wildfly/standalone/deployments/" | log; flag=${PIPESTATUS[0]}
 cp ./eap-session-replication.war $EAP_HOME/wildfly/standalone/deployments/ | log; flag=${PIPESTATUS[0]}
 echo "touch $EAP_HOME/wildfly/standalone/deployments/eap-session-replication.war.dodeploy" | log; flag=${PIPESTATUS[0]}
@@ -166,7 +166,7 @@ touch $EAP_HOME/wildfly/standalone/deployments/eap-session-replication.war.dodep
 echo "Configuring JBoss EAP management user..." | log; flag=${PIPESTATUS[0]}
 echo "$EAP_HOME/wildfly/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
 $EAP_HOME/wildfly/bin/add-user.sh  -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 ; exit $flag;  fi
+if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; exit $flag;  fi
 
 # Seeing a race condition timing error so sleep to delay
 sleep 20
