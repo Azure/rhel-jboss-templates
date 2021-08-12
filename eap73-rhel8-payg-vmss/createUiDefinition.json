@@ -160,6 +160,13 @@
                         "defaultValue": {
                             "type": "Standard_LRS",
                             "name": "[concat(toLower(take(replace(basics('vmssName'), '-', ''), 8)), take(replace(guid(), '-', ''), 10))]"
+                        },
+                        "constraints": {
+                            "allowedTypes": [
+                                "Standard_LRS",
+                                "Standard_GRS",
+                                "Standard_RAGRS"
+                            ]
                         }
                     }
                 ]
@@ -260,6 +267,7 @@
             "bootStorageNewOrExisting": "[steps('VirtualMachineConfig').storageReplication.newOrExisting]",
             "bootStorageAccountName": "[steps('VirtualMachineConfig').storageReplication.name]",
             "bootStorageReplication": "[steps('VirtualMachineConfig').storageReplication.type]",
+            "storageAccountKind": "[steps('VirtualMachineConfig').storageAccountType.kind]",
             "bootStorageAccountResourceGroup": "[steps('VirtualMachineConfig').storageReplication.resourceGroup]",
 
             "instanceCount": "[int(steps('VirtualMachineConfig').numberOfInstances)]",
