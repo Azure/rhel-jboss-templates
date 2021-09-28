@@ -41,6 +41,7 @@ done
 
 fileUrl="$artifactsLocation$pathToFile/$fileToDownload$token"
 
+private_ip=$(hostname -I)
 JBOSS_EAP_USER=$9
 JBOSS_EAP_PASSWORD=${10}
 RHSM_USER=${11}
@@ -49,7 +50,6 @@ EAP_POOL=${13}
 STORAGE_ACCOUNT_NAME=${14}
 CONTAINER_NAME=${15}
 STORAGE_ACCESS_KEY=$(echo "${16}" | openssl enc -d -base64)
-IP_ADDR=$(hostname -I)
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | log; flag=${PIPESTATUS[0]}
 echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.3-on-RHEL8.0" | log; flag=${PIPESTATUS[0]}
@@ -138,12 +138,11 @@ echo 'WILDFLY_SERVER_CONFIG=standalone-azure-ha.xml' >> $EAP_RPM_CONF_STANDALONE
 echo "Setting configurations in $EAP_LAUNCH_CONFIG"
 echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address=0.0.0.0' | log; flag=${PIPESTATUS[0]}
 echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0' | log; flag=${PIPESTATUS[0]}
-echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' | log; flag=${PIPESTATUS[0]}
-echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' | log; flag=${PIPESTATUS[0]}
+echo -e "\t-> JAVA_OPTS=\"\$JAVA_OPTS -Djboss.bind.address.private=$private_ip\"" | log; flag=${PIPESTATUS[0]}
 
 echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=0.0.0.0"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
-echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
+echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.bind.address.private=$private_ip\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 echo -e 'JAVA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 
 echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
@@ -153,12 +152,32 @@ echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.container=$CONTAINER
 echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
 echo "systemctl enable eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
 systemctl enable eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
+####################### 
+
+###################### Editing eap7-standalone.services and adding the following lines
+echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
+sed -i 's/After=syslog.target network.target/After=syslog.target network.target NetworkManager-wait-online.service/' /etc/systemd/system/multi-user.target.wants/eap7-standalone.service
+echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
+sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /etc/systemd/system/multi-user.target.wants/eap7-standalone.service
+echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
+systemctl daemon-reload
 
 echo "systemctl restart eap7-standalone.service"| log; flag=${PIPESTATUS[0]}
 systemctl restart eap7-standalone.service       | log; flag=${PIPESTATUS[0]}
 echo "systemctl status eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
 systemctl status eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
-####################### 
+######################
+
+####################### Starting cron job
+echo "systemctl restart eap7-standalone.service" >> /bin/jbossservice.sh
+chmod +x /bin/jbossservice.sh
+
+yum install cronie cronie-anacron | log; flag=${PIPESTATUS[0]}
+service crond start | log; flag=${PIPESTATUS[0]}
+chkconfig crond on | log; flag=${PIPESTATUS[0]}
+echo "@reboot sleep 90 && /bin/jbossservice.sh" >>  /var/spool/cron/root
+chmod 600 /var/spool/cron/root
+#######################
 
 echo "Deploy an application" | log; flag=${PIPESTATUS[0]}
 echo "wget -O eap-session-replication.war $fileUrl" | log; flag=${PIPESTATUS[0]}
