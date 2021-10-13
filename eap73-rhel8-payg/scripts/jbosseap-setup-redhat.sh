@@ -12,7 +12,6 @@ openport() {
     sudo firewall-cmd  --zone=public --add-port=$port/tcp  --permanent  | log; flag=${PIPESTATUS[0]}
 }
 
-private_ip=$(hostname -I)
 JBOSS_EAP_USER=$1
 JBOSS_EAP_PASSWORD=$2
 RHSM_USER=$3
@@ -65,11 +64,11 @@ echo 'WILDFLY_SERVER_CONFIG=standalone.xml' >> $EAP_RPM_CONF_STANDALONE | log; f
 echo "Setting configurations in $EAP_LAUNCH_CONFIG"
 echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address=0.0.0.0' | log; flag=${PIPESTATUS[0]}
 echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0' | log; flag=${PIPESTATUS[0]}
-echo -e "\t-> JAVA_OPTS=\"\$JAVA_OPTS -Djboss.bind.address.private=$private_ip\"" | log; flag=${PIPESTATUS[0]}
+echo -e "\t-> JAVA_OPTS=\"\$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)\"" | log; flag=${PIPESTATUS[0]}
 
 echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=0.0.0.0"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
-echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.bind.address.private=$private_ip\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
+echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 echo -e 'JAVA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 
 echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
