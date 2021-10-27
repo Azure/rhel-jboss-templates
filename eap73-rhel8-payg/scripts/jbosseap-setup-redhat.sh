@@ -62,8 +62,8 @@ echo -e "\t-> WILDFLY_SERVER_CONFIG=standalone.xml" | log; flag=${PIPESTATUS[0]}
 echo 'WILDFLY_SERVER_CONFIG=standalone.xml' >> $EAP_RPM_CONF_STANDALONE | log; flag=${PIPESTATUS[0]}
 
 echo "Setting configurations in $EAP_LAUNCH_CONFIG"
-echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address=0.0.0.0' | log; flag=${PIPESTATUS[0]}
-echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0' | log; flag=${PIPESTATUS[0]}
+echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=0.0.0.0"' | log; flag=${PIPESTATUS[0]}
+echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0"' | log; flag=${PIPESTATUS[0]}
 echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' | log; flag=${PIPESTATUS[0]}
 
 echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=0.0.0.0"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
@@ -82,9 +82,9 @@ systemctl enable eap7-standalone.service         | log; flag=${PIPESTATUS[0]}
 
 ###################### Editing eap7-standalone.services and adding the following lines
 echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
-sed -i 's/After=syslog.target network.target/After=syslog.target network.target NetworkManager-wait-online.service/' /etc/systemd/system/multi-user.target.wants/eap7-standalone.service
+sed -i 's/After=syslog.target network.target/After=syslog.target network.target NetworkManager-wait-online.service/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
 echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
-sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /etc/systemd/system/multi-user.target.wants/eap7-standalone.service
+sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
 echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
 systemctl daemon-reload
 
@@ -93,17 +93,6 @@ systemctl restart eap7-standalone.service       | log; flag=${PIPESTATUS[0]}
 echo "systemctl status eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
 systemctl status eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
 ######################
-
-####################### Starting cron job
-echo "systemctl restart eap7-standalone.service" >> /bin/jbossservice.sh
-chmod +x /bin/jbossservice.sh
-
-yum install cronie cronie-anacron | log; flag=${PIPESTATUS[0]}
-service crond start | log; flag=${PIPESTATUS[0]}
-chkconfig crond on | log; flag=${PIPESTATUS[0]}
-echo "@reboot sleep 90 && /bin/jbossservice.sh" >>  /var/spool/cron/root
-chmod 600 /var/spool/cron/root
-#######################
 
 openport 8080
 openport 9990
