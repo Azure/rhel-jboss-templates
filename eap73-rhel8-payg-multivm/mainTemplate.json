@@ -184,13 +184,6 @@
         "description": "Select the Replication Strategy for the Storage account"
       }
     },
-    "bootStorageAccountResourceGroup": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().name]",
-      "metadata": {
-        "description": "Resource group of Boot Diagnostics Storage account"
-      }
-    },
     "_artifactsLocation": {
       "type": "string",
       "defaultValue": "[deployment().properties.templateLink.uri]",
