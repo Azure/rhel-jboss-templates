@@ -39,3 +39,4 @@ test/arm-template-toolkit.zip
 test/ci-scripts/azuredeploy.parameters.new.json
 
 *.zip
+offers/
