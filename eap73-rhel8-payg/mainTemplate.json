@@ -84,13 +84,6 @@
                 "description": "Storage account kind"
             }
         },
-        "storageAccountResourceGroup": {
-            "type": "string",
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Resource group of Boot Diagnostics Storage account"
-            }
-        },
         "virtualNetworkNewOrExisting": {
             "defaultValue": "new",
             "type": "String",
