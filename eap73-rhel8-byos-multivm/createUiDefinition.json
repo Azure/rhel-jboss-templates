@@ -283,15 +283,14 @@
             "virtualNetworkName": "[steps('VirtualMachineConfig').virtualNetwork.name]",
             "addressPrefixes": "[steps('VirtualMachineConfig').virtualNetwork.addressPrefixes]",
             "subnetName": "[steps('VirtualMachineConfig').virtualNetwork.subnets.subnet1.name]",
-            "subnetPrefix": "[steps('VirtualMachineConfig').virtualNetwork.subnets.subnet1.addressPrefix]",
-            "virtualNetworkResourceGroupName": "[steps('VirtualMachineConfig').virtualNetwork.resourceGroup]",
+            "subnetPresfix": "[steps('VirtualMachineConfig').virtualNetwork.subnets.subnet1.addressPrefix]",
+            "virtualNetworkResourceGrouwpName": "[steps('VirtualMachineConfig').virtualNetwork.resourceGroup]",
 
             "bootDiagnostics": "[steps('VirtualMachineConfig').bootDiagnostics]",
             "bootStorageNewOrExisting": "[steps('VirtualMachineConfig').storageReplication.newOrExisting]",
             "bootStorageAccountName": "[steps('VirtualMachineConfig').storageReplication.name]",
             "bootStorageReplication": "[steps('VirtualMachineConfig').storageReplication.type]",
-            "storageAccountKind": "[steps('VirtualMachineConfig').storageAccountType.kind]",
-            "bootStorageAccountResourceGroup": "[steps('VirtualMachineConfig').storageReplication.resourceGroup]",
+            "storageAccountKind": "[steps('VirtualMachineConfig').storageReplication.kind]",
 
             "jbossEAPUserName": "[steps('jbossEAPSettings').jbossEAPUserName]",
             "jbossEAPPassword": "[steps('jbossEAPSettings').jbossEAPPassword]",
