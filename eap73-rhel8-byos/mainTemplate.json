@@ -315,7 +315,7 @@
                         }
                     ]
                 },
-                "diagnosticsProfile": "[if(equals(parameters('bootDiagnostics'),'On'), json(concat('{\"bootDiagnostics\": {\"enabled\": true,\"storageUri\": \"https://', parameters('storageAccountName'), '.blob.core.windows.net', '\"}}')), json(concat('{\"bootDiagnostics\": {\"enabled\": false}}')))]"
+                "diagnosticsProfile": "[if(equals(parameters('bootDiagnostics'),'on'), json(concat('{\"bootDiagnostics\": {\"enabled\": true,\"storageUri\": \"https://', parameters('storageAccountName'), '.blob.core.windows.net', '\"}}')), json(concat('{\"bootDiagnostics\": {\"enabled\": false}}')))]"
             }
         },
         {
