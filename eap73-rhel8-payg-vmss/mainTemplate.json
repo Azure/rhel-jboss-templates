@@ -230,7 +230,7 @@
     },
     "scriptFolder": "scripts",
     "fileToBeDownloaded": "eap-session-replication.war",
-    "scriptArgs": "[concat('-a ', uri(parameters('_artifactsLocation'), '.'), ' -t \"', parameters('_artifactsLocationSasToken'), '\" -p ', variables('scriptFolder'), ' -f ', variables('fileToBeDownloaded'))]"
+    "scriptArgs": "[concat('-a ', '''', uri(parameters('_artifactsLocation'), '.'), '''', ' -t \"', parameters('_artifactsLocationSasToken'), '\" -p ', variables('scriptFolder'), ' -f ', variables('fileToBeDownloaded'))]"
   },
   "resources": [
     {
