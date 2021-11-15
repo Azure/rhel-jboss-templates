@@ -1,4 +1,4 @@
-[![Validate Deployment Templates](https://github.com/Azure/rhel-jboss-templates/actions/workflows/validate-templates.yaml/badge.svg)](https://github.com/Azure/rhel-jboss-templates/actions/workflows/validate-templates.yaml)
+[![Validate Deployment Templates](https://github.com/Azure/rhel-jboss-templates/actions/workflows/validate-templates.yaml/badge.svg?branch=master)](https://github.com/Azure/rhel-jboss-templates/actions/workflows/validate-templates.yaml)
 
 This repo has been created using the sample templates from https://github.com/Azure/azure-quickstart-templates
 
