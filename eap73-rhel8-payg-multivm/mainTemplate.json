@@ -165,6 +165,13 @@
         "description": "Name of the Storage Account."
       }
     },
+    "storageAccountResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+          "description": "Name of the resource group for the existing storage account"
+      }
+    },
     "storageAccountKind": {
       "defaultValue": "Storage",
       "type": "String",
@@ -238,7 +245,7 @@
     {
       "condition": "[variables('bootDiagnosticsCheck')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2021-04-01",
       "name": "[parameters('bootStorageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -251,7 +258,7 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2021-04-01",
       "name": "[variables('eapStorageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -260,7 +267,7 @@
       "resources": [
         {
           "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-          "apiVersion": "2019-06-01",
+          "apiVersion": "2021-06-01",
           "name": "[concat(variables('eapStorageAccountName'), '/default/', variables('containerName'))]",
           "dependsOn": [
             "[variables('eapStorageAccountName')]"
@@ -276,7 +283,7 @@
     {
       "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2019-11-01",
+      "apiVersion": "2020-11-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -298,7 +305,7 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2019-11-01",
+      "apiVersion": "2020-11-01",
       "name": "[concat(variables('nicName'), copyIndex())]",
       "location": "[parameters('location')]",
       "copy": {
@@ -333,7 +340,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2021-03-01",
       "name": "[concat(variables('vmName'), copyIndex())]",
       "location": "[parameters('location')]",
       "copy": {
@@ -343,7 +350,8 @@
       "dependsOn": [
         "nicLoop",
         "[variables('asName')]",
-        "[if(equals(parameters('bootDiagnostics'),'on'), parameters('bootStorageAccountName'), parameters('virtualNetworkName'))]",
+        "[parameters('bootStorageAccountName')]",
+        "[parameters('virtualNetworkName')]",
         "[variables('eapStorageAccountName')]"
       ],
       "tags": {
@@ -375,12 +383,12 @@
           },
           "imageReference": "[variables('imageReference')]"
         },
-        "diagnosticsProfile": "[if(equals(parameters('bootDiagnostics'),'on'), json(concat('{\"bootDiagnostics\": {\"enabled\": true,\"storageUri\": \"https://', parameters('bootStorageAccountName'), '.blob.core.windows.net', '\"}}')), json(concat('{\"bootDiagnostics\": {\"enabled\": false}}')))]"
+        "diagnosticsProfile": "[if(equals(parameters('bootDiagnostics'),'on'), json(concat('{\"bootDiagnostics\": {\"enabled\": true,\"storageUri\": \"', reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', parameters('bootStorageAccountName')), '2021-06-01').primaryEndpoints.blob, '\"}}')), json(concat('{\"bootDiagnostics\": {\"enabled\": false}}')))]"
       },
       "resources": [
         {
           "type": "extensions",
-          "apiVersion": "2019-12-01",
+          "apiVersion": "2021-03-01",
           "name": "[concat('jbosseap-setup-extension-', copyIndex())]",
           "location": "[parameters('location')]",
           "dependsOn": [
@@ -400,7 +408,7 @@
               ]
             },
             "protectedSettings": {
-              "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} ''{1}'' ''{2}'' ''{3}'' ''{4}'' ''{5}'' ''{6}'' ''{7}'' ''{8}''', variables('scriptArgs'),  parameters('jbossEAPUserName'),  parameters('jbossEAPPassword'),  parameters('rhsmUserName'),  parameters('rhsmPassword'),  parameters('rhsmPoolEAP'), variables('eapStorageAccountName'),  variables('containerName'),  base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('eapStorageAccountName')), '2019-04-01').keys[0].value))]"
+              "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} ''{1}'' ''{2}'' ''{3}'' ''{4}'' ''{5}'' ''{6}'' ''{7}'' ''{8}''', variables('scriptArgs'),  parameters('jbossEAPUserName'),  parameters('jbossEAPPassword'),  parameters('rhsmUserName'),  parameters('rhsmPassword'),  parameters('rhsmPoolEAP'), variables('eapStorageAccountName'),  variables('containerName'),  base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('eapStorageAccountName')), '2021-04-01').keys[0].value))]"
             }
           }
         }
@@ -408,7 +416,7 @@
     },
     {
       "type": "Microsoft.Network/loadBalancers",
-      "apiVersion": "2019-11-01",
+      "apiVersion": "2020-11-01",
       "name": "[variables('loadBalancersName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -504,7 +512,7 @@
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
-      "apiVersion": "2019-03-01",
+      "apiVersion": "2021-03-01",
       "name": "[variables('asName')]",
       "location": "[parameters('location')]",
       "sku": {
