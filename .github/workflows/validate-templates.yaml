@@ -17,6 +17,8 @@ jobs:
             unzip -q -d ttk ttk.zip
       - name: Perform validation
         shell: pwsh
+        env:
+          SAMPLE_NAME: dummy-value
         run: |
             cd ttk/arm-ttk
             Import-Module ./arm-ttk.psd1
