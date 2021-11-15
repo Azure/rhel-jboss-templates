@@ -283,8 +283,8 @@
             "virtualNetworkName": "[steps('VirtualMachineConfig').virtualNetwork.name]",
             "addressPrefixes": "[steps('VirtualMachineConfig').virtualNetwork.addressPrefixes]",
             "subnetName": "[steps('VirtualMachineConfig').virtualNetwork.subnets.subnet1.name]",
-            "subnetPresfix": "[steps('VirtualMachineConfig').virtualNetwork.subnets.subnet1.addressPrefix]",
-            "virtualNetworkResourceGrouwpName": "[steps('VirtualMachineConfig').virtualNetwork.resourceGroup]",
+            "subnetPrefix": "[steps('VirtualMachineConfig').virtualNetwork.subnets.subnet1.addressPrefix]",
+            "virtualNetworkResourceGroupName": "[steps('VirtualMachineConfig').virtualNetwork.resourceGroup]",
 
             "bootDiagnostics": "[steps('VirtualMachineConfig').bootDiagnostics]",
             "bootStorageNewOrExisting": "[steps('VirtualMachineConfig').storageReplication.newOrExisting]",
