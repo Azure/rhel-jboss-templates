@@ -1,6 +1,6 @@
 [![Validate Deployment Templates](https://github.com/Azure/rhel-jboss-templates/actions/workflows/validate-templates.yaml/badge.svg?branch=master)](https://github.com/Azure/rhel-jboss-templates/actions/workflows/validate-templates.yaml)
 
-This repo has been created using the sample templates from https://github.com/Azure/azure-quickstart-templates
+This repo contains JBoss EAP Marketplace templates for use on Azure Marketplace. Each subdirectory corresponds to one of the offered plans.
 
 ## Build zipped offers
 1. Clean up the folder offers. This step is optional.
@@ -106,3 +106,16 @@ This file should contain values for all the parameters
 ```powershell
 .\Deploy-AzTemplate.ps1 -ArtifactStagingDirectory .\eap73-rhel8-payg-multivm -ResourceGroupLocation southeastasia -dev -UploadArtifacts
 ```
+
+## Validating templates
+
+You can use the [Azure Resource Manager Template Toolkit](https://github.com/Azure/arm-ttk) (`arm-ttk`) to validate the templates. You'll need to have [installed Powershell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell) (for Mac, Windows, Linux). 
+
+1. Donwload the latest TTK from https://aka.ms/arm-ttk-latest
+2. Extract it somewhere
+3. Move into the `ttk/arm-ttk` directory (e.g. `cd ttk/arm-ttk`)
+4. Run Powershell
+5. Within Powershell, execute `Import-Module ./arm-ttk.psd1`
+6. To validate one of the offers, run `Test-AzTemplate -TemplatePath [PATH TO OFFER BASE DIRECTORY]`
+
+The [GitHub Actions file in this repo](.github/workflows/validate-templates.yaml) does the same on pull requests or pushes.
