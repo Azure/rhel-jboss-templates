@@ -234,11 +234,11 @@
     "imageReference": {
       "publisher": "redhat",
       "offer": "rhel-byos",
-      "sku": "rhel-lvm83",
+      "sku": "rhel-lvm84",
       "version": "latest"
     },
     "plan": {
-      "name": "rhel-lvm83",
+      "name": "rhel-lvm84",
       "publisher": "redhat",
       "product": "rhel-byos"
     },
