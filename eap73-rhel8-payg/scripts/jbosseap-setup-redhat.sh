@@ -29,22 +29,22 @@ touch /etc/profile.d/eap_env.sh
 echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> /etc/profile.d/eap_env.sh
 echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"' >> /etc/profile.d/eap_env.sh
 
-echo "Initial JBoss EAP 7.3 setup" | log; flag=${PIPESTATUS[0]}
+echo "Initial JBoss EAP 7.4 setup" | log; flag=${PIPESTATUS[0]}
 echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
 subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Subscription Manager Registration Failed" >&2 log; exit $flag;  fi
 
-echo "Subscribing the system to get access to JBoss EAP 7.3 repos" | log; flag=${PIPESTATUS[0]}
+echo "Subscribing the system to get access to JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
 echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
 subscription-manager attach --pool=${RHSM_EAPPOOL} | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
 
-# Install JBoss EAP 7.3
-echo "subscription-manager repos --enable=jb-eap-7.3-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
-subscription-manager repos --enable=jb-eap-7.3-for-rhel-8-x86_64-rpms | log; flag=${PIPESTATUS[0]}
+# Install JBoss EAP 7.4
+echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
+subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
 
-echo "Installing JBoss EAP 7.3 repos" | log; flag=${PIPESTATUS[0]}
+echo "Installing JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
 echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
 yum groupinstall -y jboss-eap7 | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
