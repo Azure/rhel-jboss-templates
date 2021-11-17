@@ -84,11 +84,11 @@
                 "description": "Storage account kind"
             }
         },
-        "storageAccountResourceGroup": {
+        "storageAccountResourceGroupName": {
             "type": "string",
             "defaultValue": "[resourceGroup().name]",
             "metadata": {
-                "description": "Resource group of Boot Diagnostics Storage account"
+                "description": "Name of the resource group for the existing storage account"
             }
         },
         "virtualNetworkNewOrExisting": {
@@ -203,7 +203,7 @@
         {
             "condition": "[variables('bootDiagnosticsCheck')]",
             "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2019-06-01",
+            "apiVersion": "2021-04-01",
             "name": "[parameters('storageAccountName')]",
             "location": "[parameters('location')]",
             "sku": {
@@ -213,14 +213,14 @@
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2019-11-01",
+            "apiVersion": "2020-11-01",
             "name": "[variables('networkSecurityGroupName')]",
             "location": "[parameters('location')]"
         },
         {
             "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
             "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2019-11-01",
+            "apiVersion": "2020-11-01",
             "name": "[parameters('virtualNetworkName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -245,7 +245,7 @@
         },
         {
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2019-11-01",
+            "apiVersion": "2020-11-01",
             "name": "[variables('nicName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -271,11 +271,11 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2019-12-01",
+            "apiVersion": "2021-03-01",
             "name": "[parameters('vmName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[if(equals(parameters('bootDiagnostics'),'on'), parameters('storageAccountName'), variables('networkSecurityGroupName'))]",
+                "[parameters('storageAccountName')]",
                 "[variables('networkSecurityGroupName')]",
                 "[variables('nicName')]"
             ],
@@ -309,12 +309,12 @@
                         }
                     ]
                 },
-                "diagnosticsProfile": "[if(equals(parameters('bootDiagnostics'),'on'), json(concat('{\"bootDiagnostics\": {\"enabled\": true,\"storageUri\": \"https://', parameters('storageAccountName'), '.blob.core.windows.net', '\"}}')), json(concat('{\"bootDiagnostics\": {\"enabled\": false}}')))]"
+                "diagnosticsProfile": "[if(equals(parameters('bootDiagnostics'),'on'), json(concat('{\"bootDiagnostics\": {\"enabled\": true,\"storageUri\": \"', reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2021-06-01').primaryEndpoints.blob, '\"}}')), json(concat('{\"bootDiagnostics\": {\"enabled\": false}}')))]"
             }
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "apiVersion": "2019-12-01",
+            "apiVersion": "2021-03-01",
             "name": "[concat(parameters('vmName'),'/jbosseap-setup-extension')]",
             "location": "[parameters('location')]",
             "dependsOn": [

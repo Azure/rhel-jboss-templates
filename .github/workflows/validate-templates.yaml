@@ -1,0 +1,28 @@
+name: Validate Deployment Templates
+on: [push, pull_request]
+
+jobs:
+  validate:
+    name: Validate Deployment Templates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Download TTK
+        run: |
+            download_url="https://aka.ms/arm-ttk-latest"
+            wget -q -O ttk.zip $download_url
+            mkdir ttk
+            unzip -q -d ttk ttk.zip
+      - name: Perform validation
+        shell: pwsh
+        env:
+          SAMPLE_NAME: dummy-value
+        run: |
+            cd ttk/arm-ttk
+            Import-Module ./arm-ttk.psd1
+            $offerNames=(Get-ChildItem -Path ../.. -Directory -Name -Force | Select-String eap.*rhel)
+            foreach ($offerName in $offerNames) {
+                Test-AzTemplate -TemplatePath ../../$offerName
+            }

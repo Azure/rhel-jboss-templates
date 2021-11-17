@@ -278,8 +278,8 @@
             "bootStorageNewOrExisting": "[steps('VirtualMachineConfig').storageReplication.newOrExisting]",
             "bootStorageAccountName": "[steps('VirtualMachineConfig').storageReplication.name]",
             "bootStorageReplication": "[steps('VirtualMachineConfig').storageReplication.type]",
-            "storageAccountKind": "[steps('VirtualMachineConfig').storageAccountType.kind]",
-            "bootStorageAccountResourceGroup": "[steps('VirtualMachineConfig').storageReplication.resourceGroup]",
+            "storageAccountKind": "[steps('VirtualMachineConfig').storageReplication.kind]",
+            "storageAccountResourceGroupName": "[steps('VirtualMachineConfig').storageReplication.resourceGroup]",
 
             "instanceCount": "[int(steps('VirtualMachineConfig').numberOfInstances)]",
             "jbossEAPUserName": "[steps('jbossEAPSettings').jbossEAPUserName]",

@@ -1,12 +1,12 @@
 $offerDropLocation = "offers"
 New-Item -ItemType Directory -Force -Path $offerDropLocation
 
-$offerNames=(Get-ChildItem -Path . -Directory -Force -ErrorAction SilentlyContinue | Select-String eap)
+$offerNames=(Get-ChildItem -Path . -Directory -Name -Force | Select-String eap.*rhel)
 foreach ($offerName in $offerNames) {
     $compress = @{
-        LiteralPath      = "$offerName\scripts\", "$offerName\createUiDefinition.json", "$offerName\mainTemplate.json"
+        LiteralPath      = (Join-Path "$offerName" "scripts"), (Join-Path "$offerName" "createUiDefinition.json"), (Join-Path "$offerName" "mainTemplate.json")
         CompressionLevel = "Fastest"
-        DestinationPath  = "$offerDropLocation\$offerName.zip"
+        DestinationPath  = (Join-Path "$offerDropLocation" "$offerName.zip")
     }
     Compress-Archive @compress -Force
 }

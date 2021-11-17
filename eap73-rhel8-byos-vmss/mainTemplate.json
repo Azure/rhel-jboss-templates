@@ -104,6 +104,13 @@
           "description": "Storage account kind"
       }
     },
+    "storageAccountResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+          "description": "Name of the resource group for the existing storage account"
+      }
+    },
     "bootStorageReplication": {
       "type": "string",
       "defaultValue": "Standard_LRS",
@@ -114,13 +121,6 @@
       ],
       "metadata": {
         "description": "Select the Replication Strategy for the Storage account"
-      }
-    },
-    "bootStorageAccountResourceGroup": {
-      "type": "string",
-      "defaultValue": "[resourceGroup().name]",
-      "metadata": {
-        "description": "Resource group of Boot Diagnostics Storage account"
       }
     },
     "virtualNetworkNewOrExisting": {
@@ -249,13 +249,13 @@
     },
     "scriptFolder": "scripts",
     "fileToBeDownloaded": "eap-session-replication.war",
-    "scriptArgs": "[concat('-a ', uri(parameters('_artifactsLocation'), '.'), ' -t \"', parameters('_artifactsLocationSasToken'), '\" -p ', variables('scriptFolder'), ' -f ', variables('fileToBeDownloaded'))]"
+    "scriptArgs": "[concat('-a ',  '''', uri(parameters('_artifactsLocation'), '.'),  '''', ' -t \"', parameters('_artifactsLocationSasToken'), '\" -p ', variables('scriptFolder'), ' -f ', variables('fileToBeDownloaded'))]"
   },
   "resources": [
     {
       "condition": "[variables('bootDiagnosticsCheck')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2021-04-01",
       "name": "[parameters('bootStorageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -268,7 +268,7 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2021-04-01",
       "name": "[variables('eapStorageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -281,7 +281,7 @@
       "resources": [
         {
           "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-          "apiVersion": "2019-06-01",
+          "apiVersion": "2021-06-01",
           "name": "[concat(variables('eapStorageAccountName'), '/default/', variables('containerName'))]",
           "properties": { "publicAccess": "None" },
           "dependsOn": [
@@ -293,7 +293,7 @@
     {
       "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2019-11-01",
+      "apiVersion": "2020-11-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -315,7 +315,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "apiVersion": "2019-07-01",
+      "apiVersion": "2021-03-01",
       "name": "[variables('vmssInstanceName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -328,13 +328,14 @@
         "[variables('loadBalancersName')]",
         "[parameters('virtualNetworkName')]",
         "[variables('eapStorageAccountName')]",
-        "[if(equals(parameters('bootDiagnostics'),'on'), parameters('bootStorageAccountName'), parameters('virtualNetworkName'))]"
+        "[parameters('bootStorageAccountName')]",
+        "[parameters('virtualNetworkName')]"
       ],
       "tags": {
         "QuickstartName": "JBoss EAP on RHEL VMSS"
       },
       "properties": {
-        "overprovision": "false",
+        "overprovision": false,
         "upgradePolicy": {
           "mode": "Manual"
         },
@@ -382,7 +383,7 @@
               }
             ]
           },
-          "diagnosticsProfile": "[if(equals(parameters('bootDiagnostics'),'on'), json(concat('{\"bootDiagnostics\": {\"enabled\": true,\"storageUri\": \"https://', parameters('bootStorageAccountName'), '.blob.core.windows.net', '\"}}')), json(concat('{\"bootDiagnostics\": {\"enabled\": false}}')))]",
+          "diagnosticsProfile": "[if(equals(parameters('bootDiagnostics'),'on'), json(concat('{\"bootDiagnostics\": {\"enabled\": true,\"storageUri\": \"', reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', parameters('bootStorageAccountName')), '2021-06-01').primaryEndpoints.blob, '\"}}')), json(concat('{\"bootDiagnostics\": {\"enabled\": false}}')))]",
           "extensionProfile": {
             "extensions": [
               {
@@ -398,7 +399,7 @@
                     ]
                   },
                   "protectedSettings": {
-                    "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} ''{1}'' ''{2}'' ''{3}'' ''{4}'' ''{5}'' ''{6}'' ''{7}'' ''{8}'' ''{9}''',  variables('scriptArgs'),  parameters('jbossEAPUserName'),  parameters('jbossEAPPassword'), parameters('rhsmUserName'),  parameters('rhsmPassword'),  parameters('rhsmPoolEAP'), variables('eapStorageAccountName'), variables('containerName'),  base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('eapStorageAccountName')), '2019-04-01').keys[0].value), parameters('rhsmPoolRHEL'))]"
+                    "commandToExecute": "[format('sh jbosseap-setup-redhat.sh {0} ''{1}'' ''{2}'' ''{3}'' ''{4}'' ''{5}'' ''{6}'' ''{7}'' ''{8}'' ''{9}''',  variables('scriptArgs'),  parameters('jbossEAPUserName'),  parameters('jbossEAPPassword'), parameters('rhsmUserName'),  parameters('rhsmPassword'),  parameters('rhsmPoolEAP'), variables('eapStorageAccountName'), variables('containerName'),  base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('eapStorageAccountName')), '2021-04-01').keys[0].value), parameters('rhsmPoolRHEL'))]"
                   }
                 }
               }
@@ -409,7 +410,7 @@
     },
     {
       "type": "Microsoft.Network/loadBalancers",
-      "apiVersion": "2019-11-01",
+      "apiVersion": "2020-11-01",
       "name": "[variables('loadBalancersName')]",
       "location": "[parameters('location')]",
       "sku": {

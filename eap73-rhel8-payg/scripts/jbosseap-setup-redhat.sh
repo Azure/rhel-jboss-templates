@@ -65,7 +65,6 @@ echo "Setting configurations in $EAP_LAUNCH_CONFIG"
 echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address=0.0.0.0' | log; flag=${PIPESTATUS[0]}
 echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0' | log; flag=${PIPESTATUS[0]}
 echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' | log; flag=${PIPESTATUS[0]}
-echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' | log; flag=${PIPESTATUS[0]}
 
 echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=0.0.0.0"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
@@ -79,12 +78,21 @@ echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.container=$CONTAINER
 echo "Start JBoss-EAP service"                   | log; flag=${PIPESTATUS[0]}
 echo "systemctl enable eap7-standalone.service"  | log; flag=${PIPESTATUS[0]}
 systemctl enable eap7-standalone.service         | log; flag=${PIPESTATUS[0]}
-
-echo "systemctl restart eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
-systemctl restart eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
-echo "systemctl status eap7-standalone.service"  | log; flag=${PIPESTATUS[0]}
-systemctl status eap7-standalone.service         | log; flag=${PIPESTATUS[0]}
 ####################### 
+
+###################### Editing eap7-standalone.services and adding the following lines
+echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
+sed -i 's/After=syslog.target network.target/After=syslog.target network.target NetworkManager-wait-online.service/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
+echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
+sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
+echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
+systemctl daemon-reload
+
+echo "systemctl restart eap7-standalone.service"| log; flag=${PIPESTATUS[0]}
+systemctl restart eap7-standalone.service       | log; flag=${PIPESTATUS[0]}
+echo "systemctl status eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
+systemctl status eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
+######################
 
 openport 8080
 openport 9990
