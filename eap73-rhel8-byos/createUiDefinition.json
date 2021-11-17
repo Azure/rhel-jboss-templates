@@ -259,8 +259,7 @@
             "storageNewOrExisting": "[steps('VirtualMachineConfig').storageAccountType.newOrExisting]",
             "storageAccountName": "[steps('VirtualMachineConfig').storageAccountType.name]",
             "storageAccountType": "[steps('VirtualMachineConfig').storageAccountType.type]",
-            "storageAccountKind": "[steps('VirtualMachineConfig').storageAccountType.kind]",
-            
+
             "jbossEAPUserName": "[steps('jbossEAPSettings').jbossEAPUserName]",
             "jbossEAPPassword": "[steps('jbossEAPSettings').jbossEAPPassword]",
             "rhsmUserName": "[steps('jbossEAPSettings').rhsmUserName]",
