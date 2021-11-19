@@ -1,7 +1,7 @@
 $offerDropLocation = "offers"
 New-Item -ItemType Directory -Force -Path $offerDropLocation
 
-$offerNames=(Get-ChildItem -Path . -Directory -Name -Force | Select-String eap.*rhel)
+$offerNames=(Get-ChildItem -Path . -Include mainTemplate.json -Recurse -Name | Split-Path)
 foreach ($offerName in $offerNames) {
     $compress = @{
         LiteralPath      = (Join-Path "$offerName" "scripts"), (Join-Path "$offerName" "createUiDefinition.json"), (Join-Path "$offerName" "mainTemplate.json")
