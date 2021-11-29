@@ -51,7 +51,7 @@ CONTAINER_NAME=${15}
 STORAGE_ACCESS_KEY=$(echo "${16}" | openssl enc -d -base64)
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | log; flag=${PIPESTATUS[0]}
-echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.3-on-RHEL8.0" | log; flag=${PIPESTATUS[0]}
+echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.3-on-RHEL8.4" | log; flag=${PIPESTATUS[0]}
 echo "Storage Account Name: " ${STORAGE_ACCOUNT_NAME} | log; flag=${PIPESTATUS[0]}
 echo "Storage Container Name: " ${CONTAINER_NAME} | log; flag=${PIPESTATUS[0]}
 echo "RHSM_USER: " ${RHSM_USER} | log; flag=${PIPESTATUS[0]}
