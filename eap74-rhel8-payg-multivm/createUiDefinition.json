@@ -1,0 +1,289 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+    "handler": "Microsoft.Azure.CreateUIDef",
+    "version": "0.1.2-preview",
+    "parameters": {
+        "basics": [
+            {
+                "name": "vmName",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Virtual Machine name",
+                "toolTip": "The name of the Virtual Machine",
+                "constraints": {
+                    "required": true,
+                    "regex": "^[a-z0-9A-Z-]{3,79}$",
+                    "validationMessage": "The VM Name must be between 3 and 79 characters long and contain letters, numbers and hyphens only."
+                }
+            },
+            {
+                "name": "asName",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Availability set name",
+                "toolTip": "The name of the availability set",
+                "constraints": {
+                    "required": true,
+                    "regex": "^[a-z0-9A-Z-]{3,79}$",
+                    "validationMessage": "The Availability set Name must be between 3 and 79 characters long and contain letters, numbers and hyphens only."
+                }
+            },
+            {
+                "name": "adminUsername",
+                "type": "Microsoft.Compute.UserNameTextBox",
+                "label": "Username",
+                "toolTip": "Linux VM user account name",
+                "osPlatform": "Linux",
+                "constraints": {
+                    "required": true,
+                    "regex": "^[a-zA-Z]+[a-zA-Z0-9_-]{1,64}$",
+                    "validationMessage": "The value must be between 1 and 64 characters long."
+                }
+            },
+            {
+                "name": "authenticationType",
+                "type": "Microsoft.Compute.CredentialsCombo",
+                "label": {
+                    "authenticationType": "Authentication type",
+                    "password": "Password",
+                    "confirmPassword": "Confirm password",
+                    "sshPublicKey": "SSH public key"
+                },
+                "toolTip": {
+                    "authenticationType": "Authentication Type for the Virtual Machine",
+                    "password": "Password for the Virtual Machine",
+                    "sshPublicKey": "SSH Public Key for the Virtual Machine"
+                },
+                "constraints": {
+                    "required": true
+                },
+                "options": {
+                    "hideConfirmation": false
+                },
+                "osPlatform": "Linux"
+            }
+        ],
+        "steps": [
+            {
+                "name": "VirtualMachineConfig",
+                "label": "Virtual Machine Settings",
+                "subLabel": {
+                    "preValidation": "Configure the virtual machine's resources and settings",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Virtual Machine Settings",
+                "elements": [
+                    {
+                        "name": "numberOfInstances",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Number of Instances",
+                        "defaultValue": "2",
+                        "toolTip": "Use only allowed characters",
+                        "placeholder": "2",
+                        "constraints": {
+                            "required": true,
+                            "validations": [
+                                {
+                                    "regex": "^100$|^[2-9]$|^[1-9][0-9]{1,1}$",
+                                    "message": "Only numbers from 2 to 100 are allowed."
+                                }
+                            ]
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "vmSize",
+                        "type": "Microsoft.Compute.SizeSelector",
+                        "label": "Virtual machine size",
+                        "toolTip": "The size of virtual machine to provision",
+                        "recommendedSizes": [
+                            "Standard_DS2_v2",
+                            "Standard_DS3_v2",
+                            "Standard_DS4_v2",
+                            "Standard_E2S_v3",
+                            "Standard_E4S_v3",
+                            "Standard_E8S_v3",
+                            "Standard_F2S_v2",
+                            "Standard_F4S_v2",
+                            "Standard_F8S_v2"
+                        ],
+                        "osPlatform": "Linux",
+                        "count": "1"
+                    },
+                    {
+                        "name": "virtualNetwork",
+                        "type": "Microsoft.Network.VirtualNetworkCombo",
+                        "label": {
+                            "virtualNetwork": "Virtual network",
+                            "subnets": "Subnets"
+                        },
+                        "toolTip": {
+                            "virtualNetwork": "Name of the virtual network",
+                            "subnets": "Subnets for the virtual network"
+                        },
+                        "defaultValue": {
+                            "name": "VirtualNetwork",
+                            "addressPrefixSize": "/16"
+                        },
+                        "constraints": {
+                            "minAddressPrefixSize": "/16"
+                        },
+                        "subnets": {
+                            "subnet1": {
+                                "label": "Subnet",
+                                "defaultValue": {
+                                    "name": "Subnet-1",
+                                    "addressPrefixSize": "/24"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/24",
+                                    "minAddressCount": 12,
+                                    "requireContiguousAddresses": false
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "bootDiagnostics",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Boot diagnostics",
+                        "defaultValue": "on",
+                        "toolTip": "Capture serial console outputs and screenshots of the virtual machine running on a host to help diagnose startup issues",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "on",
+                                    "value": "on"
+                                },
+                                {
+                                    "label": "off",
+                                    "value": "off"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "storageReplication",
+                        "type": "Microsoft.Storage.StorageAccountSelector",
+                        "label": "Diagnostic storage account",
+                        "toolTip": "Storage Account for the Virtual Machine's diagnostics",
+                        "visible": "[equals(steps('VirtualMachineConfig').bootDiagnostics, 'on')]",
+                        "defaultValue": {
+                            "type": "Standard_LRS",
+                            "name": "[concat(toLower(take(replace(basics('vmName'), '-', ''), 8)), take(replace(guid(), '-', ''), 10))]"
+                        },
+                        "constraints": {
+                            "allowedTypes": [
+                                "Standard_LRS",
+                                "Standard_GRS",
+                                "Standard_RAGRS"
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "jbossEAPSettings",
+                "label": "JBoss EAP Settings",
+                "subLabel": {
+                    "preValidation": "Provide the JBoss EAP admin Console settings",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "JBoss EAP Settings",
+                "elements": [
+                    {
+                        "name": "jbossEAPUserName",
+                        "type": "Microsoft.Compute.UserNameTextBox",
+                        "label": "JBoss EAP Admin username",
+                        "osPlatform": "Linux",
+                        "constraints": {
+                            "required": true
+                        },
+                        "toolTip": "Provide User name for JBoss EAP Manager"
+                    },
+                    {
+                        "name": "jbossEAPPassword",
+                        "type": "Microsoft.Common.PasswordBox",
+                        "label": {
+                            "password": "JBoss EAP password",
+                            "confirmPassword": "Confirm password"
+                        },
+                        "toolTip": "Provide Password for JBoss EAP Manager",
+                        "options": {
+                            "hideConfirmation": false
+                        },
+                        "constraints": {
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "rhsmUserName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "RHSM username",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[a-zA-Z0-9+_.-]{1,30}(@[a-zA-Z0-9.-]+){0,1}$",
+                            "validationMessage": "Please enter a valid Red Hat Subscription Manager user id"
+                        },
+                        "toolTip": "Provide User name for Red Hat subscription Manager"
+                    },
+                    {
+                        "name": "rhsmPassword",
+                        "type": "Microsoft.Common.PasswordBox",
+                        "label": {
+                            "password": "RHSM password",
+                            "confirmPassword": "Confirm password"
+                        },
+                        "visible": true,
+                        "toolTip": "Provide Password for  Red Hat subscription Manager",
+                        "options": {
+                            "hideConfirmation": false
+                        },
+                        "constraints": {
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "rhsmPoolEAP",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "RHSM Pool ID with EAP entitlement",
+                        "toolTip": "Red Hat Subscription Manager Pool ID (Should have EAP entitlement)",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[a-f0-9A-F]{32,32}$",
+                            "validationMessage": "The RHSM Pool ID must be 32 characters long and should contain only alphabets between a to f and numbers."
+                        }
+                    }
+                ]
+            }
+        ],
+        "outputs": {
+            "location": "[location()]",
+            "vmName": "[basics('vmName')]",
+            "asName": "[basics('asName')]",
+            "adminUsername": "[basics('adminUsername')]",
+            "authenticationType": "[basics('authenticationType').authenticationType]",
+            "adminPasswordOrSSHKey": "[coalesce(basics('authenticationType').password, basics('authenticationType').sshPublicKey)]",
+            "vmSize": "[steps('VirtualMachineConfig').vmSize]",
+            "numberOfInstances": "[int(steps('VirtualMachineConfig').numberOfInstances)]",
+            "virtualNetworkNewOrExisting": "[steps('VirtualMachineConfig').virtualNetwork.newOrExisting]",
+            "virtualNetworkName": "[steps('VirtualMachineConfig').virtualNetwork.name]",
+            "addressPrefixes": "[steps('VirtualMachineConfig').virtualNetwork.addressPrefixes]",
+            "subnetName": "[steps('VirtualMachineConfig').virtualNetwork.subnets.subnet1.name]",
+            "subnetPrefix": "[steps('VirtualMachineConfig').virtualNetwork.subnets.subnet1.addressPrefix]",
+            "virtualNetworkResourceGroupName": "[steps('VirtualMachineConfig').virtualNetwork.resourceGroup]",
+            "bootDiagnostics": "[steps('VirtualMachineConfig').bootDiagnostics]",
+            "bootStorageNewOrExisting": "[steps('VirtualMachineConfig').storageReplication.newOrExisting]",
+            "bootStorageAccountName": "[steps('VirtualMachineConfig').storageReplication.name]",
+            "bootStorageReplication": "[steps('VirtualMachineConfig').storageReplication.type]",
+            "storageAccountKind": "[steps('VirtualMachineConfig').storageReplication.kind]",
+            "storageAccountResourceGroupName": "[steps('VirtualMachineConfig').storageReplication.resourceGroup]",
+            "jbossEAPUserName": "[steps('jbossEAPSettings').jbossEAPUserName]",
+            "jbossEAPPassword": "[steps('jbossEAPSettings').jbossEAPPassword]",
+            "rhsmUserName": "[steps('jbossEAPSettings').rhsmUserName]",
+            "rhsmPassword": "[steps('jbossEAPSettings').rhsmPassword]",
+            "rhsmPoolEAP": "[steps('jbossEAPSettings').rhsmPoolEAP]"
+        }
+    }
+}
