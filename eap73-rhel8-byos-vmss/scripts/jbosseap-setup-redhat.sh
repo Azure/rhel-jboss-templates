@@ -50,6 +50,7 @@ STORAGE_ACCOUNT_NAME=${14}
 CONTAINER_NAME=${15}
 STORAGE_ACCESS_KEY=$(echo "${16}" | openssl enc -d -base64)
 RHEL_POOL=${17}
+NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | log; flag=${PIPESTATUS[0]}
 echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.3-on-RHEL8.4"| log; flag=${PIPESTATUS[0]}
@@ -131,10 +132,13 @@ echo "Updating standalone-azure-ha.xml" | log; flag=${PIPESTATUS[0]}
 echo -e "\t stack UDP to TCP"           | log; flag=${PIPESTATUS[0]}
 echo -e "\t management:inet-address"    | log; flag=${PIPESTATUS[0]}
 echo -e "\t public:inet-address"        | log; flag=${PIPESTATUS[0]}
+echo -e "\t set transaction id"         | log; flag=${PIPESTATUS[0]}
 
 sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 'embed-server --std-out=echo  --server-config=standalone-azure-ha.xml',\
+'/subsystem=transactions:write-attribute(name=node-identifier,value="'${NODE_ID}'")',\
 '/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")' | log; flag=${PIPESTATUS[0]}
+
 ####################### Configure the JBoss server and setup eap service
 echo "Setting configurations in $EAP_RPM_CONF_STANDALONE"
 echo -e "\t-> WILDFLY_SERVER_CONFIG=standalone-azure-ha.xml" | log; flag=${PIPESTATUS[0]}

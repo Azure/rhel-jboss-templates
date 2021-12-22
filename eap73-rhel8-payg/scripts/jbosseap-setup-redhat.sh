@@ -17,6 +17,7 @@ JBOSS_EAP_PASSWORD=$2
 RHSM_USER=$3
 RHSM_PASSWORD=$4
 RHSM_EAPPOOL=$5
+NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
 export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"
 export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"
@@ -51,9 +52,11 @@ if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; e
 
 echo "Updating standalone.xml" | log; flag=${PIPESTATUS[0]}
 echo -e "\t stack UDP to TCP"  | log; flag=${PIPESTATUS[0]}
+echo -e "\t set transaction id"| log; flag=${PIPESTATUS[0]}
 
 sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --echo-command \
 'embed-server --std-out=echo  --server-config=standalone.xml',\
+'/subsystem=transactions:write-attribute(name=node-identifier,value="'${NODE_ID}'")',\
 '/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")' | log; flag=${PIPESTATUS[0]}
 
 ####################### Configure the JBoss server and setup eap service
