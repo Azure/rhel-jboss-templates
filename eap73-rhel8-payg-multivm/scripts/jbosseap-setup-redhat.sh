@@ -51,7 +51,7 @@ CONTAINER_NAME=${15}
 STORAGE_ACCESS_KEY=$(echo "${16}" | openssl enc -d -base64)
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | log; flag=${PIPESTATUS[0]}
-echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.3-on-RHEL8.0" | log; flag=${PIPESTATUS[0]}
+echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.3-on-RHEL8.4" | log; flag=${PIPESTATUS[0]}
 echo "Storage Account Name: " ${STORAGE_ACCOUNT_NAME} | log; flag=${PIPESTATUS[0]}
 echo "Storage Container Name: " ${CONTAINER_NAME} | log; flag=${PIPESTATUS[0]}
 echo "RHSM_USER: " ${RHSM_USER} | log; flag=${PIPESTATUS[0]}
@@ -95,8 +95,8 @@ if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log
 
 ####################### Install openjdk: is it needed? it should be installed with eap7.3
 echo "Install openjdk, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
-echo "sudo yum install java-1.8.0-openjdk wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
-sudo yum install wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.8.0-openjdk
+echo "sudo yum install java-1.8.4-openjdk wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
+sudo yum install wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.8.4-openjdk
 ####################### 
 
 ####################### Install JBoss EAP 7.3
