@@ -16,7 +16,6 @@
     <packaging>pom</packaging>
     <name>${project.artifactId}</name>
     <properties>
-        <artifactsLocationBase>https://raw.githubusercontent.com/oracle/${git.repo}/${git.tag}/rhel-jboss-templates</artifactsLocationBase>
-        <template.validation.tests.directory>${basedir}/../../../arm-ttk/arm-ttk</template.validation.tests.directory>
+        <template.validation.tests.directory>${basedir}/../../arm-ttk/arm-ttk</template.validation.tests.directory>
     </properties>
 </project>

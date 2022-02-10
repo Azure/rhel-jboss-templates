@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.rhel.jboss.azure</groupId>
-    <artifactId>eap73-rhel8-byos-multivm</artifactId>
+    <artifactId>eap74-rhel8-payg-vmss</artifactId>
     <version>1.0.0</version>
     
     <parent>
