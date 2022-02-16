@@ -40,3 +40,4 @@ test/ci-scripts/azuredeploy.parameters.new.json
 
 *.zip
 offers/
+target/
