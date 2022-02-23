@@ -9,7 +9,8 @@ Param(
     [switch] $UploadArtifacts,
     [string] $StorageAccountName,
     [string] $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts',
-    [string] $TemplateFile = (Join-Path -Path $ArtifactStagingDirectory -ChildPath 'mainTemplate.json'),
+    [string] $TemplateFile = ([IO.Path]::Combine($ArtifactStagingDirectory, 'src', 'main', 'arm', 'mainTemplate.json')),
+    [string] $ArtifactUploadBaseDir = ([IO.Path]::Combine($ArtifactStagingDirectory, 'src', 'main')),
     [string] $TemplateParametersFile = (Join-Path -Path $ArtifactStagingDirectory -ChildPath  'azuredeploy.parameters.json'),
     [string] $DSCSourceFolder = (Join-Path -Path $ArtifactStagingDirectory -ChildPath 'DSC'),
     [switch] $BuildDscPackage,
@@ -38,6 +39,7 @@ function Format-ValidationOutput {
 $OptionalParameters = New-Object -TypeName Hashtable
 $TemplateArgs = New-Object -TypeName Hashtable
 $ArtifactStagingDirectory = ($ArtifactStagingDirectory.TrimEnd('/')).TrimEnd('\')
+$ArtifactUploadBaseDir = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $ArtifactUploadBaseDir))
 
 # if the template file isn't found, try the another default
 if (!(Test-Path $TemplateFile)) { 
@@ -158,12 +160,12 @@ if ($UploadArtifacts -Or $useAbsolutePathStaging) {
     # Copy files from the local storage staging location to the storage account container
     New-AzStorageContainer -Name $StorageContainerName -Context $StorageAccount.Context -ErrorAction SilentlyContinue *>&1
 
-    $ArtifactFilePaths = Get-ChildItem $ArtifactStagingDirectory -Recurse -File | ForEach-Object -Process { $_.FullName }
+    $ArtifactFilePaths = Get-ChildItem $ArtifactUploadBaseDir -Recurse -File | ForEach-Object -Process { $_.FullName }
     foreach ($SourcePath in $ArtifactFilePaths) {
-        
+
         if ($SourcePath -like "$DSCSourceFolder*" -and $SourcePath -like "*.zip" -or !($SourcePath -like "$DSCSourceFolder*")) {
             #When using DSC, just copy the DSC archive, not all the modules and source files
-            $blobName = ($SourcePath -ireplace [regex]::Escape($ArtifactStagingDirectory), "").TrimStart("/").TrimStart("\")
+            $blobName = ($SourcePath -ireplace [regex]::Escape($ArtifactUploadBaseDir), "").TrimStart("/").TrimStart("\")
             Set-AzStorageBlobContent -File $SourcePath -Blob $blobName -Container $StorageContainerName -Context $StorageAccount.Context -Force
         }
     }
