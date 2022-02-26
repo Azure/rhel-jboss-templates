@@ -3,7 +3,7 @@ on: [push, pull_request, workflow_dispatch]
 
 env:
     refArmttk: ddca5696ebd7e718184fe65ff0be17bb06ccdd25
-    refJavaee: 13fe6ec487024eb61355d661ab5700ae90cb0a8f
+    refJavaee: c87108cc7d591a1d1eb0a7eb7aff4bc96dc1a0da
 
 jobs:
   validate:
