@@ -16,10 +16,22 @@ msg() {
 
 setup_colors
 
+success=0
+failureIndicator='[-]'
 for d in */ ; do
     folderName=$(basename $d)
     if [[ $folderName == $OFFER_PATH_PATTERN ]]; then
         msg "${YELLOW}matched folder name: $folderName. Full path is: ${BASE_DIR}/${folderName}/src/main/arm ${NOFORMAT}"
-        ./../arm-ttk/arm-ttk/Test-AzTemplate.sh -TemplatePath ${BASE_DIR}/${folderName}/src/main/arm
+        ttkResult=$(./../arm-ttk/arm-ttk/Test-AzTemplate.sh -TemplatePath ${BASE_DIR}/${folderName}/src/main/arm)
+        if [[ "${ttkResult}" == *${failureIndicator}* ]]; then
+            success=1
+        fi
+        echo ${ttkResult}
     fi
 done
+
+if [ ${success} -eq 1 ]; then
+    exit 1
+else
+    exit 0
+fi
