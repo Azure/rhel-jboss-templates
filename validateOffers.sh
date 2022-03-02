@@ -16,21 +16,24 @@ msg() {
 
 setup_colors
 
-success=0
-failureIndicator='[-]'
+rc=0
+failureIndicator='\[-\]'
 for d in */ ; do
     folderName=$(basename $d)
     if [[ $folderName == $OFFER_PATH_PATTERN ]]; then
         msg "${YELLOW}matched folder name: $folderName. Full path is: ${BASE_DIR}/${folderName}/src/main/arm ${NOFORMAT}"
-        ttkResult=$(./../arm-ttk/arm-ttk/Test-AzTemplate.sh -TemplatePath ${BASE_DIR}/${folderName}/src/main/arm)
-        if [[ "${ttkResult}" == *${failureIndicator}* ]]; then
-            success=1
+        ./../arm-ttk/arm-ttk/Test-AzTemplate.sh -TemplatePath ${BASE_DIR}/${folderName}/src/main/arm | tee testOutput
+        set +e ; grep -q ${failureIndicator} testOutput;
+        if [ $? -eq 0 ]; then
+            msg "${RED}FAILURE in ${BASE_DIR}/${folderName}"
+            rc=1
         fi
-        echo ${ttkResult}
+        rm testOutput
+        set -e
     fi
 done
 
-if [ ${success} -eq 1 ]; then
+if [ ${rc} -eq 1 ]; then
     exit 1
 else
     exit 0
