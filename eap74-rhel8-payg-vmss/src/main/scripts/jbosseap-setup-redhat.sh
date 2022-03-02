@@ -88,9 +88,9 @@ if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log
 #######################
 
 ####################### Install openjdk: is it needed? it should be installed with eap7.4
-echo "Install openjdk, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
-echo "sudo yum install java-1.8.4-openjdk wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
-sudo yum install wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.8.4-openjdk
+echo "Install openjdk, curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
+echo "sudo yum install java-1.8.4-openjdk curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
+sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.8.4-openjdk
 ####################### 
 
 
@@ -165,8 +165,8 @@ systemctl status eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
 ######################
 
 echo "Deploy an application" | log; flag=${PIPESTATUS[0]}
-echo "wget -O eap-session-replication.war $fileUrl" | log; flag=${PIPESTATUS[0]}
-wget -O "eap-session-replication.war" "$fileUrl" | log; flag=${PIPESTATUS[0]}
+echo "curl -o eap-session-replication.war $fileUrl" | log; flag=${PIPESTATUS[0]}
+curl -o "eap-session-replication.war" "$fileUrl" | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! Sample Application Download Failed" >&2 log; exit $flag; fi
 echo "cp ./eap-session-replication.war $EAP_HOME/wildfly/standalone/deployments/" | log; flag=${PIPESTATUS[0]}
 cp ./eap-session-replication.war $EAP_HOME/wildfly/standalone/deployments/ | log; flag=${PIPESTATUS[0]}
