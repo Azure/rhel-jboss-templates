@@ -36,3 +36,9 @@ jobs:
         run: |
           cd rhel-jboss-templates
           ./validateOffers.sh
+          if [ $? -eq 0 ]; then
+              echo "ARM TTK succeeded."
+          else
+              echo "ARM TTK failed."
+              exit 1
+          fi
