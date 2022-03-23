@@ -480,7 +480,7 @@
   "outputs": {
     "appURL": {
       "type": "string",
-      "value": "[uri(concat('http://', reference(variables('loadBalancersName')).frontendIPConfigurations[0].properties.privateIPAddress) 'eap-session-replication/')]"
+      "value": "[uri(concat('http://', reference(variables('loadBalancersName')).frontendIPConfigurations[0].properties.privateIPAddress), 'eap-session-replication/')]"
     }
   }
 }
