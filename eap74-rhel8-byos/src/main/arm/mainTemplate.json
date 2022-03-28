@@ -57,10 +57,17 @@
             }
         },
         "storageNewOrExisting": {
-            "defaultValue": "new",
+            "defaultValue": "New",
             "type": "String",
             "metadata": {
                 "description": "Determines whether or not a new storage account should be provisioned."
+            }
+        },
+        "existingStorageAccount":{
+            "defaultValue": "[concat('storage', uniqueString(resourceGroup().id))]",
+            "type":"String",
+            "metadata": {
+                "description": "Name of the existing Storage Account Name"
             }
         },
         "storageAccountName": {
@@ -194,7 +201,8 @@
     "variables": {
         "nicName": "[concat(uniquestring(resourceGroup().id), '-nic')]",
         "networkSecurityGroupName": "jbosseap-nsg",
-        "bootDiagnosticsCheck": "[and(equals(parameters('storageNewOrExisting'), 'new'), equals(parameters('bootDiagnostics'),'on'))]",
+        "bootDiagnosticsCheck": "[and(equals(parameters('storageNewOrExisting'), 'New'), equals(parameters('bootDiagnostics'),'on'))]",
+        "bootStorageName": "[if(equals(parameters('storageNewOrExisting'),'Existing'), parameters('existingStorageAccount'), parameters('storageAccountName'))]",
         "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
@@ -212,7 +220,7 @@
             "condition": "[variables('bootDiagnosticsCheck')]",
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2021-05-01",
-            "name": "[parameters('storageAccountName')]",
+            "name": "[variables('bootStorageName')]",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "[parameters('storageAccountType')]"
@@ -288,7 +296,7 @@
                 "product": "rhel-byos"
             },
             "dependsOn": [
-                "[parameters('storageAccountName')]",
+                "[variables('bootStorageName')]",
                 "[variables('networkSecurityGroupName')]",
                 "[variables('nicName')]"
             ],
@@ -322,7 +330,7 @@
                         }
                     ]
                 },
-                "diagnosticsProfile": "[if(equals(parameters('bootDiagnostics'),'on'), json(concat('{\"bootDiagnostics\": {\"enabled\": true,\"storageUri\": \"', reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2021-06-01').primaryEndpoints.blob, '\"}}')), json(concat('{\"bootDiagnostics\": {\"enabled\": false}}')))]"
+                "diagnosticsProfile": "[if(equals(parameters('bootDiagnostics'),'on'), json(concat('{\"bootDiagnostics\": {\"enabled\": true,\"storageUri\": \"', reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', variables('bootStorageName')), '2021-06-01').primaryEndpoints.blob, '\"}}')), json(concat('{\"bootDiagnostics\": {\"enabled\": false}}')))]"
             }
         },
         {
