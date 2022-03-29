@@ -134,22 +134,118 @@
                         "visible": true
                     },
                     {
-                        "name": "storageAccountType",
-                        "type": "Microsoft.Storage.StorageAccountSelector",
-                        "label": "Diagnostic storage account",
-                        "toolTip": "Storage Account for the Virtual Machine's diagnostics",
-                        "visible": "[equals(steps('VirtualMachineConfig').bootDiagnostics, 'on')]",
-                        "defaultValue": {
-                            "type": "Standard_LRS",
-                            "name": "[concat(toLower(take(replace(basics('vmName'), '-', ''), 8)), take(replace(guid(), '-', ''), 10))]"
+						"name": "storageNewOrExisting",
+						"type": "Microsoft.Common.DropDown",
+						"label": "Storage Account",
+						"defaultValue": "New",
+						"toolTip": "Select new or existing Storage account",
+						"constraints": {
+							"allowedValues": [
+								{
+									"label": "Existing",
+									"value": "Existing"
+								},
+								{
+									"label": "New",
+									"value": "New"
+								}
+							],
+							"required": true
+						},
+						"visible": "[equals(steps('VirtualMachineConfig').bootDiagnostics, 'on')]"
+					},
+                    {
+                        "name": "armApiControl",
+                        "type": "Microsoft.Solutions.ArmApiControl",
+                        "request": {
+                          "method": "GET",
+                          "path": "[concat(subscription().id, '/providers/Microsoft.Storage/storageAccounts?api-version=2021-04-01')]"
                         },
+                        "visible": "[equals(steps('VirtualMachineConfig').storageNewOrExisting, 'Existing')]"
+                      },
+                      {
+                        "name": "existingStorageAccount",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Available storage accounts",
+                        "toolTip": "Select a storage account from the existing list",
                         "constraints": {
-                            "allowedTypes": [
-                                "Standard_LRS",
-                                "Standard_GRS"
-                            ]
-                        }
-                    }
+                            "allowedValues": "[filter(map(steps('VirtualMachineConfig').armApiControl.value, (item) => parse(concat('{\"label\":\"', concat(item.name,' (',item.kind,')'), '\",\"value\":\"', item.name, '\",\"kind\":\"', item.kind, '\",\"location\":\"', item.location, '\",\"tier\":\"', item.sku.tier, '\"}'))), (item) => and(and(not(contains(toLower(item.kind),'blob')),equals(location(),item.location)),equals('Standard',item.tier)))]",
+                          "required": true
+                        },
+                        "visible": "[equals(steps('VirtualMachineConfig').storageNewOrExisting, 'Existing')]"
+                    },
+					{
+                        "name": "nameApi",
+                        "type": "Microsoft.Solutions.ArmApiControl",
+                        "request": {
+                        "method": "POST",
+                        "path": "[concat(subscription().id,'/providers/Microsoft.Storage/checkNameAvailability?api-version=2019-06-01')]",
+                        "body":  {
+                            "name": "[steps('VirtualMachineConfig').storageAccountName.value]",
+                            "type": "Microsoft.Storage/storageAccounts"
+                            }
+                        },
+                        "visible": "[equals(steps('VirtualMachineConfig').storageNewOrExisting, 'New')]"
+                    },
+                    {
+                        "name": "storageAccountName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Storage Account Name",
+                        "toolTip": "Name of the storage account",
+                        "constraints": {
+                        "validations": [
+                            {
+                                "regex": "^[a-z0-9]{3,15}$",
+                                "isValid": "[and(equals(steps('VirtualMachineConfig').storageAccountName,toLower(steps('VirtualMachineConfig').storageAccountName)),not(equals(steps('VirtualMachineConfig').nameApi.nameAvailable, false)))]",
+                                "message": "[concat('The storage account name: \"',steps('VirtualMachineConfig').storageAccountName.value, '\" is unavailable, because the storage name should be between 3 and 15 characters and only contain lowercase letters and numbers or is already taken.')]"
+                                }
+                        ],
+                        "required": true
+                        },
+                        "visible": "[equals(steps('VirtualMachineConfig').storageNewOrExisting, 'New')]"
+                    },
+					{
+						"name": "storageAccountKind",
+						"type": "Microsoft.Common.DropDown",
+						"label": "Storage Account Kind",
+						"defaultValue": "Storage",
+						"toolTip": "General purpose storage accounts provide storage for blobs, files, tables, and queues in a unified account. Choose an access tier that matches your storage needs.",
+						"constraints": {
+							"allowedValues": [
+								{
+									"label": "Storage",
+									"value": "Storage"
+								},
+								{
+									"label": "StorageV2",
+									"value": "StorageV2"
+								}
+							],
+							"required": true
+						},
+						"visible": "[equals(steps('VirtualMachineConfig').storageNewOrExisting, 'New')]"
+					},
+					{
+						"name": "storageAccountType",
+						"type": "Microsoft.Common.DropDown",
+						"label": "Storage Account Type",
+                        "toolTip": "The data in your Azure storage account is always replicated to ensure durability and high availability. Choose a replication strategy that matches your durability requirements. Some settings can't be changed after the storage account is created.",
+						"defaultValue": "Standard_LRS",
+						"constraints": {
+							"allowedValues": [
+								{
+									"label": "Standard_LRS",
+									"value": "Standard_LRS"
+								},
+								{
+									"label": "Standard_GRS",
+									"value": "Standard_GRS"
+								}
+							],
+							"required": true
+						},
+						"visible": "[equals(steps('VirtualMachineConfig').storageNewOrExisting, 'New')]"
+					}
                 ]
             },
             {
@@ -256,10 +352,12 @@
             "virtualNetworkResourceGroupName": "[steps('VirtualMachineConfig').virtualNetwork.resourceGroup]",
 
             "bootDiagnostics": "[steps('VirtualMachineConfig').bootDiagnostics]",
-            "storageNewOrExisting": "[steps('VirtualMachineConfig').storageAccountType.newOrExisting]",
-            "storageAccountName": "[steps('VirtualMachineConfig').storageAccountType.name]",
-            "storageAccountType": "[steps('VirtualMachineConfig').storageAccountType.type]",
-            "storageAccountResourceGroupName": "[steps('VirtualMachineConfig').storageAccountType.resourceGroup]",
+            "storageNewOrExisting": "[steps('VirtualMachineConfig').storageNewOrExisting]",
+            "existingStorageAccount": "[coalesce(steps('VirtualMachineConfig').existingStorageAccount,'')]",
+            "storageAccountName": "[steps('VirtualMachineConfig').storageAccountName.value]",
+            "storageAccountKind": "[steps('VirtualMachineConfig').storageAccountKind]",
+            "storageAccountType": "[steps('VirtualMachineConfig').storageAccountType]",
+            "storageAccountResourceGroupName": "[if(and(equals(steps('VirtualMachineConfig').bootDiagnostics, 'on'),not(empty(steps('VirtualMachineConfig').existingStorageAccount))), first(skip(split(coalesce(first(filter(steps('VirtualMachineConfig').armApiControl.value, (item) => equals(steps('VirtualMachineConfig').existingStorageAccount,item.name))),parse('{\"id\":\"/////\"}')).id, '/'),4)), resourceGroup().name)]",
 
             "jbossEAPUserName": "[steps('jbossEAPSettings').jbossEAPUserName]",
             "jbossEAPPassword": "[steps('jbossEAPSettings').jbossEAPPassword]",
