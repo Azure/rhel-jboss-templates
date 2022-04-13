@@ -9,8 +9,11 @@ Param(
     [switch] $UploadArtifacts,
     [string] $StorageAccountName,
     [string] $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts',
-    [string] $TemplateFile = ([IO.Path]::Combine($ArtifactStagingDirectory, 'src', 'main', 'arm', 'mainTemplate.json')),
     [string] $ArtifactUploadBaseDir = ([IO.Path]::Combine($ArtifactStagingDirectory, 'src', 'main')),
+    [string] $DeploymentFilesFolder = "arm",
+    [string] $ScriptFilesFolder = "scripts",
+    [string] $BinFilesFolder = "bin",
+    [string] $TemplateFile = ([IO.Path]::Combine($ArtifactUploadBaseDir, $DeploymentFilesFolder, 'mainTemplate.json')),
     [string] $TemplateParametersFile = (Join-Path -Path $ArtifactStagingDirectory -ChildPath  'azuredeploy.parameters.json'),
     [string] $DSCSourceFolder = (Join-Path -Path $ArtifactStagingDirectory -ChildPath 'DSC'),
     [switch] $BuildDscPackage,
@@ -160,8 +163,22 @@ if ($UploadArtifacts -Or $useAbsolutePathStaging) {
     # Copy files from the local storage staging location to the storage account container
     New-AzStorageContainer -Name $StorageContainerName -Context $StorageAccount.Context -ErrorAction SilentlyContinue *>&1
 
-    $ArtifactFilePaths = Get-ChildItem $ArtifactUploadBaseDir -Recurse -File | ForEach-Object -Process { $_.FullName }
-    foreach ($SourcePath in $ArtifactFilePaths) {
+    # First the deployment files are placed into the root of the storage container
+    $DeploymentFilePath = ([IO.Path]::Combine($ArtifactUploadBaseDir, $DeploymentFilesFolder))
+    $DeploymentFilePaths = Get-ChildItem $DeploymentFilePath -Recurse -File | ForEach-Object -Process { $_.FullName }
+    foreach ($SourcePath in $DeploymentFilePaths) {
+
+        if ($SourcePath -like "$DSCSourceFolder*" -and $SourcePath -like "*.zip" -or !($SourcePath -like "$DSCSourceFolder*")) {
+            #When using DSC, just copy the DSC archive, not all the modules and source files
+            $blobName = ($SourcePath -ireplace [regex]::Escape($DeploymentFilePath), "").TrimStart("/").TrimStart("\")
+            Set-AzStorageBlobContent -File $SourcePath -Blob $blobName -Container $StorageContainerName -Context $StorageAccount.Context -Force
+        }
+    }
+
+    # Next the script files are placed into the scripts/ folder in the storage container
+    $ScriptFilePath = ([IO.Path]::Combine($ArtifactUploadBaseDir, $ScriptFilesFolder))
+    $ScriptFilePaths = Get-ChildItem $ScriptFilePath -Recurse -File | ForEach-Object -Process { $_.FullName }
+    foreach ($SourcePath in $ScriptFilePaths) {
 
         if ($SourcePath -like "$DSCSourceFolder*" -and $SourcePath -like "*.zip" -or !($SourcePath -like "$DSCSourceFolder*")) {
             #When using DSC, just copy the DSC archive, not all the modules and source files
@@ -169,7 +186,20 @@ if ($UploadArtifacts -Or $useAbsolutePathStaging) {
             Set-AzStorageBlobContent -File $SourcePath -Blob $blobName -Container $StorageContainerName -Context $StorageAccount.Context -Force
         }
     }
+    
+    # Finally the binary files are also placed into the scripts/ folder in the storage container
+    $BinFilePath = ([IO.Path]::Combine($ArtifactUploadBaseDir, $BinFilesFolder))
+    $BinFilePaths = Get-ChildItem $BinFilePath -Recurse -File | ForEach-Object -Process { $_.FullName }
+    foreach ($SourcePath in $BinFilePaths) {
 
+        if ($SourcePath -like "$DSCSourceFolder*" -and $SourcePath -like "*.zip" -or !($SourcePath -like "$DSCSourceFolder*")) {
+            #When using DSC, just copy the DSC archive, not all the modules and source files
+            $blobName = ($SourcePath -ireplace [regex]::Escape($BinFilePath), "").TrimStart("/").TrimStart("\")
+            $blobName = Join-Path "scripts" $blobName
+            Set-AzStorageBlobContent -File $SourcePath -Blob $blobName -Container $StorageContainerName -Context $StorageAccount.Context -Force
+        }
+    }
+    
     # Generate a 4 hour SAS token for the artifacts location if one was not provided in the parameters file
     # first check to see if we need a sasToken (if it was not already provided in the param file or we're using relativePath)
     if ($useAbsolutePathStaging -or $null -eq $OptionalParameters[$ArtifactsLocationSasTokenName]) {

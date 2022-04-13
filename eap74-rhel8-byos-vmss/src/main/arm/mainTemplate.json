@@ -91,7 +91,8 @@
       }
     },
     "existingStorageAccount":{
-          "type":"String",
+        "defaultValue": "",
+        "type":"String",
           "metadata": {
               "description": "Name of the existing Storage Account Name"
           }
