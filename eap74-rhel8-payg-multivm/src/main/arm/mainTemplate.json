@@ -245,7 +245,7 @@
       "sku": "8_4",
       "version": "latest"
     },
-    "scriptFolder": "scripts",
+    "scriptFolder": "bin",
     "fileToBeDownloaded": "eap-session-replication.war",
     "scriptArgs": "[concat('-a ', '''', uri(parameters('_artifactsLocation'), '.'), '''', ' -t \"', parameters('_artifactsLocationSasToken'), '\" -p ', variables('scriptFolder'), ' -f ', variables('fileToBeDownloaded'))]"
   },
