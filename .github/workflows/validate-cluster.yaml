@@ -1,0 +1,460 @@
+name: Validate cluster offer
+
+on:
+  workflow_dispatch:
+    inputs:
+      isForDemo:
+        description: 'If set to true, resources will not be deleted'
+        required: true
+        default: 'false'
+
+env:
+    azCliVersion: 2.30.0
+    refArmttk: d97aa57d259e2fc8562e11501b1cf902265129d9
+    refJavaee: f25ab89a2a8848da39b84e5d6c927f4c4cb47200
+    azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
+    location: eastus
+    domainResourceGroup: jboss-eap-domain-${{ github.run_id }}-${{ github.run_number }}
+    standaloneResourceGroup: jboss-eap-standalone-${{ github.run_id }}-${{ github.run_number }}
+    vmName: ${{ github.run_id }}${{ github.run_number }}vm
+    asName: ${{ github.run_id }}${{ github.run_number }}as
+    adminUsername: azureadmin
+    password: ${{ secrets.VM_PASSWORD }}
+    numberOfInstances: 3
+    domainOperatingMode: managed-domain
+    standaloneOperatingMode: standalone
+    domainBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}domainsa
+    standaloneBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}standalonesa
+    jbossEAPUserName: jbossadmin
+    jbossEAPPassword: ${{ secrets.JBOSS_EAP_USER_PASSWORD }}
+    rhsmUserName: ${{ secrets.RHSM_USERNAME }}
+    rhsmPassword: ${{ secrets.RHSM_PASSWORD }}
+    rhsmPoolEAP: ${{ secrets.RHSM_POOL }}
+    userAssignedManagedIdentity: ${{ secrets.USER_ASSIGNED_MANAGED_IDENTITY_ID }}
+    gitUserName: ${{ secrets.USER_NAME }}
+    domainTestBranchName: domain-cicd-${{ github.run_id }}-${{ github.run_number }}
+    standaloneTestBranchName: standalone-cicd-${{ github.run_id }}-${{ github.run_number }}
+    gitEmail: ${{ secrets.USER_EMAIL }}
+    gitToken: ${{ secrets.GIT_TOKEN }}
+    enableLoadBalancer: enable
+    disableLoadBalancer: disable
+
+jobs:
+    preflight:
+        outputs:
+          isForDemo: ${{ steps.setup-env-variables-based-on-dispatch-event.outputs.isForDemo }}
+        runs-on: ubuntu-latest
+        steps:
+            - name: Set up JDK 1.8
+              uses: actions/setup-java@v1
+              with:
+                java-version: 1.8
+            - name: Set up bicep
+              run: |
+                curl -Lo bicep https://github.com/Azure/bicep/releases/download/v0.4.613/bicep-linux-x64
+                chmod +x ./bicep
+                sudo mv ./bicep /usr/local/bin/bicep
+                bicep --version
+            - name: Checkout azure-javaee-iaas
+              uses: actions/checkout@v2
+              with:
+                repository: Azure/azure-javaee-iaas
+                path: azure-javaee-iaas
+                ref: ${{ env.refJavaee }}
+            - name: Checkout arm-ttk
+              uses: actions/checkout@v2
+              with:
+                repository: Azure/arm-ttk
+                path: arm-ttk
+                ref: ${{ env.refArmttk }}
+            - name: Build azure-javaee-iaas
+              run: mvn -DskipTests clean install --file azure-javaee-iaas/pom.xml
+            - name: Checkout rhel-jboss-templates
+              uses: actions/checkout@v2
+              with:
+                repository: ${{env.gitUserName}}/rhel-jboss-templates
+                path: rhel-jboss-templates
+            - name: Build and test rhel-jboss-templates
+              run: |
+                mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests --file rhel-jboss-templates/eap73-rhel8-payg-multivm/pom.xml
+            - name: Generate artifact file name and path
+              id: artifact_file
+              run: |
+                version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec --file rhel-jboss-templates/eap73-rhel8-payg-multivm/pom.xml)
+                artifactName=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.artifactId}' --non-recursive exec:exec --file rhel-jboss-templates/eap73-rhel8-payg-multivm/pom.xml)
+                artifactName=${artifactName}-$version-arm-assembly
+                unzip rhel-jboss-templates/eap73-rhel8-payg-multivm/target/${artifactName}.zip -d rhel-jboss-templates/eap73-rhel8-payg-multivm/target/${artifactName}
+                
+                echo "##[set-output name=artifactName;]${artifactName}"
+                echo "##[set-output name=artifactPath;]rhel-jboss-templates/eap73-rhel8-payg-multivm/target/${artifactName}"
+            - name: Archive rhel-jboss-templates offer templates
+              uses: actions/upload-artifact@v3
+              if: success()
+              with:
+                name: ${{steps.artifact_file.outputs.artifactName}}
+                path: ${{steps.artifact_file.outputs.artifactPath}}
+            - name: Setup environment variables
+              id: setup-env-variables-based-on-dispatch-event
+              run: |
+                isForDemo=${{ github.event.inputs.isForDemo }}
+                echo "##[set-output name=isForDemo;]${isForDemo}"
+                echo "isForDemo=${isForDemo}" >> $GITHUB_ENV
+    deploy-jboss-eap-domain:
+        needs: preflight
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout rhel-jboss-templates
+              uses: actions/checkout@v2
+              with:
+                repository: ${{env.gitUserName}}/rhel-jboss-templates
+                path: rhel-jboss-templates
+            - name: Output artifact name and version for Download action
+              id: artifact_file
+              run: |
+                version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap73-rhel8-payg-multivm/pom.xml)
+                artifactName=eap73-rhel8-payg-multivm-$version-arm-assembly
+
+                echo "##[set-output name=artifactName;]${artifactName}"
+            - name: Download artifact for deployment
+              uses: actions/download-artifact@v1
+              with:
+                name: ${{steps.artifact_file.outputs.artifactName}}
+                path: rhel-jboss-templates-dev
+            - name: Create a new branch with built artifact
+              run: |
+                current=`pwd`
+                echo "current=${current}" >> $GITHUB_ENV
+                cd rhel-jboss-templates
+                git config --global core.longpaths true
+                git config --global user.email $gitEmail
+                git config --global user.name $gitUserName
+                echo "create branch $domainTestBranchName"
+                git checkout -b $domainTestBranchName
+                rm -r -f $current/rhel-jboss-templates/eap73-rhel8-payg-multivm/src/main/*
+                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap73-rhel8-payg-multivm/
+                git add .
+                git status
+                git commit -m "test branch for pipeline"
+                git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f
+            - name: Prepare parameter file
+              run: |
+                echo "replace placeholders using real parameter"
+                sed -i "s/#location#/${location}/g; \
+                        s/#vmName#/${vmName}/g; \
+                        s/#asName#/${asName}/g; \
+                        s/#adminUsername#/${adminUsername}/g; \
+                        s/#enableLb#/${disableLoadBalancer}/g; \
+                        s/#password#/${password}/g; \
+                        s/#numberOfInstances#/${numberOfInstances}/g; \
+                        s/#operatingMode#/${domainOperatingMode}/g; \
+                        s/#virtualNetworkResourceGroupName#/${domainResourceGroup}/g; \
+                        s/#bootStorageAccountName#/${domainBootStorageAccountName}/g; \
+                        s/#storageAccountResourceGroupName#/${domainResourceGroup}/g; \
+                        s/#jbossEAPUserName#/${jbossEAPUserName}/g; \
+                        s/#jbossEAPPassword#/${jbossEAPPassword}/g; \
+                        s/#rhsmUserName#/${rhsmUserName}/g; \
+                        s/#rhsmPassword#/${rhsmPassword}/g; \
+                        s/#rhsmPoolEAP#/${rhsmPoolEAP}/g; \
+                        s/#userAssignedManagedIdentity#/${userAssignedManagedIdentity}/g; \
+                        s/#gitUserName#/${gitUserName}/g; \
+                        s/#testbranchName#/${domainTestBranchName}/g" \
+                        rhel-jboss-templates/eap73-rhel8-payg-multivm/src/test/parameters-test-cluster.json
+            - name: Archive parameters-test-cluster.json
+              uses: actions/upload-artifact@v1
+              if: success()
+              with:
+                name: parameters-test-domain
+                path: rhel-jboss-templates/eap73-rhel8-payg-multivm/src/test/parameters-test-cluster.json
+            - uses: azure/login@v1
+              id: azure-login
+              with:
+                creds: ${{ env.azureCredentials }}
+            - name: Create Resource Group
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    echo "create resource group" ${{ env.domainResourceGroup }}
+                    az group create --verbose --name ${{ env.domainResourceGroup }} --location ${{ env.location }}
+            - name: Deploy JBoss EAP domain cluster
+              id: deploy-jboss-eap-managed-domain
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    az deployment group create \
+                    --verbose \
+                    --resource-group ${{ env.domainResourceGroup }} \
+                    --name jboss-eap-managed-domain \
+                    --parameters @rhel-jboss-templates/eap73-rhel8-payg-multivm/src/test/parameters-test-cluster.json \
+                    --template-file rhel-jboss-templates/eap73-rhel8-payg-multivm/mainTemplate.json
+            - name: Deploy public load balancer
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    az deployment group create \
+                    --verbose \
+                    --resource-group ${{ env.domainResourceGroup }} \
+                    --name jboss-eap-public-load-balancer \
+                    --template-file rhel-jboss-templates/eap73-rhel8-payg-multivm/src/test/public-lb/publicLbTemplateForDomain.json
+            - name: Add VMs to public load balancer backend pool
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    # Configure master host
+                    az network nic ip-config address-pool add \
+                        --verbose \
+                        --address-pool jbosseap-domain-master \
+                        --ip-config-name ipconfig1 \
+                        --nic-name jbosseap-server-nic0 \
+                        --resource-group ${{ env.domainResourceGroup }} \
+                        --lb-name jbosseap-lb-pub
+
+                    NUMBER_OF_INSTANCE=${{ env.numberOfInstances }}
+                    echo "NUMBER_OF_INSTANCE: " $NUMBER_OF_INSTANCE
+                    # Configure slave hosts
+                    for ((i = 1; i < NUMBER_OF_INSTANCE; i++)); do
+                        az network nic ip-config address-pool add \
+                            --verbose \
+                            --address-pool jbosseap-domain-slave \
+                            --ip-config-name ipconfig1 \
+                            --nic-name jbosseap-server-nic${i} \
+                            --resource-group ${{ env.domainResourceGroup }} \
+                            --lb-name jbosseap-lb-pub
+                    done
+            - name: Build javaee cafe
+              run: mvn clean install --file rhel-jboss-templates/eap73-rhel8-payg-multivm/src/test/coffee-app/pom.xml
+            - name: Create a container and uploading cafe app
+              id: upload_cafe_app
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    # create a container
+                    az storage container create --name cafeapp --public-access container --account-name ${{ env.domainBootStorageAccountName }}
+                    # upload cafe app
+                    az storage blob upload \
+                      --account-name ${{ env.domainBootStorageAccountName }} \
+                      --container-name cafeapp \
+                      --name javaee-cafe.war \
+                      --file rhel-jboss-templates/eap73-rhel8-payg-multivm/src/test/coffee-app/target/javaee-cafe.war
+                    # query the app url
+                    appbloburl=$(az storage blob url --container-name cafeapp \
+                        --name javaee-cafe.war \
+                        --account-name ${{ env.domainBootStorageAccountName }} -o tsv)
+                    
+                    echo "##[set-output name=appbloburl;]${appbloburl}"
+            - name: Query public ip of public load balancer
+              id: query_public_lb_ip
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    # query public ip address of load balancer
+                    publicip=$(az network public-ip show --name jbosseap-lb-pub-ip \
+                                --resource-group $domainResourceGroup --query ipAddress -o tsv)
+                    
+                    echo "##[set-output name=publicip;]${publicip}"
+            - name: Deploy cafe application
+              run: |
+                appbloburl=${{steps.upload_cafe_app.outputs.appbloburl}}
+                echo "appbloburl: " $appbloburl
+
+                publicip=${{steps.query_public_lb_ip.outputs.publicip}}
+                echo "publicip: " $publicip
+
+                curl --digest -L -D - http://${publicip}:9990/management --header "Content-Type: application/json" -u ${jbossEAPUserName}:${jbossEAPPassword} -d "{\"operation\" : \"add\", \"address\" : {\"deployment\" : \"javaee-cafe.war\"}, \"content\" : [{\"url\" : \"${appbloburl}\"}],\"json.pretty\":1}"
+                curl --digest -L -D - http://${publicip}:9990/management --header "Content-Type: application/json" -u ${jbossEAPUserName}:${jbossEAPPassword} -d "{\"operation\" : \"add\", \"address\" : {\"server-group\" : \"main-server-group\",\"deployment\":\"javaee-cafe.war\"},\"json.pretty\":1}"
+                curl --digest -L -D - http://${publicip}:9990/management --header "Content-Type: application/json" -u ${jbossEAPUserName}:${jbossEAPPassword} -d "{\"operation\" : \"deploy\", \"address\" : {\"server-group\" : \"main-server-group\",\"deployment\":\"javaee-cafe.war\"},\"json.pretty\":1}"
+            - name: Verify cafe application
+              run: |
+                publicip=${{steps.query_public_lb_ip.outputs.publicip}}
+                echo "publicip: " $publicip
+                # bash rhel-jboss-templates/eap73-rhel8-payg-multivm/src/test/scripts/verify-webapp-deployment.sh <<< "${publicip}"
+                CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
+
+                echo "Verifying Cafe is deployed as expected"
+                curl --verbose http://${publicip}/javaee-cafe/
+                response=$(curl ${CURL_RETRY_PARMS}  --write-out '%{http_code}' --silent --output /dev/null http://${publicip}/javaee-cafe/)
+                echo "$response"
+                if [ "$response" -ne 200 ]; then
+                  echo "Cafe is not accessible"
+                  exit 1
+                else
+                  echo "Cafe is accessible"
+                fi
+                exit 0
+    deploy-jboss-eap-standalone:
+        needs: preflight
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout rhel-jboss-templates
+              uses: actions/checkout@v2
+              with:
+                repository: ${{env.gitUserName}}/rhel-jboss-templates
+                path: rhel-jboss-templates
+            - name: Output artifact name and version for Download action
+              id: artifact_file
+              run: |
+                version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap73-rhel8-payg-multivm/pom.xml)
+                artifactName=eap73-rhel8-payg-multivm-$version-arm-assembly
+
+                echo "##[set-output name=artifactName;]${artifactName}"
+            - name: Download artifact for test branch
+              uses: actions/download-artifact@v1
+              with:
+                name: ${{steps.artifact_file.outputs.artifactName}}
+                path: rhel-jboss-templates-dev
+            - name: Create a new branch with built artifact
+              run: |
+                current=`pwd`
+                echo "current=${current}" >> $GITHUB_ENV
+                cd rhel-jboss-templates
+                git config --global core.longpaths true
+                git config --global user.email $gitEmail
+                git config --global user.name $gitUserName
+                echo "create branch $standaloneTestBranchName"
+                git checkout -b $standaloneTestBranchName
+                rm -r -f $current/rhel-jboss-templates/eap73-rhel8-payg-multivm/src/main/*
+                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap73-rhel8-payg-multivm/
+                git add .
+                git status
+                git commit -m "test branch for pipeline"
+                git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f
+            - name: Prepare parameter file
+              run: |
+                echo "replace placeholders using real parameter"
+                sed -i "s/#location#/${location}/g; \
+                        s/#vmName#/${vmName}/g; \
+                        s/#asName#/${asName}/g; \
+                        s/#adminUsername#/${adminUsername}/g; \
+                        s/#enableLb#/${enableLoadBalancer}/g; \
+                        s/#password#/${password}/g; \
+                        s/#numberOfInstances#/${numberOfInstances}/g; \
+                        s/#operatingMode#/${standaloneOperatingMode}/g; \
+                        s/#virtualNetworkResourceGroupName#/${standaloneResourceGroup}/g; \
+                        s/#bootStorageAccountName#/${standaloneBootStorageAccountName}/g; \
+                        s/#storageAccountResourceGroupName#/${standaloneResourceGroup}/g; \
+                        s/#jbossEAPUserName#/${jbossEAPUserName}/g; \
+                        s/#jbossEAPPassword#/${jbossEAPPassword}/g; \
+                        s/#rhsmUserName#/${rhsmUserName}/g; \
+                        s/#rhsmPassword#/${rhsmPassword}/g; \
+                        s/#rhsmPoolEAP#/${rhsmPoolEAP}/g; \
+                        s/#userAssignedManagedIdentity#/${userAssignedManagedIdentity}/g; \
+                        s/#gitUserName#/${gitUserName}/g; \
+                        s/#testbranchName#/${standaloneTestBranchName}/g" \
+                        rhel-jboss-templates/eap73-rhel8-payg-multivm/src/test/parameters-test-cluster.json
+            - name: Archive parameters-test-cluster.json
+              uses: actions/upload-artifact@v1
+              if: success()
+              with:
+                name: parameters-test-standalone
+                path: rhel-jboss-templates/eap73-rhel8-payg-multivm/src/test/parameters-test-cluster.json
+            - uses: azure/login@v1
+              id: azure-login
+              with:
+                creds: ${{ env.azureCredentials }}
+            - name: Create Resource Group
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    echo "create resource group" ${{ env.standaloneResourceGroup }}
+                    az group create --verbose --name ${{ env.standaloneResourceGroup }} --location ${{ env.location }}
+            - name: Deploy JBoss EAP domain cluster
+              id: deploy-jboss-eap-managed-domain
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    az deployment group create \
+                    --verbose \
+                    --resource-group ${{ env.standaloneResourceGroup }} \
+                    --name jboss-eap-managed-domain \
+                    --parameters @rhel-jboss-templates/eap73-rhel8-payg-multivm/src/test/parameters-test-cluster.json \
+                    --template-file rhel-jboss-templates/eap73-rhel8-payg-multivm/mainTemplate.json
+            - name: Deploy public load balancer
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    az deployment group create \
+                    --verbose \
+                    --resource-group ${{ env.standaloneResourceGroup }} \
+                    --name jboss-eap-public-load-balancer \
+                    --template-file rhel-jboss-templates/eap73-rhel8-payg-multivm/src/test/public-lb/publicLbTemplateForStandalone.json
+            - name: Add VMs to public load balancer backend pool
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    NUMBER_OF_INSTANCE=${{ env.numberOfInstances }}
+                    echo "NUMBER_OF_INSTANCE: " $NUMBER_OF_INSTANCE
+                    # Configure hosts
+                    for ((i = 0; i < NUMBER_OF_INSTANCE; i++)); do
+                        az network nic ip-config address-pool add \
+                            --verbose \
+                            --address-pool jbosseap-standalone \
+                            --ip-config-name ipconfig1 \
+                            --nic-name jbosseap-server-nic${i} \
+                            --resource-group ${{ env.standaloneResourceGroup }} \
+                            --lb-name jbosseap-lb-pub
+                    done
+            - name: Query public ip of public load balancer
+              id: query_public_lb_ip
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    # query public ip address of load balancer
+                    publicip=$(az network public-ip show --name jbosseap-lb-pub-ip \
+                                --resource-group $standaloneResourceGroup --query ipAddress -o tsv)
+                    
+                    echo "##[set-output name=publicip;]${publicip}"
+            - name: Verify eap-session-replication application
+              run: |
+                publicip=${{steps.query_public_lb_ip.outputs.publicip}}
+                echo "publicip: " $publicip
+                # bash rhel-jboss-templates/eap73-rhel8-payg-multivm/src/test/scripts/verify-webapp-deployment.sh <<< "${publicip}"
+                CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
+
+                echo "Verifying eap-session-replication is deployed as expected"
+                curl --verbose http://${publicip}/eap-session-replication/
+                response=$(curl ${CURL_RETRY_PARMS}  --write-out '%{http_code}' --silent --output /dev/null http://${publicip}/eap-session-replication/)
+                echo "$response"
+                if [ "$response" -ne 200 ]; then
+                  echo "eap-session-replication is not accessible"
+                  exit 1
+                else
+                  echo "eap-session-replication is accessible"
+                fi
+                exit 0
+    cleanup:
+      needs: [deploy-jboss-eap-standalone, deploy-jboss-eap-domain]
+      if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
+      runs-on: ubuntu-latest
+      steps:
+      - uses: azure/login@v1
+        id: azure-login
+        with:
+          creds: ${{ env.azureCredentials }}
+      - name: Delete domain Resource Group
+        id: delete-domain-resource-group
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "delete... " ${{ env.domainResourceGroup }}
+            az group delete --yes --no-wait --verbose --name ${{ env.domainResourceGroup }}
+      - name: Delete standalone Resource Group
+        id: delete-standalone-resource-group
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "delete... " ${{ env.standaloneResourceGroup }}
+            az group delete --yes --no-wait --verbose --name ${{ env.standaloneResourceGroup }}
+
+              

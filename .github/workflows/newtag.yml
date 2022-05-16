@@ -1,0 +1,123 @@
+name: New Tag (Only eap74-rhel8-payg-multivm for now)
+on:
+  workflow_dispatch:
+    inputs:
+      tagname:
+        description: 'Specify Tag name to create/update.'
+        required: true
+        default: '2022-05-20'
+      ref:
+        description: 'Specify Git Ref if needed.'
+        required: false
+        default: 'refs/heads/main'
+  repository_dispatch:
+    types: [newtag]
+  # sample cURL
+  # curl --verbose -X POST https://api.github.com/repos/<github_user>/rhel-jboss-templates/dispatches -H 'Accept: application/vnd.github.everest-preview+json' -H 'Authorization: token <personal_access_token>' --data '<request_data>'
+  # sample <request_data>
+  # {"event_type": "newtag, "client_payload": {"tagname": "2022-05-20" }}
+
+env:
+  tagbranch: "tagbranch"
+  gitToken: ${{ secrets.GIT_TOKEN }}
+  refArmttk: d97aa57d259e2fc8562e11501b1cf902265129d9
+  refJavaee: f25ab89a2a8848da39b84e5d6c927f4c4cb47200
+  repoName: "rhel-jboss-templates"
+  userEmail: ${{ secrets.USER_EMAIL }}
+  userName: ${{ secrets.USER_NAME }}
+
+jobs:
+  newtag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup environment variables
+        id: setup-env-variables-based-on-dispatch-event
+        run: |
+          if [ ${{ github.event_name }} == 'workflow_dispatch' ]; then
+            tagname=${{ github.event.inputs.tagname }}
+            ref=${{ github.event.inputs.ref }}
+          else
+            tagname=${{ github.event.client_payload.tagname }}
+            ref=${{ github.event.client_payload.ref }}
+          fi
+
+          echo "##[set-output name=tagname;]${tagname}"
+          echo "##[set-output name=ref;]${ref}"
+          echo "tagname=${tagname}" >> $GITHUB_ENV
+          echo "ref=${ref}" >> $GITHUB_ENV
+
+      - name: Checkout ${{ env.repoName }}
+        uses: actions/checkout@v2
+        with:
+          path: ${{ env.repoName }}
+          ref: ${{ github.event.inputs.ref }}
+      - name: Checkout azure-javaee-iaas
+        uses: actions/checkout@v2
+        with:
+          repository: Azure/azure-javaee-iaas
+          path: azure-javaee-iaas
+          ref: ${{ env.refJavaee }}
+      - name: Checkout arm-ttk
+        uses: actions/checkout@v2
+        with:
+          repository: Azure/arm-ttk
+          path: arm-ttk
+          ref: ${{ env.refArmttk }}
+      - name: Set up bicep
+        run: |
+          curl -Lo bicep https://github.com/Azure/bicep/releases/download/v0.4.613/bicep-linux-x64
+          chmod +x ./bicep
+          sudo mv ./bicep /usr/local/bin/bicep
+          bicep --version
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Build azure-javaee-iaas
+        run: mvn -DskipTests clean install --file azure-javaee-iaas/pom.xml
+
+      - name: Build ${{ env.repoName }}
+        run: |
+          cd ${{ env.repoName }}
+          mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests --file eap74-rhel8-payg-multivm/pom.xml
+
+      - name: Create new tag
+        run: |
+          git config --global core.longpaths true
+          git config --global user.email $userEmail
+          git config --global user.name $userName
+          
+          authGitPath=https://$gitToken@github.com/${GITHUB_REPOSITORY}.git
+
+          echo "Create tag branch"
+          remoteBranches=$(git ls-remote --heads)
+          echo ${remoteBranches}
+          if [[ -n `echo ${remoteBranches} | grep "${tagbranch}"` ]]; then
+            git push ${authGitPath} --delete ${tagbranch} -f
+          fi
+
+          if [[ -n `git branch --all | grep "${tagbranch}"` ]]; then
+            git branch -D ${tagbranch} 
+          fi
+
+          git checkout -b ${tagbranch}
+
+          git status
+          git add --all
+          git commit -m "hard code pids"
+          git fetch --unshallow
+          git push ${authGitPath} ${tagbranch} -f
+
+          # remove existing tag
+          if [[ -n `git ls-remote --tags | grep "${tagname}"` ]]; then 
+              git push ${authGitPath} --delete ${tagname} -f
+          fi
+
+          # create new tag
+          git tag ${tagname}
+          git push ${authGitPath} ${tagname} -f
+          git remote add upstream $gitToken@github.com:$userName/rhel-jboss-templates.git
+          # ignore the error if cannot push, but log it
+          push_upstream_ignore_failure () { echo "push upstream result: $?" return 0;  }
+          git push upstream ${tagname} -f || push_upstream_ignore_failure
+          git push ${authGitPath} --delete ${tagbranch} -f
