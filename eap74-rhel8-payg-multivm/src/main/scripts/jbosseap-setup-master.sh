@@ -93,13 +93,11 @@ STORAGE_ACCOUNT_NAME=${14}
 CONTAINER_NAME=${15}
 STORAGE_ACCESS_KEY=${16}
 STORAGE_ACCOUNT_PRIVATE_IP=${17}
-# STORAGE_ACCESS_KEY=$(echo "${16}" | openssl enc -d -base64)
-# NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
 MOUNT_POINT_PATH=/mnt/jbossshare
 HOST_VM_IP=$(hostname -I)
 
-# echo $@
+echo $@
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | log; flag=${PIPESTATUS[0]}
 echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.3-on-RHEL8.4" | log; flag=${PIPESTATUS[0]}
@@ -215,21 +213,6 @@ echo "Setting configurations in $EAP_RPM_CONF_DOMAIN"
 echo -e "\t-> WILDFLY_HOST_CONFIG=host-master.xml" | log; flag=${PIPESTATUS[0]}
 echo 'WILDFLY_HOST_CONFIG=host-master.xml' >> $EAP_RPM_CONF_DOMAIN | log; flag=${PIPESTATUS[0]}
 
-# echo "Setting configurations in $EAP_LAUNCH_CONFIG"
-# echo -e "\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address=$(hostname -I)" | log; flag=${PIPESTATUS[0]}
-# echo -e "\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address.management=$(hostname -I)" | log; flag=${PIPESTATUS[0]}
-# echo -e "\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address.unsecure=$(hostname -I)" | log; flag=${PIPESTATUS[0]}
-# echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' | log; flag=${PIPESTATUS[0]}
-
-# echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=$(hostname -I)"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
-# echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.management=$(hostname -I)"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
-# echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.unsecure=$(hostname -I)"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
-# echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
-# echo -e 'JAVA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
-
-# echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
-# echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
-# echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 ####################### Start the JBoss server and setup eap service
 echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
 echo "systemctl enable eap7-domain.service" | log; flag=${PIPESTATUS[0]}
@@ -242,8 +225,6 @@ sed -i 's/After=syslog.target network.target/After=syslog.target network.target 
 echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
 sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap7-domain.service | log; flag=${PIPESTATUS[0]}
 echo "Removing - User=jboss Group=jboss" | log; flag=${PIPESTATUS[0]}
-# sed -i '/User/d' /usr/lib/systemd/system/eap7-domain.service | log; flag=${PIPESTATUS[0]}
-# sed -i '/Group/d' /usr/lib/systemd/system/eap7-domain.service | log; flag=${PIPESTATUS[0]}
 echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
 systemctl daemon-reload | log; flag=${PIPESTATUS[0]}
 

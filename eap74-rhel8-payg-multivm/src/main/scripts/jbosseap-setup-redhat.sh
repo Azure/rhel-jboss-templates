@@ -70,9 +70,6 @@ if [[ "${CONFIGURATION_MODE,,}" != "managed-domain" ]]; then
         echo "standalone ${VM_NAME_PREFIX}${i} extension execution completed"
     done
 else
-    # STORAGE_ACCESS_KEY=$(echo "${16}" | openssl enc -d -base64)
-    # NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
-
     # Configure domain controller host
     echo "Configure domain controller host: ${VM_NAME_PREFIX}0"
 
