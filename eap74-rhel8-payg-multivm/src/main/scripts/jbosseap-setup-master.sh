@@ -84,7 +84,8 @@ done
 # fileUrl="$artifactsLocation$pathToFile/$fileToDownload$token"
 
 JBOSS_EAP_USER=$9
-JBOSS_EAP_PASSWORD=${10}
+JBOSS_EAP_PASSWORD_BASE64=${10}
+JBOSS_EAP_PASSWORD=$(echo $JBOSS_EAP_PASSWORD_BASE64 | base64 -d)
 RHSM_USER=${11}
 RHSM_PASSWORD=${12}
 EAP_POOL=${13}
