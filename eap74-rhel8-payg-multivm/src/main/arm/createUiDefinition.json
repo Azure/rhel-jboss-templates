@@ -332,11 +332,21 @@
                         "visible": "[not(equals(steps('jbossEAPSettings').operatingMode, 'standalone'))]"
                     },
                     {
+                        "name": "disableLoadBalancerWarningInfo",
+                        "type": "Microsoft.Common.InfoBox",
+                        "visible": "[greater(steps('jbossEAPSettings').numberOfServerInstances, '1')]",
+                        "options": {
+                            "icon": "Warning",
+                            "text": "Load Balancer is not supported when users choose to create more than 1 JBoss EAP server instances per host",
+                            "uri": "https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-overview"
+                        }
+                    },
+                    {
                         "name": "disableLoadBalancerWhenMultipleServerInst",
                         "type": "Microsoft.Common.OptionsGroup",
                         "label": "Disable Load Balancer when creating multiple Server Instances per host.",
                         "defaultValue": "Disable",
-                        "toolTip": "Load Balancer may not work as expected.",
+                        "toolTip": "Load Balancer is not supported.",
                         "constraints": {
                             "allowedValues": [
                                 {

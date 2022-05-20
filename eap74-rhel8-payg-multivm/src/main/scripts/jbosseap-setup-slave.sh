@@ -102,8 +102,6 @@ HOST_VM_IP=$(hostname -I)
 MOUNT_POINT_PATH=/mnt/jbossshare
 SCRIPT_PWD=`pwd`
 
-echo $@
-
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | log; flag=${PIPESTATUS[0]}
 echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.3-on-RHEL8.4" | log; flag=${PIPESTATUS[0]}
 echo "Storage Account Name: " ${STORAGE_ACCOUNT_NAME} | log; flag=${PIPESTATUS[0]}

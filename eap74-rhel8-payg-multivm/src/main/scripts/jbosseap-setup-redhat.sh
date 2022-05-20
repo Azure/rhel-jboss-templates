@@ -34,8 +34,6 @@ NUMBER_OF_SERVER_INSTANCE=${21}
 CONFIGURATION_MODE=${22}
 VNET_NEW_OR_EXISTING=${23}
 
-echo $@
-
 # Get storage account sas token
 STORAGE_ACCESS_KEY=$(az storage account keys list --verbose --account-name "${STORAGE_ACCOUNT_NAME}" --query [0].value --output tsv)
 
