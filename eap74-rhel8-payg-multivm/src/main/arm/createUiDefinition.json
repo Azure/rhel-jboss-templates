@@ -186,6 +186,7 @@
                     {
                         "name": "armApiControl",
                         "type": "Microsoft.Solutions.ArmApiControl",
+                        "toolTip": "Select existing storage account",
                         "request": {
                           "method": "GET",
                           "path": "[concat(subscription().id, '/providers/Microsoft.Storage/storageAccounts?api-version=2021-04-01')]"
@@ -206,11 +207,13 @@
 					{
                         "name": "nameApi",
                         "type": "Microsoft.Solutions.ArmApiControl",
+                        "toolTip": "Check new storage account name availability",
                         "request": {
                         "method": "POST",
                         "path": "[concat(subscription().id,'/providers/Microsoft.Storage/checkNameAvailability?api-version=2019-06-01')]",
                         "body":  {
                             "name": "[steps('VirtualMachineConfig').storageAccountName.value]",
+                            "toolTip": "get storage account name provided earlier",
                             "type": "Microsoft.Storage/storageAccounts"
                             }
                         },
