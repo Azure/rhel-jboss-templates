@@ -104,7 +104,7 @@ This file should contain values for all the parameters
     }
 
 ```powershell
-.\Deploy-AzTemplate.ps1 -ArtifactStagingDirectory .\eap73-rhel8-payg-multivm -ResourceGroupLocation southeastasia -dev -UploadArtifacts
+.\Deploy-AzTemplate.ps1 -ArtifactStagingDirectory .\eap74-rhel8-payg-multivm -ResourceGroupLocation southeastasia -dev -UploadArtifacts
 ```
 
 ## Validating templates
