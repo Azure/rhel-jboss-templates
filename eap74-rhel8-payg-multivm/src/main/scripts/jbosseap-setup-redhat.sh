@@ -62,7 +62,7 @@ echo "SCRIPT_LOCATION: ${SCRIPT_LOCATION}"
 
 # Satellite server
 SATELLITE_VM_PRIVATE_IP=''
-if [ "${CONNECT_SATELLITE}" == "true" ]; then
+if [[ "${CONNECT_SATELLITE,,}" == "true" ]]; then
     SATELLITE_VM_PRIVATE_IP=$(az vm list-ip-addresses --verbose --ids ${SATELLITE_VM_RESOURCE_ID} --query [0].virtualMachine.network.privateIpAddresses[0] --output tsv)
 
     echo "SATELLITE_VM_PRIVATE_IP: ${SATELLITE_VM_PRIVATE_IP}"

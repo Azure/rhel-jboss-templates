@@ -244,7 +244,7 @@ $EAP_HOME/wildfly/bin/add-user.sh  -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 
 if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; exit $flag;  fi
 
 # Satellite server configuration
-if [ "${CONNECT_SATELLITE}" == "true" ]; then
+if [[ "${CONNECT_SATELLITE,,}" == "true" ]]; then
     echo "Configuring Satellite server registration" | log; flag=${PIPESTATUS[0]}
 
     echo "sudo sed -i "${SATELLITE_VM_PRIVATE_IP}  ${SATELLITE_VM_FQDN}" /etc/hosts" | log; flag=${PIPESTATUS[0]}
