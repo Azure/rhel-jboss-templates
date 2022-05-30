@@ -568,7 +568,7 @@
             "rhsmPoolEAP": "[steps('jbossEAPSettings').rhsmPoolEAP]",
             "identity": "[steps('jbossEAPSettings').identity]",
             "connectSatellite": "[steps('satelliteServerSettings').connectSatellite]",
-            "satelliteVmId": "[steps('satelliteServerSettings').satelliteServerVmSelector.id]",
+            "satelliteVmResourceId": "[steps('satelliteServerSettings').satelliteServerVmSelector.id]",
             "satelliteActivationKey": "[steps('satelliteServerSettings').satelliteActivationKey]",
             "satelliteOrgName": "[steps('satelliteServerSettings').satelliteOrgName]",
             "satelliteFqdn": "[steps('satelliteServerSettings').satelliteFqdn]"

@@ -105,6 +105,9 @@ HOST_VM_NAME=$(hostname)
 HOST_VM_NAME_LOWERCASES=$(echo "${HOST_VM_NAME,,}")
 HOST_VM_IP=$(hostname -I)
 
+echo "all prameters: "
+echo $@
+
 MOUNT_POINT_PATH=/mnt/jbossshare
 SCRIPT_PWD=`pwd`
 
@@ -243,14 +246,15 @@ if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration F
 # Satellite server configuration
 if [ "${CONNECT_SATELLITE}" == "true" ]; then
     echo "Configuring Satellite server registration" | log; flag=${PIPESTATUS[0]}
+
+    echo "sudo sed -i "${SATELLITE_VM_PRIVATE_IP}  ${SATELLITE_VM_FQDN}" /etc/hosts" | log; flag=${PIPESTATUS[0]}
+    sudo sed -i "${SATELLITE_VM_PRIVATE_IP} ${SATELLITE_VM_FQDN}" /etc/hosts | log; flag=${PIPESTATUS[0]}
+
     echo "sudo rpm -Uvh http://${SATELLITE_VM_FQDN}/pub/katello-ca-consumer-latest.noarch.rpm" | log; flag=${PIPESTATUS[0]}
-    sudo rpm -Uvh http://${SATELLITE_VM_FQDN}/pub/katello-ca-consumer-latest.noarch.rpm
+    sudo rpm -Uvh http://${SATELLITE_VM_FQDN}/pub/katello-ca-consumer-latest.noarch.rpm | log; flag=${PIPESTATUS[0]}
 
     echo "sudo subscription-manager register --org=/"${SATELLITE_ORG_NAME}/" --activationkey=/"${SATELLITE_ACTIVATION_KEY}/"" | log; flag=${PIPESTATUS[0]}
-    sudo subscription-manager register --org=${SATELLITE_ORG_NAME} --activationkey=${SATELLITE_ACTIVATION_KEY}
-
-    echo "sudo sed -i "${SATELLITE_VM_PRIVATE_IP}  ${SATELLITE_VM_FQDN}" /etc/hosts"
-    sudo sed -i "${SATELLITE_VM_PRIVATE_IP} ${SATELLITE_VM_FQDN}" /etc/hosts
+    sudo subscription-manager register --org=${SATELLITE_ORG_NAME} --activationkey=${SATELLITE_ACTIVATION_KEY} | log; flag=${PIPESTATUS[0]}
 fi
 
 # Seeing a race condition timing error so sleep to delay

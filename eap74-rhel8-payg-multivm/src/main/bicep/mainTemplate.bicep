@@ -130,19 +130,19 @@ param artifactsLocationSasToken string = ''
 param identity object
 
 @description('Connect to an existing Red Hat Satellite Server.')
-var connectSatellite = 'false'
+param connectSatellite bool = false
 
 @description('Red Hat Satellite Server VM resource ID.')
-var satelliteVmResourceId = ''
+param satelliteVmResourceId string = ''
 
 @description('Red Hat Satellite Server activation key.')
-var satelliteActivationKey = ''
+param satelliteActivationKey string = ''
 
 @description('Red Hat Satellite Server organization name.')
-var satelliteOrgName = ''
+param satelliteOrgName string = ''
 
 @description('Red Hat Satellite Server VM FQDN name.')
-var satelliteFqdn = ''
+param satelliteFqdn string = ''
 
 var name_managedDomain = 'managed-domain'
 var name_fileshare = 'jbossshare'
@@ -182,7 +182,7 @@ var scriptFolder = 'scripts'
 var fileFolder = 'bin'
 var fileToBeDownloaded = 'eap-session-replication.war'
 var scriptArgs = '-a "${uri(artifactsLocation, '.')}" -t "${empty(artifactsLocationSasToken) ? '?' : 'artifactsLocationSasToken'}" -p ${fileFolder} -f ${fileToBeDownloaded} -s ${scriptFolder}'
-var const_arguments = '${scriptArgs} ${jbossEAPUserName} ${base64(jbossEAPPassword)} ${rhsmUserName} ${base64(rhsmPassword)} ${rhsmPoolEAP} ${eapStorageAccountName} ${containerName} ${resourceGroup().name} ${numberOfInstances} ${vmName_var} ${numberOfServerInstances} ${operatingMode} ${virtualNetworkNewOrExisting} ${connectSatellite} ${satelliteVmResourceId} ${satelliteActivationKey} ${satelliteOrgName} ${satelliteFqdn}'
+var const_arguments = '${scriptArgs} ${jbossEAPUserName} ${base64(jbossEAPPassword)} ${rhsmUserName} ${base64(rhsmPassword)} ${rhsmPoolEAP} ${eapStorageAccountName} ${containerName} ${resourceGroup().name} ${numberOfInstances} ${vmName_var} ${numberOfServerInstances} ${operatingMode} ${virtualNetworkNewOrExisting} ${bool('${connectSatellite}')} ${satelliteVmResourceId} ${satelliteActivationKey} ${satelliteOrgName} ${satelliteFqdn}'
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jbosseap-setup-redhat.sh'
 var const_setupDomainMasterScript = 'jbosseap-setup-master.sh'

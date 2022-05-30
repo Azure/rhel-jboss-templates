@@ -39,6 +39,9 @@ SATELLITE_ACTIVATION_KEY=${26}
 SATELLITE_ORG_NAME=${27}
 SATELLITE_VM_FQDN=${28}
 
+echo "all prameters: "
+echo $@
+
 # Get storage account sas token
 STORAGE_ACCESS_KEY=$(az storage account keys list --verbose --account-name "${STORAGE_ACCOUNT_NAME}" --query [0].value --output tsv)
 
@@ -59,7 +62,7 @@ echo "SCRIPT_LOCATION: ${SCRIPT_LOCATION}"
 
 # Satellite server
 SATELLITE_VM_PRIVATE_IP=''
-if [ "CONNECT_SATELLITE" == "true" ]; then
+if [ "${CONNECT_SATELLITE}" == "true" ]; then
     SATELLITE_VM_PRIVATE_IP=$(az vm list-ip-addresses --verbose --ids ${SATELLITE_VM_RESOURCE_ID} --query [0].virtualMachine.network.privateIpAddresses[0] --output tsv)
 
     echo "SATELLITE_VM_PRIVATE_IP: ${SATELLITE_VM_PRIVATE_IP}"
