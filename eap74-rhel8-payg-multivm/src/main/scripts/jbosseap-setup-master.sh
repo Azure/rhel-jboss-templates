@@ -94,6 +94,11 @@ STORAGE_ACCOUNT_NAME=${14}
 CONTAINER_NAME=${15}
 STORAGE_ACCESS_KEY=${16}
 STORAGE_ACCOUNT_PRIVATE_IP=${17}
+CONNECT_SATELLITE=${18}
+SATELLITE_ACTIVATION_KEY=${19}
+SATELLITE_ORG_NAME=${20}
+SATELLITE_VM_FQDN=${21}
+SATELLITE_VM_PRIVATE_IP=${22}
 
 MOUNT_POINT_PATH=/mnt/jbossshare
 HOST_VM_IP=$(hostname -I)
@@ -237,6 +242,16 @@ echo "Configuring JBoss EAP management user..." | log; flag=${PIPESTATUS[0]}
 echo "$EAP_HOME/wildfly/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
 $EAP_HOME/wildfly/bin/add-user.sh  -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; exit $flag;  fi
+
+# Satellite server configuration
+if [ "${CONNECT_SATELLITE}" == "true" ]; then
+    echo "Configuring Satellite server registration" | log; flag=${PIPESTATUS[0]}
+    echo "sudo rpm -Uvh http://${SATELLITE_VM_FQDN}/pub/katello-ca-consumer-latest.noarch.rpm" | log; flag=${PIPESTATUS[0]}
+    sudo rpm -Uvh http://${SATELLITE_VM_FQDN}/pub/katello-ca-consumer-latest.noarch.rpm
+
+    echo "sudo subscription-manager register --org=/"${SATELLITE_ORG_NAME}/" --activationkey=/"${SATELLITE_ACTIVATION_KEY}/"" | log; flag=${PIPESTATUS[0]}
+    sudo subscription-manager register --org=${SATELLITE_ORG_NAME} --activationkey=${SATELLITE_ACTIVATION_KEY}
+fi
 
 # Seeing a race condition timing error so sleep to delay
 sleep 20
