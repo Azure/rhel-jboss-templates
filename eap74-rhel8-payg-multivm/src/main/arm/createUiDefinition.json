@@ -567,7 +567,7 @@
             "rhsmPassword": "[steps('jbossEAPSettings').rhsmPassword]",
             "rhsmPoolEAP": "[steps('jbossEAPSettings').rhsmPoolEAP]",
             "identity": "[steps('jbossEAPSettings').identity]",
-            "connectSatellite": "[steps('VirtualMachineConfig').connectSatellite]",
+            "connectSatellite": "[steps('satelliteServerSettings').connectSatellite]",
             "satelliteVmId": "[steps('satelliteServerSettings').satelliteServerVmSelector.id]",
             "satelliteActivationKey": "[steps('satelliteServerSettings').satelliteActivationKey]",
             "satelliteOrgName": "[steps('satelliteServerSettings').satelliteOrgName]",

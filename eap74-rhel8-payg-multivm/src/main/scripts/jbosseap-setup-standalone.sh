@@ -201,6 +201,9 @@ if [ "${CONNECT_SATELLITE}" == "true" ]; then
 
     echo "sudo subscription-manager register --org=/"${SATELLITE_ORG_NAME}/" --activationkey=/"${SATELLITE_ACTIVATION_KEY}/"" | log; flag=${PIPESTATUS[0]}
     sudo subscription-manager register --org=${SATELLITE_ORG_NAME} --activationkey=${SATELLITE_ACTIVATION_KEY}
+
+    echo "sudo sed -i "${SATELLITE_VM_PRIVATE_IP}  ${SATELLITE_VM_FQDN}" /etc/hosts"
+    sudo sed -i "${SATELLITE_VM_PRIVATE_IP} ${SATELLITE_VM_FQDN}" /etc/hosts
 fi
 
 # Seeing a race condition timing error so sleep to delay
