@@ -121,21 +121,21 @@
                         },
                         "defaultValue": {
                             "name": "VirtualNetwork",
-                            "addressPrefixSize": "/16"
+                            "addressPrefixSize": "/28"
                         },
                         "constraints": {
-                            "minAddressPrefixSize": "/16"
+                            "minAddressPrefixSize": "/28"
                         },
                         "subnets": {
                             "subnet1": {
                                 "label": "Subnet",
                                 "defaultValue": {
                                     "name": "Subnet-1",
-                                    "addressPrefixSize": "/24"
+                                    "addressPrefixSize": "/29"
                                 },
                                 "constraints": {
-                                    "minAddressPrefixSize": "/24",
-                                    "minAddressCount": 12,
+                                    "minAddressPrefixSize": "/29",
+                                    "minAddressCount": 2,
                                     "requireContiguousAddresses": false
                                 }
                             }
@@ -186,6 +186,7 @@
                     {
                         "name": "armApiControl",
                         "type": "Microsoft.Solutions.ArmApiControl",
+                        "toolTip": "Select existing storage account",
                         "request": {
                           "method": "GET",
                           "path": "[concat(subscription().id, '/providers/Microsoft.Storage/storageAccounts?api-version=2021-04-01')]"
@@ -206,11 +207,13 @@
 					{
                         "name": "nameApi",
                         "type": "Microsoft.Solutions.ArmApiControl",
+                        "toolTip": "Check new storage account name availability",
                         "request": {
                         "method": "POST",
                         "path": "[concat(subscription().id,'/providers/Microsoft.Storage/checkNameAvailability?api-version=2019-06-01')]",
                         "body":  {
                             "name": "[steps('VirtualMachineConfig').storageAccountName.value]",
+                            "toolTip": "get storage account name provided earlier",
                             "type": "Microsoft.Storage/storageAccounts"
                             }
                         },
@@ -290,6 +293,72 @@
                 "bladeTitle": "JBoss EAP Settings",
                 "elements": [
                     {
+                        "name": "operatingMode",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Use managed domain or standalone hosts to form a cluster",
+                        "defaultValue": "Managed domain",
+                        "toolTip": "Choose to use managed domain or standalone hosts to form a cluster.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Managed domain",
+                                    "value": "managed-domain"
+                                },
+                                {
+                                    "label": "Standalone",
+                                    "value": "standalone"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "numberOfServerInstances",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Number of Server Instances per Host",
+                        "defaultValue": "1",
+                        "toolTip": "Use only allowed characters",
+                        "placeholder": "1",
+                        "constraints": {
+                            "required": true,
+                            "validations": [
+                                {
+                                    "regex": "^(1|2|3|4|5)$",
+                                    "message": "Only numbers from 1 to 5 are allowed."
+                                }
+                            ]
+                        },
+                        "visible": "[not(equals(steps('jbossEAPSettings').operatingMode, 'standalone'))]"
+                    },
+                    {
+                        "name": "disableLoadBalancerWarningInfo",
+                        "type": "Microsoft.Common.InfoBox",
+                        "visible": "[greater(steps('jbossEAPSettings').numberOfServerInstances, '1')]",
+                        "options": {
+                            "icon": "Warning",
+                            "text": "Load Balancer is not supported when users choose to create more than 1 JBoss EAP server instances per host",
+                            "uri": "https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-overview"
+                        }
+                    },
+                    {
+                        "name": "disableLoadBalancerWhenMultipleServerInst",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Disable Load Balancer when creating multiple Server Instances per host.",
+                        "defaultValue": "Disable",
+                        "toolTip": "Load Balancer is not supported.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Disable",
+                                    "value": "disable"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[greater(steps('jbossEAPSettings').numberOfServerInstances, '1')]"
+                    },
+                    {
                         "name": "jbossEAPUserName",
                         "type": "Microsoft.Compute.UserNameTextBox",
                         "label": "JBoss EAP Admin username",
@@ -352,6 +421,31 @@
                             "regex": "^[a-f0-9A-F]{32,32}$",
                             "validationMessage": "The RHSM Pool ID must be 32 characters long and should contain only alphabets between a to f and numbers."
                         }
+                    },
+                    {
+                        "name": "errInfo",
+                        "type": "Microsoft.Common.InfoBox",
+                        "visible": "[not(equals(length(steps('jbossEAPSettings').identity.userAssignedIdentities),1))]",
+                        "options": {
+                            "icon": "Error",
+                            "text": "Please select exactly one user assigned managed identity.  The identity must have the Contributor or Owner role in the specified subscription.",
+                            "uri": "https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-to-manage-ua-identity-portal"
+                        }
+                    },
+                    {
+                        "name": "identity",
+                        "type": "Microsoft.ManagedIdentity.IdentitySelector",
+                        "label": "Managed Identity Configuration",
+                        "toolTip": {
+                            "userAssignedIdentity": "Add one user assigned identity to enable the JBoss EAP managed domain deployment."
+                        },
+                        "defaultValue": {
+                            "systemAssignedIdentity": "Off"
+                        },
+                        "options": {
+                            "hideSystemAssignedIdentity": true,
+                            "hideUserAssignedIdentity": false
+                        }
                     }
                 ]
             }
@@ -363,7 +457,7 @@
             "adminUsername": "[basics('adminUsername')]",
             "authenticationType": "[basics('authenticationType').authenticationType]",
             "adminPasswordOrSSHKey": "[coalesce(basics('authenticationType').password, basics('authenticationType').sshPublicKey)]",
-
+            "enableLoadBalancer": "[steps('jbossEAPSettings').disableLoadBalancerWhenMultipleServerInst]",
             "vmSize": "[steps('VirtualMachineConfig').vmSize]",
             "numberOfInstances": "[int(steps('VirtualMachineConfig').numberOfInstances)]",
             "virtualNetworkNewOrExisting": "[steps('VirtualMachineConfig').virtualNetwork.newOrExisting]",
@@ -372,7 +466,6 @@
             "subnetName": "[steps('VirtualMachineConfig').virtualNetwork.subnets.subnet1.name]",
             "subnetPrefix": "[steps('VirtualMachineConfig').virtualNetwork.subnets.subnet1.addressPrefix]",
             "virtualNetworkResourceGroupName": "[steps('VirtualMachineConfig').virtualNetwork.resourceGroup]",
-
             "bootDiagnostics": "[steps('VirtualMachineConfig').bootDiagnostics]",
             "bootStorageNewOrExisting": "[steps('VirtualMachineConfig').storageNewOrExisting]",
             "existingStorageAccount": "[coalesce(steps('VirtualMachineConfig').existingStorageAccount,'')]",
@@ -380,12 +473,14 @@
             "storageAccountKind": "[steps('VirtualMachineConfig').storageAccountKind]",
             "bootStorageReplication": "[steps('VirtualMachineConfig').storageAccountType]",
             "storageAccountResourceGroupName": "[if(and(equals(steps('VirtualMachineConfig').bootDiagnostics, 'on'),not(empty(steps('VirtualMachineConfig').existingStorageAccount))), first(skip(split(coalesce(first(filter(steps('VirtualMachineConfig').armApiControl.value, (item) => equals(steps('VirtualMachineConfig').existingStorageAccount,item.name))),parse('{\"id\":\"/////\"}')).id, '/'),4)), resourceGroup().name)]",
-
+            "numberOfServerInstances": "[int(steps('jbossEAPSettings').numberOfServerInstances)]",
+            "operatingMode": "[steps('jbossEAPSettings').operatingMode]",
             "jbossEAPUserName": "[steps('jbossEAPSettings').jbossEAPUserName]",
             "jbossEAPPassword": "[steps('jbossEAPSettings').jbossEAPPassword]",
             "rhsmUserName": "[steps('jbossEAPSettings').rhsmUserName]",
             "rhsmPassword": "[steps('jbossEAPSettings').rhsmPassword]",
-            "rhsmPoolEAP": "[steps('jbossEAPSettings').rhsmPoolEAP]"
+            "rhsmPoolEAP": "[steps('jbossEAPSettings').rhsmPoolEAP]",
+            "identity": "[steps('jbossEAPSettings').identity]"
         }
     }
 }
