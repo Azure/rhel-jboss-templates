@@ -495,6 +495,7 @@
 						"type": "Microsoft.Solutions.ResourceSelector",
                         "visible": "[steps('satelliteServerSettings').connectSatellite]",
 						"label": "Select the Virtual Machine has Red Hat Satellite Server running on it.",
+                        "toolTip": "Select Satellite Server VM",
 						"resourceType": "Microsoft.Compute/virtualMachines",
 						"options": {
 							"filter": {
@@ -510,7 +511,9 @@
                         "label": "The template will need the activation key to register the JBoss EAP host to the Red Hat Satellite server.",
                         "toolTip": "Activation key",
                         "constraints": {
-                            "required": true
+                            "required": true,
+                            "regex": "^.{1,}$",
+                            "validationMessage": "Cannot be empty."
                         }
                     },
                     {
@@ -520,7 +523,9 @@
                         "label": "The template will need the Organization name to register the JBoss EAP host to the Red Hat Satellite server.",
                         "toolTip": "Organization name",
                         "constraints": {
-                            "required": true
+                            "required": true,
+                            "regex": "^.{1,}$",
+                            "validationMessage": "Cannot be empty."
                         }
                     },
                     {
@@ -530,7 +535,9 @@
                         "label": "The template will need the FQDN of Satellite Server virtual machine.",
                         "toolTip": "FQDN of Satellite Sever VM",
                         "constraints": {
-                            "required": true
+                            "required": true,
+                            "regex": "^.{1,}$",
+                            "validationMessage": "Cannot be empty."
                         }
                     }
 				]
