@@ -456,5 +456,15 @@ jobs:
           inlineScript: |
             echo "delete... " ${{ env.standaloneResourceGroup }}
             az group delete --yes --no-wait --verbose --name ${{ env.standaloneResourceGroup }}
+      - name: Checkout rhel-jboss-templates
+        uses: actions/checkout@v2
+        with:
+          repository: ${{env.gitUserName}}/rhel-jboss-templates
+          path: rhel-jboss-templates
+      - name: Delete testing branch
+        run: |
+          cd rhel-jboss-templates
+          git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $domainTestBranchName
+          git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $standaloneTestBranchName
 
               
