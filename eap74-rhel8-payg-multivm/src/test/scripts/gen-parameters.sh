@@ -1,39 +1,45 @@
+#!/bin/bash
+
+#read arguments from stdin
+read parametersPath gitUserName testbranchName location vmName asName adminUsername password enableLb numberOfInstances operatingMode virtualNetworkResourceGroupName bootStorageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword rhsmUserName rhsmPassword rhsmPoolEAP userAssignedManagedIdentity
+ 
+cat <<EOF > ${parametersPath}
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "artifactsLocation": {
-            "value": "https://raw.githubusercontent.com/#gitUserName#/rhel-jboss-templates/#testbranchName#/eap74-rhel8-payg-multivm/"
+            "value": "https://raw.githubusercontent.com/${gitUserName}/rhel-jboss-templates/${testbranchName}/eap74-rhel8-payg-multivm/"
         },
         "location": {
-            "value": "#location#"
+            "value": "${location}"
         },
         "vmName": {
-            "value": "#vmName#"
+            "value": "${vmName}"
         },
         "asName": {
-            "value": "#asName#"
+            "value": "${asName}"
         },
         "adminUsername": {
-            "value": "#adminUsername#"
+            "value": "${adminUsername}"
         },
         "authenticationType": {
             "value": "password"
         },
         "adminPasswordOrSSHKey": {
-            "value": "#password#"
+            "value": "${password}"
         },
         "enableLoadBalancer": {
-            "value": "#enableLb#"
+            "value": "${enableLb}"
         },
         "vmSize": {
             "value": "Standard_DS2_v2"
         },
         "numberOfInstances": {
-            "value": #numberOfInstances#
+            "value": ${numberOfInstances}
         },
         "operatingMode": {
-            "value": "#operatingMode#"
+            "value": "${operatingMode}"
         },
         "numberOfServerInstances": {
             "value": 2
@@ -56,7 +62,7 @@
             "value": "10.0.0.0/24"
         },
         "virtualNetworkResourceGroupName": {
-            "value": "#virtualNetworkResourceGroupName#"
+            "value": "${virtualNetworkResourceGroupName}"
         },
         "bootDiagnostics": {
             "value": "on"
@@ -65,7 +71,7 @@
             "value": "New"
         },
         "bootStorageAccountName": {
-            "value": "#bootStorageAccountName#"
+            "value": "${bootStorageAccountName}"
         },
         "bootStorageReplication": {
             "value": "Standard_LRS"
@@ -74,30 +80,31 @@
             "value": "Storage"
         },
         "storageAccountResourceGroupName": {
-            "value": "#storageAccountResourceGroupName#"
+            "value": "${storageAccountResourceGroupName}"
         },
         "jbossEAPUserName": {
-            "value": "#jbossEAPUserName#"
+            "value": "${jbossEAPUserName}"
         },
         "jbossEAPPassword": {
-            "value": "#jbossEAPPassword#"
+            "value": "${jbossEAPPassword}"
         },
         "rhsmUserName": {
-            "value": "#rhsmUserName#"
+            "value": "${rhsmUserName}"
         },
         "rhsmPassword": {
-            "value": "#rhsmPassword#"
+            "value": "${rhsmPassword}"
         },
         "rhsmPoolEAP": {
-            "value": "#rhsmPoolEAP#"
+            "value": "${rhsmPoolEAP}"
         },
         "identity": {
             "value": {
                 "type": "UserAssigned",
                 "userAssignedIdentities": {
-                    "#userAssignedManagedIdentity#": {}
+                    "${userAssignedManagedIdentity}": {}
                 }
             }
         }
     }
 }
+EOF
