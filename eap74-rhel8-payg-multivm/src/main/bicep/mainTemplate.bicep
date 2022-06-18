@@ -171,6 +171,11 @@ var const_setupDomainSlaveScript = 'jbosseap-setup-slave.sh'
 var const_setupDomainStandaloneScript = 'jbosseap-setup-standalone.sh'
 var const_enableLoadBalancer = bool(enableLoadBalancer == 'enable')
 
+module partnerCenterPid './modules/_pids/_empty.bicep' = {
+  name: 'pid-1879addb-1fa9-4225-8bd2-6d0a1ffc5dc0-partnercenter'
+  params: {}
+}
+
 resource bootStorageName 'Microsoft.Storage/storageAccounts@2021-04-01' = if (bootDiagnosticsCheck) {
   name: bootStorageName_var
   location: location

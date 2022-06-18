@@ -13,7 +13,7 @@
         <version>1.0.16</version>
         <relativePath></relativePath>
     </parent>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
     <name>${project.artifactId}</name>
     <properties>
         <template.validation.tests.directory>${basedir}/../../arm-ttk/arm-ttk</template.validation.tests.directory>
