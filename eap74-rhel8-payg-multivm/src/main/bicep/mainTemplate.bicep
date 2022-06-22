@@ -24,14 +24,14 @@ param jbossEAPUserName string
 param jbossEAPPassword string
 
 @description('User name for Red Hat subscription Manager')
-param rhsmUserName string
+param rhsmUserName string = newGuid()
 
 @description('Password for Red Hat subscription Manager')
 @secure()
-param rhsmPassword string
+param rhsmPassword string = newGuid()
 
 @description('Red Hat Subscription Manager Pool ID (Should have EAP entitlement)')
-param rhsmPoolEAP string
+param rhsmPoolEAP string = newGuid()
 
 @description('The size of the Virtual Machine')
 param vmSize string = 'Standard_DS2_v2'
@@ -132,9 +132,6 @@ param identity object
 @description('Connect to an existing Red Hat Satellite Server.')
 param connectSatellite bool = false
 
-@description('Red Hat Satellite Server VM resource ID.')
-param satelliteVmResourceId string = ''
-
 @description('Red Hat Satellite Server activation key.')
 param satelliteActivationKey string = ''
 
@@ -182,7 +179,7 @@ var scriptFolder = 'scripts'
 var fileFolder = 'bin'
 var fileToBeDownloaded = 'eap-session-replication.war'
 var scriptArgs = '-a "${uri(artifactsLocation, '.')}" -t "${empty(artifactsLocationSasToken) ? '?' : 'artifactsLocationSasToken'}" -p ${fileFolder} -f ${fileToBeDownloaded} -s ${scriptFolder}'
-var const_arguments = '${scriptArgs} ${jbossEAPUserName} ${base64(jbossEAPPassword)} ${rhsmUserName} ${base64(rhsmPassword)} ${rhsmPoolEAP} ${eapStorageAccountName} ${containerName} ${resourceGroup().name} ${numberOfInstances} ${vmName_var} ${numberOfServerInstances} ${operatingMode} ${virtualNetworkNewOrExisting} ${bool('${connectSatellite}')} ${satelliteVmResourceId} ${satelliteActivationKey} ${satelliteOrgName} ${satelliteFqdn}'
+var const_arguments = '${scriptArgs} ${jbossEAPUserName} ${base64(jbossEAPPassword)} ${rhsmUserName} ${base64(rhsmPassword)} ${rhsmPoolEAP} ${eapStorageAccountName} ${containerName} ${resourceGroup().name} ${numberOfInstances} ${vmName_var} ${numberOfServerInstances} ${operatingMode} ${virtualNetworkNewOrExisting} ${connectSatellite} ${base64(satelliteActivationKey)} ${base64(satelliteOrgName)} ${satelliteFqdn}'
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jbosseap-setup-redhat.sh'
 var const_setupDomainMasterScript = 'jbosseap-setup-master.sh'
