@@ -119,3 +119,7 @@ You can use the [Azure Resource Manager Template Toolkit](https://github.com/Azu
 6. To validate one of the offers, run `Test-AzTemplate -TemplatePath [PATH TO OFFER BASE DIRECTORY]`
 
 The [GitHub Actions file in this repo](.github/workflows/validate-templates.yaml) does the same on pull requests or pushes.
+
+## Merge policy
+
+* Squash and merge
