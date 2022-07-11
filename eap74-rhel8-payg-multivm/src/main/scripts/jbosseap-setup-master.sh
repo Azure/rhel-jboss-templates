@@ -101,9 +101,6 @@ SATELLITE_ORG_NAME_BASE64=${20}
 SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
 SATELLITE_VM_FQDN=${21}
 
-echo "all prameters: "
-echo $@
-
 MOUNT_POINT_PATH=/mnt/jbossshare
 HOST_VM_IP=$(hostname -I)
 

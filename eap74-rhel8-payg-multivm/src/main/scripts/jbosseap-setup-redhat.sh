@@ -38,9 +38,6 @@ SATELLITE_ACTIVATION_KEY_BASE64=${25}
 SATELLITE_ORG_NAME_BASE64=${26}
 SATELLITE_VM_FQDN=${27}
 
-echo "all prameters: "
-echo $@
-
 # Get storage account sas token
 STORAGE_ACCESS_KEY=$(az storage account keys list --verbose --account-name "${STORAGE_ACCOUNT_NAME}" --query [0].value --output tsv)
 

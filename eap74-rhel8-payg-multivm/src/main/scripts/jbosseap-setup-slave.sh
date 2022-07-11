@@ -106,9 +106,6 @@ HOST_VM_NAME=$(hostname)
 HOST_VM_NAME_LOWERCASES=$(echo "${HOST_VM_NAME,,}")
 HOST_VM_IP=$(hostname -I)
 
-echo "all prameters: "
-echo $@
-
 MOUNT_POINT_PATH=/mnt/jbossshare
 SCRIPT_PWD=`pwd`
 
