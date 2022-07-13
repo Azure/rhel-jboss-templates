@@ -146,6 +146,11 @@ var scriptFolder = 'bin'
 var fileToBeDownloaded = 'eap-session-replication.war'
 var scriptArgs = '-a \'${uri(artifactsLocation, '.')}\' -t "${artifactsLocationSasToken}" -p ${scriptFolder} -f ${fileToBeDownloaded}'
 
+module partnerCenterPid './modules/_pids/_empty.bicep' = {
+  name: 'pid-39449bba-8b25-4e45-9ba7-3caf62f76e6b-partnercenter'
+  params: {}
+}
+
 resource bootStorageName 'Microsoft.Storage/storageAccounts@2021-04-01' = if (bootDiagnosticsCheck) {
   name: bootStorageName_var
   location: location
