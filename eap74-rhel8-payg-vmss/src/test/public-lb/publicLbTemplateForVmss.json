@@ -30,22 +30,12 @@
                 ],
                 "backendAddressPools": [
                     {
-                        "name": "jbosseap-standalone"
+                        "name": "jbosseap-vmss"
                     }
                 ],
                 "probes": [
                     {
-                        "name": "jbosseap-standalone-9990-probe",
-                        "properties": {
-                            "protocol": "Tcp",
-                            "port": 9990,
-                            "requestPath": null,
-                            "intervalInSeconds": 5,
-                            "numberOfProbes": 2
-                        }
-                    },
-                    {
-                        "name": "jbosseap-standalone-8080-probe",
+                        "name": "jbosseap-vmss-8080-probe",
                         "properties": {
                             "protocol": "Tcp",
                             "port": 8080,
@@ -57,31 +47,7 @@
                 ],
                 "loadBalancingRules": [
                     {
-                        "name": "jbosseap-standalone-9990-rule",
-                        "properties": {
-                            "frontendIPConfiguration": {
-                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', 'jbosseap-lb-pub', 'jbosseap-lb-pub-ip')]"
-                            },
-                            "frontendPort": 9990,
-                            "backendPort": 9990,
-                            "enableFloatingIP": false,
-                            "idleTimeoutInMinutes": 4,
-                            "protocol": "TCP",
-                            "loadDistribution": "Default",
-                            "probe": {
-                                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', 'jbosseap-lb-pub', 'jbosseap-standalone-9990-probe')]"
-                            },
-                            "disableOutboundSnat": true,
-                            "enableTcpReset": false,
-                            "backendAddressPools": [
-                                {
-                                    "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'jbosseap-lb-pub', 'jbosseap-standalone')]"
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "name": "jbosseap-standalone-8080-rule",
+                        "name": "jbosseap-vmss-8080-rule",
                         "properties": {
                             "frontendIPConfiguration": {
                                 "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', 'jbosseap-lb-pub', 'jbosseap-lb-pub-ip')]"
@@ -93,13 +59,13 @@
                             "protocol": "TCP",
                             "loadDistribution": "Default",
                             "probe": {
-                                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', 'jbosseap-lb-pub', 'jbosseap-standalone-8080-probe')]"
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', 'jbosseap-lb-pub', 'jbosseap-vmss-8080-probe')]"
                             },
                             "disableOutboundSnat": true,
                             "enableTcpReset": false,
                             "backendAddressPools": [
                                 {
-                                    "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'jbosseap-lb-pub', 'jbosseap-standalone')]"
+                                    "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'jbosseap-lb-pub', 'jbosseap-vmss')]"
                                 }
                             ]
                         }

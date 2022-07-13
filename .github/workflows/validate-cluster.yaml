@@ -16,7 +16,9 @@ env:
     location: eastus
     domainResourceGroup: jboss-eap-domain-${{ github.run_id }}-${{ github.run_number }}
     standaloneResourceGroup: jboss-eap-standalone-${{ github.run_id }}-${{ github.run_number }}
+    vmssResourceGroup: jboss-eap-vmss-${{ github.run_id }}-${{ github.run_number }}
     vmName: ${{ github.run_id }}${{ github.run_number }}vm
+    vmssName: ${{ github.run_id }}${{ github.run_number }}vmss
     asName: ${{ github.run_id }}${{ github.run_number }}as
     adminUsername: azureadmin
     password: ${{ secrets.VM_PASSWORD }}
@@ -25,6 +27,7 @@ env:
     standaloneOperatingMode: standalone
     domainBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}domainsa
     standaloneBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}standalonesa
+    vmssBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}vmsssa
     jbossEAPUserName: jbossadmin
     jbossEAPPassword: ${{ secrets.JBOSS_EAP_USER_PASSWORD }}
     rhsmUserName: ${{ secrets.RHSM_USERNAME }}
@@ -34,6 +37,7 @@ env:
     gitUserName: ${{ secrets.USER_NAME }}
     domainTestBranchName: domain-cicd-${{ github.run_id }}-${{ github.run_number }}
     standaloneTestBranchName: standalone-cicd-${{ github.run_id }}-${{ github.run_number }}
+    vmssTestBranchName: vmss-cicd-${{ github.run_id }}-${{ github.run_number }}
     gitEmail: ${{ secrets.USER_EMAIL }}
     gitToken: ${{ secrets.GIT_TOKEN }}
     enableLoadBalancer: enable
@@ -275,7 +279,6 @@ jobs:
               run: |
                 publicip=${{steps.query_public_lb_ip.outputs.publicip}}
                 echo "publicip: " $publicip
-                # bash rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/scripts/verify-webapp-deployment.sh <<< "${publicip}"
                 CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
 
                 echo "Verifying Cafe is deployed as expected"
@@ -377,7 +380,7 @@ jobs:
                     az deployment group create \
                     --verbose \
                     --resource-group ${{ env.standaloneResourceGroup }} \
-                    --name jboss-eap-managed-domain \
+                    --name jboss-eap-standalone \
                     --parameters @rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/parameters-test-standalone.json \
                     --template-file rhel-jboss-templates/eap74-rhel8-payg-multivm/mainTemplate.json
             - name: Deploy public load balancer
@@ -422,7 +425,151 @@ jobs:
               run: |
                 publicip=${{steps.query_public_lb_ip.outputs.publicip}}
                 echo "publicip: " $publicip
-                # bash rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/scripts/verify-webapp-deployment.sh <<< "${publicip}"
+                CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
+
+                echo "Verifying eap-session-replication is deployed as expected"
+                curl --verbose http://${publicip}/eap-session-replication/
+                response=$(curl ${CURL_RETRY_PARMS}  --write-out '%{http_code}' --silent --output /dev/null http://${publicip}/eap-session-replication/)
+                echo "$response"
+                if [ "$response" -ne 200 ]; then
+                  echo "eap-session-replication is not accessible"
+                  exit 1
+                else
+                  echo "eap-session-replication is accessible"
+                fi
+                exit 0
+    deploy-vmss:
+        needs: preflight
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout rhel-jboss-templates
+              uses: actions/checkout@v2
+              with:
+                repository: ${{env.gitUserName}}/rhel-jboss-templates
+                path: rhel-jboss-templates
+            - name: Output artifact name and version for Download action
+              id: artifact_file
+              run: |
+                version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap74-rhel8-payg-vmss/pom.xml)
+                artifactName=eap74-rhel8-payg-vmss-$version-arm-assembly
+
+                echo "##[set-output name=artifactName;]${artifactName}"
+            - name: Download artifact for test branch
+              uses: actions/download-artifact@v1
+              with:
+                name: ${{steps.artifact_file.outputs.artifactName}}
+                path: rhel-jboss-templates-dev
+            - name: Create a new branch with built artifact
+              run: |
+                current=`pwd`
+                echo "current=${current}" >> $GITHUB_ENV
+                cd rhel-jboss-templates
+                git config --global core.longpaths true
+                git config --global user.email $gitEmail
+                git config --global user.name $gitUserName
+                echo "create branch $vmssTestBranchName"
+                git checkout -b $vmssTestBranchName
+                rm -r -f $current/rhel-jboss-templates/eap74-rhel8-payg-vmss/src/main/*
+                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap74-rhel8-payg-vmss/
+                git add .
+                git status
+                git commit -m "test branch for pipeline"
+                git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f
+            - name: Prepare parameter file
+              run: |
+                echo "generate parameter file for vmss"
+                bash rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/scripts/gen-parameters.sh \
+                <<< "rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/parameters-test-vmss.json  \
+                ${gitUserName} \
+                ${vmssTestBranchName} \
+                ${location} \
+                ${vmssName} \
+                ${adminUsername} \
+                ${password} \
+                ${vmssResourceGroup} \
+                ${vmssBootStorageAccountName} \
+                ${vmssResourceGroup} \
+                ${numberOfInstances} \
+                ${jbossEAPUserName} \
+                ${jbossEAPPassword} \
+                ${rhsmUserName} \
+                ${rhsmPassword} \
+                ${rhsmPoolEAP}"
+
+            - name: Archive parameters-test-vmss.json
+              uses: actions/upload-artifact@v1
+              if: success()
+              with:
+                name: parameters-test-vmss
+                path: rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/parameters-test-vmss.json
+            - uses: azure/login@v1
+              id: azure-login
+              with:
+                creds: ${{ env.azureCredentials }}
+            - name: Create Resource Group
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    echo "create resource group" ${{ env.vmssResourceGroup }}
+                    az group create --verbose --name ${{ env.vmssResourceGroup }} --location ${{ env.location }}
+            - name: Deploy JBoss EAP VMSS
+              id: deploy-jboss-eap-vmss
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    az deployment group create \
+                    --verbose \
+                    --resource-group ${{ env.vmssResourceGroup }} \
+                    --name jboss-eap-vmss \
+                    --parameters @rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/parameters-test-vmss.json \
+                    --template-file rhel-jboss-templates/eap74-rhel8-payg-vmss/mainTemplate.json
+            - name: Deploy public load balancer
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    az deployment group create \
+                    --verbose \
+                    --resource-group ${{ env.vmssResourceGroup }} \
+                    --name jboss-eap-public-load-balancer \
+                    --template-file rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/public-lb/publicLbTemplateForVmss.json
+            - name: Add VMs to public load balancer backend pool
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    # Configure VM scale set
+                    subId=$(az account show --query id -o tsv)
+
+                    # Add scale set to backend pool
+                    az vmss update -g ${{ env.vmssResourceGroup }} -n jbosseap-serverjbossvm --add virtualMachineProfile.networkProfile.networkInterfaceConfigurations[0].ipConfigurations[0].loadBalancerBackendAddressPools '{"id":"/subscriptions/'${subId}'/resourceGroups/'${{ env.vmssResourceGroup }}'/providers/Microsoft.Network/loadBalancers/jbosseap-lb-pub/backendAddressPools/jbosseap-vmss"}'
+
+                    # Get all instance IDs
+                    NUMBER_OF_INSTANCE=${{ env.numberOfInstances }}
+                    vmssInsIdStr=""
+                    for ((i = 0; i < NUMBER_OF_INSTANCE; i++)); do
+                        vmssInsIdStr="${vmssInsIdStr} ${i}"
+                    done
+                    # Upgrade the instances to make it work
+                    az vmss update-instances --instance-ids ${vmssInsIdStr} -g ${{ env.vmssResourceGroup }} -n jbosseap-serverjbossvm
+                    
+            - name: Query public ip of public load balancer
+              id: query_public_lb_ip
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    # query public ip address of load balancer
+                    publicip=$(az network public-ip show --name jbosseap-lb-pub-ip \
+                                --resource-group $vmssResourceGroup --query ipAddress -o tsv)
+                    
+                    echo "##[set-output name=publicip;]${publicip}"
+            - name: Verify eap-session-replication application
+              run: |
+                publicip=${{steps.query_public_lb_ip.outputs.publicip}}
+                echo "publicip: " $publicip
                 CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
 
                 echo "Verifying eap-session-replication is deployed as expected"
@@ -437,7 +584,7 @@ jobs:
                 fi
                 exit 0
     cleanup:
-      needs: [deploy-jboss-eap-standalone, deploy-jboss-eap-domain]
+      needs: [deploy-jboss-eap-standalone, deploy-jboss-eap-domain, deploy-vmss]
       if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
       runs-on: ubuntu-latest
       steps:
