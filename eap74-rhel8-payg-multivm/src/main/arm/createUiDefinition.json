@@ -121,7 +121,7 @@
                         },
                         "defaultValue": {
                             "name": "VirtualNetwork",
-                            "addressPrefixSize": "/28"
+                            "addressPrefixSize": "/16"
                         },
                         "constraints": {
                             "minAddressPrefixSize": "/28"
@@ -131,7 +131,7 @@
                                 "label": "Subnet",
                                 "defaultValue": {
                                     "name": "Subnet-1",
-                                    "addressPrefixSize": "/29"
+                                    "addressPrefixSize": "/24"
                                 },
                                 "constraints": {
                                     "minAddressPrefixSize": "/29",
@@ -353,8 +353,8 @@
                         "name": "satelliteFqdn",
                         "type": "Microsoft.Common.TextBox",
                         "visible": "[steps('satelliteServerSettings').connectSatellite]",
-                        "label": "The template will need the FQDN of Satellite Server virtual machine.",
-                        "toolTip": "FQDN of Satellite Sever VM",
+                        "label": "The template will need the Fully Qualified Domain Name of Satellite Server virtual machine.",
+                        "toolTip": "Fully Qualified Domain Name of Satellite Sever VM",
                         "constraints": {
                             "required": true,
                             "regex": "^.{1,}$",
