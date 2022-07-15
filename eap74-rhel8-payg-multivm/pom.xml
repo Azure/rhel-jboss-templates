@@ -5,7 +5,9 @@
 
     <groupId>com.rhel.jboss.azure</groupId>
     <artifactId>eap74-rhel8-payg-multivm</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
+
+    <!-- mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests -->
     
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
