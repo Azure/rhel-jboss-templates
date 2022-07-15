@@ -1,4 +1,4 @@
-name: Validate cluster offer (eap74-rhel8-payg-multivm only for now)
+name: Validate eap74-rhel8-payg-multivm offer
 
 on:
   workflow_dispatch:
@@ -14,8 +14,8 @@ env:
     refJavaee: f25ab89a2a8848da39b84e5d6c927f4c4cb47200
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
     location: eastus
-    domainResourceGroup: jboss-eap-domain-${{ github.run_id }}-${{ github.run_number }}
-    standaloneResourceGroup: jboss-eap-standalone-${{ github.run_id }}-${{ github.run_number }}
+    domainResourceGroup: multivm-domain-${{ github.run_id }}-${{ github.run_number }}
+    standaloneResourceGroup: multivm-standalone-${{ github.run_id }}-${{ github.run_number }}
     vmName: ${{ github.run_id }}${{ github.run_number }}vm
     asName: ${{ github.run_id }}${{ github.run_number }}as
     adminUsername: azureadmin
@@ -80,26 +80,26 @@ jobs:
             - name: Generate artifact file name and path
               id: artifact_file
               run: |
-                version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
-                artifactName=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.artifactId}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
-                artifactName=${artifactName}-$version-arm-assembly
-                unzip rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${artifactName}.zip -d rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${artifactName}
+                multivmVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
+                multivmArtifactName=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.artifactId}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
+                multivmArtifactName=${multivmArtifactName}-${multivmVersion}-arm-assembly
+                unzip rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${multivmArtifactName}.zip -d rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${multivmArtifactName}
                 
-                echo "##[set-output name=artifactName;]${artifactName}"
-                echo "##[set-output name=artifactPath;]rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${artifactName}"
-            - name: Archive rhel-jboss-templates offer templates
+                echo "##[set-output name=multivmArtifactName;]${multivmArtifactName}"
+                echo "##[set-output name=multivmArtifactPath;]rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${multivmArtifactName}"
+            - name: Archive rhel-jboss-templates eap74-rhel8-payg-multivm offer templates
               uses: actions/upload-artifact@v3
               if: success()
               with:
-                name: ${{steps.artifact_file.outputs.artifactName}}
-                path: ${{steps.artifact_file.outputs.artifactPath}}
+                name: ${{steps.artifact_file.outputs.multivmArtifactName}}
+                path: ${{steps.artifact_file.outputs.multivmArtifactPath}}
             - name: Setup environment variables
               id: setup-env-variables-based-on-dispatch-event
               run: |
                 isForDemo=${{ github.event.inputs.isForDemo }}
                 echo "##[set-output name=isForDemo;]${isForDemo}"
                 echo "isForDemo=${isForDemo}" >> $GITHUB_ENV
-    deploy-jboss-eap-domain:
+    deploy-multivm-domain:
         needs: preflight
         runs-on: ubuntu-latest
         steps:
@@ -111,14 +111,14 @@ jobs:
             - name: Output artifact name and version for Download action
               id: artifact_file
               run: |
-                version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
-                artifactName=eap74-rhel8-payg-multivm-$version-arm-assembly
+                multivmVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
+                multivmArtifactName=eap74-rhel8-payg-multivm-${multivmVersion}-arm-assembly
 
-                echo "##[set-output name=artifactName;]${artifactName}"
+                echo "##[set-output name=multivmArtifactName;]${multivmArtifactName}"
             - name: Download artifact for deployment
               uses: actions/download-artifact@v1
               with:
-                name: ${{steps.artifact_file.outputs.artifactName}}
+                name: ${{steps.artifact_file.outputs.multivmArtifactName}}
                 path: rhel-jboss-templates-dev
             - name: Create a new branch with built artifact
               run: |
@@ -180,7 +180,7 @@ jobs:
                     echo "create resource group" ${{ env.domainResourceGroup }}
                     az group create --verbose --name ${{ env.domainResourceGroup }} --location ${{ env.location }}
             - name: Deploy JBoss EAP domain cluster
-              id: deploy-jboss-eap-managed-domain
+              id: deploy-multivm-managed-domain
               uses: azure/CLI@v1
               with:
                 azcliversion: ${{ env.azCliVersion }}
@@ -188,7 +188,7 @@ jobs:
                     az deployment group create \
                     --verbose \
                     --resource-group ${{ env.domainResourceGroup }} \
-                    --name jboss-eap-managed-domain \
+                    --name multivm-managed-domain \
                     --parameters @rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/parameters-test-domain.json \
                     --template-file rhel-jboss-templates/eap74-rhel8-payg-multivm/mainTemplate.json
             - name: Deploy public load balancer
@@ -199,7 +199,7 @@ jobs:
                     az deployment group create \
                     --verbose \
                     --resource-group ${{ env.domainResourceGroup }} \
-                    --name jboss-eap-public-load-balancer \
+                    --name multivm-public-load-balancer \
                     --template-file rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/public-lb/publicLbTemplateForDomain.json
             - name: Add VMs to public load balancer backend pool
               uses: azure/CLI@v1
@@ -275,7 +275,6 @@ jobs:
               run: |
                 publicip=${{steps.query_public_lb_ip.outputs.publicip}}
                 echo "publicip: " $publicip
-                # bash rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/scripts/verify-webapp-deployment.sh <<< "${publicip}"
                 CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
 
                 echo "Verifying Cafe is deployed as expected"
@@ -289,7 +288,22 @@ jobs:
                   echo "Cafe is accessible"
                 fi
                 exit 0
-    deploy-jboss-eap-standalone:
+            - name: Delete Resource Group
+              id: delete-resource-group
+              if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
+              run: |
+                  echo "delete... " $domainResourceGroup
+                  az group delete --yes --no-wait --verbose --name $domainResourceGroup
+            - name: Checkout rhel-jboss-templates
+              uses: actions/checkout@v2
+              with:
+                repository: ${{env.gitUserName}}/rhel-jboss-templates
+                path: rhel-jboss-templates
+            - name: Delete testing branch
+              run: |
+                cd rhel-jboss-templates
+                git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $domainTestBranchName        
+    deploy-multivm-standalone:
         needs: preflight
         runs-on: ubuntu-latest
         steps:
@@ -301,14 +315,14 @@ jobs:
             - name: Output artifact name and version for Download action
               id: artifact_file
               run: |
-                version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
-                artifactName=eap74-rhel8-payg-multivm-$version-arm-assembly
+                multivmVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
+                multivmArtifactName=eap74-rhel8-payg-multivm-${multivmVersion}-arm-assembly
 
-                echo "##[set-output name=artifactName;]${artifactName}"
+                echo "##[set-output name=multivmArtifactName;]${multivmArtifactName}"
             - name: Download artifact for test branch
               uses: actions/download-artifact@v1
               with:
-                name: ${{steps.artifact_file.outputs.artifactName}}
+                name: ${{steps.artifact_file.outputs.multivmArtifactName}}
                 path: rhel-jboss-templates-dev
             - name: Create a new branch with built artifact
               run: |
@@ -369,7 +383,7 @@ jobs:
                     echo "create resource group" ${{ env.standaloneResourceGroup }}
                     az group create --verbose --name ${{ env.standaloneResourceGroup }} --location ${{ env.location }}
             - name: Deploy JBoss EAP standalone cluster
-              id: deploy-jboss-eap-managed-domain
+              id: deploy-multivm-managed-standalone
               uses: azure/CLI@v1
               with:
                 azcliversion: ${{ env.azCliVersion }}
@@ -377,7 +391,7 @@ jobs:
                     az deployment group create \
                     --verbose \
                     --resource-group ${{ env.standaloneResourceGroup }} \
-                    --name jboss-eap-managed-domain \
+                    --name multivm-standalone \
                     --parameters @rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/parameters-test-standalone.json \
                     --template-file rhel-jboss-templates/eap74-rhel8-payg-multivm/mainTemplate.json
             - name: Deploy public load balancer
@@ -388,7 +402,7 @@ jobs:
                     az deployment group create \
                     --verbose \
                     --resource-group ${{ env.standaloneResourceGroup }} \
-                    --name jboss-eap-public-load-balancer \
+                    --name multivm-public-load-balancer \
                     --template-file rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/public-lb/publicLbTemplateForStandalone.json
             - name: Add VMs to public load balancer backend pool
               uses: azure/CLI@v1
@@ -422,7 +436,6 @@ jobs:
               run: |
                 publicip=${{steps.query_public_lb_ip.outputs.publicip}}
                 echo "publicip: " $publicip
-                # bash rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/scripts/verify-webapp-deployment.sh <<< "${publicip}"
                 CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
 
                 echo "Verifying eap-session-replication is deployed as expected"
@@ -436,40 +449,18 @@ jobs:
                   echo "eap-session-replication is accessible"
                 fi
                 exit 0
-    cleanup:
-      needs: [deploy-jboss-eap-standalone, deploy-jboss-eap-domain]
-      if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
-      runs-on: ubuntu-latest
-      steps:
-      - uses: azure/login@v1
-        id: azure-login
-        with:
-          creds: ${{ env.azureCredentials }}
-      - name: Delete domain Resource Group
-        id: delete-domain-resource-group
-        uses: azure/CLI@v1
-        with:
-          azcliversion: ${{ env.azCliVersion }}
-          inlineScript: |
-            echo "delete... " ${{ env.domainResourceGroup }}
-            az group delete --yes --no-wait --verbose --name ${{ env.domainResourceGroup }}
-      - name: Delete standalone Resource Group
-        id: delete-standalone-resource-group
-        uses: azure/CLI@v1
-        with:
-          azcliversion: ${{ env.azCliVersion }}
-          inlineScript: |
-            echo "delete... " ${{ env.standaloneResourceGroup }}
-            az group delete --yes --no-wait --verbose --name ${{ env.standaloneResourceGroup }}
-      - name: Checkout rhel-jboss-templates
-        uses: actions/checkout@v2
-        with:
-          repository: ${{env.gitUserName}}/rhel-jboss-templates
-          path: rhel-jboss-templates
-      - name: Delete testing branch
-        run: |
-          cd rhel-jboss-templates
-          git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $domainTestBranchName
-          git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $standaloneTestBranchName
-
-              
+            - name: Delete Resource Group
+              id: delete-resource-group
+              if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
+              run: |
+                  echo "delete... " $standaloneResourceGroup
+                  az group delete --yes --no-wait --verbose --name $standaloneResourceGroup
+            - name: Checkout rhel-jboss-templates
+              uses: actions/checkout@v2
+              with:
+                repository: ${{env.gitUserName}}/rhel-jboss-templates
+                path: rhel-jboss-templates
+            - name: Delete testing branch
+              run: |
+                cd rhel-jboss-templates
+                git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $standaloneTestBranchName        
