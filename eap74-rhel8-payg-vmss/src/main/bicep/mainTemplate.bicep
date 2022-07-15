@@ -147,7 +147,7 @@ var fileToBeDownloaded = 'eap-session-replication.war'
 var scriptArgs = '-a \'${uri(artifactsLocation, '.')}\' -t "${artifactsLocationSasToken}" -p ${scriptFolder} -f ${fileToBeDownloaded}'
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
-  name: 'pid-39449bba-8b25-4e45-9ba7-3caf62f76e6b-partnercenter'
+  name: 'pid-b57c8aee-4919-4cbb-8399-f966d39d4064-partnercenter'
   params: {}
 }
 
