@@ -24,14 +24,14 @@ param jbossEAPUserName string
 param jbossEAPPassword string
 
 @description('User name for Red Hat subscription Manager')
-param rhsmUserName string
+param rhsmUserName string = newGuid()
 
 @description('Password for Red Hat subscription Manager')
 @secure()
-param rhsmPassword string
+param rhsmPassword string = newGuid()
 
 @description('Red Hat Subscription Manager Pool ID (Should have EAP entitlement)')
-param rhsmPoolEAP string
+param rhsmPoolEAP string = newGuid()
 
 @description('The size of the Virtual Machine')
 param vmSize string = 'Standard_DS2_v2'
@@ -50,6 +50,10 @@ param numberOfServerInstances int = 2
 param enableLoadBalancer string = 'enable'
 
 @description('Managed domain mode or standalone mode')
+@allowed([
+  'standalone'
+  'managed-domain'
+])
 param operatingMode string = 'managed-domain'
 
 @description('Name of the availability set')
@@ -125,6 +129,18 @@ param artifactsLocationSasToken string = ''
 @description('An user assigned managed identity. Make sure the identity has permission to create/update/delete/list Azure resources.')
 param identity object
 
+@description('Connect to an existing Red Hat Satellite Server.')
+param connectSatellite bool = false
+
+@description('Red Hat Satellite Server activation key.')
+param satelliteActivationKey string = ''
+
+@description('Red Hat Satellite Server organization name.')
+param satelliteOrgName string = ''
+
+@description('Red Hat Satellite Server VM FQDN name.')
+param satelliteFqdn string = ''
+
 var name_managedDomain = 'managed-domain'
 var name_fileshare = 'jbossshare'
 var containerName = 'eapblobcontainer'
@@ -163,7 +179,7 @@ var scriptFolder = 'scripts'
 var fileFolder = 'bin'
 var fileToBeDownloaded = 'eap-session-replication.war'
 var scriptArgs = '-a "${uri(artifactsLocation, '.')}" -t "${empty(artifactsLocationSasToken) ? '?' : 'artifactsLocationSasToken'}" -p ${fileFolder} -f ${fileToBeDownloaded} -s ${scriptFolder}'
-var const_arguments = '${scriptArgs} ${jbossEAPUserName} ${base64(jbossEAPPassword)} ${rhsmUserName} ${base64(rhsmPassword)} ${rhsmPoolEAP} ${eapStorageAccountName} ${containerName} ${resourceGroup().name} ${numberOfInstances} ${vmName_var} ${numberOfServerInstances} ${operatingMode} ${virtualNetworkNewOrExisting}'
+var const_arguments = '${scriptArgs} ${jbossEAPUserName} ${base64(jbossEAPPassword)} ${rhsmUserName} ${base64(rhsmPassword)} ${rhsmPoolEAP} ${eapStorageAccountName} ${containerName} ${resourceGroup().name} ${numberOfInstances} ${vmName_var} ${numberOfServerInstances} ${operatingMode} ${virtualNetworkNewOrExisting} ${connectSatellite} ${base64(satelliteActivationKey)} ${base64(satelliteOrgName)} ${satelliteFqdn}'
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jbosseap-setup-redhat.sh'
 var const_setupDomainMasterScript = 'jbosseap-setup-master.sh'
@@ -380,31 +396,6 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     eapStorageAccount
   ]
 }
-
-// resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/extensions@2021-03-01' = [for i in range(0, numberOfInstances): {
-//   name: '${vmName_var}${i}/jbosseap-setup-extension-${i}'
-//   location: location
-//   tags: {
-//     QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-//   }
-//   properties: {
-//     publisher: 'Microsoft.Azure.Extensions'
-//     type: 'CustomScript'
-//     typeHandlerVersion: '2.0'
-//     autoUpgradeMinorVersion: true
-//     settings: {
-//       fileUris: [
-//         uri(artifactsLocation, 'scripts/jbosseap-setup-redhat.sh${artifactsLocationSasToken}')
-//       ]
-//     }
-//     protectedSettings: {
-//       commandToExecute: 'sh jbosseap-setup-redhat.sh ${scriptArgs} \'${jbossEAPUserName}\' \'${jbossEAPPassword}\' \'${rhsmUserName}\' \'${rhsmPassword}\' \'${rhsmPoolEAP}\' \'${eapStorageAccountName_var}\' \'${containerName}\' \'${base64(listKeys(eapStorageAccountName.id, '2021-04-01').keys[0].value)}\''
-//     }
-//   }
-//   dependsOn: [
-//     resourceId('Microsoft.Compute/virtualMachines', concat(vmName_var, i))
-//   ]
-// }]
 
 resource loadBalancersName 'Microsoft.Network/loadBalancers@2020-11-01' = if (const_enableLoadBalancer) {
   name: loadBalancersName_var

@@ -96,6 +96,12 @@ STORAGE_ACCESS_KEY=${16}
 STORAGE_ACCOUNT_PRIVATE_IP=${17}
 DOMAIN_CONTROLLER_PRIVATE_IP=${18}
 NUMBER_OF_SERVER_INSTANCE=${19}
+CONNECT_SATELLITE=${20}
+SATELLITE_ACTIVATION_KEY_BASE64=${21}
+SATELLITE_ACTIVATION_KEY=$(echo $SATELLITE_ACTIVATION_KEY_BASE64 | base64 -d)
+SATELLITE_ORG_NAME_BASE64=${22}
+SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
+SATELLITE_VM_FQDN=${23}
 HOST_VM_NAME=$(hostname)
 HOST_VM_NAME_LOWERCASES=$(echo "${HOST_VM_NAME,,}")
 HOST_VM_IP=$(hostname -I)
@@ -126,21 +132,38 @@ sudo iptables-save   | log; flag=${PIPESTATUS[0]}
 ####################### 
 
 echo "Initial JBoss EAP setup" | log; flag=${PIPESTATUS[0]}
-####################### Register to subscription Manager
-echo "Register subscription manager" | log; flag=${PIPESTATUS[0]}
-echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
-subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Manager Registration Failed" >&2 log; exit $flag;  fi
-#######################
 
-sleep 20
+# Satellite server configuration
+echo "CONNECT_SATELLITE: ${CONNECT_SATELLITE}"
+if [[ "${CONNECT_SATELLITE,,}" == "true" ]]; then
+    ####################### Register to satellite server
+    echo "Configuring Satellite server registration" | log; flag=${PIPESTATUS[0]}
 
-####################### Attach EAP Pool
-echo "Subscribing the system to get access to JBoss EAP repos" | log; flag=${PIPESTATUS[0]}
-echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
-subscription-manager attach --pool=${EAP_POOL} | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
-#######################
+    echo "sudo rpm -Uvh http://${SATELLITE_VM_FQDN}/pub/katello-ca-consumer-latest.noarch.rpm" | log; flag=${PIPESTATUS[0]}
+    sudo rpm -Uvh http://${SATELLITE_VM_FQDN}/pub/katello-ca-consumer-latest.noarch.rpm | log; flag=${PIPESTATUS[0]}
+
+    echo "sudo subscription-manager clean" | log; flag=${PIPESTATUS[0]}
+    sudo subscription-manager clean | log; flag=${PIPESTATUS[0]}
+
+    echo "sudo subscription-manager register --org=${SATELLITE_ORG_NAME} --activationkey=${SATELLITE_ACTIVATION_KEY}" | log; flag=${PIPESTATUS[0]}
+    sudo subscription-manager register --org="${SATELLITE_ORG_NAME}" --activationkey="${SATELLITE_ACTIVATION_KEY}" --force | log; flag=${PIPESTATUS[0]}
+else
+    ####################### Register to subscription Manager
+    echo "Register subscription manager" | log; flag=${PIPESTATUS[0]}
+    echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
+    subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Manager Registration Failed" >&2 log; exit $flag;  fi
+    #######################
+
+    sleep 20
+
+    ####################### Attach EAP Pool
+    echo "Subscribing the system to get access to JBoss EAP repos" | log; flag=${PIPESTATUS[0]}
+    echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
+    subscription-manager attach --pool=${EAP_POOL} | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
+    #######################
+fi
 
 ####################### Install openjdk: is it needed? it should be installed with eap7.4
 echo "Install openjdk, curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
