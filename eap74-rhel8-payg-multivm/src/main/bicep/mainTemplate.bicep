@@ -180,16 +180,37 @@ var fileFolder = 'bin'
 var fileToBeDownloaded = 'eap-session-replication.war'
 var scriptArgs = '-a "${uri(artifactsLocation, '.')}" -t "${empty(artifactsLocationSasToken) ? '?' : 'artifactsLocationSasToken'}" -p ${fileFolder} -f ${fileToBeDownloaded} -s ${scriptFolder}'
 var const_arguments = '${scriptArgs} ${jbossEAPUserName} ${base64(jbossEAPPassword)} ${rhsmUserName} ${base64(rhsmPassword)} ${rhsmPoolEAP} ${eapStorageAccountName} ${containerName} ${resourceGroup().name} ${numberOfInstances} ${vmName_var} ${numberOfServerInstances} ${operatingMode} ${virtualNetworkNewOrExisting} ${connectSatellite} ${base64(satelliteActivationKey)} ${base64(satelliteOrgName)} ${satelliteFqdn}'
+var const_arguments_validate_parameters = '${location} ${vmSize} ${numberOfInstances} ${connectSatellite} ${satelliteFqdn}'
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jbosseap-setup-redhat.sh'
 var const_setupDomainMasterScript = 'jbosseap-setup-master.sh'
 var const_setupDomainSlaveScript = 'jbosseap-setup-slave.sh'
 var const_setupDomainStandaloneScript = 'jbosseap-setup-standalone.sh'
+var const_validateParameterScript = 'validate-parameters.sh'
 var const_enableLoadBalancer = bool(enableLoadBalancer == 'enable')
+var const_deploymentName = 'validate-parameters-and-fail-fast'
+var const_azcliVersion = '2.15.0'
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-1879addb-1fa9-4225-8bd2-6d0a1ffc5dc0-partnercenter'
   params: {}
+}
+
+resource validateParameters 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+  name: const_deploymentName
+  location: location
+  kind: 'AzureCLI'
+  identity: identity
+  properties: {
+    azCliVersion: const_azcliVersion
+    arguments: const_arguments_validate_parameters
+    primaryScriptUri: uri(const_scriptLocation, '${const_validateParameterScript}${artifactsLocationSasToken}')
+    cleanupPreference: 'OnExpiration'
+    retentionInterval: 'P1D'
+  }
+  dependsOn: [
+    partnerCenterPid
+  ]
 }
 
 resource bootStorageName 'Microsoft.Storage/storageAccounts@2021-04-01' = if (bootDiagnosticsCheck) {
@@ -202,6 +223,9 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@2021-04-01' = if (bo
   tags: {
     QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
   }
+  dependsOn: [
+    validateParameters
+  ]
 }
 
 resource eapStorageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
@@ -232,6 +256,9 @@ resource eapStorageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   tags: {
     QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
   }
+  dependsOn: [
+    validateParameters
+  ]
 }
 
 resource eapStorageAccountNameContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-06-01' = {
@@ -241,6 +268,7 @@ resource eapStorageAccountNameContainer 'Microsoft.Storage/storageAccounts/blobS
   }
   dependsOn: [
     eapStorageAccount
+    validateParameters
   ]
 }
 
@@ -380,7 +408,7 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   kind: 'AzureCLI'
   identity: identity
   properties: {
-    azCliVersion: '2.15.0'
+    azCliVersion: const_azcliVersion
     arguments: const_arguments
     primaryScriptUri: uri(const_scriptLocation, '${const_setupJBossScript}${artifactsLocationSasToken}')
     supportingScriptUris: [
@@ -505,6 +533,9 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@2021-03-01' = {
     platformUpdateDomainCount: 2
     platformFaultDomainCount: 2
   }
+  dependsOn: [
+    validateParameters
+  ]
 }
 
 output appURL string = const_enableLoadBalancer ? (uri('http://${loadBalancersName.properties.frontendIPConfigurations[0].properties.privateIPAddress}', 'eap-session-replication/')) : ''
