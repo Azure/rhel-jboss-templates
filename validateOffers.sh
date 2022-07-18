@@ -2,7 +2,7 @@
 
 set -e
 
-OFFER_PATH_PATTERN="eap74eap74-rhel8-byos*"
+OFFER_PATH_PATTERN="eap74-rhel8-byos*"
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BASE_DIR="$(readlink -f ${CURR_DIR})"
 

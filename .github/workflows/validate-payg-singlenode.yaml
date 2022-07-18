@@ -28,6 +28,8 @@ env:
     singleTestBranchName: single-cicd-${{ github.run_id }}-${{ github.run_number }}
     gitEmail: ${{ secrets.USER_EMAIL }}
     gitToken: ${{ secrets.GIT_TOKEN }}
+    testPubIpName: testPubIp
+    nsgName: jbosseap-nsg
 
 jobs:
     preflight:
@@ -175,50 +177,50 @@ jobs:
                     --name single \
                     --parameters @rhel-jboss-templates/eap74-rhel8-payg/src/test/parameters-test-single.json \
                     --template-file rhel-jboss-templates/eap74-rhel8-payg/mainTemplate.json
-            # - name: Deploy public load balancer
-            #   uses: azure/CLI@v1
-            #   with:
-            #     azcliversion: ${{ env.azCliVersion }}
-            #     inlineScript: |
-            #         az deployment group create \
-            #         --verbose \
-            #         --resource-group ${{ env.singleResourceGroup }} \
-            #         --name single-public-load-balancer \
-            #         --template-file rhel-jboss-templates/eap74-rhel8-payg/src/test/public-lb/publicLbTemplateForsingle.json
-            # - name: Add VMs to public load balancer backend pool
-            #   uses: azure/CLI@v1
-            #   with:
-            #     azcliversion: ${{ env.azCliVersion }}
-            #     inlineScript: |
-                    
-            # - name: Query public ip of public load balancer
-            #   id: query_public_lb_ip
-            #   uses: azure/CLI@v1
-            #   with:
-            #     azcliversion: ${{ env.azCliVersion }}
-            #     inlineScript: |
-            #         # query public ip address of load balancer
-            #         publicip=$(az network public-ip show --name jbosseap-lb-pub-ip \
-            #                     --resource-group $singleResourceGroup --query ipAddress -o tsv)
-                    
-            #         echo "##[set-output name=publicip;]${publicip}"
-            # - name: Verify eap-session-replication application
-            #   run: |
-            #     publicip=${{steps.query_public_lb_ip.outputs.publicip}}
-            #     echo "publicip: " $publicip
-            #     CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
+            - name: Setup public IP
+              id: setup_public_lb
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    # Create NSG rule to allow inbound traffic to port 9990
+                    az network nsg rule create -g ${{ env.singleResourceGroup }} --nsg-name ${{ env.nsgName }} -n rule_9990 --priority 100 \
+                      --source-address-prefixes '*' --source-port-ranges '*' \
+                      --destination-address-prefixes '*' --destination-port-ranges 9990 --access Allow \
+                      --protocol '*' --description "allow 9990"
+                    # Create public IP
+                    az network public-ip create --name ${{ env.testPubIpName }} --resource-group ${{ env.singleResourceGroup }}
+                    # Query VM NIC name
+                    nicId=$(az vm nic list --vm-name $vmName --resource-group $singleResourceGroup --query [0].id -o tsv)
+                    nicName=$(az vm nic show --vm-name $vmName --resource-group $singleResourceGroup --nic $nicId --query name -o tsv)
+                    # Query VM NIC ipconfig name
+                    configName=$(az network nic ip-config list --nic-name $nicName --resource-group $singleResourceGroup --query [0].name -o tsv)
+                    # Update configuration, associate the public IP to the VM
+                    az network nic ip-config update \
+                      --name $configName \
+                      --nic-name $nicName \
+                      --resource-group ${{ env.singleResourceGroup }} \
+                      --public-ip-address ${{ env.testPubIpName }}
+                    # Query public IP for later use
+                    publicip=$(az network public-ip show --name ${{ env.testPubIpName }} --resource-group $singleResourceGroup --query ipAddress -o tsv)
+                    echo "##[set-output name=publicip;]${publicip}"
+            - name: Verify console is accessible
+              run: |
+                publicip=${{steps.setup_public_lb.outputs.publicip}}
+                echo "publicip: " $publicip
+                CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
 
-            #     echo "Verifying eap-session-replication is deployed as expected"
-            #     curl --verbose http://${publicip}/eap-session-replication/
-            #     response=$(curl ${CURL_RETRY_PARMS}  --write-out '%{http_code}' --silent --output /dev/null http://${publicip}/eap-session-replication/)
-            #     echo "$response"
-            #     if [ "$response" -ne 200 ]; then
-            #       echo "eap-session-replication is not accessible"
-            #       exit 1
-            #     else
-            #       echo "eap-session-replication is accessible"
-            #     fi
-            #     exit 0
+                echo "Verifying console is accessible"
+                curl --verbose http://${publicip}:9990/console/index.html
+                response=$(curl ${CURL_RETRY_PARMS}  --write-out '%{http_code}' --silent --output /dev/null http://${publicip}:9990/console/index.html)
+                echo "$response"
+                if [ "$response" -ne 200 ]; then
+                  echo "console is not accessible"
+                  exit 1
+                else
+                  echo "console is accessible"
+                fi
+                exit 0
             - name: Delete Resource Group
               id: delete-resource-group
               if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
