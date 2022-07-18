@@ -1,0 +1,237 @@
+name: Validate eap74-rhel8-byos offer
+
+on:
+  workflow_dispatch:
+    inputs:
+      isForDemo:
+        description: 'If set to true, resources will not be deleted'
+        required: true
+        default: 'false'
+
+env:
+    azCliVersion: 2.30.0
+    refArmttk: 90e8e5cde786cd8b0c358c847ee9d0203e11e726
+    refJavaee: f25ab89a2a8848da39b84e5d6c927f4c4cb47200
+    azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
+    location: eastus
+    singleResourceGroup: single-${{ github.run_id }}-${{ github.run_number }}
+    vmName: ${{ github.run_id }}${{ github.run_number }}vm
+    adminUsername: azureadmin
+    password: ${{ secrets.VM_PASSWORD }}
+    singleStorageAccountName: ${{ github.run_id }}${{ github.run_number }}singlesa
+    jbossEAPUserName: jbossadmin
+    jbossEAPPassword: ${{ secrets.JBOSS_EAP_USER_PASSWORD }}
+    rhsmUserName: ${{ secrets.RHSM_USERNAME }}
+    rhsmPassword: ${{ secrets.RHSM_PASSWORD }}
+    rhsmPoolEAP: ${{ secrets.RHSM_POOL }}
+    rhsmPoolRHEL: ${{ secrets.RHSM_POOL_FOR_RHEL }}
+    gitUserName: ${{ secrets.USER_NAME }}
+    singleTestBranchName: single-cicd-${{ github.run_id }}-${{ github.run_number }}
+    gitEmail: ${{ secrets.USER_EMAIL }}
+    gitToken: ${{ secrets.GIT_TOKEN }}
+    testPubIpName: testPubIp
+    nsgName: jbosseap-nsg
+
+jobs:
+    preflight:
+        outputs:
+          isForDemo: ${{ steps.setup-env-variables-based-on-dispatch-event.outputs.isForDemo }}
+        runs-on: ubuntu-latest
+        steps:
+            - name: Set up JDK 1.8
+              uses: actions/setup-java@v1
+              with:
+                java-version: 1.8
+            - name: Set up bicep
+              run: |
+                curl -Lo bicep https://github.com/Azure/bicep/releases/download/v0.4.613/bicep-linux-x64
+                chmod +x ./bicep
+                sudo mv ./bicep /usr/local/bin/bicep
+                bicep --version
+            - name: Checkout azure-javaee-iaas
+              uses: actions/checkout@v2
+              with:
+                repository: Azure/azure-javaee-iaas
+                path: azure-javaee-iaas
+                ref: ${{ env.refJavaee }}
+            - name: Checkout arm-ttk
+              uses: actions/checkout@v2
+              with:
+                repository: Azure/arm-ttk
+                path: arm-ttk
+                ref: ${{ env.refArmttk }}
+            - name: Build azure-javaee-iaas
+              run: mvn -DskipTests clean install --file azure-javaee-iaas/pom.xml
+            - name: Checkout rhel-jboss-templates
+              uses: actions/checkout@v2
+              with:
+                repository: ${{env.gitUserName}}/rhel-jboss-templates
+                path: rhel-jboss-templates
+            - name: Build and test rhel-jboss-templates
+              run: |
+                mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests --file rhel-jboss-templates/eap74-rhel8-byos/pom.xml
+            - name: Generate artifact file name and path
+              id: artifact_file
+              run: |
+                singleVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-byos/pom.xml)
+                singleArtifactName=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.artifactId}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-byos/pom.xml)
+                singleArtifactName=${singleArtifactName}-${singleVersion}-arm-assembly
+                unzip rhel-jboss-templates/eap74-rhel8-byos/target/${singleArtifactName}.zip -d rhel-jboss-templates/eap74-rhel8-byos/target/${singleArtifactName}
+                
+                echo "##[set-output name=singleArtifactName;]${singleArtifactName}"
+                echo "##[set-output name=singleArtifactPath;]rhel-jboss-templates/eap74-rhel8-byos/target/${singleArtifactName}"
+            - name: Archive rhel-jboss-templates eap74-rhel8-byos-single offer templates
+              uses: actions/upload-artifact@v3
+              if: success()
+              with:
+                name: ${{steps.artifact_file.outputs.singleArtifactName}}
+                path: ${{steps.artifact_file.outputs.singleArtifactPath}}
+            - name: Setup environment variables
+              id: setup-env-variables-based-on-dispatch-event
+              run: |
+                isForDemo=${{ github.event.inputs.isForDemo }}
+                echo "##[set-output name=isForDemo;]${isForDemo}"
+                echo "isForDemo=${isForDemo}" >> $GITHUB_ENV
+    deploy-single:
+        needs: preflight
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout rhel-jboss-templates
+              uses: actions/checkout@v2
+              with:
+                repository: ${{env.gitUserName}}/rhel-jboss-templates
+                path: rhel-jboss-templates
+            - name: Output artifact name and version for Download action
+              id: artifact_file
+              run: |
+                singleVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap74-rhel8-byos/pom.xml)
+                singleArtifactName=eap74-rhel8-byos-${singleVersion}-arm-assembly
+                echo "##[set-output name=singleArtifactName;]${singleArtifactName}"
+            - name: Download artifact for test branch
+              uses: actions/download-artifact@v1
+              with:
+                name: ${{steps.artifact_file.outputs.singleArtifactName}}
+                path: rhel-jboss-templates-dev
+            - name: Create a new branch with built artifact
+              run: |
+                current=`pwd`
+                echo "current=${current}" >> $GITHUB_ENV
+                cd rhel-jboss-templates
+                git config --global core.longpaths true
+                git config --global user.email $gitEmail
+                git config --global user.name $gitUserName
+                echo "create branch $singleTestBranchName"
+                git checkout -b $singleTestBranchName
+                rm -r -f $current/rhel-jboss-templates/eap74-rhel8-byos/src/main/*
+                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap74-rhel8-byos/
+                git add .
+                git status
+                git commit -m "test branch for pipeline"
+                git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f
+            - name: Prepare parameter file
+              run: |
+                echo "generate parameter file for single"
+                bash rhel-jboss-templates/eap74-rhel8-byos/src/test/scripts/gen-parameters.sh \
+                <<< "rhel-jboss-templates/eap74-rhel8-byos/src/test/parameters-test-single.json  \
+                ${gitUserName} \
+                ${singleTestBranchName} \
+                ${location} \
+                ${vmName} \
+                ${adminUsername} \
+                ${password} \
+                ${singleResourceGroup} \
+                ${singleStorageAccountName} \
+                ${singleResourceGroup} \
+                ${jbossEAPUserName} \
+                ${jbossEAPPassword} \
+                ${rhsmUserName} \
+                ${rhsmPassword} \
+                ${rhsmPoolEAP} \
+                ${rhsmPoolRHEL}"
+            - name: Archive parameters-test-single.json
+              uses: actions/upload-artifact@v1
+              if: success()
+              with:
+                name: parameters-test-single
+                path: rhel-jboss-templates/eap74-rhel8-byos/src/test/parameters-test-single.json
+            - uses: azure/login@v1
+              id: azure-login
+              with:
+                creds: ${{ env.azureCredentials }}
+            - name: Create Resource Group
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    echo "create resource group" ${{ env.singleResourceGroup }}
+                    az group create --verbose --name ${{ env.singleResourceGroup }} --location ${{ env.location }}
+            - name: Deploy JBoss EAP single
+              id: deploy-single
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    az deployment group create \
+                    --verbose \
+                    --resource-group ${{ env.singleResourceGroup }} \
+                    --name single \
+                    --parameters @rhel-jboss-templates/eap74-rhel8-byos/src/test/parameters-test-single.json \
+                    --template-file rhel-jboss-templates/eap74-rhel8-byos/mainTemplate.json
+            - name: Setup public IP
+              id: setup_public_lb
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    # Create NSG rule to allow inbound traffic to port 9990
+                    az network nsg rule create -g ${{ env.singleResourceGroup }} --nsg-name ${{ env.nsgName }} -n rule_9990 --priority 100 \
+                      --source-address-prefixes '*' --source-port-ranges '*' \
+                      --destination-address-prefixes '*' --destination-port-ranges 9990 --access Allow \
+                      --protocol '*' --description "allow 9990"
+                    # Create public IP
+                    az network public-ip create --name ${{ env.testPubIpName }} --resource-group ${{ env.singleResourceGroup }}
+                    # Query VM NIC name
+                    nicId=$(az vm nic list --vm-name $vmName --resource-group $singleResourceGroup --query [0].id -o tsv)
+                    nicName=$(az vm nic show --vm-name $vmName --resource-group $singleResourceGroup --nic $nicId --query name -o tsv)
+                    # Query VM NIC ipconfig name
+                    configName=$(az network nic ip-config list --nic-name $nicName --resource-group $singleResourceGroup --query [0].name -o tsv)
+                    # Update configuration, associate the public IP to the VM
+                    az network nic ip-config update \
+                      --name $configName \
+                      --nic-name $nicName \
+                      --resource-group ${{ env.singleResourceGroup }} \
+                      --public-ip-address ${{ env.testPubIpName }}
+                    # Query public IP for later use
+                    publicip=$(az network public-ip show --name ${{ env.testPubIpName }} --resource-group $singleResourceGroup --query ipAddress -o tsv)
+                    echo "##[set-output name=publicip;]${publicip}"
+            - name: Verify console is accessible
+              run: |
+                publicip=${{steps.setup_public_lb.outputs.publicip}}
+                echo "publicip: " $publicip
+                CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
+                echo "Verifying console is accessible"
+                curl --verbose http://${publicip}:9990/console/index.html
+                response=$(curl ${CURL_RETRY_PARMS}  --write-out '%{http_code}' --silent --output /dev/null http://${publicip}:9990/console/index.html)
+                echo "$response"
+                if [ "$response" -ne 200 ]; then
+                  echo "console is not accessible"
+                  exit 1
+                else
+                  echo "console is accessible"
+                fi
+                exit 0
+            - name: Delete Resource Group
+              id: delete-resource-group
+              if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
+              run: |
+                  echo "delete... " $singleResourceGroup
+                  az group delete --yes --no-wait --verbose --name $singleResourceGroup
+            - name: Checkout rhel-jboss-templates
+              uses: actions/checkout@v2
+              with:
+                repository: ${{env.gitUserName}}/rhel-jboss-templates
+                path: rhel-jboss-templates
+            - name: Delete testing branch
+              run: |
+                cd rhel-jboss-templates
+                git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $singleTestBranchName
