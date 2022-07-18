@@ -18,7 +18,7 @@ env:
     vmName: ${{ github.run_id }}${{ github.run_number }}vm
     adminUsername: azureadmin
     password: ${{ secrets.VM_PASSWORD }}
-    singleBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}singlesa
+    singleStorageAccountName: ${{ github.run_id }}${{ github.run_number }}singlesa
     jbossEAPUserName: jbossadmin
     jbossEAPPassword: ${{ secrets.JBOSS_EAP_USER_PASSWORD }}
     rhsmUserName: ${{ secrets.RHSM_USERNAME }}
@@ -134,10 +134,11 @@ jobs:
                 ${gitUserName} \
                 ${singleTestBranchName} \
                 ${location} \
+                ${vmName} \
                 ${adminUsername} \
                 ${password} \
                 ${singleResourceGroup} \
-                ${singleBootStorageAccountName} \
+                ${singleStorageAccountName} \
                 ${singleResourceGroup} \
                 ${jbossEAPUserName} \
                 ${jbossEAPPassword} \

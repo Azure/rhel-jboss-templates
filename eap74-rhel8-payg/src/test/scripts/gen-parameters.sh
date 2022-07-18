@@ -10,7 +10,7 @@ cat <<EOF > ${parametersPath}
     "contentVersion": "1.0.0.0",
     "parameters": {
         "artifactsLocation": {
-            "value": "https://raw.githubusercontent.com/${gitUserName}/rhel-jboss-templates/${testbranchName}/eap74-rhel8-payg-vmss/"
+            "value": "https://raw.githubusercontent.com/${gitUserName}/rhel-jboss-templates/${testbranchName}/eap74-rhel8-payg/"
         },
         "location": {
             "value": "${location}"
@@ -53,7 +53,7 @@ cat <<EOF > ${parametersPath}
         "bootDiagnostics": {
             "value": "on"
         },
-        "bootStorageNewOrExisting": {
+        "storageNewOrExisting": {
             "value": "New"
         },
         "storageAccountName": {
@@ -61,9 +61,6 @@ cat <<EOF > ${parametersPath}
         },
         "storageAccountKind": {
             "value": "Storage"
-        },
-        "bootStorageReplication": {
-            "value": "Standard_LRS"
         },
         "storageAccountResourceGroupName": {
             "value": "${storageAccountResourceGroupName}"
