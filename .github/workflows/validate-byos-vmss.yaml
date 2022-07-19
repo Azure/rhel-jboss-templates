@@ -165,6 +165,11 @@ jobs:
               id: azure-login
               with:
                 creds: ${{ env.azureCredentials }}
+            - name: Accept Image Terms
+              id: accept-terms
+              run: |
+                  echo "accept terms for VM image"
+                  az vm image accept-terms --urn redhat:rhel-byos:rhel-lvm84:latest
             - name: Create Resource Group
               uses: azure/CLI@v1
               with:
