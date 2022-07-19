@@ -114,7 +114,7 @@ var linuxConfiguration = {
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
-  name: 'pid-e9412731-57c2-4e6a-9825-061ad30337c0-partnercenter'
+  name: 'pid-1879addb-1fa9-4225-8bd2-6d0a1ffc5dc0-partnercenter'
   params: {}
 }
 
@@ -240,7 +240,7 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
       ]
     }
     protectedSettings: {
-      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${jbossEAPPassword}\' \'${rhsmUserName}\' \'${rhsmPassword}\' \'${rhsmPoolEAP}\' \'${rhsmPoolRHEL}\''
+      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${rhsmPoolRHEL}\''
     }
   }
 }
