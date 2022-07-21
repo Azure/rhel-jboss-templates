@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+#read arguments from stdin
+read parametersPath gitUserName testbranchName location vmName adminUsername password virtualNetworkResourceGroupName storageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword rhsmUserName rhsmPassword rhsmPoolEAP
+ 
+cat <<EOF > ${parametersPath}
+{
+    "\$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "artifactsLocation": {
+            "value": "https://raw.githubusercontent.com/${gitUserName}/rhel-jboss-templates/${testbranchName}/eap74-rhel8-payg/"
+        },
+        "location": {
+            "value": "${location}"
+        },
+        "vmName": {
+            "value": "${vmName}"
+        },
+        "adminUsername": {
+            "value": "${adminUsername}"
+        },
+        "authenticationType": {
+            "value": "password"
+        },
+        "adminPasswordOrSSHKey": {
+            "value": "${password}"
+        },
+        "vmSize": {
+            "value": "Standard_DS2_v2"
+        },
+        "virtualNetworkNewOrExisting": {
+            "value": "new"
+        },
+        "virtualNetworkName": {
+            "value": "VirtualNetwork"
+        },
+        "addressPrefixes": {
+            "value": [
+                "10.0.0.0/16"
+            ]
+        },
+        "subnetName": {
+            "value": "Subnet-1"
+        },
+        "subnetPrefix": {
+            "value": "10.0.0.0/24"
+        },
+        "virtualNetworkResourceGroupName": {
+            "value": "${virtualNetworkResourceGroupName}"
+        },
+        "bootDiagnostics": {
+            "value": "on"
+        },
+        "storageNewOrExisting": {
+            "value": "New"
+        },
+        "storageAccountName": {
+            "value": "${storageAccountName}"
+        },
+        "storageAccountKind": {
+            "value": "Storage"
+        },
+        "storageAccountResourceGroupName": {
+            "value": "${storageAccountResourceGroupName}"
+        },
+        "jbossEAPUserName": {
+            "value": "${jbossEAPUserName}"
+        },
+        "jbossEAPPassword": {
+            "value": "${jbossEAPPassword}"
+        },
+        "rhsmUserName": {
+            "value": "${rhsmUserName}"
+        },
+        "rhsmPassword": {
+            "value": "${rhsmPassword}"
+        },
+        "rhsmPoolEAP": {
+            "value": "${rhsmPoolEAP}"
+        }
+    }
+}
+EOF

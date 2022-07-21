@@ -22,6 +22,7 @@ LOCATION=
 RHSM_PASSWORD=
 RHSM_USERNAME=
 RHSM_POOL=
+RHSM_POOL_FOR_RHEL=
 OWNER_REPONAME=
 VM_PASSWORD=
 JBOSS_EAP_USER_PASSWORD=
@@ -79,6 +80,11 @@ fi
 # get RHSM_POOL if not set at the beginning of this file
 if [ "$RHSM_POOL" == '' ] ; then
     read -r -p "Enter RHSM pool secret: " RHSM_POOL
+fi
+
+# get RHSM_POOL_FOR_RHEL if not set at the beginning of this file
+if [ "$RHSM_POOL_FOR_RHEL" == '' ] ; then
+    read -r -p "Enter RHSM pool secret for RHEL: " RHSM_POOL_FOR_RHEL
 fi
 
 # get JBOSS_EAP_USER_PASSWORD if not set at the beginning of this file
@@ -209,6 +215,7 @@ if $USE_GITHUB_CLI; then
     gh ${GH_FLAGS} secret set RHSM_USERNAME -b"${RHSM_USERNAME}"
     gh ${GH_FLAGS} secret set RHSM_PASSWORD -b"${RHSM_PASSWORD}"
     gh ${GH_FLAGS} secret set RHSM_POOL -b"${RHSM_POOL}"
+    gh ${GH_FLAGS} secret set RHSM_POOL_FOR_RHEL -b"${RHSM_POOL_FOR_RHEL}"
     gh ${GH_FLAGS} secret set USER_EMAIL -b"${USER_EMAIL}"
     gh ${GH_FLAGS} secret set USER_NAME -b"${USER_NAME}"
     gh ${GH_FLAGS} secret set GIT_TOKEN -b"${GIT_TOKEN}"
@@ -246,6 +253,8 @@ if [ $USE_GITHUB_CLI == false ]; then
   msg "${GREEN}${USER_ASSIGNED_MANAGED_IDENTITY_ID}"
   msg "${YELLOW}\"RHSM_POOL\""
   msg "${GREEN}${RHSM_POOL}"
+  msg "${YELLOW}\"RHSM_POOL_FOR_RHEL\""
+  msg "${GREEN}${RHSM_POOL_FOR_RHEL}"
   msg "${YELLOW}\"DISAMBIG_PREFIX\""
   msg "${GREEN}${DISAMBIG_PREFIX}"
   msg "${YELLOW}\"USER_EMAIL\""

@@ -80,6 +80,7 @@ if $USE_GITHUB_CLI; then
     gh ${GH_FLAGS} secret remove RHSM_USERNAME
     gh ${GH_FLAGS} secret remove RHSM_PASSWORD
     gh ${GH_FLAGS} secret remove RHSM_POOL
+    gh ${GH_FLAGS} secret remove RHSM_POOL_FOR_RHEL
     gh ${GH_FLAGS} secret remove USER_EMAIL
     gh ${GH_FLAGS} secret remove USER_NAME
     gh ${GH_FLAGS} secret remove GIT_TOKEN
@@ -101,6 +102,7 @@ if [ $USE_GITHUB_CLI == false ]; then
   msg "${YELLOW}\"RHSM_USERNAME\""
   msg "${YELLOW}\"RHSM_PASSWORD\""
   msg "${YELLOW}\"RHSM_POOL\""
+  msg "${YELLOW}\"RHSM_POOL_FOR_RHEL\""
   msg "${YELLOW}\"USER_EMAIL\""
   msg "${YELLOW}\"USER_NAME\""
   msg "${YELLOW}\"GIT_TOKEN\""
