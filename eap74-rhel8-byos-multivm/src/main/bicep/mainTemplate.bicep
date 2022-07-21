@@ -24,17 +24,17 @@ param jbossEAPUserName string
 param jbossEAPPassword string
 
 @description('User name for Red Hat subscription Manager')
-param rhsmUserName string
+param rhsmUserName string = newGuid()
 
 @description('Password for Red Hat subscription Manager')
 @secure()
-param rhsmPassword string
+param rhsmPassword string = newGuid()
 
 @description('Red Hat Subscription Manager Pool ID (Should have EAP entitlement)')
-param rhsmPoolEAP string
+param rhsmPoolEAP string = newGuid()
 
 @description('Red Hat Subscription Manager Pool ID (Should have RHEL entitlement). Mandartory if you select the BYOS RHEL OS License Type')
-param rhsmPoolRHEL string = ''
+param rhsmPoolRHEL string = newGuid()
 
 @description('The size of the Virtual Machine')
 param vmSize string = 'Standard_DS2_v2'
@@ -324,11 +324,11 @@ resource nicName 'Microsoft.Network/networkInterfaces@2020-11-01' = [for i in ra
           subnet: {
             id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
           }
-          loadBalancerBackendAddressPools: [
+          loadBalancerBackendAddressPools: const_enableLoadBalancer ? [
             {
               id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancersName_var, backendPoolName)
             }
-          ]
+          ] : json('null')
         }
       }
     ]
@@ -406,7 +406,7 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   ]
 }
 
-resource loadBalancersName 'Microsoft.Network/loadBalancers@2020-11-01' = {
+resource loadBalancersName 'Microsoft.Network/loadBalancers@2020-11-01' = if (const_enableLoadBalancer) {
   name: loadBalancersName_var
   location: location
   sku: {
@@ -516,4 +516,4 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@2021-03-01' = {
   }
 }
 
-output appURL string = uri('http://${loadBalancersName.properties.frontendIPConfigurations[0].properties.privateIPAddress}', 'eap-session-replication/')
+output appURL string = const_enableLoadBalancer ? (uri('http://${loadBalancersName.properties.frontendIPConfigurations[0].properties.privateIPAddress}', 'eap-session-replication/')) : ''
