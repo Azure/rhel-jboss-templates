@@ -13,7 +13,7 @@ openport() {
 }
 
 echo "Red Hat JBoss EAP Cluster Intallation Start " | log; flag=${PIPESTATUS[0]}
-/bin/date +%H:%M:%S | log; flag=${PIPESTATUS[0]}
+/bin/date +%H:%M:%S  | log; flag=${PIPESTATUS[0]}
 
 export EAP_LAUNCH_CONFIG="/opt/rh/eap7/root/usr/share/wildfly/bin/standalone.conf"
 echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"' >> ~/.bash_profile
@@ -42,24 +42,15 @@ done
 fileUrl="$artifactsLocation$pathToFile/$fileToDownload$token"
 
 JBOSS_EAP_USER=$9
-JBOSS_EAP_PASSWORD_BASE64=${10}
-JBOSS_EAP_PASSWORD=$(echo $JBOSS_EAP_PASSWORD_BASE64 | base64 -d)
+JBOSS_EAP_PASSWORD=${10}
 RHSM_USER=${11}
-RHSM_PASSWORD_BASE64=${12}
-RHSM_PASSWORD=$(echo $RHSM_PASSWORD_BASE64 | base64 -d)
+RHSM_PASSWORD=${12}
 EAP_POOL=${13}
 STORAGE_ACCOUNT_NAME=${14}
 CONTAINER_NAME=${15}
-STORAGE_ACCESS_KEY=${16}
-CONNECT_SATELLITE=${17}
-SATELLITE_ACTIVATION_KEY_BASE64=${18}
-SATELLITE_ACTIVATION_KEY=$(echo $SATELLITE_ACTIVATION_KEY_BASE64 | base64 -d)
-SATELLITE_ORG_NAME_BASE64=${19}
-SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
-SATELLITE_VM_FQDN=${20}
+STORAGE_ACCESS_KEY=$(echo "${16}" | openssl enc -d -base64)
+RHEL_POOL=${17} # kept at the end because it is possible that customer won't provide this.
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
-HOST_VM_NAME=$(hostname)
-HOST_VM_NAME_LOWERCASES=$(echo "${HOST_VM_NAME,,}")
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | log; flag=${PIPESTATUS[0]}
 echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.4-on-RHEL8.4" | log; flag=${PIPESTATUS[0]}
@@ -88,43 +79,40 @@ sudo iptables-save   | log; flag=${PIPESTATUS[0]}
 ####################### 
 
 echo "Initial JBoss EAP setup" | log; flag=${PIPESTATUS[0]}
+####################### Register to subscription Manager
+echo "Register subscription manager" | log; flag=${PIPESTATUS[0]}
+echo "subscription-manager register --username $RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
+subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
+if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Manager Registration Failed" >&2 log; exit $flag;  fi
+#######################
 
-# Satellite server configuration
-if [[ "${CONNECT_SATELLITE,,}" == "true" ]]; then
-    ####################### Register to satellite server
-    echo "Configuring Satellite server registration" | log; flag=${PIPESTATUS[0]}
+sleep 20
 
-    echo "sudo rpm -Uvh http://${SATELLITE_VM_FQDN}/pub/katello-ca-consumer-latest.noarch.rpm" | log; flag=${PIPESTATUS[0]}
-    sudo rpm -Uvh http://${SATELLITE_VM_FQDN}/pub/katello-ca-consumer-latest.noarch.rpm | log; flag=${PIPESTATUS[0]}
+####################### Attach EAP Pool
+echo "Subscribing the system to get access to JBoss EAP repos" | log; flag=${PIPESTATUS[0]}
+echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
+subscription-manager attach --pool=${EAP_POOL}  | log; flag=${PIPESTATUS[0]}
+if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
+#######################
 
-    echo "sudo subscription-manager clean" | log; flag=${PIPESTATUS[0]}
-    sudo subscription-manager clean | log; flag=${PIPESTATUS[0]}
-
-    echo "sudo subscription-manager register --org=${SATELLITE_ORG_NAME} --activationkey=${SATELLITE_ACTIVATION_KEY}" | log; flag=${PIPESTATUS[0]}
-    sudo subscription-manager register --org="${SATELLITE_ORG_NAME}" --activationkey="${SATELLITE_ACTIVATION_KEY}" --force | log; flag=${PIPESTATUS[0]}
+####################### Attach RHEL Pool
+echo "Attaching Pool ID for RHEL OS" | log; flag=${PIPESTATUS[0]}
+if [ "$EAP_POOL" != "$RHEL_POOL" ]; then
+    echo "subscription-manager attach --pool=RHEL_POOL" | log; flag=${PIPESTATUS[0]}
+    subscription-manager attach --pool=${RHEL_POOL}  | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for RHEL Failed" >&2 log; exit $flag;  fi
 else
-    ####################### Register to subscription Manager
-    echo "Register subscription manager" | log; flag=${PIPESTATUS[0]}
-    echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
-    subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Manager Registration Failed" >&2 log; exit $flag;  fi
-    #######################
-
-    sleep 20
-
-    ####################### Attach EAP Pool
-    echo "Subscribing the system to get access to JBoss EAP repos" | log; flag=${PIPESTATUS[0]}
-    echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
-    subscription-manager attach --pool=${EAP_POOL} | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
-    #######################
+    echo "Using the same pool to get access to RHEL repos" | log; flag=${PIPESTATUS[0]}
 fi
+#######################
+
 
 ####################### Install openjdk: is it needed? it should be installed with eap7.4
 echo "Install openjdk, curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
 echo "sudo yum install java-1.8.4-openjdk curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
-sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.8.4-openjdk
+sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}
 ####################### 
+
 
 ####################### Install JBoss EAP 7.4
 echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
@@ -133,7 +121,7 @@ if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 
 
 echo "Installing JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
 echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
-yum groupinstall -y jboss-eap7 | log; flag=${PIPESTATUS[0]}
+yum groupinstall -y jboss-eap7        | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
 
 echo "sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config" | log; flag=${PIPESTATUS[0]}
@@ -151,12 +139,15 @@ sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml 
 
 echo "Updating standalone-azure-ha.xml" | log; flag=${PIPESTATUS[0]}
 echo -e "\t stack UDP to TCP"           | log; flag=${PIPESTATUS[0]}
+echo -e "\t management:inet-address"    | log; flag=${PIPESTATUS[0]}
+echo -e "\t public:inet-address"        | log; flag=${PIPESTATUS[0]}
 echo -e "\t set transaction id"         | log; flag=${PIPESTATUS[0]}
 
 sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 'embed-server --std-out=echo  --server-config=standalone-azure-ha.xml',\
 '/subsystem=transactions:write-attribute(name=node-identifier,value="'${NODE_ID}'")',\
-'/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")' | log; flag=${PIPESTATUS[0]}
+'/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
+'/interface=public:write-attribute(name=inet-address, value="${jboss.bind.address:0.0.0.0}")' | log; flag=${PIPESTATUS[0]}
 
 ####################### Configure the JBoss server and setup eap service
 echo "Setting configurations in $EAP_RPM_CONF_STANDALONE"
@@ -164,8 +155,8 @@ echo -e "\t-> WILDFLY_SERVER_CONFIG=standalone-azure-ha.xml" | log; flag=${PIPES
 echo 'WILDFLY_SERVER_CONFIG=standalone-azure-ha.xml' >> $EAP_RPM_CONF_STANDALONE | log; flag=${PIPESTATUS[0]}
 
 echo "Setting configurations in $EAP_LAUNCH_CONFIG"
-echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address=0.0.0.0' | log; flag=${PIPESTATUS[0]}
-echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0' | log; flag=${PIPESTATUS[0]}
+echo -e "\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address=0.0.0.0" | log; flag=${PIPESTATUS[0]}
+echo -e "\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0" | log; flag=${PIPESTATUS[0]}
 echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' | log; flag=${PIPESTATUS[0]}
 
 echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=0.0.0.0"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
@@ -214,4 +205,4 @@ if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration F
 sleep 20
 
 echo "Red Hat JBoss EAP Cluster Intallation End " | log; flag=${PIPESTATUS[0]}
-/bin/date +%H:%M:%S | log
+/bin/date +%H:%M:%S  | log

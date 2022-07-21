@@ -48,15 +48,16 @@ RHSM_USER=${11}
 RHSM_PASSWORD_BASE64=${12}
 RHSM_PASSWORD=$(echo $RHSM_PASSWORD_BASE64 | base64 -d)
 EAP_POOL=${13}
-STORAGE_ACCOUNT_NAME=${14}
-CONTAINER_NAME=${15}
-STORAGE_ACCESS_KEY=${16}
-CONNECT_SATELLITE=${17}
-SATELLITE_ACTIVATION_KEY_BASE64=${18}
+EAP_RHEL=${14}
+STORAGE_ACCOUNT_NAME=${15}
+CONTAINER_NAME=${16}
+STORAGE_ACCESS_KEY=${17}
+CONNECT_SATELLITE=${18}
+SATELLITE_ACTIVATION_KEY_BASE64=${19}
 SATELLITE_ACTIVATION_KEY=$(echo $SATELLITE_ACTIVATION_KEY_BASE64 | base64 -d)
-SATELLITE_ORG_NAME_BASE64=${19}
+SATELLITE_ORG_NAME_BASE64=${20}
 SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
-SATELLITE_VM_FQDN=${20}
+SATELLITE_VM_FQDN=${21}
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 HOST_VM_NAME=$(hostname)
 HOST_VM_NAME_LOWERCASES=$(echo "${HOST_VM_NAME,,}")
@@ -120,6 +121,17 @@ else
     #######################
 fi
 
+####################### Attach RHEL Pool
+echo "Attaching Pool ID for RHEL OS" | log; flag=${PIPESTATUS[0]}
+if [ "$EAP_POOL" != "$RHEL_POOL" ]; then
+    echo "subscription-manager attach --pool=RHEL_POOL" | log; flag=${PIPESTATUS[0]}
+    subscription-manager attach --pool=${RHEL_POOL}  | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for RHEL Failed" >&2 log; exit $flag;  fi
+else
+    echo "Using the same pool to get access to RHEL repos" | log; flag=${PIPESTATUS[0]}
+fi
+#######################
+
 ####################### Install openjdk: is it needed? it should be installed with eap7.4
 echo "Install openjdk, curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
 echo "sudo yum install java-1.8.4-openjdk curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
@@ -151,12 +163,15 @@ sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml 
 
 echo "Updating standalone-azure-ha.xml" | log; flag=${PIPESTATUS[0]}
 echo -e "\t stack UDP to TCP"           | log; flag=${PIPESTATUS[0]}
+echo -e "\t management:inet-address"    | log; flag=${PIPESTATUS[0]}
+echo -e "\t public:inet-address"        | log; flag=${PIPESTATUS[0]}
 echo -e "\t set transaction id"         | log; flag=${PIPESTATUS[0]}
 
 sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 'embed-server --std-out=echo  --server-config=standalone-azure-ha.xml',\
 '/subsystem=transactions:write-attribute(name=node-identifier,value="'${NODE_ID}'")',\
-'/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")' | log; flag=${PIPESTATUS[0]}
+'/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
+'/interface=public:write-attribute(name=inet-address, value="${jboss.bind.address:0.0.0.0}")' | log; flag=${PIPESTATUS[0]}
 
 ####################### Configure the JBoss server and setup eap service
 echo "Setting configurations in $EAP_RPM_CONF_STANDALONE"
