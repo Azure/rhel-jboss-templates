@@ -20,7 +20,7 @@ rc=0
 failureIndicator='\[-\]'
 for d in */ ; do
     folderName=$(basename $d)
-    if [[ $folderName == $OFFER_PATH_PATTERN && $folderName != 'eap74-rhel8-payg-multivm' && $folderName != 'eap74-rhel8-payg-vmss' ]]; then
+    if [[ $folderName == $OFFER_PATH_PATTERN ]]; then
         msg "${YELLOW}matched folder name: $folderName. Full path is: ${BASE_DIR}/${folderName}/src/main/arm ${NOFORMAT}"
         ./../arm-ttk/arm-ttk/Test-AzTemplate.sh -TemplatePath ${BASE_DIR}/${folderName}/src/main/arm | tee testOutput
         set +e ; grep -q ${failureIndicator} testOutput;
