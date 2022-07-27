@@ -411,7 +411,6 @@
                             "password": "RHSM password",
                             "confirmPassword": "Confirm password"
                         },
-                        "visible": true,
                         "toolTip": "Provide Password for  Red Hat subscription Manager",
                         "options": {
                             "hideConfirmation": false
