@@ -25,14 +25,14 @@ param jbossEAPUserName string
 param jbossEAPPassword string
 
 @description('User name for Red Hat subscription Manager')
-param rhsmUserName string
+param rhsmUserName string = newGuid()
 
 @description('Password for Red Hat subscription Manager')
 @secure()
-param rhsmPassword string
+param rhsmPassword string = newGuid()
 
 @description('Red Hat Subscription Manager Pool ID (Should have EAP entitlement)')
-param rhsmPoolEAP string
+param rhsmPoolEAP string = newGuid()
 
 @allowed([
   'on'
@@ -109,6 +109,18 @@ param artifactsLocation string = deployment().properties.templateLink.uri
 @description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated')
 @secure()
 param artifactsLocationSasToken string = ''
+
+@description('Connect to an existing Red Hat Satellite Server.')
+param connectSatellite bool = false
+
+@description('Red Hat Satellite Server activation key.')
+param satelliteActivationKey string = ''
+
+@description('Red Hat Satellite Server organization name.')
+param satelliteOrgName string = ''
+
+@description('Red Hat Satellite Server VM FQDN name.')
+param satelliteFqdn string = ''
 
 var containerName = 'eapblobcontainer'
 var eapStorageAccountName_var = 'jbosstrg${uniqueString(resourceGroup().id)}'
@@ -282,7 +294,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2021-03-01'
                 ]
               }
               protectedSettings: {
-                commandToExecute: 'sh jbosseap-setup-redhat.sh ${scriptArgs} \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${eapStorageAccountName_var}\' \'${containerName}\' \'${base64(listKeys(eapStorageAccountName.id, '2021-06-01').keys[0].value)}\''
+                commandToExecute: 'sh jbosseap-setup-redhat.sh ${scriptArgs} \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${eapStorageAccountName_var}\' \'${containerName}\' \'${base64(listKeys(eapStorageAccountName.id, '2021-06-01').keys[0].value)}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\''
               }
             }
           }

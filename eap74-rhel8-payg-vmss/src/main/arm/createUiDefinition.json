@@ -278,6 +278,85 @@
                 ]
             },
             {
+                "name": "satelliteServerSettings",
+                "label": "Satellite Server Settings",
+                "subLabel": {
+                    "preValidation": "Provide the settings for Satellite Server registration",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Satellite Server Settings",
+                "elements": [
+                    {
+                        "name": "connectToSatelliteServer",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "Selecting 'Yes' here will cause the template to register JBoss EAP hosts to an existing Red Hat Satellite Server. Further configuration may be necessary after deployment.",
+                            "link": {
+                                "label": "Learn more",
+                                "uri": "https://access.redhat.com/products/red-hat-satellite"
+                            }
+                        }
+                    },
+                    {
+                        "name": "connectSatellite",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Connect to an existing Red Hat Satellite Server?",
+                        "defaultValue": "No",
+                        "toolTip": "Select 'Yes' to register JBoss EAP hosts created in preview step to an existing Red Hat.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": true
+                                },
+                                {
+                                    "label": "No",
+                                    "value": false
+                                }
+                            ],
+                            "required": false
+                        }
+                    },
+                    {
+                        "name": "satelliteActivationKey",
+                        "type": "Microsoft.Common.TextBox",
+                        "visible": "[steps('satelliteServerSettings').connectSatellite]",
+                        "label": "The template will need the activation key to register the JBoss EAP host to the Red Hat Satellite server.",
+                        "toolTip": "Activation key",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^.{1,}$",
+                            "validationMessage": "Cannot be empty."
+                        }
+                    },
+                    {
+                        "name": "satelliteOrgName",
+                        "type": "Microsoft.Common.TextBox",
+                        "visible": "[steps('satelliteServerSettings').connectSatellite]",
+                        "label": "The template will need the Organization name to register the JBoss EAP host to the Red Hat Satellite server.",
+                        "toolTip": "Organization name",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^.{1,}$",
+                            "validationMessage": "Cannot be empty."
+                        }
+                    },
+                    {
+                        "name": "satelliteFqdn",
+                        "type": "Microsoft.Common.TextBox",
+                        "visible": "[steps('satelliteServerSettings').connectSatellite]",
+                        "label": "The template will need the Fully Qualified Domain Name of Satellite Server virtual machine.",
+                        "toolTip": "Fully Qualified Domain Name of Satellite Sever VM",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^.{1,}$",
+                            "validationMessage": "Cannot be empty."
+                        }
+                    }
+				]
+            },
+            {
                 "name": "jbossEAPSettings",
                 "label": "JBoss EAP Settings",
                 "subLabel": {
@@ -315,6 +394,7 @@
                     {
                         "name": "rhsmUserName",
                         "type": "Microsoft.Common.TextBox",
+                        "visible": "[not(steps('satelliteServerSettings').connectSatellite)]",
                         "label": "RHSM username",
                         "constraints": {
                             "required": true,
@@ -326,11 +406,11 @@
                     {
                         "name": "rhsmPassword",
                         "type": "Microsoft.Common.PasswordBox",
+                        "visible": "[not(steps('satelliteServerSettings').connectSatellite)]",
                         "label": {
                             "password": "RHSM password",
                             "confirmPassword": "Confirm password"
                         },
-                        "visible": true,
                         "toolTip": "Provide Password for  Red Hat subscription Manager",
                         "options": {
                             "hideConfirmation": false
@@ -342,6 +422,7 @@
                     {
                         "name": "rhsmPoolEAP",
                         "type": "Microsoft.Common.TextBox",
+                        "visible": "[not(steps('satelliteServerSettings').connectSatellite)]",
                         "label": "RHSM Pool ID with EAP entitlement",
                         "toolTip": "Red Hat Subscription Manager Pool ID (Should have EAP entitlement)",
                         "constraints": {
@@ -382,7 +463,11 @@
             "jbossEAPPassword": "[steps('jbossEAPSettings').jbossEAPPassword]",
             "rhsmUserName": "[steps('jbossEAPSettings').rhsmUserName]",
             "rhsmPassword": "[steps('jbossEAPSettings').rhsmPassword]",
-            "rhsmPoolEAP": "[steps('jbossEAPSettings').rhsmPoolEAP]"
+            "rhsmPoolEAP": "[steps('jbossEAPSettings').rhsmPoolEAP]",
+            "connectSatellite": "[steps('satelliteServerSettings').connectSatellite]",
+            "satelliteActivationKey": "[steps('satelliteServerSettings').satelliteActivationKey]",
+            "satelliteOrgName": "[steps('satelliteServerSettings').satelliteOrgName]",
+            "satelliteFqdn": "[steps('satelliteServerSettings').satelliteFqdn]"
         }
     }
 }
