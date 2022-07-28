@@ -16,42 +16,34 @@ openport() {
 # Mount the Azure file share on all VMs created
 function mountFileShare()
 {
-  echo "Creating mount point"
-  echo "Mount point: $MOUNT_POINT_PATH"
-  sudo mkdir -p $MOUNT_POINT_PATH
+  echo "Creating mount point" | log; flag=${PIPESTATUS[0]}
+  echo "Mount point: $MOUNT_POINT_PATH" | log; flag=${PIPESTATUS[0]}
+  sudo mkdir -p $MOUNT_POINT_PATH | log; flag=${PIPESTATUS[0]}
   if [ ! -d "/etc/smbcredentials" ]; then
-    sudo mkdir /etc/smbcredentials
+    sudo mkdir /etc/smbcredentials | log; flag=${PIPESTATUS[0]}
   fi
   if [ ! -f "/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred" ]; then
-    echo "Crearing smbcredentials"
-    echo "username=$STORAGE_ACCOUNT_NAME >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred"
-    echo "password=$STORAGE_ACCESS_KEY >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred"
-    sudo bash -c "echo "username=$STORAGE_ACCOUNT_NAME" >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred"
-    sudo bash -c "echo "password=$STORAGE_ACCESS_KEY" >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred"
+    echo "Crearing smbcredentials" | log; flag=${PIPESTATUS[0]}
+    echo "username=$STORAGE_ACCOUNT_NAME >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred" | log; flag=${PIPESTATUS[0]}
+    echo "password=$STORAGE_ACCESS_KEY >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred" | log; flag=${PIPESTATUS[0]}
+    sudo bash -c "echo "username=$STORAGE_ACCOUNT_NAME" >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred" | log; flag=${PIPESTATUS[0]}
+    sudo bash -c "echo "password=$STORAGE_ACCESS_KEY" >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred" | log; flag=${PIPESTATUS[0]}
   fi
-  echo "chmod 600 /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred"
-  sudo chmod 600 /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred
-  echo "//${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH cifs nofail,vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred ,dir_mode=0777,file_mode=0777,serverino"
-  sudo bash -c "echo \"//${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH cifs nofail,vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred ,dir_mode=0777,file_mode=0777,serverino\" >> /etc/fstab"
-  echo "mount -t cifs //${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH -o vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred,dir_mode=0777,file_mode=0777,serverino"
-  sudo mount -t cifs //${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH -o vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred,dir_mode=0777,file_mode=0777,serverino
-  if [[ $? != 0 ]];
-  then
-         echo "Failed to mount //${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH"
-	 exit 1
-  fi
+  echo "chmod 600 /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred" | log; flag=${PIPESTATUS[0]}
+  sudo chmod 600 /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred | log; flag=${PIPESTATUS[0]}
+  echo "//${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH cifs nofail,vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred ,dir_mode=0777,file_mode=0777,serverino" | log; flag=${PIPESTATUS[0]}
+  sudo bash -c "echo \"//${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH cifs nofail,vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred ,dir_mode=0777,file_mode=0777,serverino\" >> /etc/fstab" | log; flag=${PIPESTATUS[0]}
+  echo "mount -t cifs //${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH -o vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred,dir_mode=0777,file_mode=0777,serverino" | log; flag=${PIPESTATUS[0]}
+  sudo mount -t cifs //${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH -o vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred,dir_mode=0777,file_mode=0777,serverino | log; flag=${PIPESTATUS[0]}
+  if [ $flag != 0 ] ; then echo "Failed to mount //${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH" >&2 log; exit $flag;  fi
 }
 
 # Copy domain.xml file from master host vm to share point
 function copyDomainXmlFileToShare()
 {
   sudo -u jboss cp $EAP_HOME/wildfly/domain/configuration/domain.xml ${MOUNT_POINT_PATH}/.
-  ls -lt ${MOUNT_POINT_PATH}/domain.xml
-  if [[ $? != 0 ]]; 
-  then
-      echo "Failed to copy $EAP_HOME/wildfly/domain/configuration/domain.xml"
-      exit 1
-  fi
+  ls -lt ${MOUNT_POINT_PATH}/domain.xml | log; flag=${PIPESTATUS[0]}
+  if [ $flag != 0 ] ; then echo "Failed to copy $EAP_HOME/wildfly/domain/configuration/domain.xml" >&2 log; exit $flag;  fi
 }
 
 echo "Red Hat JBoss EAP Cluster Intallation Start " | log; flag=${PIPESTATUS[0]}
@@ -145,6 +137,7 @@ if [[ "${CONNECT_SATELLITE,,}" == "true" ]]; then
 
     echo "sudo subscription-manager register --org=${SATELLITE_ORG_NAME} --activationkey=${SATELLITE_ACTIVATION_KEY}" | log; flag=${PIPESTATUS[0]}
     sudo subscription-manager register --org="${SATELLITE_ORG_NAME}" --activationkey="${SATELLITE_ACTIVATION_KEY}" --force | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "Failed to register host to Satellite server" >&2 log; exit $flag;  fi
 else
     ####################### Register to subscription Manager
     echo "Register subscription manager" | log; flag=${PIPESTATUS[0]}

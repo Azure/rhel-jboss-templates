@@ -1,4 +1,5 @@
 #!/bin/sh
+
 log() {
     while IFS= read -r line; do
         printf '%s %s\n' "$(date "+%Y-%m-%d %H:%M:%S")" "$line" >> /var/log/jbosseap.install.log
@@ -103,6 +104,7 @@ if [[ "${CONNECT_SATELLITE,,}" == "true" ]]; then
 
     echo "sudo subscription-manager register --org=${SATELLITE_ORG_NAME} --activationkey=${SATELLITE_ACTIVATION_KEY}" | log; flag=${PIPESTATUS[0]}
     sudo subscription-manager register --org="${SATELLITE_ORG_NAME}" --activationkey="${SATELLITE_ACTIVATION_KEY}" --force | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "Failed to register host to Satellite server" >&2 log; exit $flag;  fi
 else
     ####################### Register to subscription Manager
     echo "Register subscription manager" | log; flag=${PIPESTATUS[0]}
