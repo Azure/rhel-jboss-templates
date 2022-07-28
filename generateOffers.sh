@@ -18,10 +18,6 @@ for d in */ ; do
     folderName=$(basename $d)
     if [[ $folderName == $OFFER_PATH_PATTERN ]]; then
         msg "${YELLOW}matched folder name: $folderName. ${NOFORMAT}"
-        if [[ $folderName == "eap74-rhel8-payg-multivm" ]]; then
-          mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests -f $folderName/pom.xml
-        else
-          mvn -Ptemplate-validation-tests clean install -f $folderName/pom.xml
-        fi
+        mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests -f $folderName/pom.xml
     fi
 done
