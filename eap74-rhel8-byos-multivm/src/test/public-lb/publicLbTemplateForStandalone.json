@@ -1,0 +1,133 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "variables": {
+        "name": "jbosseap-lb-pub",
+        "sku": "Basic",
+        "tier": "Regional",
+        "location": "eastus"
+    },
+    "resources": [
+        {
+            "apiVersion": "2021-05-01",
+            "name": "[variables('name')]",
+            "type": "Microsoft.Network/loadBalancers",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "Microsoft.Network/publicIPAddresses/jbosseap-lb-pub-ip"
+            ],
+            "tags": {},
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "jbosseap-lb-pub-ip",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', 'jbosseap-lb-pub-ip')]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "jbosseap-standalone"
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "jbosseap-standalone-9990-probe",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 9990,
+                            "requestPath": null,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    },
+                    {
+                        "name": "jbosseap-standalone-8080-probe",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 8080,
+                            "requestPath": null,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "jbosseap-standalone-9990-rule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', 'jbosseap-lb-pub', 'jbosseap-lb-pub-ip')]"
+                            },
+                            "frontendPort": 9990,
+                            "backendPort": 9990,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4,
+                            "protocol": "TCP",
+                            "loadDistribution": "Default",
+                            "probe": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', 'jbosseap-lb-pub', 'jbosseap-standalone-9990-probe')]"
+                            },
+                            "disableOutboundSnat": true,
+                            "enableTcpReset": false,
+                            "backendAddressPools": [
+                                {
+                                    "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'jbosseap-lb-pub', 'jbosseap-standalone')]"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "jbosseap-standalone-8080-rule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', 'jbosseap-lb-pub', 'jbosseap-lb-pub-ip')]"
+                            },
+                            "frontendPort": 80,
+                            "backendPort": 8080,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4,
+                            "protocol": "TCP",
+                            "loadDistribution": "Default",
+                            "probe": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', 'jbosseap-lb-pub', 'jbosseap-standalone-8080-probe')]"
+                            },
+                            "disableOutboundSnat": true,
+                            "enableTcpReset": false,
+                            "backendAddressPools": [
+                                {
+                                    "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'jbosseap-lb-pub', 'jbosseap-standalone')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "inboundNatRules": [],
+                "outboundRules": []
+            },
+            "sku": {
+                "name": "[variables('sku')]",
+                "tier": "[variables('tier')]"
+            }
+        },
+        {
+            "apiVersion": "2020-08-01",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "name": "jbosseap-lb-pub-ip",
+            "location": "[variables('location')]",
+            "dependsOn": [],
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4
+            },
+            "sku": {
+                "name": "[variables('sku')]",
+                "tier": "[variables('tier')]"
+            }
+        }
+    ]
+}

@@ -291,7 +291,6 @@
 					}
                 ]
             },
-			
             {
                 "name": "satelliteServerSettings",
                 "label": "Satellite Server Settings",

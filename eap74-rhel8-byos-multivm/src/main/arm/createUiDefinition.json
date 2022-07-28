@@ -109,6 +109,14 @@
                         "count": "1"
                     },
                     {
+                        "name": "vnetInfo",
+                        "type": "Microsoft.Common.InfoBox",
+                        "options": {
+                            "icon": "Info",
+                            "text": "When creating a new virtual network, the subnet's address prefix is calculated automatically based on the virtual network's address prefix. When using an existing virtual network, a minimum virtual network size of /28 and a minimum subnet size of /29 are required. Additionally, the subnet must have adequate available addresses for the server setup."
+                        }
+                    },
+                    {
                         "name": "virtualNetwork",
                         "type": "Microsoft.Network.VirtualNetworkCombo",
                         "label": {
@@ -121,21 +129,21 @@
                         },
                         "defaultValue": {
                             "name": "VirtualNetwork",
-                            "addressPrefixSize": "/16"
+                            "addressPrefixSize": "/28"
                         },
                         "constraints": {
-                            "minAddressPrefixSize": "/16"
+                            "minAddressPrefixSize": "/28"
                         },
                         "subnets": {
                             "subnet1": {
                                 "label": "Subnet",
                                 "defaultValue": {
                                     "name": "Subnet-1",
-                                    "addressPrefixSize": "/24"
+                                    "addressPrefixSize": "/28"
                                 },
                                 "constraints": {
-                                    "minAddressPrefixSize": "/24",
-                                    "minAddressCount": 12,
+                                    "minAddressPrefixSize": "/29",
+                                    "minAddressCount": "[add(int(steps('VirtualMachineConfig').numberOfInstances), 1)]",
                                     "requireContiguousAddresses": false
                                 }
                             }
@@ -281,6 +289,85 @@
                 ]
             },
             {
+                "name": "satelliteServerSettings",
+                "label": "Satellite Server Settings",
+                "subLabel": {
+                    "preValidation": "Provide the settings for Satellite Server registration",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Satellite Server Settings",
+                "elements": [
+                    {
+                        "name": "connectToSatelliteServer",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "Selecting 'Yes' here will cause the template to register JBoss EAP hosts to an existing Red Hat Satellite Server. Further configuration may be necessary after deployment.",
+                            "link": {
+                                "label": "Learn more",
+                                "uri": "https://access.redhat.com/products/red-hat-satellite"
+                            }
+                        }
+                    },
+                    {
+                        "name": "connectSatellite",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Connect to an existing Red Hat Satellite Server?",
+                        "defaultValue": "No",
+                        "toolTip": "Select 'Yes' to register JBoss EAP hosts created in preview step to an existing Red Hat.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": true
+                                },
+                                {
+                                    "label": "No",
+                                    "value": false
+                                }
+                            ],
+                            "required": false
+                        }
+                    },
+                    {
+                        "name": "satelliteActivationKey",
+                        "type": "Microsoft.Common.TextBox",
+                        "visible": "[steps('satelliteServerSettings').connectSatellite]",
+                        "label": "The template will need the activation key to register the JBoss EAP host to the Red Hat Satellite server.",
+                        "toolTip": "Activation key",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^.{1,}$",
+                            "validationMessage": "Cannot be empty."
+                        }
+                    },
+                    {
+                        "name": "satelliteOrgName",
+                        "type": "Microsoft.Common.TextBox",
+                        "visible": "[steps('satelliteServerSettings').connectSatellite]",
+                        "label": "The template will need the Organization name to register the JBoss EAP host to the Red Hat Satellite server.",
+                        "toolTip": "Organization name",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^.{1,}$",
+                            "validationMessage": "Cannot be empty."
+                        }
+                    },
+                    {
+                        "name": "satelliteFqdn",
+                        "type": "Microsoft.Common.TextBox",
+                        "visible": "[steps('satelliteServerSettings').connectSatellite]",
+                        "label": "The template will need the Fully Qualified Domain Name of Satellite Server virtual machine.",
+                        "toolTip": "Fully Qualified Domain Name of Satellite Sever VM",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^.{1,}$",
+                            "validationMessage": "Cannot be empty."
+                        }
+                    }
+				]
+			},
+            {
                 "name": "jbossEAPSettings",
                 "label": "JBoss EAP Settings",
                 "subLabel": {
@@ -289,6 +376,72 @@
                 },
                 "bladeTitle": "JBoss EAP Settings",
                 "elements": [
+                    {
+                        "name": "operatingMode",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Use managed domain or standalone hosts to form a cluster",
+                        "defaultValue": "Managed domain",
+                        "toolTip": "Choose to use managed domain or standalone hosts to form a cluster.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Managed domain",
+                                    "value": "managed-domain"
+                                },
+                                {
+                                    "label": "Standalone",
+                                    "value": "standalone"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "numberOfServerInstances",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Number of Server Instances per Host",
+                        "defaultValue": "1",
+                        "toolTip": "Use only allowed characters",
+                        "placeholder": "1",
+                        "constraints": {
+                            "required": true,
+                            "validations": [
+                                {
+                                    "regex": "^(1|2|3|4|5)$",
+                                    "message": "Only numbers from 1 to 5 are allowed."
+                                }
+                            ]
+                        },
+                        "visible": "[not(equals(steps('jbossEAPSettings').operatingMode, 'standalone'))]"
+                    },
+                    {
+                        "name": "disableLoadBalancerWarningInfo",
+                        "type": "Microsoft.Common.InfoBox",
+                        "visible": "[greater(steps('jbossEAPSettings').numberOfServerInstances, '1')]",
+                        "options": {
+                            "icon": "Warning",
+                            "text": "Load Balancer is not supported when users choose to create more than 1 JBoss EAP server instances per host",
+                            "uri": "https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-overview"
+                        }
+                    },
+                    {
+                        "name": "disableLoadBalancerWhenMultipleServerInst",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Disable Load Balancer when creating multiple Server Instances per host.",
+                        "defaultValue": "Disable",
+                        "toolTip": "Load Balancer is not supported.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Disable",
+                                    "value": "disable"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[greater(steps('jbossEAPSettings').numberOfServerInstances, '1')]"
+                    },
                     {
                         "name": "jbossEAPUserName",
                         "type": "Microsoft.Compute.UserNameTextBox",
@@ -318,6 +471,7 @@
                     {
                         "name": "rhsmUserName",
                         "type": "Microsoft.Common.TextBox",
+                        "visible": "[not(steps('satelliteServerSettings').connectSatellite)]",
                         "label": "RHSM username",
                         "constraints": {
                             "required": true,
@@ -329,11 +483,11 @@
                     {
                         "name": "rhsmPassword",
                         "type": "Microsoft.Common.PasswordBox",
+                        "visible": "[not(steps('satelliteServerSettings').connectSatellite)]",
                         "label": {
                             "password": "RHSM password",
                             "confirmPassword": "Confirm password"
                         },
-                        "visible": true,
                         "toolTip":"Provide Password for  Red Hat subscription Manager",
                         "options": {
                             "hideConfirmation": false
@@ -345,6 +499,7 @@
                     {
                         "name": "rhsmPoolEAP",
                         "type": "Microsoft.Common.TextBox",
+                        "visible": "[not(steps('satelliteServerSettings').connectSatellite)]",
                         "label": "RHSM Pool ID with EAP entitlement",
                         "toolTip": "Red Hat Subscription Manager Pool ID (Should have EAP entitlement)",
                         "constraints": {
@@ -356,12 +511,38 @@
                     {
                         "name": "rhsmPoolRHEL",
                         "type": "Microsoft.Common.TextBox",
+                        "visible": "[not(steps('satelliteServerSettings').connectSatellite)]",
                         "label": "RHSM Pool ID with RHEL entitlement",
                         "toolTip": "Red Hat Subscription Manager Pool ID (Should have RHEL entitlement)",
                         "constraints": {
                             "required": true,
                             "regex": "^[a-f0-9A-F]{32,32}$",
                             "validationMessage": "The RHSM Pool ID must be 32 characters long and should contain only alphabets between a to f and numbers."
+                        }
+                    },
+                    {
+                        "name": "errInfo",
+                        "type": "Microsoft.Common.InfoBox",
+                        "visible": "[not(equals(length(steps('jbossEAPSettings').identity.userAssignedIdentities),1))]",
+                        "options": {
+                            "icon": "Error",
+                            "text": "Please select exactly one user assigned managed identity.  The identity must have the Contributor or Owner role in the specified subscription.",
+                            "uri": "https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-to-manage-ua-identity-portal"
+                        }
+                    },
+                    {
+                        "name": "identity",
+                        "type": "Microsoft.ManagedIdentity.IdentitySelector",
+                        "label": "Managed Identity Configuration",
+                        "toolTip": {
+                            "userAssignedIdentity": "Add one user assigned identity to enable the JBoss EAP managed domain deployment."
+                        },
+                        "defaultValue": {
+                            "systemAssignedIdentity": "Off"
+                        },
+                        "options": {
+                            "hideSystemAssignedIdentity": true,
+                            "hideUserAssignedIdentity": false
                         }
                     }
                 ]
@@ -374,7 +555,7 @@
             "adminUsername": "[basics('adminUsername')]",
             "authenticationType": "[basics('authenticationType').authenticationType]",
             "adminPasswordOrSSHKey": "[coalesce(basics('authenticationType').password, basics('authenticationType').sshPublicKey)]",
-
+            "enableLoadBalancer": "[steps('jbossEAPSettings').disableLoadBalancerWhenMultipleServerInst]",
             "vmSize": "[steps('VirtualMachineConfig').vmSize]",
             "numberOfInstances": "[int(steps('VirtualMachineConfig').numberOfInstances)]",
             "virtualNetworkNewOrExisting": "[steps('VirtualMachineConfig').virtualNetwork.newOrExisting]",
@@ -391,13 +572,19 @@
             "storageAccountKind": "[steps('VirtualMachineConfig').storageAccountKind]",
             "bootStorageReplication": "[steps('VirtualMachineConfig').storageAccountType]",
             "storageAccountResourceGroupName": "[if(and(equals(steps('VirtualMachineConfig').bootDiagnostics, 'on'),not(empty(steps('VirtualMachineConfig').existingStorageAccount))), first(skip(split(coalesce(first(filter(steps('VirtualMachineConfig').armApiControl.value, (item) => equals(steps('VirtualMachineConfig').existingStorageAccount,item.name))),parse('{\"id\":\"/////\"}')).id, '/'),4)), resourceGroup().name)]",
-
+            "numberOfServerInstances": "[int(steps('jbossEAPSettings').numberOfServerInstances)]",
+            "operatingMode": "[steps('jbossEAPSettings').operatingMode]",
             "jbossEAPUserName": "[steps('jbossEAPSettings').jbossEAPUserName]",
             "jbossEAPPassword": "[steps('jbossEAPSettings').jbossEAPPassword]",
             "rhsmUserName": "[steps('jbossEAPSettings').rhsmUserName]",
             "rhsmPassword": "[steps('jbossEAPSettings').rhsmPassword]",
             "rhsmPoolEAP": "[steps('jbossEAPSettings').rhsmPoolEAP]",
-            "rhsmPoolRHEL": "[steps('jbossEAPSettings').rhsmPoolRHEL]"
+            "rhsmPoolRHEL": "[steps('jbossEAPSettings').rhsmPoolRHEL]",
+            "identity": "[steps('jbossEAPSettings').identity]",
+            "connectSatellite": "[steps('satelliteServerSettings').connectSatellite]",
+            "satelliteActivationKey": "[steps('satelliteServerSettings').satelliteActivationKey]",
+            "satelliteOrgName": "[steps('satelliteServerSettings').satelliteOrgName]",
+            "satelliteFqdn": "[steps('satelliteServerSettings').satelliteFqdn]"
         }
     }
 }
