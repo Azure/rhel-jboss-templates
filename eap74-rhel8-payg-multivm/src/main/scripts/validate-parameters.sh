@@ -141,7 +141,8 @@ location=$1
 vmSize=$2
 numberOfInstances=$3
 connectSatellite=$4
-satelliteFqdn=$5
+DEFAULT_SATELLITE_FQDN="invalid-fqdn"
+satelliteFqdn="${5:-$DEFAULT_SATELLITE_FQDN}"
 userManagedIdentityType="Microsoft.ManagedIdentity/userAssignedIdentities"
 
 validate_user_assigned_managed_identity
