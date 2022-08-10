@@ -1,4 +1,4 @@
-name: Validate eap74-rhel8-payg offer
+name: Validate payg offer
 
 on:
   workflow_dispatch:

@@ -1,4 +1,4 @@
-name: Validate eap74-rhel8-byos-multivm offer
+name: Validate byos-multivm offer
 
 on:
   workflow_dispatch:

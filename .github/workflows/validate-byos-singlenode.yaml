@@ -1,4 +1,4 @@
-name: Validate eap74-rhel8-byos offer
+name: Validate byos offer
 
 on:
   workflow_dispatch:
@@ -162,7 +162,7 @@ jobs:
               id: accept-terms
               run: |
                   echo "accept terms for VM image"
-                  az vm image accept-terms --urn redhat:rhel-byos:rhel-lvm84:latest
+                  az vm image terms accept --urn redhat:rhel-byos:rhel-lvm84:latest
             - name: Create Resource Group
               uses: azure/CLI@v1
               with:

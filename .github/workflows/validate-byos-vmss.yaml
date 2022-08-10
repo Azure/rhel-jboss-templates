@@ -1,4 +1,4 @@
-name: Validate eap74-rhel8-byos-vmss offer
+name: Validate byos-vmss offer
 
 on:
   workflow_dispatch:
@@ -169,7 +169,7 @@ jobs:
               id: accept-terms
               run: |
                   echo "accept terms for VM image"
-                  az vm image accept-terms --urn redhat:rhel-byos:rhel-lvm84:latest
+                  az vm image terms accept --urn redhat:rhel-byos:rhel-lvm84:latest
             - name: Create Resource Group
               uses: azure/CLI@v1
               with:
@@ -177,6 +177,18 @@ jobs:
                 inlineScript: |
                     echo "create resource group" ${{ env.vmssResourceGroup }}
                     az group create --verbose --name ${{ env.vmssResourceGroup }} --location ${{ env.location }}
+            - name: Validate Deploy JBoss EAP VMSS
+              id: validate-deploy-vmss
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                    az deployment group validate \
+                    --verbose \
+                    --resource-group ${{ env.vmssResourceGroup }} \
+                    --name vmss \
+                    --parameters @rhel-jboss-templates/eap74-rhel8-byos-vmss/src/test/parameters-test-vmss.json \
+                    --template-file rhel-jboss-templates/eap74-rhel8-byos-vmss/mainTemplate.json
             - name: Deploy JBoss EAP VMSS
               id: deploy-vmss
               uses: azure/CLI@v1
