@@ -1,8 +1,8 @@
-name: Build BYOS multivm artifact
+name: Build BYOS single artifact
 
 on:
   repository_dispatch:
-    types: [byos-multivm-package, byos-package, all-package]
+    types: [byos-single-package, byos-package, all-package]
   workflow_dispatch:
     inputs:
       ref:
@@ -10,14 +10,14 @@ on:
         required: false
         default: 'refs/heads/master'
   # Sample cURL
-  # curl --verbose -X POST https://api.github.com/repos/<github_user>/rhel-jboss-templates/dispatches -H 'Accept: application/vnd.github.everest-preview+json' -H 'Authorization: token <personal_access_token>' --data '{"event_type": "byos-multivm-package", "ref": "refs/heads/master"}'
+  # curl --verbose -X POST https://api.github.com/repos/<github_user>/rhel-jboss-templates/dispatches -H 'Accept: application/vnd.github.everest-preview+json' -H 'Authorization: token <personal_access_token>' --data '{"event_type": "byos-single-package", "ref": "refs/heads/master"}'
 
 env:
     refArmttk: bad2965565e2e69318039bc15c2496844d55a59d
     refJavaee: f25ab89a2a8848da39b84e5d6c927f4c4cb47200
     azCliVersion: 2.30.0
     location: eastus
-    offerName: "eap74-rhel8-byos-multivm"
+    offerName: "eap74-rhel8-byos-single"
     repoName: "rhel-jboss-templates"
     repoOwner: ${{ secrets.USER_NAME }}
 
