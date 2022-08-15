@@ -10,7 +10,7 @@ on:
         required: false
         default: 'refs/heads/master'
   # Sample cURL
-  # curl --verbose -X POST https://api.github.com/repos/<github_user>/rhel-jboss-templates/dispatches -H 'Accept: application/vnd.github.everest-preview+json' -H 'Authorization: token <personal_access_token>' --data '{"event_type": "byos-multivm-package", "ref": "refs/heads/master"}'
+  # curl --verbose -X POST https://api.github.com/repos/<github_user>/rhel-jboss-templates/dispatches -H 'Accept: application/vnd.github.everest-preview+json' -H 'Authorization: token <personal_access_token>' --data '{"event_type": "byos-multivm-package", "client_payload": {"ref": "refs/heads/master"}}'
 
 env:
     refArmttk: bad2965565e2e69318039bc15c2496844d55a59d
