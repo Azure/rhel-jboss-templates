@@ -2,7 +2,7 @@ name: Build BYOS multivm artifact
 
 on:
   repository_dispatch:
-    types: [byos-multivm-package, byos-package]
+    types: [byos-multivm-package, byos-package, all-package]
   workflow_dispatch:
     inputs:
       ref:
