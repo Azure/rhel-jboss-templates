@@ -14,10 +14,16 @@ msg() {
 
 setup_colors
 
+if [ -z "$1" ]; then
+    MVN_TARGETS="clean install"
+else
+    MVN_TARGETS="clean"
+fi
+
 for d in */ ; do
     folderName=$(basename $d)
     if [[ $folderName == $OFFER_PATH_PATTERN ]]; then
         msg "${YELLOW}matched folder name: $folderName. ${NOFORMAT}"
-        mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests -f $folderName/pom.xml
+        mvn -Pbicep -Passembly -Ptemplate-validation-tests ${MVN_TARGETS} -f $folderName/pom.xml
     fi
 done

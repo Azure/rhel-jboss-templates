@@ -48,6 +48,62 @@
                     "hideConfirmation": false
                 },
                 "osPlatform": "Linux"
+            },
+            {
+                "name": "howToReportIssues",
+                "type": "Microsoft.Common.Section",
+                "label": "Report issues, get help, and share feedback",
+                "elements": [
+                    {
+                        "name": "help",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "See the documentation for this offer.",
+                            "link": {
+                                "label": "Offer documentation",
+                                "uri": "https://red.ht/eap-vm-docs"
+                            }
+                        }
+                    },
+                    {
+                        "name": "howToReportIssueText",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "If you encounter problems during the deployment of Oracle WebLogic Server, report them here.",
+                            "link": {
+                                "label": "Issue tracker",
+                                "uri": "https://red.ht/eap-vm-issues?version=${project.version}"
+                            }
+                        }
+                    },
+                    {
+                        "name": "howToJoinSlack",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "If you want to interact directly with the Red Hat community, join the public community forum.",
+                            "link": {
+                                "label": "Join Community",
+                                "uri": "https://red.ht/eap-vms-community"
+                            }
+                        }
+                    },
+                    {
+                        "name": "survey",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "To get free help with Azure migration from the development team, fill out this survey.",
+                            "link": {
+                                "label": "Take survey",
+                                "uri": "https://red.ht/javaee-on-azure-survey"
+                            }
+                        }
+                    }
+                ],
+                "visible": true
             }
         ],
         "steps": [
