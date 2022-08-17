@@ -43,16 +43,6 @@ SATELLITE_VM_FQDN=${28}
 STORAGE_ACCESS_KEY=$(az storage account keys list --verbose --account-name "${STORAGE_ACCOUNT_NAME}" --query [0].value --output tsv)
 if [[ -z "${STORAGE_ACCESS_KEY}" ]] ; then echo  "Failed to get storage account sas token"; exit 1;  fi
 
-privateEndpointId=$(az storage account show --resource-group ${RESOURCE_GROUP_NAME} --name ${STORAGE_ACCOUNT_NAME} --query privateEndpointConnections[0].privateEndpoint.id -o tsv)
-if [[ -z "${privateEndpointId}" ]] ; then echo  "Failed to get private endpoint ID"; exit 1;  fi
-
-privateEndpointIp=$(az network private-endpoint show --ids $privateEndpointId --query customDnsConfigs[0].ipAddresses[0] -o tsv)
-if [[ -z "${privateEndpointIp}" ]] ; then echo  "Failed to get private endpoint IP"; exit 1;  fi
-
-# Get domain controller host private IP
-DOMAIN_CONTROLLER_PRIVATE_IP=$(az vm list-ip-addresses --verbose --resource-group ${RESOURCE_GROUP_NAME} --name "${VM_NAME_PREFIX}0" --query [0].virtualMachine.network.privateIpAddresses[0] --output tsv)
-if [[ -z "${DOMAIN_CONTROLLER_PRIVATE_IP}" ]] ; then echo  "Failed to get domain controller host private IP"; exit 1;  fi
-
 # Markdown script location
 SCRIPT_LOCATION=${artifactsLocation}${pathToScript}
 
@@ -71,6 +61,16 @@ if [ "${CONFIGURATION_MODE}" != "managed-domain" ]; then
         echo "standalone ${VM_NAME_PREFIX}${i} extension execution completed"
     done
 else
+    privateEndpointId=$(az storage account show --resource-group ${RESOURCE_GROUP_NAME} --name ${STORAGE_ACCOUNT_NAME} --query privateEndpointConnections[0].privateEndpoint.id -o tsv)
+    if [[ -z "${privateEndpointId}" ]] ; then echo  "Failed to get private endpoint ID"; exit 1;  fi
+
+    privateEndpointIp=$(az network private-endpoint show --ids $privateEndpointId --query customDnsConfigs[0].ipAddresses[0] -o tsv)
+    if [[ -z "${privateEndpointIp}" ]] ; then echo  "Failed to get private endpoint IP"; exit 1;  fi
+
+    # Get domain controller host private IP
+    DOMAIN_CONTROLLER_PRIVATE_IP=$(az vm list-ip-addresses --verbose --resource-group ${RESOURCE_GROUP_NAME} --name "${VM_NAME_PREFIX}0" --query [0].virtualMachine.network.privateIpAddresses[0] --output tsv)
+    if [[ -z "${DOMAIN_CONTROLLER_PRIVATE_IP}" ]] ; then echo  "Failed to get domain controller host private IP"; exit 1;  fi
+
     # Configure domain controller host
     echo "Configure domain controller host: ${VM_NAME_PREFIX}0"
 
