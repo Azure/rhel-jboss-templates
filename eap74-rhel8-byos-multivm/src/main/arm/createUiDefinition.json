@@ -73,7 +73,7 @@
                             "text": "See the documentation for this offer.",
                             "link": {
                                 "label": "Offer documentation",
-                                "uri": "https://aka.ms/eap-vm-docs"
+                                "uri": "https://red.ht/eap-vm-docs"
                             }
                         }
                     },
@@ -85,7 +85,7 @@
                             "text": "If you encounter problems during the deployment of Oracle WebLogic Server, report them here.",
                             "link": {
                                 "label": "Issue tracker",
-                                "uri": "https://aka.ms/eap-vm-issues?version=${project.version}"
+                                "uri": "https://red.ht/eap-vm-issues?version=${project.version}"
                             }
                         }
                     },
@@ -97,7 +97,7 @@
                             "text": "If you want to interact directly with the Red Hat community, join the public community forum.",
                             "link": {
                                 "label": "Join Community",
-                                "uri": "https://aka.ms/eap-vms-community"
+                                "uri": "https://red.ht/eap-vms-community"
                             }
                         }
                     },
@@ -109,7 +109,7 @@
                             "text": "To get free help with Azure migration from the development team, fill out this survey.",
                             "link": {
                                 "label": "Take survey",
-                                "uri": "https://aka.ms/javaee-on-azure-survey"
+                                "uri": "https://red.ht/javaee-on-azure-survey"
                             }
                         }
                     }
