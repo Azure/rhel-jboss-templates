@@ -259,6 +259,16 @@ jobs:
                   echo "eap-session-replication is accessible"
                 fi
                 exit 0
+            - name: Unregister before deleting resources
+              if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                  for ((i = 0; i < numberOfInstances; i++)); do
+                    echo "Unregister VMSS instance ${i}"
+                    az vmss run-command invoke -g ${vmssResourceGroup} -n jbosseap-server${vmssName} --command-id RunShellScript --instance-id ${i} --scripts "sudo subscription-manager unregister"
+                  done
             - name: Delete Resource Group
               id: delete-resource-group
               if: ${{ needs.preflight.outputs.isForDemo == 'false' }}

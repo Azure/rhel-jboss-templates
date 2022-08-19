@@ -290,6 +290,16 @@ jobs:
                   echo "Cafe is accessible"
                 fi
                 exit 0
+            - name: Unregister before deleting resources
+              if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                  for ((i = 0; i < numberOfInstances; i++)); do
+                    echo "Unregister ${vmName}${i}"
+                    az vm run-command invoke -g ${domainResourceGroup} -n ${vmName}${i} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
+                  done
             - name: Delete Resource Group
               id: delete-resource-group
               if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
@@ -452,6 +462,16 @@ jobs:
                   echo "eap-session-replication is accessible"
                 fi
                 exit 0
+            - name: Unregister before deleting resources
+              if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                  for ((i = 0; i < numberOfInstances; i++)); do
+                    echo "Unregister ${vmName}${i}"
+                    az vm run-command invoke -g ${standaloneResourceGroup} -n ${vmName}${i} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
+                  done
             - name: Delete Resource Group
               id: delete-resource-group
               if: ${{ needs.preflight.outputs.isForDemo == 'false' }}

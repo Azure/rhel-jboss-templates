@@ -184,10 +184,10 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # Create NSG rule to allow inbound traffic to port 9990
-                    az network nsg rule create -g ${{ env.singleResourceGroup }} --nsg-name ${{ env.nsgName }} -n rule_9990_22 --priority 100 \
+                    az network nsg rule create -g ${{ env.singleResourceGroup }} --nsg-name ${{ env.nsgName }} -n rule_9990 --priority 100 \
                       --source-address-prefixes '*' --source-port-ranges '*' \
-                      --destination-address-prefixes '*' --destination-port-ranges 9990 22 --access Allow \
-                      --protocol '*' --description "allow 9990 22"
+                      --destination-address-prefixes '*' --destination-port-ranges 9990 --access Allow \
+                      --protocol '*' --description "allow 9990"
                     # Create public IP
                     az network public-ip create --name ${{ env.testPubIpName }} --resource-group ${{ env.singleResourceGroup }}
                     # Query VM NIC name
@@ -221,24 +221,13 @@ jobs:
                   echo "console is accessible"
                 fi
                 exit 0
-            # Fix failure that caused by remote server closed.
-            - name: Restart remote SSH agent
-              run: |
-                  echo "Restart remote SSH agent"
-                  az vm user reset-ssh \
-                    --resource-group $singleResourceGroup \
-                    --name $vmName
-                  sleep 1m
             - name: Unregister VM
               if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
-              run: |
-                  publicip=${{steps.setup_public_lb.outputs.publicip}}
-                  echo "publicip: " $publicip
-                  echo "Unregister VM from RHSM account"
-                  timeout 6m sh -c 'until nc -zv $0 $1; do echo "nc rc: $?"; sleep 5; done' ${publicip} 22
-                  echo install sshpass
-                  sudo apt-get install -y sshpass
-                  sshpass -p ${password} -v ssh -p 22 -o StrictHostKeyChecking=no -o TCPKeepAlive=yes -o ServerAliveCountMax=20 -o ServerAliveInterval=15 -o ConnectTimeout=100 -v -tt ${adminUsername}@${publicip} 'sudo subscription-manager unregister'
+              uses: azure/CLI@v1
+              with:
+                azcliversion: ${{ env.azCliVersion }}
+                inlineScript: |
+                  az vm run-command invoke -g ${singleResourceGroup} -n ${vmName} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
             - name: Delete Resource Group
               id: delete-resource-group
               if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
