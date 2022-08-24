@@ -74,16 +74,16 @@ param jbossEAPUserName string
 param jbossEAPPassword string
 
 @description('User name for Red Hat subscription Manager')
-param rhsmUserName string
+param rhsmUserName string = newGuid()
 
 @description('Password for Red Hat subscription Manager')
 @secure()
-param rhsmPassword string
+param rhsmPassword string = newGuid()
 
 @description('Red Hat Subscription Manager Pool ID (Should have EAP entitlement)')
 @minLength(32)
 @maxLength(32)
-param rhsmPoolEAP string
+param rhsmPoolEAP string = take(newGuid(), 32)
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated')
 param artifactsLocation string = deployment().properties.templateLink.uri
@@ -91,6 +91,18 @@ param artifactsLocation string = deployment().properties.templateLink.uri
 @description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated')
 @secure()
 param artifactsLocationSasToken string = ''
+
+@description('Connect to an existing Red Hat Satellite Server.')
+param connectSatellite bool = false
+
+@description('Red Hat Satellite Server activation key.')
+param satelliteActivationKey string = ''
+
+@description('Red Hat Satellite Server organization name.')
+param satelliteOrgName string = ''
+
+@description('Red Hat Satellite Server VM FQDN name.')
+param satelliteFqdn string = ''
 
 var nicName_var = '${uniqueString(resourceGroup().id)}-nic'
 var networkSecurityGroupName_var = 'jbosseap-nsg'
@@ -230,7 +242,7 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
       ]
     }
     protectedSettings: {
-      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\''
+      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\''
     }
   }
 }

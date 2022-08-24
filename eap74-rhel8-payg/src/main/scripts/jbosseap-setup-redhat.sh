@@ -19,6 +19,12 @@ RHSM_USER=$3
 RHSM_PASSWORD_BASE64=$4
 RHSM_PASSWORD=$(echo $RHSM_PASSWORD_BASE64 | base64 -d)
 RHSM_EAPPOOL=$5
+CONNECT_SATELLITE=${6}
+SATELLITE_ACTIVATION_KEY_BASE64=${7}
+SATELLITE_ACTIVATION_KEY=$(echo $SATELLITE_ACTIVATION_KEY_BASE64 | base64 -d)
+SATELLITE_ORG_NAME_BASE64=${8}
+SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
+SATELLITE_VM_FQDN=${9}
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
 export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"
@@ -32,15 +38,30 @@ touch /etc/profile.d/eap_env.sh
 echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> /etc/profile.d/eap_env.sh
 echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"' >> /etc/profile.d/eap_env.sh
 
-echo "Initial JBoss EAP 7.4 setup" | log; flag=${PIPESTATUS[0]}
-echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
-subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Subscription Manager Registration Failed" >&2 log; exit $flag;  fi
+# Satellite server configuration
+if [[ "${CONNECT_SATELLITE,,}" == "true" ]]; then
+    ####################### Register to satellite server
+    echo "Configuring Satellite server registration" | log; flag=${PIPESTATUS[0]}
 
-echo "Subscribing the system to get access to JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
-echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
-subscription-manager attach --pool=${RHSM_EAPPOOL} | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
+    echo "sudo rpm -Uvh http://${SATELLITE_VM_FQDN}/pub/katello-ca-consumer-latest.noarch.rpm" | log; flag=${PIPESTATUS[0]}
+    sudo rpm -Uvh http://${SATELLITE_VM_FQDN}/pub/katello-ca-consumer-latest.noarch.rpm | log; flag=${PIPESTATUS[0]}
+
+    echo "sudo subscription-manager clean" | log; flag=${PIPESTATUS[0]}
+    sudo subscription-manager clean | log; flag=${PIPESTATUS[0]}
+
+    echo "sudo subscription-manager register --org=${SATELLITE_ORG_NAME} --activationkey=${SATELLITE_ACTIVATION_KEY}" | log; flag=${PIPESTATUS[0]}
+    sudo subscription-manager register --org="${SATELLITE_ORG_NAME}" --activationkey="${SATELLITE_ACTIVATION_KEY}" --force | log; flag=${PIPESTATUS[0]}
+else
+    echo "Initial JBoss EAP 7.4 setup" | log; flag=${PIPESTATUS[0]}
+    echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
+    subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Subscription Manager Registration Failed" >&2 log; exit $flag;  fi
+
+    echo "Subscribing the system to get access to JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
+    echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
+    subscription-manager attach --pool=${RHSM_EAPPOOL} | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
+fi
 
 # Install JBoss EAP 7.4
 echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
