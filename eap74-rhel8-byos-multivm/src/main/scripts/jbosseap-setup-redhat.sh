@@ -44,7 +44,8 @@ STORAGE_ACCESS_KEY=$(az storage account keys list --verbose --account-name "${ST
 if [[ -z "${STORAGE_ACCESS_KEY}" ]] ; then echo  "Failed to get storage account sas token"; exit 1;  fi
 
 # Markdown script location
-SCRIPT_LOCATION=${artifactsLocation}${pathToScript}
+eval unwrapped_artifactsLocation=${artifactsLocation}
+SCRIPT_LOCATION="'""${unwrapped_artifactsLocation}${pathToScript}""'"
 
 if [ "${CONFIGURATION_MODE}" != "managed-domain" ]; then
     # Configure standalone host
