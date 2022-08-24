@@ -162,7 +162,7 @@ var plan = {
   publisher: 'redhat'
   product: 'rhel-byos'
 }
-var scriptFolder = 'bin'
+var scriptFolder = 'scripts'
 var fileToBeDownloaded = 'eap-session-replication.war'
 var scriptArgs = '-a \'${uri(artifactsLocation, '.')}\' -t "${artifactsLocationSasToken}" -p ${scriptFolder} -f ${fileToBeDownloaded}'
 

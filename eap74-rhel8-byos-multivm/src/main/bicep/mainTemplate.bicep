@@ -184,7 +184,7 @@ var plan = {
   product: 'rhel-byos'
 }
 var scriptFolder = 'scripts'
-var fileFolder = 'bin'
+var fileFolder = 'scripts'
 var fileToBeDownloaded = 'eap-session-replication.war'
 var scriptArgs = '-a \'${uri(artifactsLocation, '.')}\' -t \'${empty(artifactsLocationSasToken) ? '?' : artifactsLocationSasToken}\' -p ${fileFolder} -f ${fileToBeDownloaded} -s ${scriptFolder}'
 var const_arguments = '${scriptArgs} ${jbossEAPUserName} ${base64(jbossEAPPassword)} ${rhsmUserName} ${base64(rhsmPassword)} ${rhsmPoolEAP} ${rhsmPoolRHEL} ${eapStorageAccountName} ${containerName} ${resourceGroup().name} ${numberOfInstances} ${vmName_var} ${numberOfServerInstances} ${operatingMode} ${virtualNetworkNewOrExisting} ${connectSatellite} ${base64(satelliteActivationKey)} ${base64(satelliteOrgName)} ${satelliteFqdn}'
