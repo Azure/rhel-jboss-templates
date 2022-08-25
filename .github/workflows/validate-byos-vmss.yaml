@@ -81,7 +81,10 @@ jobs:
                 vmssArtifactName=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.artifactId}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-byos-vmss/pom.xml)
                 vmssArtifactName=${vmssArtifactName}-${vmssVersion}-arm-assembly
                 unzip rhel-jboss-templates/eap74-rhel8-byos-vmss/target/${vmssArtifactName}.zip -d rhel-jboss-templates/eap74-rhel8-byos-vmss/target/${vmssArtifactName}
-                
+                # Move eap-session-replication.war from /bin to /scripts, a walkaround for publishing private plan in Partner center
+                cp -R rhel-jboss-templates/${{ env.offerName }}/target/$artifactName/bin/. rhel-jboss-templates/${{ env.offerName }}/target/$artifactName/scripts/
+                # Delete /bin 
+                rm -r rhel-jboss-templates/${{ env.offerName }}/target/$artifactName/bin
                 echo "##[set-output name=vmssArtifactName;]${vmssArtifactName}"
                 echo "##[set-output name=vmssArtifactPath;]rhel-jboss-templates/eap74-rhel8-byos-vmss/target/${vmssArtifactName}"
             - name: Archive rhel-jboss-templates eap74-rhel8-byos-vmss offer templates

@@ -85,7 +85,10 @@ jobs:
                 multivmArtifactName=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.artifactId}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-byos-multivm/pom.xml)
                 multivmArtifactName=${multivmArtifactName}-${multivmVersion}-arm-assembly
                 unzip rhel-jboss-templates/eap74-rhel8-byos-multivm/target/${multivmArtifactName}.zip -d rhel-jboss-templates/eap74-rhel8-byos-multivm/target/${multivmArtifactName}
-                
+                # Move eap-session-replication.war from /bin to /scripts, a walkaround for publishing private plan in Partner center
+                cp -R rhel-jboss-templates/${{ env.offerName }}/target/$artifactName/bin/. rhel-jboss-templates/${{ env.offerName }}/target/$artifactName/scripts/
+                # Delete /bin 
+                rm -r rhel-jboss-templates/${{ env.offerName }}/target/$artifactName/bin
                 echo "##[set-output name=multivmArtifactName;]${multivmArtifactName}"
                 echo "##[set-output name=multivmArtifactPath;]rhel-jboss-templates/eap74-rhel8-byos-multivm/target/${multivmArtifactName}"
             - name: Archive rhel-jboss-templates eap74-rhel8-byos-multivm offer templates
