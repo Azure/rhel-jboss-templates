@@ -43,20 +43,20 @@ SATELLITE_VM_FQDN=${28}
 STORAGE_ACCESS_KEY=$(az storage account keys list --verbose --account-name "${STORAGE_ACCOUNT_NAME}" --query [0].value --output tsv)
 if [[ -z "${STORAGE_ACCESS_KEY}" ]] ; then echo  "Failed to get storage account sas token"; exit 1;  fi
 
-# Markdown script location
+# Unwrap single quotes around artifactsLocation
 eval unwrapped_artifactsLocation=${artifactsLocation}
-SCRIPT_LOCATION="'""${unwrapped_artifactsLocation}${pathToScript}""'"
 
 if [ "${CONFIGURATION_MODE}" != "managed-domain" ]; then
     # Configure standalone host
     for ((i = 0; i < NUMBER_OF_INSTANCE; i++)); do
         echo "Configure standalone host: ${VM_NAME_PREFIX}${i}"
+        standaloneScriptUri="${unwrapped_artifactsLocation}${pathToScript}/jbosseap-setup-standalone.sh"
         az vm extension set --verbose --name CustomScript \
         --resource-group ${RESOURCE_GROUP_NAME} \
         --vm-name ${VM_NAME_PREFIX}${i} \
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
-        --settings "{\"fileUris\": [\"${SCRIPT_LOCATION}/jbosseap-setup-standalone.sh\"]}" \
+        --settings "{\"fileUris\": [\"${standaloneScriptUri}\"]}" \
         --protected-settings "{\"commandToExecute\":\"bash jbosseap-setup-standalone.sh -a $artifactsLocation -t $token -p $pathToFile -f $fileToDownload ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${RHEL_POOL} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN} \"}"
         if [ $? != 0 ] ; then echo  "Failed to configure standalone host ${VM_NAME_PREFIX}${i}"; exit 1;  fi
         echo "standalone ${VM_NAME_PREFIX}${i} extension execution completed"
@@ -74,25 +74,26 @@ else
 
     # Configure domain controller host
     echo "Configure domain controller host: ${VM_NAME_PREFIX}0"
-
+    masterScriptUri="${unwrapped_artifactsLocation}${pathToScript}/jbosseap-setup-master.sh"
     az vm extension set --verbose --name CustomScript \
         --resource-group ${RESOURCE_GROUP_NAME} \
         --vm-name ${VM_NAME_PREFIX}0 \
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
-        --settings "{\"fileUris\": [\"${SCRIPT_LOCATION}/jbosseap-setup-master.sh\"]}" \
+        --settings "{\"fileUris\": [\"${masterScriptUri}\"]}" \
         --protected-settings "{\"commandToExecute\":\"bash jbosseap-setup-master.sh -a $artifactsLocation -t $token -p $pathToFile -f $fileToDownload ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${RHEL_POOL} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${privateEndpointIp} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN} \"}"
         if [ $? != 0 ] ; then echo  "Failed to configure domain controller host: ${VM_NAME_PREFIX}0"; exit 1;  fi
         echo "Domain controller VM extension execution completed"
 
     for ((i = 1; i < NUMBER_OF_INSTANCE; i++)); do
         echo "Configure domain slave host: ${VM_NAME_PREFIX}${i}"
+        slaveScriptUri="${unwrapped_artifactsLocation}${pathToScript}/jbosseap-setup-slave.sh"
         az vm extension set --verbose --name CustomScript \
         --resource-group ${RESOURCE_GROUP_NAME} \
         --vm-name ${VM_NAME_PREFIX}${i} \
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
-        --settings "{\"fileUris\": [\"${SCRIPT_LOCATION}/jbosseap-setup-slave.sh\"]}" \
+        --settings "{\"fileUris\": [\"${slaveScriptUri}\"]}" \
         --protected-settings "{\"commandToExecute\":\"bash jbosseap-setup-slave.sh -a $artifactsLocation -t $token -p $pathToFile -f $fileToDownload ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${RHEL_POOL} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${privateEndpointIp} ${DOMAIN_CONTROLLER_PRIVATE_IP} ${NUMBER_OF_SERVER_INSTANCE} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN} \"}"
         if [ $? != 0 ] ; then echo  "Failed to configure domain slave host: ${VM_NAME_PREFIX}${i}"; exit 1;  fi
         echo "Slave ${VM_NAME_PREFIX}${i} extension execution completed"
