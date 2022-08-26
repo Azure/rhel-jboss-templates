@@ -85,10 +85,11 @@ jobs:
                 multivmArtifactName=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.artifactId}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-byos-multivm/pom.xml)
                 multivmArtifactName=${multivmArtifactName}-${multivmVersion}-arm-assembly
                 unzip rhel-jboss-templates/eap74-rhel8-byos-multivm/target/${multivmArtifactName}.zip -d rhel-jboss-templates/eap74-rhel8-byos-multivm/target/${multivmArtifactName}
-                # Move eap-session-replication.war from /bin to /scripts, a walkaround for publishing private plan in Partner center
-                cp -R rhel-jboss-templates/${{ env.offerName }}/target/$artifactName/bin/. rhel-jboss-templates/${{ env.offerName }}/target/$artifactName/scripts/
+                # Move eap-session-replication.war from /bin to /scripts, a workaround for publishing private plan in Partner center, see issue: https://github.com/Azure/rhel-jboss-templates/issues/108
+                # This change is coupled with eap74-rhel8-byos-multivm/src/main/bicep/mainTemplate.bicep#188
+                cp -R rhel-jboss-templates/eap74-rhel8-byos-multivm/target/${multivmArtifactName}/bin/. rhel-jboss-templates/eap74-rhel8-byos-multivm/target/${multivmArtifactName}/scripts/
                 # Delete /bin 
-                rm -r rhel-jboss-templates/${{ env.offerName }}/target/$artifactName/bin
+                rm -r rhel-jboss-templates/eap74-rhel8-byos-multivm/target/${multivmArtifactName}/bin
                 echo "##[set-output name=multivmArtifactName;]${multivmArtifactName}"
                 echo "##[set-output name=multivmArtifactPath;]rhel-jboss-templates/eap74-rhel8-byos-multivm/target/${multivmArtifactName}"
             - name: Archive rhel-jboss-templates eap74-rhel8-byos-multivm offer templates

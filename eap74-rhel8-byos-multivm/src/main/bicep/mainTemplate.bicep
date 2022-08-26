@@ -184,6 +184,8 @@ var plan = {
   product: 'rhel-byos'
 }
 var scriptFolder = 'scripts'
+// A workaround for publishing private plan in Partner center, see issue: https://github.com/Azure/rhel-jboss-templates/issues/108
+// This change is coupled with .github/workflows/validate-byos-multivm.yaml#81
 var fileFolder = 'scripts'
 var fileToBeDownloaded = 'eap-session-replication.war'
 var scriptArgs = '-a \'${uri(artifactsLocation, '.')}\' -t \'${empty(artifactsLocationSasToken) ? '?' : artifactsLocationSasToken}\' -p ${fileFolder} -f ${fileToBeDownloaded} -s ${scriptFolder}'

@@ -77,7 +77,8 @@ jobs:
                 version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/${{ env.offerName }}/pom.xml)
                 artifactName=${{ env.offerName }}-$version-arm-assembly
                 unzip rhel-jboss-templates/${{ env.offerName }}/target/$artifactName.zip -d rhel-jboss-templates/${{ env.offerName }}/target/$artifactName
-                # Move eap-session-replication.war from /bin to /scripts, a walkaround for publishing private plan in Partner center
+                # Move eap-session-replication.war from /bin to /scripts, a workaround for publishing private plan in Partner center, see issue: https://github.com/Azure/rhel-jboss-templates/issues/108
+                # This change is coupled with eap74-rhel8-byos-vmss/src/main/bicep/mainTemplate.bicep#165
                 cp -R rhel-jboss-templates/${{ env.offerName }}/target/$artifactName/bin/. rhel-jboss-templates/${{ env.offerName }}/target/$artifactName/scripts/
                 # Delete /bin 
                 rm -r rhel-jboss-templates/${{ env.offerName }}/target/$artifactName/bin
