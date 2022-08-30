@@ -70,7 +70,7 @@ jobs:
             - name: Build ${{ env.offerName }}
               run: |
                 cd ${{env.repoName}}/${{ env.offerName }}
-                mvn -Pbicep -Passembly clean install
+                mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests
             - name: Generate artifact file name and path
               id: artifact_file
               run: |

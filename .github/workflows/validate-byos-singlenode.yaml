@@ -10,7 +10,7 @@ on:
 
 env:
     azCliVersion: 2.30.0
-    refArmttk: 90e8e5cde786cd8b0c358c847ee9d0203e11e726
+    refArmttk: bad2965565e2e69318039bc15c2496844d55a59d
     refJavaee: f25ab89a2a8848da39b84e5d6c927f4c4cb47200
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
     location: eastus
