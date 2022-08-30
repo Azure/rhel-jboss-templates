@@ -13,3 +13,8 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 */
+
+// Workaround to arm-ttk complain: Parameters property must exist in the template
+param name string = 'This is an empty deployment'
+
+output name string = name
