@@ -39,33 +39,6 @@ function validate_status() {
     fi
 }
 
-# Validate User Assigned Managed Identity
-# Check points:
-#   - the identity is User Assigned Identity, if not, exit with error.
-#   - the identity is assigned with Contributor or Owner role, if not, exit with error.
-function validate_user_assigned_managed_identity() {
-    # AZ_SCRIPTS_USER_ASSIGNED_IDENTITY
-    local uamiType=$(az identity show --ids ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY} --query "type" -o tsv)
-    validate_status "query resource type of ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY}" "The user managed identity may not exist, please check."
-    if [[ "${uamiType}" != "${userManagedIdentityType}" ]]; then
-        echo_stderr "You must use User Assigned Managed Identity, please follow the document to create one: https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-to-manage-ua-identity-portal?WT.mc_id=Portal-Microsoft_Azure_CreateUIDef"
-        exit 1
-    fi
-
-    echo_stdout "query principal Id of the User Assigned Identity."
-    local principalId=$(az identity show --ids ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY} --query "principalId" -o tsv)
-
-    echo_stdout "check if the user assigned managed identity has Contributor or Owner role."
-    local roleLength=$(az role assignment list --assignee ${principalId} |
-        jq '[.[] | select(.roleDefinitionName=="Contributor" or .roleDefinitionName=="Owner")] | length')
-    if [ ${roleLength} -lt 1 ]; then
-        echo_stderr "You must grant the User Assigned Managed Identity with at least Contributor role. Please check ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY}"
-        exit 1
-    fi
-
-    echo_stdout "Check User Assigned Identity: passed!"
-}
-
 # Validate compute resources
 # Check points:
 #   - there is enough resource for VM

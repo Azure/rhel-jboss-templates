@@ -126,9 +126,6 @@ param artifactsLocation string = deployment().properties.templateLink.uri
 @secure()
 param artifactsLocationSasToken string = ''
 
-@description('An user assigned managed identity. Make sure the identity has permission to create/update/delete/list Azure resources.')
-param identity object
-
 @description('Connect to an existing Red Hat Satellite Server.')
 param connectSatellite bool = false
 
@@ -140,6 +137,8 @@ param satelliteOrgName string = ''
 
 @description('Red Hat Satellite Server VM FQDN name.')
 param satelliteFqdn string = ''
+
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
 var name_managedDomain = 'managed-domain'
 var name_fileshare = 'jbossshare'
@@ -175,38 +174,39 @@ var imageReference = {
   sku: '8_4'
   version: 'latest'
 }
-var scriptFolder = 'scripts'
-var fileFolder = 'bin'
-var fileToBeDownloaded = 'eap-session-replication.war'
-var scriptArgs = '-a "${uri(artifactsLocation, '.')}" -t "${empty(artifactsLocationSasToken) ? '?' : 'artifactsLocationSasToken'}" -p ${fileFolder} -f ${fileToBeDownloaded} -s ${scriptFolder}'
-var const_arguments = '${scriptArgs} ${jbossEAPUserName} ${base64(jbossEAPPassword)} ${rhsmUserName} ${base64(rhsmPassword)} ${rhsmPoolEAP} ${eapStorageAccountName} ${containerName} ${resourceGroup().name} ${numberOfInstances} ${vmName_var} ${numberOfServerInstances} ${operatingMode} ${virtualNetworkNewOrExisting} ${connectSatellite} ${base64(satelliteActivationKey)} ${base64(satelliteOrgName)} ${satelliteFqdn}'
-var const_arguments_validate_parameters = '${location} ${vmSize} ${numberOfInstances} ${connectSatellite} ${satelliteFqdn}'
-var const_scriptLocation = uri(artifactsLocation, 'scripts/')
-var const_setupJBossScript = 'jbosseap-setup-redhat.sh'
-var const_setupDomainMasterScript = 'jbosseap-setup-master.sh'
-var const_setupDomainSlaveScript = 'jbosseap-setup-slave.sh'
-var const_setupDomainStandaloneScript = 'jbosseap-setup-standalone.sh'
-var const_validateParameterScript = 'validate-parameters.sh'
 var const_enableLoadBalancer = bool(enableLoadBalancer == 'enable')
-var const_deploymentName = 'validate-parameters-and-fail-fast'
-var const_azcliVersion = '2.15.0'
+var name_failFastDsName = format('failFast{0}', guidValue)
+var name_jbossEAPDsName = 'jbosseap-setup'
+var obj_uamiForDeploymentScript = {
+  type: 'UserAssigned'
+  userAssignedIdentities: {
+    '${uamiDeployment.outputs.uamiIdForDeploymentScript}': {}
+  }
+}
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-1879addb-1fa9-4225-8bd2-6d0a1ffc5dc0-partnercenter'
   params: {}
 }
 
-resource validateParameters 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: const_deploymentName
-  location: location
-  kind: 'AzureCLI'
-  identity: identity
-  properties: {
-    azCliVersion: const_azcliVersion
-    arguments: const_arguments_validate_parameters
-    primaryScriptUri: uri(const_scriptLocation, '${const_validateParameterScript}${artifactsLocationSasToken}')
-    cleanupPreference: 'OnExpiration'
-    retentionInterval: 'P1D'
+module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
+  name: 'uami-deployment'
+  params: {
+    location: location
+  }
+}
+
+module failFastDeployment 'modules/_deployment-scripts/_ds-failfast.bicep' = {
+  name: name_failFastDsName
+  params: {
+    artifactsLocation: artifactsLocation
+    artifactsLocationSasToken: artifactsLocationSasToken
+    location: location
+    identity: obj_uamiForDeploymentScript
+    vmSize: vmSize
+    numberOfInstances: numberOfInstances
+    connectSatellite: connectSatellite
+    satelliteFqdn: satelliteFqdn
   }
   dependsOn: [
     partnerCenterPid
@@ -224,7 +224,7 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@2021-04-01' = if (bo
     QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
   }
   dependsOn: [
-    validateParameters
+    failFastDeployment
   ]
 }
 
@@ -257,7 +257,7 @@ resource eapStorageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
     QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
   }
   dependsOn: [
-    validateParameters
+    failFastDeployment
   ]
 }
 
@@ -268,7 +268,7 @@ resource eapStorageAccountNameContainer 'Microsoft.Storage/storageAccounts/blobS
   }
   dependsOn: [
     eapStorageAccount
-    validateParameters
+    failFastDeployment
   ]
 }
 
@@ -402,22 +402,29 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2021-03-01' = [for i
   ]
 }]
 
-resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: 'jbosseap-setup'
-  location: location
-  kind: 'AzureCLI'
-  identity: identity
-  properties: {
-    azCliVersion: const_azcliVersion
-    arguments: const_arguments
-    primaryScriptUri: uri(const_scriptLocation, '${const_setupJBossScript}${artifactsLocationSasToken}')
-    supportingScriptUris: [
-      uri(const_scriptLocation, '${const_setupDomainMasterScript}${artifactsLocationSasToken}')
-      uri(const_scriptLocation, '${const_setupDomainSlaveScript}${artifactsLocationSasToken}')
-      uri(const_scriptLocation, '${const_setupDomainStandaloneScript}${artifactsLocationSasToken}')
-    ]
-    cleanupPreference: 'OnExpiration'
-    retentionInterval: 'P1D'
+module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' = {
+  name: name_jbossEAPDsName
+  params: {
+    artifactsLocation: artifactsLocation
+    artifactsLocationSasToken: artifactsLocationSasToken
+    location: location
+    identity: obj_uamiForDeploymentScript
+    jbossEAPUserName: jbossEAPUserName
+    jbossEAPPassword: jbossEAPPassword
+    rhsmUserName: rhsmUserName
+    rhsmPassword: rhsmPassword
+    rhsmPoolEAP: rhsmPoolEAP
+    eapStorageAccountName: eapStorageAccountName
+    containerName: containerName
+    numberOfInstances: numberOfInstances
+    vmName: vmName_var
+    numberOfServerInstances: numberOfServerInstances
+    operatingMode: operatingMode
+    virtualNetworkNewOrExisting: virtualNetworkNewOrExisting
+    connectSatellite: connectSatellite
+    satelliteActivationKey: satelliteActivationKey
+    satelliteOrgName: satelliteOrgName
+    satelliteFqdn: satelliteFqdn
   }
   dependsOn: [
     vmName_resource
@@ -534,7 +541,7 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@2021-03-01' = {
     platformFaultDomainCount: 2
   }
   dependsOn: [
-    validateParameters
+    failFastDeployment
   ]
 }
 

@@ -97,3 +97,6 @@ else
         echo "Slave ${VM_NAME_PREFIX}${i} extension execution completed"
     done
 fi
+
+# Delete uami generated before
+az identity delete --ids ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY}

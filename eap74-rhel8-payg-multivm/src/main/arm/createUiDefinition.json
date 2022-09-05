@@ -5,6 +5,15 @@
     "parameters": {
         "basics": [
             {
+                "name": "infoForBeforeDeployment",
+                "type": "Microsoft.Common.InfoBox",
+                "visible": true,
+                "options": {
+                    "icon": "Info",
+                    "text": "The Azure identity deploying this offer must have one of the following two sets of Azure role-based access control roles:<br> <li><a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#contributor'>Contributor</a> <b>and</b> <a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#user-access-administrator'>User Access Administrator</a> of the current subscription.</li><li><a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#owner'>Owner</a> of the current subscription.</li>"
+                }
+            },
+            {
                 "name": "vmName",
                 "type": "Microsoft.Common.TextBox",
                 "label": "Virtual Machine name",
@@ -566,31 +575,6 @@
                             "regex": "^[a-f0-9A-F]{32,32}$",
                             "validationMessage": "The RHSM Pool ID must be 32 characters long and should contain only alphabets between a to f and numbers."
                         }
-                    },
-                    {
-                        "name": "errInfo",
-                        "type": "Microsoft.Common.InfoBox",
-                        "visible": "[not(equals(length(steps('jbossEAPSettings').identity.userAssignedIdentities),1))]",
-                        "options": {
-                            "icon": "Error",
-                            "text": "Please select exactly one user assigned managed identity.  The identity must have the Contributor or Owner role in the specified subscription.",
-                            "uri": "https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-to-manage-ua-identity-portal"
-                        }
-                    },
-                    {
-                        "name": "identity",
-                        "type": "Microsoft.ManagedIdentity.IdentitySelector",
-                        "label": "Managed Identity Configuration",
-                        "toolTip": {
-                            "userAssignedIdentity": "Add one user assigned identity to enable the JBoss EAP managed domain deployment."
-                        },
-                        "defaultValue": {
-                            "systemAssignedIdentity": "Off"
-                        },
-                        "options": {
-                            "hideSystemAssignedIdentity": true,
-                            "hideUserAssignedIdentity": false
-                        }
                     }
                 ]
             }
@@ -625,7 +609,6 @@
             "rhsmUserName": "[steps('jbossEAPSettings').rhsmUserName]",
             "rhsmPassword": "[steps('jbossEAPSettings').rhsmPassword]",
             "rhsmPoolEAP": "[steps('jbossEAPSettings').rhsmPoolEAP]",
-            "identity": "[steps('jbossEAPSettings').identity]",
             "connectSatellite": "[steps('satelliteServerSettings').connectSatellite]",
             "satelliteActivationKey": "[steps('satelliteServerSettings').satelliteActivationKey]",
             "satelliteOrgName": "[steps('satelliteServerSettings').satelliteOrgName]",
