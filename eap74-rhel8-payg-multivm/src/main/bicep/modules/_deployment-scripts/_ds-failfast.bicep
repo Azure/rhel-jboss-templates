@@ -27,6 +27,7 @@ var const_validateParameterScript = 'validate-parameters.sh'
 var deploymentName = 'validate-parameters-and-fail-fast'
 var const_azcliVersion = '2.15.0'
 var const_arguments_validate_parameters = '${location} ${vmSize} ${numberOfInstances} ${connectSatellite} ${satelliteFqdn}'
+var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 
 resource validateParameters 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: deploymentName
@@ -36,7 +37,7 @@ resource validateParameters 'Microsoft.Resources/deploymentScripts@2020-10-01' =
   properties: {
     azCliVersion: const_azcliVersion
     arguments: const_arguments_validate_parameters
-    primaryScriptUri: uri(artifactsLocation, '${const_validateParameterScript}${artifactsLocationSasToken}')
+    primaryScriptUri: uri(const_scriptLocation, '${const_validateParameterScript}${artifactsLocationSasToken}')
     cleanupPreference: 'OnExpiration'
     retentionInterval: 'P1D'
   }

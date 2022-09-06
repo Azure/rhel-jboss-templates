@@ -116,9 +116,6 @@ numberOfInstances=$3
 connectSatellite=$4
 DEFAULT_SATELLITE_FQDN="invalid-fqdn"
 satelliteFqdn="${5:-$DEFAULT_SATELLITE_FQDN}"
-userManagedIdentityType="Microsoft.ManagedIdentity/userAssignedIdentities"
-
-validate_user_assigned_managed_identity
 
 validate_compute_resources
 
