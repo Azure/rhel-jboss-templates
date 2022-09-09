@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 #read arguments from stdin
-read parametersPath gitUserName testbranchName location vmName asName adminUsername password enableLb numberOfInstances operatingMode virtualNetworkResourceGroupName bootStorageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword rhsmUserName rhsmPassword rhsmPoolEAP rhsmPoolRHEL userAssignedManagedIdentity
+read parametersPath gitUserName testbranchName location vmName asName adminUsername password enableLb numberOfInstances operatingMode virtualNetworkResourceGroupName bootStorageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword rhsmUserName rhsmPassword rhsmPoolEAP rhsmPoolRHEL
  
 cat <<EOF > ${parametersPath}
 {
@@ -100,14 +100,6 @@ cat <<EOF > ${parametersPath}
         },
         "rhsmPoolRHEL": {
             "value": "${rhsmPoolRHEL}"
-        },
-        "identity": {
-            "value": {
-                "type": "UserAssigned",
-                "userAssignedIdentities": {
-                    "${userAssignedManagedIdentity}": {}
-                }
-            }
         }
     }
 }
