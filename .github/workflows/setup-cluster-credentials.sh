@@ -126,7 +126,6 @@ fi
 # Comment out adding date suffix to make it works with tear down script
 # DISAMBIG_PREFIX=${DISAMBIG_PREFIX}`date +%m%d`
 SERVICE_PRINCIPAL_NAME=${DISAMBIG_PREFIX}sp
-USER_ASSIGNED_MANAGED_IDENTITY_NAME=${DISAMBIG_PREFIX}u
 
 # get default location if not set at the beginning of this file
 if [ "$LOCATION" == '' ] ; then
@@ -145,7 +144,7 @@ if [ "$LOCATION" == '' ] ; then
 fi
 
 # Check AZ CLI status
-msg "${GREEN}(1/6) Checking Azure CLI status...${NOFORMAT}"
+msg "${GREEN}(1/4) Checking Azure CLI status...${NOFORMAT}"
 {
   az > /dev/null
 } || {
@@ -164,7 +163,7 @@ msg "${GREEN}(1/6) Checking Azure CLI status...${NOFORMAT}"
 msg "${YELLOW}Azure CLI is installed and configured!"
 
 # Check GitHub CLI status
-msg "${GREEN}(2/6) Checking GitHub CLI status...${NOFORMAT}"
+msg "${GREEN}(2/4) Checking GitHub CLI status...${NOFORMAT}"
 USE_GITHUB_CLI=false
 {
   gh auth status && USE_GITHUB_CLI=true && msg "${YELLOW}GitHub CLI is installed and configured!"
@@ -174,7 +173,7 @@ USE_GITHUB_CLI=false
 }
 
 # Execute commands
-msg "${GREEN}(3/6) Create service principal and Azure credentials ${SERVICE_PRINCIPAL_NAME}"
+msg "${GREEN}(3/4) Create service principal and Azure credentials ${SERVICE_PRINCIPAL_NAME}"
 SUBSCRIPTION_ID=$(az account show --query id --output tsv --only-show-errors)
 
 ### AZ ACTION CREATE
@@ -182,28 +181,7 @@ SUBSCRIPTION_ID=$(az account show --query id --output tsv --only-show-errors)
 SERVICE_PRINCIPAL=$(az ad sp create-for-rbac --name ${SERVICE_PRINCIPAL_NAME} --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION_ID}" --sdk-auth --only-show-errors | base64 -w0)
 AZURE_CREDENTIALS=$(echo $SERVICE_PRINCIPAL | base64 -d)
 
-### AZ ACTION CREATE
-
-msg "${GREEN}(4/6) Create User assigned managed identity ${USER_ASSIGNED_MANAGED_IDENTITY_NAME}"
-az group create --name ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} --location ${LOCATION}
-az identity create --name ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} --location ${LOCATION} --resource-group ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} --subscription ${SUBSCRIPTION_ID}
-USER_ASSIGNED_MANAGED_IDENTITY_ID_NOT_ESCAPED=$(az identity show --name ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} --resource-group ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} --query id)
-
-### AZ ACTION MUTATE
-
-msg "${GREEN}(5/6) Grant Contributor role in subscription scope to ${USER_ASSIGNED_MANAGED_IDENTITY_NAME}. Sleeping for ${SLEEP_VALUE} first."
-sleep ${SLEEP_VALUE}
-ASSIGNEE_OBJECT_ID=$(az identity show --name ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} --resource-group ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} --query principalId)
-# strip quotes
-ASSIGNEE_OBJECT_ID=${ASSIGNEE_OBJECT_ID//\"/}
-az role assignment create --role Contributor --assignee-principal-type ServicePrincipal --assignee-object-id ${ASSIGNEE_OBJECT_ID} --subscription ${SUBSCRIPTION_ID} --scope /subscriptions/${SUBSCRIPTION_ID}
-
-# https://stackoverflow.com/questions/13210880/replace-one-substring-for-another-string-in-shell-script
-USER_ASSIGNED_MANAGED_IDENTITY_ID=${USER_ASSIGNED_MANAGED_IDENTITY_ID_NOT_ESCAPED//\//\\/}
-# remove leading and trailing quote
-USER_ASSIGNED_MANAGED_IDENTITY_ID=${USER_ASSIGNED_MANAGED_IDENTITY_ID//\"/}
-
-msg "${GREEN}(6/6) Create secrets in GitHub"
+msg "${GREEN}(4/4) Create secrets in GitHub"
 if $USE_GITHUB_CLI; then
   {
     msg "${GREEN}Using the GitHub CLI to set secrets.${NOFORMAT}"
@@ -222,9 +200,6 @@ if $USE_GITHUB_CLI; then
     gh ${GH_FLAGS} secret set SERVICE_PRINCIPAL -b"${SERVICE_PRINCIPAL}"
     msg "${YELLOW}\"SERVICE_PRINCIPAL\""
     msg "${GREEN}${SERVICE_PRINCIPAL}"
-    gh ${GH_FLAGS} secret set USER_ASSIGNED_MANAGED_IDENTITY_ID -b"${USER_ASSIGNED_MANAGED_IDENTITY_ID}"
-    msg "${YELLOW}\"USER_ASSIGNED_MANAGED_IDENTITY_ID\""
-    msg "${GREEN}${USER_ASSIGNED_MANAGED_IDENTITY_ID}"
     msg "${YELLOW}\"DISAMBIG_PREFIX\""
     msg "${GREEN}${DISAMBIG_PREFIX}"
   } || {
@@ -249,8 +224,6 @@ if [ $USE_GITHUB_CLI == false ]; then
   msg "${GREEN}${RHSM_USERNAME}"
   msg "${YELLOW}\"SERVICE_PRINCIPAL\""
   msg "${GREEN}${SERVICE_PRINCIPAL}"
-  msg "${YELLOW}\"USER_ASSIGNED_MANAGED_IDENTITY_ID\""
-  msg "${GREEN}${USER_ASSIGNED_MANAGED_IDENTITY_ID}"
   msg "${YELLOW}\"RHSM_POOL\""
   msg "${GREEN}${RHSM_POOL}"
   msg "${YELLOW}\"RHSM_POOL_FOR_RHEL\""

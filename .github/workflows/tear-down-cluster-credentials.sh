@@ -43,10 +43,9 @@ else
 fi
 
 SERVICE_PRINCIPAL_NAME=${DISAMBIG_PREFIX}sp
-USER_ASSIGNED_MANAGED_IDENTITY_NAME=${DISAMBIG_PREFIX}u
 
 # Execute commands
-msg "${GREEN}(1/4) Delete service principal ${SERVICE_PRINCIPAL_NAME}"
+msg "${GREEN}(1/3) Delete service principal ${SERVICE_PRINCIPAL_NAME}"
 SUBSCRIPTION_ID=$(az account show --query id --output tsv --only-show-errors)
 SP_OBJECT_ID_ARRAY=$(az ad sp list --display-name ${SERVICE_PRINCIPAL_NAME} --query "[].objectId") || true
 # remove whitespace
@@ -55,11 +54,8 @@ SP_OBJECT_ID_ARRAY=${SP_OBJECT_ID_ARRAY//[/}
 SP_OBJECT_ID=${SP_OBJECT_ID_ARRAY//]/}
 az ad sp delete --id ${SP_OBJECT_ID} || true
 
-msg "${GREEN}(2/4) Delete User assigned managed identity ${USER_ASSIGNED_MANAGED_IDENTITY_NAME}"
-az group delete --yes --no-wait --name ${USER_ASSIGNED_MANAGED_IDENTITY_NAME} > /dev/null 2>&1 || true
-
 # Check GitHub CLI status
-msg "${GREEN}(3/4) Checking GitHub CLI status...${NOFORMAT}"
+msg "${GREEN}(2/3) Checking GitHub CLI status...${NOFORMAT}"
 USE_GITHUB_CLI=false
 {
   gh auth status && USE_GITHUB_CLI=true && msg "${YELLOW}GitHub CLI is installed and configured!"
@@ -68,13 +64,12 @@ USE_GITHUB_CLI=false
   USE_GITHUB_CLI=false
 }
 
-msg "${GREEN}(4/4) Removing secrets...${NOFORMAT}"
+msg "${GREEN}(3/3) Removing secrets...${NOFORMAT}"
 if $USE_GITHUB_CLI; then
   {
     msg "${GREEN}Using the GitHub CLI to remove secrets.${NOFORMAT}"
     gh ${GH_FLAGS} secret remove AZURE_CREDENTIALS
     gh ${GH_FLAGS} secret remove SERVICE_PRINCIPAL
-    gh ${GH_FLAGS} secret remove USER_ASSIGNED_MANAGED_IDENTITY_ID
     gh ${GH_FLAGS} secret remove JBOSS_EAP_USER_PASSWORD
     gh ${GH_FLAGS} secret remove VM_PASSWORD
     gh ${GH_FLAGS} secret remove RHSM_USERNAME
@@ -96,7 +91,6 @@ if [ $USE_GITHUB_CLI == false ]; then
   msg "(in ${YELLOW}yellow the secret name)"
   msg "${YELLOW}\"AZURE_CREDENTIALS\""
   msg "${YELLOW}\"SERVICE_PRINCIPAL\""
-  msg "${YELLOW}\"USER_ASSIGNED_MANAGED_IDENTITY_ID\""
   msg "${YELLOW}\"VM_PASSWORD\""
   msg "${YELLOW}\"JBOSS_EAP_USER_PASSWORD\""
   msg "${YELLOW}\"RHSM_USERNAME\""
