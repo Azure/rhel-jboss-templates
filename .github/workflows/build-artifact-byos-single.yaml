@@ -8,9 +8,9 @@ on:
       ref:
         description: 'Specify Git Ref if needed.'
         required: false
-        default: 'refs/heads/master'
+        default: 'refs/heads/main'
   # Sample cURL
-  # curl --verbose -X POST https://api.github.com/repos/<github_user>/rhel-jboss-templates/dispatches -H 'Accept: application/vnd.github.everest-preview+json' -H 'Authorization: token <personal_access_token>' --data '{"event_type": "byos-single-package", "client_payload": {"ref": "refs/heads/master"}}'
+  # curl --verbose -X POST https://api.github.com/repos/<github_user>/rhel-jboss-templates/dispatches -H 'Accept: application/vnd.github.everest-preview+json' -H 'Authorization: token <personal_access_token>' --data '{"event_type": "byos-single-package", "client_payload": {"ref": "refs/heads/main"}}'
 
 env:
     refArmttk: bad2965565e2e69318039bc15c2496844d55a59d
@@ -34,7 +34,7 @@ jobs:
                     ref=${{ github.event.client_payload.ref }}
                 fi
                 if [ -z "$ref" ]; then
-                    ref='refs/heads/master'
+                    ref='refs/heads/main'
                 fi
                 echo "##[set-output name=ref;]${ref}"
                 echo "ref=${ref}" >> $GITHUB_ENV
