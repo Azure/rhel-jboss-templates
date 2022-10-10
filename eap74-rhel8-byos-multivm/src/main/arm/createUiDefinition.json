@@ -91,7 +91,7 @@
                         "type": "Microsoft.Common.TextBlock",
                         "visible": true,
                         "options": {
-                            "text": "If you encounter problems during the deployment of Oracle WebLogic Server, report them here.",
+                            "text": "If you encounter problems during the deployment of Red Hat JBoss EAP, report them here.",
                             "link": {
                                 "label": "Issue tracker",
                                 "uri": "https://red.ht/eap-vm-issues?version=${project.version}"

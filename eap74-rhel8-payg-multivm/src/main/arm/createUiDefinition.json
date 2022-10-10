@@ -272,7 +272,7 @@
                         "type": "Microsoft.Common.TextBlock",
                         "visible": true,
                         "options": {
-                            "text": "If you encounter problems during the deployment of Oracle WebLogic Server, report them here.",
+                            "text": "If you encounter problems during the deployment of Red Hat JBoss EAP, report them here.",
                             "link": {
                                 "label": "Issue tracker",
                                 "uri": "https://red.ht/eap-vm-issues?version=${project.version}"
@@ -461,20 +461,33 @@
                 "bladeTitle": "Azure Application Gateway Settings",
                 "elements": [
                     {
-                        "name": "connectToAGText",
+                        "name": "cannotConnectToAGText",
                         "type": "Microsoft.Common.TextBlock",
-                        "visible": true,
+                        "visible": "[equals(steps('jbossEAPSettings').operatingMode, 'standalone')]",
                         "options": {
                             "text": "Selecting 'Yes' here will cause the template to provision an Azure Application Gateway (WAF_v2 or later SKU), a public IP, and a backend pool consisting of the worker nodes in the cluster.  Further configuration may be necessary after deployment.",
                             "link": {
                                 "label": "Learn more",
-                                "uri": "https://aka.ms/arm-oraclelinux-wls-cluster-app-gateway-overview"
+                                "uri": "https://learn.microsoft.com/en-us/azure/application-gateway/overview"
+                            }
+                        }
+                    },
+                    {
+                        "name": "connectToAGText",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": "[not(equals(steps('jbossEAPSettings').operatingMode, 'standalone'))]",
+                        "options": {
+                            "text": "Selecting 'Yes' here will cause the template to provision an Azure Application Gateway (WAF_v2 or later SKU), a public IP, and a backend pool consisting of the worker nodes in the cluster.  Further configuration may be necessary after deployment.",
+                            "link": {
+                                "label": "Learn more",
+                                "uri": "https://learn.microsoft.com/en-us/azure/application-gateway/overview"
                             }
                         }
                     },
                     {
                         "name": "enableAppGateway",
                         "type": "Microsoft.Common.OptionsGroup",
+                        "visible": "[not(equals(steps('jbossEAPSettings').operatingMode, 'standalone'))]",
                         "label": "Connect to Azure Application Gateway?",
                         "defaultValue": "No",
                         "toolTip": "Select 'Yes' to create an Azure Application Gateway as the load balancer for the cluster.",
