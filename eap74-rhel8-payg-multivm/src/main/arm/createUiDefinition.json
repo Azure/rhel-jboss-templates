@@ -33,30 +33,6 @@
                 "count": "1"
             },
             {
-                "name": "vmName",
-                "type": "Microsoft.Common.TextBox",
-                "label": "Virtual Machine name",
-                "defaultValue": "jbossvm",
-                "toolTip": "The name of the Virtual Machine",
-                "constraints": {
-                    "required": true,
-                    "regex": "^[a-z0-9A-Z-]{3,79}$",
-                    "validationMessage": "The VM Name must be between 3 and 79 characters long and contain letters, numbers and hyphens only."
-                }
-            },
-            {
-                "name": "asName",
-                "type": "Microsoft.Common.TextBox",
-                "label": "Availability set name",
-                "defaultValue": "jbossas",
-                "toolTip": "The name of the availability set",
-                "constraints": {
-                    "required": true,
-                    "regex": "^[a-z0-9A-Z-]{3,79}$",
-                    "validationMessage": "The Availability set Name must be between 3 and 79 characters long and contain letters, numbers and hyphens only."
-                }
-            },
-            {
                 "name": "adminUsername",
                 "type": "Microsoft.Compute.UserNameTextBox",
                 "label": "Username",
@@ -110,145 +86,199 @@
                 "visible": true
             },
             {
-                "name": "bootDiagnostics",
-                "type": "Microsoft.Common.OptionsGroup",
-                "label": "Boot diagnostics",
-                "defaultValue": "off",
-                "toolTip": "Capture serial console outputs and screenshots of the virtual machine running on a host to help diagnose startup issues",
-                "constraints": {
-                    "allowedValues": [
-                        {
-                            "label": "on",
-                            "value": "on"
-                        },
-                        {
-                            "label": "off",
-                            "value": "off"
+                "name": "basicsOptional",
+                "type": "Microsoft.Common.Section",
+                "label": "Optional Basic Configuration",
+                "elements": [
+                    {
+                        "name": "basicsOptionalAcceptDefaults",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Accept defaults for optional configuration?",
+                        "defaultValue": "Yes",
+                        "toolTip": "Select 'No' to edit optional basic configuration.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": "false"
+                                },
+                                {
+                                    "label": "No",
+                                    "value": "true"
+                                }
+                            ],
+                            "required": true
                         }
-                    ],
-                    "required": true
-                },
-                "visible": true
-            },
-            {
-                "name": "storageNewOrExisting",
-                "type": "Microsoft.Common.DropDown",
-                "label": "Storage Account",
-                "defaultValue": "New",
-                "toolTip": "Select new or existing Storage account",
-                "constraints": {
-                    "allowedValues": [
-                        {
-                            "label": "Existing",
-                            "value": "Existing"
+                    },
+                    {
+                        "name": "vmName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Virtual Machine name",
+                        "defaultValue": "jbossvm",
+                        "toolTip": "The name of the Virtual Machine",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[a-z0-9A-Z-]{3,79}$",
+                            "validationMessage": "The VM Name must be between 3 and 79 characters long and contain letters, numbers and hyphens only."
                         },
-                        {
-                            "label": "New",
-                            "value": "New"
-                        }
-                    ],
-                    "required": true
-                },
-                "visible": "[equals(basics('bootDiagnostics'), 'on')]"
-            },
-            {
-                "name": "armApiControl",
-                "type": "Microsoft.Solutions.ArmApiControl",
-                "toolTip": "Select existing storage account",
-                "request": {
-                    "method": "GET",
-                    "path": "[concat(subscription().id, '/providers/Microsoft.Storage/storageAccounts?api-version=2021-04-01')]"
-                },
-                "visible": "[equals(basics('storageNewOrExisting'), 'Existing')]"
-            },
-            {
-                "name": "existingStorageAccount",
-                "type": "Microsoft.Common.DropDown",
-                "label": "Available storage accounts",
-                "toolTip": "Select a storage account from the existing list",
-                "constraints": {
-                    "allowedValues": "[filter(map(basics('armApiControl').value, (item) => parse(concat('{\"label\":\"', concat(item.name,' (',item.kind,')'), '\",\"value\":\"', item.name, '\",\"kind\":\"', item.kind, '\",\"location\":\"', item.location, '\",\"tier\":\"', item.sku.tier, '\"}'))), (item) => and(and(not(contains(toLower(item.kind),'blob')),equals(location(),item.location)),equals('Standard',item.tier)))]",
-                    "required": true
-                },
-                "visible": "[equals(basics('storageNewOrExisting'), 'Existing')]"
-            },
-            {
-                "name": "nameApi",
-                "type": "Microsoft.Solutions.ArmApiControl",
-                "toolTip": "Check new storage account name availability",
-                "request": {
-                    "method": "POST",
-                    "path": "[concat(subscription().id,'/providers/Microsoft.Storage/checkNameAvailability?api-version=2019-06-01')]",
-                    "body": {
-                        "name": "[basics('storageAccountName').value]",
-                        "toolTip": "get storage account name provided earlier",
-                        "type": "Microsoft.Storage/storageAccounts"
+                        "visible": "[bool(basics('basicsOptional').basicsOptionalAcceptDefaults)]"
+                    },
+                    {
+                        "name": "asName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Availability set name",
+                        "defaultValue": "jbossas",
+                        "toolTip": "The name of the availability set",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[a-z0-9A-Z-]{3,79}$",
+                            "validationMessage": "The Availability set Name must be between 3 and 79 characters long and contain letters, numbers and hyphens only."
+                        },
+                        "visible": "[bool(basics('basicsOptional').basicsOptionalAcceptDefaults)]"
+                    },
+                    {
+                        "name": "bootDiagnostics",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Boot diagnostics",
+                        "defaultValue": "off",
+                        "toolTip": "Capture serial console outputs and screenshots of the virtual machine running on a host to help diagnose startup issues",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "on",
+                                    "value": "on"
+                                },
+                                {
+                                    "label": "off",
+                                    "value": "off"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[bool(basics('basicsOptional').basicsOptionalAcceptDefaults)]"
+                    },
+                    {
+                        "name": "storageNewOrExisting",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Storage Account",
+                        "defaultValue": "New",
+                        "toolTip": "Select new or existing Storage account",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Existing",
+                                    "value": "Existing"
+                                },
+                                {
+                                    "label": "New",
+                                    "value": "New"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').bootDiagnostics, 'on'))]"
+                    },
+                    {
+                        "name": "armApiControl",
+                        "type": "Microsoft.Solutions.ArmApiControl",
+                        "toolTip": "Select existing storage account",
+                        "request": {
+                            "method": "GET",
+                            "path": "[concat(subscription().id, '/providers/Microsoft.Storage/storageAccounts?api-version=2021-04-01')]"
+                        },
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'Existing'))]"
+                    },
+                    {
+                        "name": "existingStorageAccount",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Available storage accounts",
+                        "toolTip": "Select a storage account from the existing list",
+                        "constraints": {
+                            "allowedValues": "[filter(map(basics('armApiControl').value, (item) => parse(concat('{\"label\":\"', concat(item.name,' (',item.kind,')'), '\",\"value\":\"', item.name, '\",\"kind\":\"', item.kind, '\",\"location\":\"', item.location, '\",\"tier\":\"', item.sku.tier, '\"}'))), (item) => and(and(not(contains(toLower(item.kind),'blob')),equals(location(),item.location)),equals('Standard',item.tier)))]",
+                            "required": true
+                        },
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'Existing'))]"
+                    },
+                    {
+                        "name": "nameApi",
+                        "type": "Microsoft.Solutions.ArmApiControl",
+                        "toolTip": "Check new storage account name availability",
+                        "request": {
+                            "method": "POST",
+                            "path": "[concat(subscription().id,'/providers/Microsoft.Storage/checkNameAvailability?api-version=2019-06-01')]",
+                            "body": {
+                                "name": "[basics('storageAccountName').value]",
+                                "toolTip": "get storage account name provided earlier",
+                                "type": "Microsoft.Storage/storageAccounts"
+                            }
+                        },
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'New'))]"
+                    },
+                    {
+                        "name": "storageAccountName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Storage Account Name",
+                        "defaultValue": "[concat('jbosssa', substring(guid(), 0, 6))]",
+                        "toolTip": "Name of the storage account",
+                        "constraints": {
+                            "validations": [
+                                {
+                                    "regex": "^[a-z0-9]{3,24}$",
+                                    "message": "Storage account name should be between 3 and 24 characters and only contain lowercase letters and numbers"
+                                },
+                                {
+                                    "isValid": "[not(equals(basics('nameApi').nameAvailable, false))]",
+                                    "message": "[concat('The storage account name \"',basics('storageAccountName').value, '\" is unavailable or already taken')]"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'New'))]"
+                    },
+                    {
+                        "name": "storageAccountKind",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Storage Account Kind",
+                        "defaultValue": "Storage",
+                        "toolTip": "General purpose storage accounts provide storage for blobs, files, tables, and queues in a unified account. Choose an access tier that matches your storage needs.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Storage",
+                                    "value": "Storage"
+                                },
+                                {
+                                    "label": "StorageV2",
+                                    "value": "StorageV2"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'New'))]"
+                    },
+                    {
+                        "name": "storageAccountType",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Storage Account Type",
+                        "toolTip": "The data in your Azure storage account is always replicated to ensure durability and high availability. Choose a replication strategy that matches your durability requirements. Some settings can't be changed after the storage account is created.",
+                        "defaultValue": "Standard_LRS",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Standard_LRS",
+                                    "value": "Standard_LRS"
+                                },
+                                {
+                                    "label": "Standard_GRS",
+                                    "value": "Standard_GRS"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'New'))]"
                     }
-                },
-                "visible": "[equals(basics('storageNewOrExisting'), 'New')]"
-            },
-            {
-                "name": "storageAccountName",
-                "type": "Microsoft.Common.TextBox",
-                "label": "Storage Account Name",
-                "defaultValue": "[concat('jbosssa', substring(guid(), 0, 6))]",
-                "toolTip": "Name of the storage account",
-                "constraints": {
-                    "validations": [
-                        {
-                            "regex": "^[a-z0-9]{3,24}$",
-                            "message": "Storage account name should be between 3 and 24 characters and only contain lowercase letters and numbers"
-                        },
-                        {
-                            "isValid": "[not(equals(basics('nameApi').nameAvailable, false))]",
-                            "message": "[concat('The storage account name \"',basics('storageAccountName').value, '\" is unavailable or already taken')]"
-                        }
-                    ],
-                    "required": true
-                },
-                "visible": "[equals(basics('storageNewOrExisting'), 'New')]"
-            },
-            {
-                "name": "storageAccountKind",
-                "type": "Microsoft.Common.DropDown",
-                "label": "Storage Account Kind",
-                "defaultValue": "Storage",
-                "toolTip": "General purpose storage accounts provide storage for blobs, files, tables, and queues in a unified account. Choose an access tier that matches your storage needs.",
-                "constraints": {
-                    "allowedValues": [
-                        {
-                            "label": "Storage",
-                            "value": "Storage"
-                        },
-                        {
-                            "label": "StorageV2",
-                            "value": "StorageV2"
-                        }
-                    ],
-                    "required": true
-                },
-                "visible": "[equals(basics('storageNewOrExisting'), 'New')]"
-            },
-            {
-                "name": "storageAccountType",
-                "type": "Microsoft.Common.DropDown",
-                "label": "Storage Account Type",
-                "toolTip": "The data in your Azure storage account is always replicated to ensure durability and high availability. Choose a replication strategy that matches your durability requirements. Some settings can't be changed after the storage account is created.",
-                "defaultValue": "Standard_LRS",
-                "constraints": {
-                    "allowedValues": [
-                        {
-                            "label": "Standard_LRS",
-                            "value": "Standard_LRS"
-                        },
-                        {
-                            "label": "Standard_GRS",
-                            "value": "Standard_GRS"
-                        }
-                    ],
-                    "required": true
-                },
-                "visible": "[equals(basics('storageNewOrExisting'), 'New')]"
+                ],
+                "visible": true
             },
             {
                 "name": "howToReportIssues",
@@ -339,54 +369,10 @@
                         "visible": true
                     },
                     {
-                        "name": "numberOfServerInstances",
-                        "type": "Microsoft.Common.TextBox",
-                        "label": "Number of Server Instances per Host",
-                        "defaultValue": "1",
-                        "toolTip": "Use only allowed characters",
-                        "placeholder": "1",
-                        "constraints": {
-                            "required": true,
-                            "validations": [
-                                {
-                                    "regex": "^(1|2|3|4|5)$",
-                                    "message": "Only numbers from 1 to 5 are allowed."
-                                }
-                            ]
-                        },
-                        "visible": "[not(equals(steps('jbossEAPSettings').operatingMode, 'standalone'))]"
-                    },
-                    {
-                        "name": "disableLoadBalancerWarningInfo",
-                        "type": "Microsoft.Common.InfoBox",
-                        "visible": "[greater(steps('jbossEAPSettings').numberOfServerInstances, '1')]",
-                        "options": {
-                            "icon": "Warning",
-                            "text": "Load Balancer is not supported when users choose to create more than 1 JBoss EAP server instances per host",
-                            "uri": "https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-overview"
-                        }
-                    },
-                    {
-                        "name": "disableLoadBalancerWhenMultipleServerInst",
-                        "type": "Microsoft.Common.OptionsGroup",
-                        "label": "Disable Load Balancer when creating multiple Server Instances per host.",
-                        "defaultValue": "Disable",
-                        "toolTip": "Load Balancer is not supported.",
-                        "constraints": {
-                            "allowedValues": [
-                                {
-                                    "label": "Disable",
-                                    "value": "disable"
-                                }
-                            ],
-                            "required": true
-                        },
-                        "visible": "[greater(steps('jbossEAPSettings').numberOfServerInstances, '1')]"
-                    },
-                    {
                         "name": "jbossEAPUserName",
                         "type": "Microsoft.Compute.UserNameTextBox",
                         "label": "JBoss EAP Admin username",
+                        "defaultValue": "jbossadmin",
                         "osPlatform": "Linux",
                         "constraints": {
                             "required": true
@@ -461,21 +447,8 @@
                 "bladeTitle": "Azure Application Gateway Settings",
                 "elements": [
                     {
-                        "name": "cannotConnectToAGText",
-                        "type": "Microsoft.Common.TextBlock",
-                        "visible": "[equals(steps('jbossEAPSettings').operatingMode, 'standalone')]",
-                        "options": {
-                            "text": "Selecting 'Yes' here will cause the template to provision an Azure Application Gateway (WAF_v2 or later SKU), a public IP, and a backend pool consisting of the worker nodes in the cluster.  Further configuration may be necessary after deployment.",
-                            "link": {
-                                "label": "Learn more",
-                                "uri": "https://learn.microsoft.com/en-us/azure/application-gateway/overview"
-                            }
-                        }
-                    },
-                    {
                         "name": "connectToAGText",
                         "type": "Microsoft.Common.TextBlock",
-                        "visible": "[not(equals(steps('jbossEAPSettings').operatingMode, 'standalone'))]",
                         "options": {
                             "text": "Selecting 'Yes' here will cause the template to provision an Azure Application Gateway (WAF_v2 or later SKU), a public IP, and a backend pool consisting of the worker nodes in the cluster.  Further configuration may be necessary after deployment.",
                             "link": {
@@ -487,7 +460,6 @@
                     {
                         "name": "enableAppGateway",
                         "type": "Microsoft.Common.OptionsGroup",
-                        "visible": "[not(equals(steps('jbossEAPSettings').operatingMode, 'standalone'))]",
                         "label": "Connect to Azure Application Gateway?",
                         "defaultValue": "No",
                         "toolTip": "Select 'Yes' to create an Azure Application Gateway as the load balancer for the cluster.",
@@ -553,7 +525,7 @@
                             "minAddressPrefixSize": "/28"
                         },
                         "subnets": {
-                            "subnet1": {
+                            "jbossSubnet": {
                                 "label": "Subnet for cluster",
                                 "defaultValue": {
                                     "name": "jboss-subnet",
@@ -587,7 +559,7 @@
                             "minAddressPrefixSize": "/23"
                         },
                         "subnets": {
-                            "subnet1": {
+                            "jbossSubnet": {
                                 "label": "Subnet for cluster",
                                 "defaultValue": {
                                     "name": "jboss-subnet",
@@ -599,7 +571,7 @@
                                     "requireContiguousAddresses": false
                                 }
                             },
-                            "subnet2": {
+                            "gatewaySubnet": {
                                 "label": "Subnet for Application Gateway",
                                 "defaultValue": {
                                     "name": "jboss-appgateway-subnet",
@@ -697,14 +669,13 @@
         ],
         "outputs": {
             "location": "[location()]",
-            "vmName": "[basics('vmName')]",
-            "asName": "[basics('asName')]",
+            "vmName": "[basics('basicsOptional').vmName]",
+            "asName": "[basics('basicsOptional').asName]",
             "adminUsername": "[basics('adminUsername')]",
             "authenticationType": "[basics('authenticationType').authenticationType]",
             "adminPasswordOrSSHKey": "[coalesce(basics('authenticationType').password, basics('authenticationType').sshPublicKey)]",
-            "enableLoadBalancer": "[steps('jbossEAPSettings').disableLoadBalancerWhenMultipleServerInst]",
             "vmSize": "[basics('vmSize')]",
-            "numberOfInstances": "[basics('numberOfInstances')]",
+            "numberOfInstances": "[int(basics('numberOfInstances'))]",
             "virtualNetworkNewOrExisting": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.newOrExisting, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.newOrExisting)]",
             "virtualNetworkName": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.name, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.name)]",
             "addressPrefixes": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.addressPrefixes, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.addressPrefixes)]",
@@ -713,14 +684,13 @@
             "subnetForAppGateway": "[steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.subnet2.name]",
             "subnetPrefixForAppGateway": "[steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.subnet2.addressPrefix]",
             "virtualNetworkResourceGroupName": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.resourceGroup, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.resourceGroup)]",
-            "bootDiagnostics": "[basics('bootDiagnostics')]",
-            "bootStorageNewOrExisting": "[basics('storageNewOrExisting')]",
-            "existingStorageAccount": "[coalesce(basics('existingStorageAccount'),'')]",
+            "bootDiagnostics": "[basics('basicsOptional').bootDiagnostics]",
+            "bootStorageNewOrExisting": "[basics('basicsOptional').storageNewOrExisting]",
+            "existingStorageAccount": "[coalesce(basics('basicsOptional').existingStorageAccount,'')]",
             "bootStorageAccountName": "[basics('storageAccountName').value]",
-            "storageAccountKind": "[basics('storageAccountKind')]",
-            "bootStorageReplication": "[basics('storageAccountType')]",
-            "storageAccountResourceGroupName": "[if(and(equals(basics('bootDiagnostics'), 'on'),not(empty(basics('existingStorageAccount')))), first(skip(split(coalesce(first(filter(basics('armApiControl').value, (item) => equals(basics('existingStorageAccount'),item.name))),parse('{\"id\":\"/////\"}')).id, '/'),4)), resourceGroup().name)]",
-            "numberOfServerInstances": "[int(steps('jbossEAPSettings').numberOfServerInstances)]",
+            "storageAccountKind": "[basics('basicsOptional').storageAccountKind]",
+            "bootStorageReplication": "[basics('basicsOptional').storageAccountType]",
+            "storageAccountResourceGroupName": "[if(and(equals(basics('basicsOptional').bootDiagnostics, 'on'),not(empty(basics('basicsOptional').existingStorageAccount))), first(skip(split(coalesce(first(filter(basics('basicsOptional').armApiControl.value, (item) => equals(basics('basicsOptional').existingStorageAccount,item.name))),parse('{\"id\":\"/////\"}')).id, '/'),4)), resourceGroup().name)]",
             "operatingMode": "[steps('jbossEAPSettings').operatingMode]",
             "jbossEAPUserName": "[steps('jbossEAPSettings').jbossEAPUserName]",
             "jbossEAPPassword": "[steps('jbossEAPSettings').jbossEAPPassword]",
@@ -731,7 +701,7 @@
             "satelliteActivationKey": "[steps('satelliteServerSettings').satelliteActivationKey]",
             "satelliteOrgName": "[steps('satelliteServerSettings').satelliteOrgName]",
             "satelliteFqdn": "[steps('satelliteServerSettings').satelliteFqdn]",
-            "enableAppGateway": "[steps('AppGatewayConfig').enableAppGateway]"
+            "enableAppGWIngress": "[steps('AppGatewayConfig').enableAppGateway]"
         }
     }
 }
