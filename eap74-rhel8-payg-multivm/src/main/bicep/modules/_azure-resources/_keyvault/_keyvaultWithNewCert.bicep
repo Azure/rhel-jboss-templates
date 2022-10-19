@@ -26,7 +26,7 @@ param sku string = 'Standard'
 param subjectName string = 'contoso.xyz'
 param utcValue string = utcNow()
 
-var const_identityId = '${substring(string(identity.userAssignedIdentities), indexOf(string(identity.userAssignedIdentities), '"') + 1, lastIndexOf(string(identity.userAssignedIdentities), '"') - (indexOf(string(identity.userAssignedIdentities), '"') + 1))}'
+var const_identityId = substring(string(identity.userAssignedIdentities), indexOf(string(identity.userAssignedIdentities), '"') + 1, lastIndexOf(string(identity.userAssignedIdentities), '"') - (indexOf(string(identity.userAssignedIdentities), '"') + 1))
 
 resource keyvault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   name: keyVaultName

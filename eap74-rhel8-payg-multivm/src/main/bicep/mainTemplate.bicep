@@ -1,5 +1,5 @@
 @description('User name for the Virtual Machine')
-param adminUsername string
+param adminUsername string = 'jbossuser'
 
 @description('Type of authentication to use on the Virtual Machine')
 @allowed([
@@ -40,14 +40,7 @@ param vmSize string = 'Standard_DS2_v2'
 param numberOfInstances int = 2
 
 @description('Number of server instances per host')
-param numberOfServerInstances int = 2
-
-// @description('Enable Load Balancer')
-// @allowed([
-//   'enable'
-//   'disable'
-// ])
-// param enableLoadBalancer string = 'enable'
+param numberOfServerInstances int = 1
 
 @description('true to set up Application Gateway ingress.')
 param enableAppGWIngress bool = false
@@ -69,7 +62,7 @@ param vmName string = 'jbosseapVm'
   'on'
   'off'
 ])
-param bootDiagnostics string = 'on'
+param bootDiagnostics string = 'off'
 
 @description('Name of the existing or new VNET')
 param virtualNetworkName string = 'jbosseap-vnet'
@@ -158,15 +151,14 @@ param utcValue string = utcNow()
 @description('DNS prefix for ApplicationGateway')
 param dnsNameforApplicationGateway string = 'jbossgw'
 
-// @description('Public IP Name for the Application Gateway')
-// param appGatewayPublicIPAddressName string = 'gwip'
+@description('The name of the secret in the specified KeyVault whose value is the SSL Certificate Data for Appliation Gateway frontend TLS/SSL.')
+param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
 
 var name_managedDomain = 'managed-domain'
 var name_fileshare = 'jbossshare'
 var containerName = 'eapblobcontainer'
 var eapStorageAccountName = 'jbosstrg${uniqueString(resourceGroup().id)}'
 var eapstorageReplication = 'Standard_LRS'
-// var loadBalancersName_var = 'jbosseap-lb'
 var vmName_var = vmName
 var asName_var = asName
 var skuName = 'Aligned'
@@ -174,10 +166,6 @@ var nicName_var = 'jbosseap-server-nic'
 var privateSaEndpointName_var = 'saep${uniqueString(resourceGroup().id)}'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
 var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
-// var backendPoolName = 'jbosseap-server'
-// var frontendName = 'LoadBalancerFrontEnd'
-// var healthProbeEAP = 'eap-jboss-health'
-// var healthProbeAdmin = 'eap-admin-health'
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -195,9 +183,7 @@ var imageReference = {
   sku: '8_4'
   version: 'latest'
 }
-// var const_enableLoadBalancer = bool(enableLoadBalancer == 'enable')
 
-var const_enableAppGWIngress = enableAppGWIngress
 var name_failFastDsName = format('failFast{0}', guidValue)
 var name_jbossEAPDsName = 'jbosseap-setup'
 var obj_uamiForDeploymentScript = {
@@ -206,8 +192,8 @@ var obj_uamiForDeploymentScript = {
     '${uamiDeployment.outputs.uamiIdForDeploymentScript}': {}
   }
 }
-var name_keyVaultName = take('jboss-kv${uniqueString(utcValue)}', 24)
-var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}${take(utcValue, 6)}'
+var name_keyVaultName = take('jboss-kv${guidValue}', 24)
+var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}${take(uniqueString(utcValue), 6)}'
 var name_rgNameWithoutSpecialCharacter = replace(replace(replace(replace(resourceGroup().name, '.', ''), '(', ''), ')', ''), '_', '') // remove . () _ from resource group name
 var name_domainLabelforApplicationGateway = take('${name_dnsNameforApplicationGateway}-${toLower(name_rgNameWithoutSpecialCharacter)}', 63)
 var const_azureSubjectName = format('{0}.{1}.{2}', name_domainLabelforApplicationGateway, location, 'cloudapp.azure.com')
@@ -224,7 +210,7 @@ var property_subnet_with_app_gateway = [
     }
   }
   {
-    // PENDING(edburns): Assume it is acceptable to create a subnet for the App Gateway, even if the user
+    // Assume it is acceptable to create a subnet for the App Gateway, even if the user
     // has not requested an App Gateway.  In support of this assumption we can note: the user may want an App 
     // Gateway after deployment.
     name: subnetForAppGateway
@@ -241,17 +227,15 @@ var property_subnet_without_app_gateway = [
     name: subnetName
     properties: {
       addressPrefix: subnetPrefix
-      networkSecurityGroup: {
-        id: nsg.id
-      }
     }
   }
 ]
-var name_publicIPAddress = '_PublicIP'
-var name_adminVmName = '_adminVM'
-var dnsNameforAdminVm = 'jboss-admin'
-var dnsNameforManagedVm = 'jboss-managed'
+var name_publicIPAddress = '-pubIp'
+var name_adminVmName = '-adminVM'
+var dnsNameforAdminVm = 'jboss-admin${guidValue}'
+var dnsNameforManagedVm = 'jboss-managed${guidValue}'
 var name_networkSecurityGroup = 'jboss-nsg'
+var name_appGatewayPublicIPAddress = 'gwip'
 
 /*
 * Beginning of the offer deployment
@@ -290,7 +274,7 @@ module failFastDeployment 'modules/_deployment-scripts/_ds-failfast.bicep' = {
   ]
 }
 
-module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep' = if (const_enableAppGWIngress) {
+module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep' = if (enableAppGWIngress) {
   name: 'appgateway-certificates-secrets-deployment'
   params: {
     identity: obj_uamiForDeploymentScript
@@ -302,35 +286,6 @@ module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep
   dependsOn: [
     failFastDeployment
   ]
-}
-
-// To void space overlap with AKS Vnet, must deploy the Applciation Gateway VNet before AKS deployment.
-// module appgatewayDeployment 'modules/_appGateway.bicep' = if (enableAppGWIngress) {
-//   name: 'application-gateway-deployment'
-//   params: {
-//     _pidAppgwEnd: pids.outputs.appgwEnd
-//     _pidAppgwStart: pids.outputs.appgwStart
-//     appgwPublicIPAddressName: appGatewayPublicIPAddressName
-//     appgwSslCertName: name_appgwFrontendSSLCertName
-//     dnsNameforApplicationGateway: name_domainLabelforApplicationGateway
-//     keyVaultName: appgwSecretDeployment.outputs.keyVaultName
-//     keyVaultResourceGroup: resourceGroup().name
-//     keyvaultFrontendCertDataSecretName: appgwSecretDeployment.outputs.sslCertDataSecretName
-//     location: location
-//     newOrExistingVnetForApplicationGateway: virtualNetworkNewOrExisting
-//     vnetRGNameForApplicationGateway: virtualNetworkResourceGroupName
-//     numberOfInstances: numberOfInstances
-//   }
-//   dependsOn: [
-//     appgwSecretDeployment
-//     pids
-//   ]
-// }
-
-// get key vault object from a resource group
-resource existingKeyvault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
-  name: appgwSecretDeployment.outputs.keyVaultName
-  scope: resourceGroup()
 }
 
 // Get existing VNET.
@@ -345,20 +300,19 @@ resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-05-01' e
   parent: existingVnet
 }
 
-module appgwDeployment 'modules/_azure-resources/_appgateway.bicep' = {
+module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
   name: 'app-gateway-deployment'
   params: {
     appGatewayName: name_appGateway
-    dnsNameforApplicationGateway: dnsNameforApplicationGateway
-    gatewayPublicIPAddressName: name_domainLabelforApplicationGateway
+    dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
+    gatewayPublicIPAddressName: name_appGatewayPublicIPAddress
     gatewaySubnetId: virtualNetworkNewOrExisting == 'new' ? resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetForAppGateway) : existingSubnet.id
     gatewaySslCertName: name_appgwFrontendSSLCertName
     location: location
-    noSslCertPsw: true
-    sslCertData: existingKeyvault.getSecret(appgwSecretDeployment.outputs.sslCertDataSecretName)
-    sslCertPswData: 'null'
+    sslCertDataSecretName: (enableAppGWIngress ? appgwSecretDeployment.outputs.sslCertDataSecretName : keyVaultSSLCertDataSecretName)
     _pidAppgwStart: pids.outputs.appgwStart
     _pidAppgwEnd: pids.outputs.appgwEnd
+    keyVaultName: name_keyVaultName
   }
   dependsOn: [
     appgwSecretDeployment
@@ -434,7 +388,7 @@ resource fileService 'Microsoft.Storage/storageAccounts/fileServices/shares@2022
   }
 }
 
-resource symbolicname 'Microsoft.Network/privateEndpoints@2022-05-01' = if (operatingMode == name_managedDomain) {
+resource symbolicname 'Microsoft.Network/privateEndpoints@2022-01-01' = if (operatingMode == name_managedDomain) {
   name: privateSaEndpointName_var
   location: location
   properties: {
@@ -459,7 +413,7 @@ resource symbolicname 'Microsoft.Network/privateEndpoints@2022-05-01' = if (oper
 }
 
 // Create new network security group.
-resource nsg 'Microsoft.Network/networkSecurityGroups@2022-05-01' = if (virtualNetworkNewOrExisting == 'new') {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2022-05-01' = if (enableAppGWIngress && virtualNetworkNewOrExisting == 'new') {
   name: name_networkSecurityGroup
   location: location
   properties: {
@@ -512,22 +466,8 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2022-05-
   }
 }
 
-// resource adminPublicIP 'Microsoft.Network/publicIPAddresses@2022-05-01' = if (enableAppGWIngress) {
-//   name: '${name_adminVmName}${name_publicIPAddress}'
-//   sku: {
-//     name: 'Standard'
-//   }
-//   location: location
-//   properties: {
-//     publicIPAllocationMethod: 'Static'
-//     dnsSettings: {
-//       domainNameLabel: dnsNameforAdminVm
-//     }
-//   }
-// }
-
 resource publicIp 'Microsoft.Network/publicIPAddresses@2022-05-01' = [for i in range(0, numberOfInstances): if (enableAppGWIngress) {
-  name: (i == 0) ? '${vmName_var}${name_adminVmName}${name_publicIPAddress}' : '${vmName_var}${i}${name_publicIPAddress}'
+  name: (operatingMode == name_managedDomain) ? ((i == 0) ? '${vmName_var}${name_adminVmName}${name_publicIPAddress}' : '${vmName_var}${i}${name_publicIPAddress}') :'${vmName_var}${i}${name_publicIPAddress}'
   sku: {
     name: 'Standard'
   }
@@ -535,7 +475,7 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2022-05-01' = [for i in r
   properties: {
     publicIPAllocationMethod: 'Static'
     dnsSettings: {
-      domainNameLabel: (i == 0) ? '${dnsNameforAdminVm}' : '${dnsNameforManagedVm}${i}'
+      domainNameLabel: (operatingMode == name_managedDomain) ? ((i == 0) ? '${dnsNameforAdminVm}' : '${dnsNameforManagedVm}${i}') : '${dnsNameforManagedVm}${i}'
     }
   }
 }]
@@ -555,33 +495,18 @@ resource nicName 'Microsoft.Network/networkInterfaces@2022-05-01' = [for i in ra
           subnet: {
             id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
           }
-          applicationGatewayBackendAddressPools: enableAppGWIngress && (i != 0) ? [
+          applicationGatewayBackendAddressPools: enableAppGWIngress ? ((operatingMode == name_managedDomain) ? ((i != 0) ? [
             {
               id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name_appGateway, 'managedNodeBackendPool')
             }
-          ] : null
+          ] : null) : [
+            {
+              id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name_appGateway, 'managedNodeBackendPool')
+            }
+          ]) : null
           publicIPAddress: enableAppGWIngress ? {
-            id: (i == 0) ? resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${name_adminVmName}${name_publicIPAddress}') : resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${i}${name_publicIPAddress}')
+            id: (operatingMode == name_managedDomain) ? ((i == 0) ? resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${name_adminVmName}${name_publicIPAddress}') : resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${i}${name_publicIPAddress}')) : resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${i}${name_publicIPAddress}')
           } : null
-          // applicationGatewayBackendAddressPools: (operatingMode == name_managedDomain) ? ((i != 0) ? [
-          //   {
-          //     id:  resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name_appGateway, 'managedNodeBackendPool')
-          //   }
-          // ] : [
-          //   {
-          //     id:  resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name_appGateway, 'adminNodeBackendPool')
-          //   }
-          // ]) : null
-          // applicationGatewayBackendAddressPools: [
-          //   {
-          //     id: (i == 0 ? resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name_appGateway, 'adminBackendPool') : resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name_appGateway, 'managedNodeBackendPool'))
-          //   }
-          // ]
-          // loadBalancerBackendAddressPools: const_enableLoadBalancer ? [
-          //   {
-          //     id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancersName_var, backendPoolName)
-          //   }
-          // ] : json('null')
         }
       }
     ]
@@ -590,13 +515,10 @@ resource nicName 'Microsoft.Network/networkInterfaces@2022-05-01' = [for i in ra
     virtualNetworkName_resource
     appgwDeployment
     publicIp
-    // adminPublicIP
-    // loadBalancersName
   ]
 }]
 
 resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(0, numberOfInstances): {
-  // name: '${vmName_var}${i}'
   name: (operatingMode == name_managedDomain) ? (i == 0 ? '${vmName_var}${name_adminVmName}' : '${vmName_var}${i}') : '${vmName_var}${i}'
   location: location
   tags: {
@@ -669,101 +591,6 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
   ]
 }
 
-// resource loadBalancersName 'Microsoft.Network/loadBalancers@2020-11-01' = if (const_enableLoadBalancer) {
-//   name: loadBalancersName_var
-//   location: location
-//   sku: {
-//     name: 'Basic'
-//   }
-//   tags: {
-//     QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-//   }
-//   properties: {
-//     frontendIPConfigurations: [
-//       {
-//         name: frontendName
-//         properties: {
-//           privateIPAllocationMethod: 'Dynamic'
-//           privateIPAddressVersion: 'IPv4'
-//           subnet: {
-//             id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
-//           }
-//         }
-//       }
-//     ]
-//     backendAddressPools: [
-//       {
-//         name: backendPoolName
-//       }
-//     ]
-//     loadBalancingRules: [
-//       {
-//         name: '${loadBalancersName_var}-rule1'
-//         properties: {
-//           frontendIPConfiguration: {
-//             id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancersName_var, frontendName)
-//           }
-//           frontendPort: 80
-//           backendPort: 8080
-//           enableFloatingIP: false
-//           idleTimeoutInMinutes: 5
-//           protocol: 'Tcp'
-//           enableTcpReset: false
-//           backendAddressPool: {
-//             id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancersName_var, backendPoolName)
-//           }
-//           probe: {
-//             id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancersName_var, healthProbeEAP)
-//           }
-//         }
-//       }
-//       {
-//         name: '${loadBalancersName_var}-rule2'
-//         properties: {
-//           frontendIPConfiguration: {
-//             id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancersName_var, frontendName)
-//           }
-//           frontendPort: 9990
-//           backendPort: 9990
-//           enableFloatingIP: false
-//           idleTimeoutInMinutes: 5
-//           protocol: 'Tcp'
-//           enableTcpReset: false
-//           backendAddressPool: {
-//             id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancersName_var, backendPoolName)
-//           }
-//           probe: {
-//             id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancersName_var, healthProbeAdmin)
-//           }
-//         }
-//       }
-//     ]
-//     probes: [
-//       {
-//         name: healthProbeEAP
-//         properties: {
-//           protocol: 'Tcp'
-//           port: 8080
-//           intervalInSeconds: 5
-//           numberOfProbes: 2
-//         }
-//       }
-//       {
-//         name: healthProbeAdmin
-//         properties: {
-//           protocol: 'Tcp'
-//           port: 9990
-//           intervalInSeconds: 5
-//           numberOfProbes: 2
-//         }
-//       }
-//     ]
-//   }
-//   dependsOn: [
-//     virtualNetworkName_resource
-//   ]
-// }
-
 resource asName_resource 'Microsoft.Compute/availabilitySets@2022-08-01' = {
   name: asName_var
   location: location
@@ -782,4 +609,6 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@2022-08-01' = {
   ]
 }
 
-// output appURL string = const_enableLoadBalancer ? (uri('http://${loadBalancersName.properties.frontendIPConfigurations[0].properties.privateIPAddress}', 'eap-session-replication/')) : ''
+output appHttpURL string = (enableAppGWIngress && (operatingMode != name_managedDomain)) ? uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication') : ''
+output appHttpsURL string = (enableAppGWIngress && (operatingMode != name_managedDomain)) ? uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication') : ''
+output adminConsole string = (operatingMode == name_managedDomain) ? (enableAppGWIngress ? (uri(format('http://{0}:9990', (reference(resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${name_adminVmName}${name_publicIPAddress}')).dnsSettings.fqdn)), '')) : (uri(format('http://{0}:9990', (reference(resourceId('Microsoft.Network/networkInterfaces', '${nicName_var}0')).ipConfigurations[0].properties.privateIPAddress)), ''))) : ''

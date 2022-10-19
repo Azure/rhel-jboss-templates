@@ -34,11 +34,10 @@
             },
             {
                 "name": "adminUsername",
-                "type": "Microsoft.Compute.UserNameTextBox",
+                "type": "Microsoft.Common.TextBox",
                 "label": "Username",
                 "defaultValue": "jbossuser",
                 "toolTip": "Linux VM user account name",
-                "osPlatform": "Linux",
                 "constraints": {
                     "required": true,
                     "regex": "^[a-zA-Z]+[a-zA-Z0-9_-]{1,64}$",
@@ -370,12 +369,13 @@
                     },
                     {
                         "name": "jbossEAPUserName",
-                        "type": "Microsoft.Compute.UserNameTextBox",
+                        "type": "Microsoft.Common.TextBox",
                         "label": "JBoss EAP Admin username",
                         "defaultValue": "jbossadmin",
-                        "osPlatform": "Linux",
                         "constraints": {
-                            "required": true
+                            "required": true,
+                            "regex": "^[a-z0-9A-Z]{1,30}$",
+                            "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
                         },
                         "toolTip": "Provide User name for JBoss EAP Manager"
                     },
@@ -676,18 +676,17 @@
             "adminPasswordOrSSHKey": "[coalesce(basics('authenticationType').password, basics('authenticationType').sshPublicKey)]",
             "vmSize": "[basics('vmSize')]",
             "numberOfInstances": "[int(basics('numberOfInstances'))]",
-            "virtualNetworkNewOrExisting": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.newOrExisting, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.newOrExisting)]",
             "virtualNetworkName": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.name, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.name)]",
             "addressPrefixes": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.addressPrefixes, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.addressPrefixes)]",
-            "subnetName": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.subnet1.name, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.subnets.subnet1.name)]",
-            "subnetPrefix": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.subnet1.addressPrefix, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.subnets.subnet1.addressPrefix)]",
-            "subnetForAppGateway": "[steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.subnet2.name]",
-            "subnetPrefixForAppGateway": "[steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.subnet2.addressPrefix]",
+            "subnetName": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.jbossSubnet.name, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.subnets.jbossSubnet.name)]",
+            "subnetPrefix": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.jbossSubnet.addressPrefix, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.subnets.jbossSubnet.addressPrefix)]",
+            "subnetForAppGateway": "[steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.gatewaySubnet.name]",
+            "subnetPrefixForAppGateway": "[steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.gatewaySubnet.addressPrefix]",
             "virtualNetworkResourceGroupName": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.resourceGroup, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.resourceGroup)]",
             "bootDiagnostics": "[basics('basicsOptional').bootDiagnostics]",
             "bootStorageNewOrExisting": "[basics('basicsOptional').storageNewOrExisting]",
             "existingStorageAccount": "[coalesce(basics('basicsOptional').existingStorageAccount,'')]",
-            "bootStorageAccountName": "[basics('storageAccountName').value]",
+            "bootStorageAccountName": "[basics('basicsOptional').storageAccountName.value]",
             "storageAccountKind": "[basics('basicsOptional').storageAccountKind]",
             "bootStorageReplication": "[basics('basicsOptional').storageAccountType]",
             "storageAccountResourceGroupName": "[if(and(equals(basics('basicsOptional').bootDiagnostics, 'on'),not(empty(basics('basicsOptional').existingStorageAccount))), first(skip(split(coalesce(first(filter(basics('basicsOptional').armApiControl.value, (item) => equals(basics('basicsOptional').existingStorageAccount,item.name))),parse('{\"id\":\"/////\"}')).id, '/'),4)), resourceGroup().name)]",
@@ -701,7 +700,8 @@
             "satelliteActivationKey": "[steps('satelliteServerSettings').satelliteActivationKey]",
             "satelliteOrgName": "[steps('satelliteServerSettings').satelliteOrgName]",
             "satelliteFqdn": "[steps('satelliteServerSettings').satelliteFqdn]",
-            "enableAppGWIngress": "[steps('AppGatewayConfig').enableAppGateway]"
+            "enableAppGWIngress": "[steps('AppGatewayConfig').enableAppGateway]",
+            "virtualNetworkNewOrExisting": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.newOrExisting, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.newOrExisting)]"
         }
     }
 }
