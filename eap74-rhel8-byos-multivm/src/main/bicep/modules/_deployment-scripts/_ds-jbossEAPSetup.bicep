@@ -41,11 +41,14 @@ param containerName string = ''
 @description('Number of VMs to deploy')
 param numberOfInstances int = 2
 
+@description('Name of the admin virtual machines')
+param adminVmName string = 'jbosseap-byos-server'
+
 @description('Name of the virtual machines')
 param vmName string = 'jbosseap-byos-server'
 
 @description('Number of server instances per host')
-param numberOfServerInstances int = 2
+param numberOfServerInstances int = 1
 
 @description('Managed domain mode or standalone mode')
 @allowed([
@@ -85,7 +88,7 @@ var scriptFolder = 'scripts'
 var fileFolder = 'scripts'
 var fileToBeDownloaded = 'eap-session-replication.war'
 var scriptArgs = '-a \'${uri(artifactsLocation, '.')}\' -t \'${empty(artifactsLocationSasToken) ? '?' : artifactsLocationSasToken}\' -p ${fileFolder} -f ${fileToBeDownloaded} -s ${scriptFolder}'
-var const_arguments = '${scriptArgs} ${jbossEAPUserName} ${base64(jbossEAPPassword)} ${rhsmUserName} ${base64(rhsmPassword)} ${rhsmPoolEAP} ${rhsmPoolRHEL} ${eapStorageAccountName} ${containerName} ${resourceGroup().name} ${numberOfInstances} ${vmName} ${numberOfServerInstances} ${operatingMode} ${virtualNetworkNewOrExisting} ${connectSatellite} ${base64(satelliteActivationKey)} ${base64(satelliteOrgName)} ${satelliteFqdn}'
+var const_arguments = '${scriptArgs} ${jbossEAPUserName} ${base64(jbossEAPPassword)} ${rhsmUserName} ${base64(rhsmPassword)} ${rhsmPoolEAP} ${rhsmPoolRHEL} ${eapStorageAccountName} ${containerName} ${resourceGroup().name} ${numberOfInstances} ${adminVmName} ${vmName} ${numberOfServerInstances} ${operatingMode} ${virtualNetworkNewOrExisting} ${connectSatellite} ${base64(satelliteActivationKey)} ${base64(satelliteOrgName)} ${satelliteFqdn}'
 
 
 resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {

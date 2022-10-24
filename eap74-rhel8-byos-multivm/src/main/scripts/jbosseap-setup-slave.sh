@@ -117,6 +117,7 @@ openport 9999
 openport 8443
 openport 8009
 openport 9990
+openport 9993
 openport 45700
 openport 7600
 
