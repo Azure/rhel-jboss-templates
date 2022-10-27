@@ -145,7 +145,7 @@ param guidValue string = take(replace(newGuid(), '-', ''), 6)
 @description('Price tier for Key Vault.')
 param keyVaultSku string = 'Standard'
 
-@description('ture to upload Java EE applications and deploy the applications to WebLogic domain.')
+@description('true to upload Java EE applications and deploy the applications to WebLogic domain.')
 param utcValue string = utcNow()
 
 @description('DNS prefix for ApplicationGateway')

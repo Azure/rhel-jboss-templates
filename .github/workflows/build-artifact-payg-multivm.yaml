@@ -13,8 +13,6 @@ on:
   # curl --verbose -X POST https://api.github.com/repos/<github_user>/rhel-jboss-templates/dispatches -H 'Accept: application/vnd.github.everest-preview+json' -H 'Authorization: token <personal_access_token>' --data '{"event_type": "payg-multivm-package", "client_payload": {"ref": "refs/heads/main"}}'
 
 env:
-    # refArmttk: bad2965565e2e69318039bc15c2496844d55a59d
-    # refJavaee: f25ab89a2a8848da39b84e5d6c927f4c4cb47200
     location: eastus
     offerName: "eap74-rhel8-payg-multivm"
     repoName: "rhel-jboss-templates"
