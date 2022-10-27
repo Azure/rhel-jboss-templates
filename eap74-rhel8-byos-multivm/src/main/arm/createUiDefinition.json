@@ -69,7 +69,7 @@
             {
                 "name": "numberOfInstances",
                 "type": "Microsoft.Common.TextBox",
-                "label": "Number of Instances",
+                "label": "Number of virtual machines to create",
                 "defaultValue": "2",
                 "toolTip": "Use only allowed characters",
                 "placeholder": "2",
