@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 #read arguments from stdin
-read parametersPath gitUserName testbranchName location vmName asName adminUsername password enableLb numberOfInstances operatingMode virtualNetworkResourceGroupName bootStorageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword rhsmUserName rhsmPassword rhsmPoolEAP rhsmPoolRHEL
+read parametersPath gitUserName testbranchName location vmName asName adminUsername password numberOfInstances operatingMode virtualNetworkResourceGroupName bootStorageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword rhsmUserName rhsmPassword rhsmPoolEAP rhsmPoolRHEL
  
 cat <<EOF > ${parametersPath}
 {
@@ -30,9 +30,6 @@ cat <<EOF > ${parametersPath}
         "adminPasswordOrSSHKey": {
             "value": "${password}"
         },
-        "enableLoadBalancer": {
-            "value": "${enableLb}"
-        },
         "vmSize": {
             "value": "Standard_DS2_v2"
         },
@@ -47,14 +44,20 @@ cat <<EOF > ${parametersPath}
         },
         "addressPrefixes": {
             "value": [
-                "10.0.0.0/16"
+                "10.0.0.0/23"
             ]
         },
         "subnetName": {
-            "value": "Subnet-1"
+            "value": "jboss-subnet"
         },
         "subnetPrefix": {
-            "value": "10.0.0.0/24"
+            "value": "10.0.0.0/28"
+        },
+        "subnetForAppGateway": {
+            "value": "jboss-appgateway-subnet"
+        },
+        "subnetPrefixForAppGateway": {
+            "value": "10.0.1.0/24"
         },
         "virtualNetworkResourceGroupName": {
             "value": "${virtualNetworkResourceGroupName}"
@@ -80,9 +83,6 @@ cat <<EOF > ${parametersPath}
         "operatingMode": {
             "value": "${operatingMode}"
         },
-        "numberOfServerInstances": {
-            "value": 2
-        },
         "jbossEAPUserName": {
             "value": "${jbossEAPUserName}"
         },
@@ -100,6 +100,9 @@ cat <<EOF > ${parametersPath}
         },
         "rhsmPoolRHEL": {
             "value": "${rhsmPoolRHEL}"
+        },
+        "enableAppGWIngress": {
+            "value": true
         }
     }
 }

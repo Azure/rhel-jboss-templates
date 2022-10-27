@@ -30,14 +30,15 @@ STORAGE_ACCOUNT_NAME=${17}
 CONTAINER_NAME=${18}
 RESOURCE_GROUP_NAME=${19}
 NUMBER_OF_INSTANCE=${20}
-VM_NAME_PREFIX=${21}
-NUMBER_OF_SERVER_INSTANCE=${22}
-CONFIGURATION_MODE=${23}
-VNET_NEW_OR_EXISTING=${24}
-CONNECT_SATELLITE=${25}
-SATELLITE_ACTIVATION_KEY_BASE64=${26}
-SATELLITE_ORG_NAME_BASE64=${27}
-SATELLITE_VM_FQDN=${28}
+ADMIN_VM_NAME=${21}
+VM_NAME_PREFIX=${22}
+NUMBER_OF_SERVER_INSTANCE=${23}
+CONFIGURATION_MODE=${24}
+VNET_NEW_OR_EXISTING=${25}
+CONNECT_SATELLITE=${26}
+SATELLITE_ACTIVATION_KEY_BASE64=${27}
+SATELLITE_ORG_NAME_BASE64=${28}
+SATELLITE_VM_FQDN=${29}
 
 # Get storage account sas token
 STORAGE_ACCESS_KEY=$(az storage account keys list --verbose --account-name "${STORAGE_ACCOUNT_NAME}" --query [0].value --output tsv)
@@ -69,20 +70,20 @@ else
     if [[ -z "${privateEndpointIp}" ]] ; then echo  "Failed to get private endpoint IP"; exit 1;  fi
 
     # Get domain controller host private IP
-    DOMAIN_CONTROLLER_PRIVATE_IP=$(az vm list-ip-addresses --verbose --resource-group ${RESOURCE_GROUP_NAME} --name "${VM_NAME_PREFIX}0" --query [0].virtualMachine.network.privateIpAddresses[0] --output tsv)
+    DOMAIN_CONTROLLER_PRIVATE_IP=$(az vm list-ip-addresses --verbose --resource-group ${RESOURCE_GROUP_NAME} --name "${ADMIN_VM_NAME}" --query [0].virtualMachine.network.privateIpAddresses[0] --output tsv)
     if [[ -z "${DOMAIN_CONTROLLER_PRIVATE_IP}" ]] ; then echo  "Failed to get domain controller host private IP"; exit 1;  fi
 
     # Configure domain controller host
-    echo "Configure domain controller host: ${VM_NAME_PREFIX}0"
+    echo "Configure domain controller host: ${ADMIN_VM_NAME}"
     masterScriptUri="${unwrapped_artifactsLocation}${pathToScript}/jbosseap-setup-master.sh"
     az vm extension set --verbose --name CustomScript \
         --resource-group ${RESOURCE_GROUP_NAME} \
-        --vm-name ${VM_NAME_PREFIX}0 \
+        --vm-name ${ADMIN_VM_NAME} \
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
         --settings "{\"fileUris\": [\"${masterScriptUri}\"]}" \
         --protected-settings "{\"commandToExecute\":\"bash jbosseap-setup-master.sh -a $artifactsLocation -t $token -p $pathToFile -f $fileToDownload ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${RHEL_POOL} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${privateEndpointIp} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN} \"}"
-        if [ $? != 0 ] ; then echo  "Failed to configure domain controller host: ${VM_NAME_PREFIX}0"; exit 1;  fi
+        if [ $? != 0 ] ; then echo  "Failed to configure domain controller host: ${ADMIN_VM_NAME}"; exit 1;  fi
         echo "Domain controller VM extension execution completed"
 
     for ((i = 1; i < NUMBER_OF_INSTANCE; i++)); do

@@ -22,7 +22,7 @@ var name_deploymentScriptUserDefinedManagedIdentity = 'jboss-eap-vm-deployment-s
 var name_deploymentScriptContributorRoleAssignmentName = guid('${resourceGroup().id}${name_deploymentScriptUserDefinedManagedIdentity}Deployment Script')
 
 // UAMI for deployment script
-resource uamiForDeploymentScript 'Microsoft.ManagedIdentity/userAssignedIdentities@2021-09-30-preview' = {
+resource uamiForDeploymentScript 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
   name: name_deploymentScriptUserDefinedManagedIdentity
   location: location
 }
