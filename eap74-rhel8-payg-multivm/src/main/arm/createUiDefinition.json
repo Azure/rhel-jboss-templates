@@ -206,7 +206,7 @@
                             "method": "POST",
                             "path": "[concat(subscription().id,'/providers/Microsoft.Storage/checkNameAvailability?api-version=2019-06-01')]",
                             "body": {
-                                "name": "[basics('storageAccountName').value]",
+                                "name": "[basics('basicsOptional').storageAccountName]",
                                 "toolTip": "get storage account name provided earlier",
                                 "type": "Microsoft.Storage/storageAccounts"
                             }
@@ -226,8 +226,8 @@
                                     "message": "Storage account name should be between 3 and 24 characters and only contain lowercase letters and numbers"
                                 },
                                 {
-                                    "isValid": "[not(equals(basics('nameApi').nameAvailable, false))]",
-                                    "message": "[concat('The storage account name \"',basics('storageAccountName').value, '\" is unavailable or already taken')]"
+                                    "isValid": "[not(equals(basics('basicsOptional').nameApi.nameAvailable, false))]",
+                                    "message": "[concat('The storage account name \"',basics('basicsOptional').storageAccountName, '\" is unavailable or already taken')]"
                                 }
                             ],
                             "required": true
@@ -559,18 +559,6 @@
                             "minAddressPrefixSize": "/23"
                         },
                         "subnets": {
-                            "jbossSubnet": {
-                                "label": "Subnet for cluster",
-                                "defaultValue": {
-                                    "name": "jboss-subnet",
-                                    "addressPrefixSize": "/28"
-                                },
-                                "constraints": {
-                                    "minAddressPrefixSize": "/29",
-                                    "minAddressCount": "[add(int(basics('numberOfInstances')), 1)]",
-                                    "requireContiguousAddresses": false
-                                }
-                            },
                             "gatewaySubnet": {
                                 "label": "Subnet for Application Gateway",
                                 "defaultValue": {
@@ -580,6 +568,18 @@
                                 "constraints": {
                                     "minAddressPrefixSize": "/24",
                                     "minAddressCount": 250,
+                                    "requireContiguousAddresses": false
+                                }
+                            },
+                            "jbossSubnet": {
+                                "label": "Subnet for cluster",
+                                "defaultValue": {
+                                    "name": "jboss-subnet",
+                                    "addressPrefixSize": "/28"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/29",
+                                    "minAddressCount": "[add(int(basics('numberOfInstances')), 1)]",
                                     "requireContiguousAddresses": false
                                 }
                             }
@@ -686,7 +686,7 @@
             "bootDiagnostics": "[basics('basicsOptional').bootDiagnostics]",
             "bootStorageNewOrExisting": "[basics('basicsOptional').storageNewOrExisting]",
             "existingStorageAccount": "[coalesce(basics('basicsOptional').existingStorageAccount,'')]",
-            "bootStorageAccountName": "[basics('basicsOptional').storageAccountName.value]",
+            "bootStorageAccountName": "[basics('basicsOptional').storageAccountName]",
             "storageAccountKind": "[basics('basicsOptional').storageAccountKind]",
             "bootStorageReplication": "[basics('basicsOptional').storageAccountType]",
             "storageAccountResourceGroupName": "[if(and(equals(basics('basicsOptional').bootDiagnostics, 'on'),not(empty(basics('basicsOptional').existingStorageAccount))), first(skip(split(coalesce(first(filter(basics('basicsOptional').armApiControl.value, (item) => equals(basics('basicsOptional').existingStorageAccount,item.name))),parse('{\"id\":\"/////\"}')).id, '/'),4)), resourceGroup().name)]",
