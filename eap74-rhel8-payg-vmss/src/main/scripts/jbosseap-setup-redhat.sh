@@ -57,6 +57,7 @@ SATELLITE_ACTIVATION_KEY=$(echo $SATELLITE_ACTIVATION_KEY_BASE64 | base64 -d)
 SATELLITE_ORG_NAME_BASE64=${19}
 SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
 SATELLITE_VM_FQDN=${20}
+JDK_VERSION=${21}
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | log; flag=${PIPESTATUS[0]}
@@ -117,6 +118,22 @@ echo "sudo yum install java-1.8.4-openjdk curl wget unzip vim git -y" | log; fla
 sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.8.4-openjdk
 ####################### 
 
+####################### Install openjdk, EAP 7.4 is shipped with JDK 1.8, we are allowing more
+echo "Install openjdk, curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
+echo "sudo yum install curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
+sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}
+## Install specific JDK version
+if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
+    echo "sudo yum install java-17-openjdk -y" | log; flag=${PIPESTATUS[0]}
+    sudo yum install java-17-openjdk -y | log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "openjdk11" ]]; then
+    echo "sudo yum install java-11-openjdk -y" | log; flag=${PIPESTATUS[0]}
+    sudo yum install java-11-openjdk -y | log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "openjdk8" ]]; then
+    echo "openjdk8 is shipped with EAP 7.4, proceed" | log; flag=${PIPESTATUS[0]}
+fi
+####################### 
+
 
 ####################### Install JBoss EAP 7.4
 echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
@@ -144,6 +161,11 @@ sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml 
 echo "Updating standalone-azure-ha.xml" | log; flag=${PIPESTATUS[0]}
 echo -e "\t stack UDP to TCP"         | log; flag=${PIPESTATUS[0]}
 echo -e "\t set transaction id"       | log; flag=${PIPESTATUS[0]}
+
+## OpenJDK 17 specific logic
+if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
+    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-azure-ha.xml
+fi
 
 sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 'embed-server --std-out=echo  --server-config=standalone-azure-ha.xml',\
