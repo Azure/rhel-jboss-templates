@@ -2,10 +2,10 @@
 param location string = resourceGroup().location
 
 @description('Name for the Virtual Machine.')
-param vmName string
+param vmName string= 'jbosseapVm'
 
 @description('Linux VM user account name')
-param adminUsername string
+param adminUsername string = 'jbossuser'
 
 @description('Type of authentication to use on the Virtual Machine')
 @allowed([
@@ -20,6 +20,9 @@ param adminPasswordOrSSHKey string
 
 @description('The size of the Virtual Machine')
 param vmSize string = 'Standard_DS2_v2'
+
+@description('The JDK version of the Virtual Machine')
+param jdkVersion string = 'openjdk17'
 
 @description('Capture serial console outputs and screenshots of the virtual machine running on a host to help diagnose startup issues')
 @allowed([
@@ -130,7 +133,7 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
-resource bootStorageName 'Microsoft.Storage/storageAccounts@2021-05-01' = if (bootDiagnosticsCheck) {
+resource bootStorageName 'Microsoft.Storage/storageAccounts@2022-05-01' = if (bootDiagnosticsCheck) {
   name: bootStorageName_var
   location: location
   sku: {
@@ -139,12 +142,12 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@2021-05-01' = if (bo
   kind: storageAccountKind
 }
 
-resource networkSecurityGroupName 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
+resource networkSecurityGroupName 'Microsoft.Network/networkSecurityGroups@2022-05-01' = {
   name: networkSecurityGroupName_var
   location: location
 }
 
-resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2021-05-01' = if (virtualNetworkNewOrExisting == 'new') {
+resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2022-05-01' = if (virtualNetworkNewOrExisting == 'new') {
   name: virtualNetworkName
   location: location
   properties: {
@@ -165,7 +168,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2021-05-
   }
 }
 
-resource nicName 'Microsoft.Network/networkInterfaces@2021-05-01' = {
+resource nicName 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   name: nicName_var
   location: location
   properties: {
@@ -190,11 +193,11 @@ resource nicName 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   ]
 }
 
-resource vmName_resource 'Microsoft.Compute/virtualMachines@2021-03-01' = {
+resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   name: vmName
   location: location
   plan: {
-    name: 'rhel-lvm84'
+    name: 'rhel-lvm86-gen2'
     publisher: 'redhat'
     product: 'rhel-byos'
   }
@@ -212,7 +215,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2021-03-01' = {
       imageReference: {
         publisher: 'redhat'
         offer: 'rhel-byos'
-        sku: 'rhel-lvm84'
+        sku: 'rhel-lvm86-gen2'
         version: 'latest'
       }
       osDisk: {
@@ -237,7 +240,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2021-03-01' = {
   ]
 }
 
-resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/extensions@2021-03-01' = {
+resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = {
   parent: vmName_resource
   name: 'jbosseap-setup-extension'
   location: location
@@ -252,7 +255,7 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
       ]
     }
     protectedSettings: {
-      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${rhsmPoolRHEL}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\''
+      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${rhsmPoolRHEL}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\''
     }
   }
 }
