@@ -10,8 +10,6 @@ on:
 
 env:
     azCliVersion: 2.30.0
-    refArmttk: bad2965565e2e69318039bc15c2496844d55a59d
-    refJavaee: f25ab89a2a8848da39b84e5d6c927f4c4cb47200
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
     location: eastus
     vmssResourceGroup: vmss-${{ github.run_id }}-${{ github.run_number }}
@@ -42,24 +40,33 @@ jobs:
           isForDemo: ${{ steps.setup-env-variables-based-on-dispatch-event.outputs.isForDemo }}
         runs-on: ubuntu-latest
         steps:
-            - name: Set up JDK 1.8
-              uses: actions/setup-java@v1
+            - name: Get versions of external dependencies
+              run: |
+                curl -Lo external-deps-versions.properties https://raw.githubusercontent.com/Azure/azure-javaee-iaas/main/external-deps-versions.properties
+                source external-deps-versions.properties
+                echo "azCliVersion=${AZ_CLI_VERSION}" >> $GITHUB_ENV
+                echo "bicepVersion=${BICEP_VERSION}" >> $GITHUB_ENV
+                echo "refArmttk=${ARM_TTK_REFERENCE}" >> $GITHUB_ENV
+                echo "refJavaee=${AZURE_JAVAEE_IAAS_REFERENCE}" >> $GITHUB_ENV
+            - name: Set up JDK 11
+              uses: actions/setup-java@v3
               with:
-                java-version: 1.8
+                distribution: 'temurin'
+                java-version: '11'
             - name: Set up bicep
               run: |
-                curl -Lo bicep https://github.com/Azure/bicep/releases/download/v0.4.613/bicep-linux-x64
+                curl -Lo bicep https://github.com/Azure/bicep/releases/download/${{ env.bicepVersion }}/bicep-linux-x64
                 chmod +x ./bicep
                 sudo mv ./bicep /usr/local/bin/bicep
                 bicep --version
             - name: Checkout azure-javaee-iaas
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
               with:
                 repository: Azure/azure-javaee-iaas
                 path: azure-javaee-iaas
                 ref: ${{ env.refJavaee }}
             - name: Checkout arm-ttk
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
               with:
                 repository: Azure/arm-ttk
                 path: arm-ttk
@@ -67,7 +74,7 @@ jobs:
             - name: Build azure-javaee-iaas
               run: mvn -DskipTests clean install --file azure-javaee-iaas/pom.xml
             - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
               with:
                 repository: ${{env.gitUserName}}/rhel-jboss-templates
                 path: rhel-jboss-templates
@@ -105,7 +112,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
               with:
                 repository: ${{env.gitUserName}}/rhel-jboss-templates
                 path: rhel-jboss-templates
@@ -280,7 +287,7 @@ jobs:
                   echo "delete... " $vmssResourceGroup
                   az group delete --yes --no-wait --verbose --name $vmssResourceGroup
             - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@v2
+              uses: actions/checkout@v3
               with:
                 repository: ${{env.gitUserName}}/rhel-jboss-templates
                 path: rhel-jboss-templates
