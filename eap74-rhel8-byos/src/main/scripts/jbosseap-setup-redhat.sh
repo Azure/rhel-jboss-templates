@@ -26,6 +26,7 @@ SATELLITE_ACTIVATION_KEY=$(echo $SATELLITE_ACTIVATION_KEY_BASE64 | base64 -d)
 SATELLITE_ORG_NAME_BASE64=${9}
 SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
 SATELLITE_VM_FQDN=${10}
+JDK_VERSION=${11}
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
 export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"
@@ -72,6 +73,22 @@ else
     fi
 fi
 
+####################### Install openjdk, EAP 7.4 is shipped with JDK 1.8, we are allowing more
+echo "Install openjdk, curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
+echo "sudo yum install curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
+sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}
+## Install specific JDK version
+if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
+    echo "sudo yum install java-17-openjdk -y" | log; flag=${PIPESTATUS[0]}
+    sudo yum install java-17-openjdk -y | log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "openjdk11" ]]; then
+    echo "sudo yum install java-11-openjdk -y" | log; flag=${PIPESTATUS[0]}
+    sudo yum install java-11-openjdk -y | log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "openjdk8" ]]; then
+    echo "openjdk8 is shipped with EAP 7.4, proceed" | log; flag=${PIPESTATUS[0]}
+fi
+####################### 
+
 # Install JBoss EAP 7.4
 echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
 subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
@@ -83,19 +100,24 @@ yum groupinstall -y jboss-eap7        | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
 
 
-echo "Updating standalone.xml"      | log; flag=${PIPESTATUS[0]}
+echo "Updating standalone-full-ha.xml" | log; flag=${PIPESTATUS[0]}
 echo -e "\t stack UDP to TCP"       | log; flag=${PIPESTATUS[0]}
 echo -e "\t set transaction id"     | log; flag=${PIPESTATUS[0]}
 
+## OpenJDK 17 specific logic
+if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
+    sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-full-ha.xml
+fi
+
 sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --echo-command \
-"embed-server --std-out=echo  --server-config=standalone.xml",\
+"embed-server --std-out=echo  --server-config=standalone-full-ha.xml",\
 '/subsystem=transactions:write-attribute(name=node-identifier,value="'${NODE_ID}'")',\
 '/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")' | log; flag=${PIPESTATUS[0]} 
 
 ####################### Configure the JBoss server and setup eap service
 echo "Setting configurations in $EAP_RPM_CONF_STANDALONE"
-echo -e "\t-> WILDFLY_SERVER_CONFIG=standalone.xml" | log; flag=${PIPESTATUS[0]}
-echo 'WILDFLY_SERVER_CONFIG=standalone.xml' >> $EAP_RPM_CONF_STANDALONE | log; flag=${PIPESTATUS[0]}
+echo -e "\t-> WILDFLY_SERVER_CONFIG=standalone-full-ha.xml" | log; flag=${PIPESTATUS[0]}
+echo 'WILDFLY_SERVER_CONFIG=standalone-full-ha.xml' >> $EAP_RPM_CONF_STANDALONE | log; flag=${PIPESTATUS[0]}
 
 echo "Setting configurations in $EAP_LAUNCH_CONFIG"
 echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=0.0.0.0"' | log; flag=${PIPESTATUS[0]}
