@@ -39,6 +39,9 @@ param rhsmPoolRHEL string = newGuid()
 @description('The size of the Virtual Machine')
 param vmSize string = 'Standard_DS2_v2'
 
+@description('The JDK version of the Virtual Machine')
+param jdkVersion string = 'openjdk17'
+
 @description('Number of VMs to deploy')
 param numberOfInstances int = 2
 
@@ -183,11 +186,11 @@ var linuxConfiguration = {
 var imageReference = {
   publisher: 'redhat'
   offer: 'rhel-byos'
-  sku: 'rhel-lvm84'
+  sku: 'rhel-lvm86-gen2'
   version: 'latest'
 }
 var plan = {
-  name: 'rhel-lvm84'
+  name: 'rhel-lvm86-gen2'
   publisher: 'redhat'
   product: 'rhel-byos'
 }
@@ -201,7 +204,7 @@ var obj_uamiForDeploymentScript = {
   }
 }
 var name_keyVaultName = take('jboss-kv${guidValue}', 24)
-var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}${take(uniqueString(utcValue), 6)}'
+var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}${take(uniqueString('${utcValue}${resourceGroup().id}'), 6)}'
 var name_rgNameWithoutSpecialCharacter = replace(replace(replace(replace(resourceGroup().name, '.', ''), '(', ''), ')', ''), '_', '') // remove . () _ from resource group name
 var name_domainLabelforApplicationGateway = take('${name_dnsNameforApplicationGateway}-${toLower(name_rgNameWithoutSpecialCharacter)}', 63)
 var const_azureSubjectName = format('{0}.{1}.{2}', name_domainLabelforApplicationGateway, location, 'cloudapp.azure.com')
@@ -598,6 +601,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
     satelliteActivationKey: satelliteActivationKey
     satelliteOrgName: satelliteOrgName
     satelliteFqdn: satelliteFqdn
+    jdkVersion: jdkVersion
   }
   dependsOn: [
     vmName_resource

@@ -1,64 +1,24 @@
 #!/bin/bash
 
-while getopts "a:t:p:f:s:" opt; do
-    case $opt in
-        a)
-            artifactsLocation=$OPTARG #base uri of the file including the container
-        ;;
-        t)
-            token=$OPTARG #saToken for the uri - use "?" if the artifact is not secured via sasToken
-        ;;
-        p)
-            pathToFile=$OPTARG #path to the file relative to artifactsLocation
-        ;;
-        f)
-            fileToDownload=$OPTARG #filename of the file to download from storage
-        ;;
-        s)
-            pathToScript=$OPTARG #filename of the file to download from storage
-        ;;
-    esac
-done
-
-JBOSS_EAP_USER=${11}
-JBOSS_EAP_PASSWORD_BASE64=${12}
-RHSM_USER=${13}
-RHSM_PASSWORD_BASE64=${14}
-EAP_POOL=${15}
-RHEL_POOL=${16}
-STORAGE_ACCOUNT_NAME=${17}
-CONTAINER_NAME=${18}
-RESOURCE_GROUP_NAME=${19}
-NUMBER_OF_INSTANCE=${20}
-ADMIN_VM_NAME=${21}
-VM_NAME_PREFIX=${22}
-NUMBER_OF_SERVER_INSTANCE=${23}
-CONFIGURATION_MODE=${24}
-VNET_NEW_OR_EXISTING=${25}
-CONNECT_SATELLITE=${26}
-SATELLITE_ACTIVATION_KEY_BASE64=${27}
-SATELLITE_ORG_NAME_BASE64=${28}
-SATELLITE_VM_FQDN=${29}
-
 # Get storage account sas token
 STORAGE_ACCESS_KEY=$(az storage account keys list --verbose --account-name "${STORAGE_ACCOUNT_NAME}" --query [0].value --output tsv)
 if [[ -z "${STORAGE_ACCESS_KEY}" ]] ; then echo  "Failed to get storage account sas token"; exit 1;  fi
 
-# Unwrap single quotes around artifactsLocation
-eval unwrapped_artifactsLocation=${artifactsLocation}
+# Deal with special character in Azure private offer's artifact location
+eval unwrapped_artifactsLocation=${ARTIFACTS_LOCATION}
 
 if [ "${CONFIGURATION_MODE}" != "managed-domain" ]; then
     # Configure standalone host
     for ((i = 0; i < NUMBER_OF_INSTANCE; i++)); do
         echo "Configure standalone host: ${VM_NAME_PREFIX}${i}"
-        standaloneScriptUri="${unwrapped_artifactsLocation}${pathToScript}/jbosseap-setup-standalone.sh"
+        standaloneScriptUri="${unwrapped_artifactsLocation}${PATH_TO_SCRIPT}/jbosseap-setup-standalone.sh"
         az vm extension set --verbose --name CustomScript \
         --resource-group ${RESOURCE_GROUP_NAME} \
         --vm-name ${VM_NAME_PREFIX}${i} \
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
         --settings "{\"fileUris\": [\"${standaloneScriptUri}\"]}" \
-        --protected-settings "{\"commandToExecute\":\"bash jbosseap-setup-standalone.sh -a $artifactsLocation -t $token -p $pathToFile -f $fileToDownload ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${RHEL_POOL} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN} \"}"
+        --protected-settings "{\"commandToExecute\":\"sh jbosseap-setup-standalone.sh -a ${ARTIFACTS_LOCATION} -t ${ARTIFACTS_LOCATION_SAS_TOKEN} -p ${PATH_TO_FILE} -f ${FILE_TO_DOWNLOAD} ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${RHEL_POOL} ${JDK_VERSION} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN} \"}"
         if [ $? != 0 ] ; then echo  "Failed to configure standalone host ${VM_NAME_PREFIX}${i}"; exit 1;  fi
         echo "standalone ${VM_NAME_PREFIX}${i} extension execution completed"
     done
@@ -73,29 +33,31 @@ else
     DOMAIN_CONTROLLER_PRIVATE_IP=$(az vm list-ip-addresses --verbose --resource-group ${RESOURCE_GROUP_NAME} --name "${ADMIN_VM_NAME}" --query [0].virtualMachine.network.privateIpAddresses[0] --output tsv)
     if [[ -z "${DOMAIN_CONTROLLER_PRIVATE_IP}" ]] ; then echo  "Failed to get domain controller host private IP"; exit 1;  fi
 
+    enableElytronSe17DomainCliUri="${unwrapped_artifactsLocation}${PATH_TO_SCRIPT}/enable-elytron-se17-domain.cli"
+
     # Configure domain controller host
     echo "Configure domain controller host: ${ADMIN_VM_NAME}"
-    masterScriptUri="${unwrapped_artifactsLocation}${pathToScript}/jbosseap-setup-master.sh"
+    masterScriptUri="${unwrapped_artifactsLocation}${PATH_TO_SCRIPT}/jbosseap-setup-master.sh"
     az vm extension set --verbose --name CustomScript \
         --resource-group ${RESOURCE_GROUP_NAME} \
         --vm-name ${ADMIN_VM_NAME} \
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
-        --settings "{\"fileUris\": [\"${masterScriptUri}\"]}" \
-        --protected-settings "{\"commandToExecute\":\"bash jbosseap-setup-master.sh -a $artifactsLocation -t $token -p $pathToFile -f $fileToDownload ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${RHEL_POOL} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${privateEndpointIp} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN} \"}"
+        --settings "{\"fileUris\": [\"${masterScriptUri}\", \"${enableElytronSe17DomainCliUri}\"]}" \
+        --protected-settings "{\"commandToExecute\":\"sh jbosseap-setup-master.sh ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${RHEL_POOL} ${JDK_VERSION} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${privateEndpointIp} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN} \"}"
         if [ $? != 0 ] ; then echo  "Failed to configure domain controller host: ${ADMIN_VM_NAME}"; exit 1;  fi
         echo "Domain controller VM extension execution completed"
 
     for ((i = 1; i < NUMBER_OF_INSTANCE; i++)); do
         echo "Configure domain slave host: ${VM_NAME_PREFIX}${i}"
-        slaveScriptUri="${unwrapped_artifactsLocation}${pathToScript}/jbosseap-setup-slave.sh"
+        slaveScriptUri="${unwrapped_artifactsLocation}${PATH_TO_SCRIPT}/jbosseap-setup-slave.sh"
         az vm extension set --verbose --name CustomScript \
         --resource-group ${RESOURCE_GROUP_NAME} \
         --vm-name ${VM_NAME_PREFIX}${i} \
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
-        --settings "{\"fileUris\": [\"${slaveScriptUri}\"]}" \
-        --protected-settings "{\"commandToExecute\":\"bash jbosseap-setup-slave.sh -a $artifactsLocation -t $token -p $pathToFile -f $fileToDownload ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${RHEL_POOL} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${privateEndpointIp} ${DOMAIN_CONTROLLER_PRIVATE_IP} ${NUMBER_OF_SERVER_INSTANCE} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN} \"}"
+        --settings "{\"fileUris\": [\"${slaveScriptUri}\", \"${enableElytronSe17DomainCliUri}\"]}" \
+        --protected-settings "{\"commandToExecute\":\"sh jbosseap-setup-slave.sh ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${RHEL_POOL} ${JDK_VERSION} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${privateEndpointIp} ${DOMAIN_CONTROLLER_PRIVATE_IP} ${NUMBER_OF_SERVER_INSTANCE} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN} \"}"
         if [ $? != 0 ] ; then echo  "Failed to configure domain slave host: ${VM_NAME_PREFIX}${i}"; exit 1;  fi
         echo "Slave ${VM_NAME_PREFIX}${i} extension execution completed"
     done

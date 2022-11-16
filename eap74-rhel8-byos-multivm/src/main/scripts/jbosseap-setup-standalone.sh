@@ -50,15 +50,16 @@ RHSM_PASSWORD_BASE64=${12}
 RHSM_PASSWORD=$(echo $RHSM_PASSWORD_BASE64 | base64 -d)
 EAP_POOL=${13}
 RHEL_POOL=${14}
-STORAGE_ACCOUNT_NAME=${15}
-CONTAINER_NAME=${16}
-STORAGE_ACCESS_KEY=${17}
-CONNECT_SATELLITE=${18}
-SATELLITE_ACTIVATION_KEY_BASE64=${19}
+JDK_VERSION=${15}
+STORAGE_ACCOUNT_NAME=${16}
+CONTAINER_NAME=${17}
+STORAGE_ACCESS_KEY=${18}
+CONNECT_SATELLITE=${19}
+SATELLITE_ACTIVATION_KEY_BASE64=${20}
 SATELLITE_ACTIVATION_KEY=$(echo $SATELLITE_ACTIVATION_KEY_BASE64 | base64 -d)
-SATELLITE_ORG_NAME_BASE64=${20}
+SATELLITE_ORG_NAME_BASE64=${21}
 SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
-SATELLITE_VM_FQDN=${21}
+SATELLITE_VM_FQDN=${22}
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 HOST_VM_NAME=$(hostname)
 HOST_VM_NAME_LOWERCASES=$(echo "${HOST_VM_NAME,,}")
@@ -136,10 +137,23 @@ else
 fi
 
 ####################### Install openjdk: is it needed? it should be installed with eap7.4
-echo "Install openjdk, curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
-echo "sudo yum install java-1.8.4-openjdk curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
+echo "Install curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
+echo "sudo yum install curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
 sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.8.4-openjdk
 ####################### 
+
+## Install specific JDK version
+if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
+    echo "sudo yum install java-17-openjdk -y" | log; flag=${PIPESTATUS[0]}
+    sudo yum install java-17-openjdk -y | log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "openjdk11" ]]; then
+    echo "sudo yum install java-11-openjdk -y" | log; flag=${PIPESTATUS[0]}
+    sudo yum install java-11-openjdk -y | log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "openjdk8" ]]; then
+    echo "openjdk8 is shipped with EAP 7.4, proceed" | log; flag=${PIPESTATUS[0]}
+else
+    echo "${JDK_VERSION} is not supported"
+fi
 
 ####################### Install JBoss EAP 7.4
 echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
@@ -169,6 +183,11 @@ echo -e "\t stack UDP to TCP"           | log; flag=${PIPESTATUS[0]}
 echo -e "\t management:inet-address"    | log; flag=${PIPESTATUS[0]}
 echo -e "\t public:inet-address"        | log; flag=${PIPESTATUS[0]}
 echo -e "\t set transaction id"         | log; flag=${PIPESTATUS[0]}
+
+## OpenJDK 17 specific logic
+if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
+    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-azure-ha.xml
+fi
 
 sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 'embed-server --std-out=echo  --server-config=standalone-azure-ha.xml',\
