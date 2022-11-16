@@ -1,5 +1,5 @@
 @description('User name for the Virtual Machine')
-param adminUsername string
+param adminUsername string = 'jbossuser'
 
 @description('Type of authentication to use on the Virtual Machine')
 @allowed([
@@ -93,7 +93,7 @@ param subnetPrefix string = '10.0.0.0/24'
 
 @description('String used as a base for naming resources (9 characters or less). A hash is prepended to this string for some resources, and resource-specific information is appended')
 @maxLength(9)
-param vmssName string
+param vmssName string = 'jbossvmss'
 
 @description('Number of VM instances (100 or less)')
 @minValue(2)
@@ -102,6 +102,9 @@ param instanceCount int = 2
 
 @description('The size of the Virtual Machine scale set')
 param vmSize string = 'Standard_DS2_v2'
+
+@description('The JDK version of the Virtual Machine')
+param jdkVersion string = 'openjdk17'
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated')
 param artifactsLocation string = deployment().properties.templateLink.uri
@@ -151,7 +154,7 @@ var linuxConfiguration = {
 var imageReference = {
   publisher: 'RedHat'
   offer: 'RHEL'
-  sku: '8_4'
+  sku: '8_6'
   version: 'latest'
 }
 var scriptFolder = 'bin'
@@ -163,7 +166,7 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
-resource bootStorageName 'Microsoft.Storage/storageAccounts@2021-04-01' = if (bootDiagnosticsCheck) {
+resource bootStorageName 'Microsoft.Storage/storageAccounts@2022-05-01' = if (bootDiagnosticsCheck) {
   name: bootStorageName_var
   location: location
   sku: {
@@ -175,7 +178,7 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@2021-04-01' = if (bo
   }
 }
 
-resource eapStorageAccountName 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource eapStorageAccountName 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: eapStorageAccountName_var
   location: location
   sku: {
@@ -187,7 +190,7 @@ resource eapStorageAccountName 'Microsoft.Storage/storageAccounts@2021-04-01' = 
   }
 }
 
-resource eapStorageAccountName_default_containerName 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-06-01' = {
+resource eapStorageAccountName_default_containerName 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-05-01' = {
   name: '${eapStorageAccountName_var}/default/${containerName}'
   properties: {
     publicAccess: 'None'
@@ -197,7 +200,7 @@ resource eapStorageAccountName_default_containerName 'Microsoft.Storage/storageA
   ]
 }
 
-resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2020-11-01' = if (virtualNetworkNewOrExisting == 'new') {
+resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2022-05-01' = if (virtualNetworkNewOrExisting == 'new') {
   name: virtualNetworkName
   location: location
   tags: {
@@ -218,7 +221,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2020-11-
   }
 }
 
-resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2021-03-01' = {
+resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2022-08-01' = {
   name: vmssInstanceName_var
   location: location
   sku: {
@@ -294,7 +297,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2021-03-01'
                 ]
               }
               protectedSettings: {
-                commandToExecute: 'sh jbosseap-setup-redhat.sh ${scriptArgs} \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${eapStorageAccountName_var}\' \'${containerName}\' \'${base64(listKeys(eapStorageAccountName.id, '2021-06-01').keys[0].value)}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\''
+                commandToExecute: 'sh jbosseap-setup-redhat.sh ${scriptArgs} \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${eapStorageAccountName_var}\' \'${containerName}\' \'${base64(listKeys(eapStorageAccountName.id, '2021-06-01').keys[0].value)}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\''
               }
             }
           }
@@ -310,7 +313,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2021-03-01'
   ]
 }
 
-resource loadBalancersName 'Microsoft.Network/loadBalancers@2020-11-01' = {
+resource loadBalancersName 'Microsoft.Network/loadBalancers@2022-05-01' = {
   name: loadBalancersName_var
   location: location
   sku: {
