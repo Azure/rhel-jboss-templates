@@ -348,12 +348,14 @@
                 "elements": [
                     {
                         "name": "jbossEAPUserName",
-                        "type": "Microsoft.Compute.UserNameTextBox",
+                        "type": "Microsoft.Common.TextBox",
                         "label": "JBoss EAP Admin username",
                         "defaultValue": "jbossadmin",
                         "osPlatform": "Linux",
                         "constraints": {
-                            "required": true
+                            "required": true,
+                            "regex": "^[a-z0-9A-Z]{1,30}$",
+                            "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
                         },
                         "toolTip": "Provide User name for JBoss EAP Manager"
                     },
