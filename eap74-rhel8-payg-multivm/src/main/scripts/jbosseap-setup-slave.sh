@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 log() {
     while IFS= read -r line; do
@@ -66,48 +66,34 @@ source ~/.bash_profile
 touch /etc/profile.d/eap_env.sh
 echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> /etc/profile.d/eap_env.sh
 
-while getopts "a:t:p:f:" opt; do
-    case $opt in
-        a)
-            artifactsLocation=$OPTARG #base uri of the file including the container
-        ;;
-        t)
-            token=$OPTARG #saToken for the uri - use "?" if the artifact is not secured via sasToken
-        ;;
-        p)
-            pathToFile=$OPTARG #path to the file relative to artifactsLocation
-        ;;
-        f)
-            fileToDownload=$OPTARG #filename of the file to download from storage
-        ;;
-    esac
-done
-
-JBOSS_EAP_USER=$9
-JBOSS_EAP_PASSWORD_BASE64=${10}
+JBOSS_EAP_USER=${1}
+JBOSS_EAP_PASSWORD_BASE64=${2}
 JBOSS_EAP_PASSWORD=$(echo $JBOSS_EAP_PASSWORD_BASE64 | base64 -d)
-RHSM_USER=${11}
-RHSM_PASSWORD_BASE64=${12}
+RHSM_USER=${3}
+RHSM_PASSWORD_BASE64=${4}
 RHSM_PASSWORD=$(echo $RHSM_PASSWORD_BASE64 | base64 -d)
-EAP_POOL=${13}
-STORAGE_ACCOUNT_NAME=${14}
-CONTAINER_NAME=${15}
-STORAGE_ACCESS_KEY=${16}
-STORAGE_ACCOUNT_PRIVATE_IP=${17}
-DOMAIN_CONTROLLER_PRIVATE_IP=${18}
-NUMBER_OF_SERVER_INSTANCE=${19}
-CONNECT_SATELLITE=${20}
-SATELLITE_ACTIVATION_KEY_BASE64=${21}
+EAP_POOL=${5}
+JDK_VERSION=${6}
+STORAGE_ACCOUNT_NAME=${7}
+CONTAINER_NAME=${8}
+STORAGE_ACCESS_KEY=${9}
+STORAGE_ACCOUNT_PRIVATE_IP=${10}
+DOMAIN_CONTROLLER_PRIVATE_IP=${11}
+NUMBER_OF_SERVER_INSTANCE=${12}
+CONNECT_SATELLITE=${13}
+SATELLITE_ACTIVATION_KEY_BASE64=${14}
 SATELLITE_ACTIVATION_KEY=$(echo $SATELLITE_ACTIVATION_KEY_BASE64 | base64 -d)
-SATELLITE_ORG_NAME_BASE64=${22}
+SATELLITE_ORG_NAME_BASE64=${15}
 SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
-SATELLITE_VM_FQDN=${23}
+SATELLITE_VM_FQDN=${16}
 HOST_VM_NAME=$(hostname)
 HOST_VM_NAME_LOWERCASES=$(echo "${HOST_VM_NAME,,}")
 HOST_VM_IP=$(hostname -I)
 
 MOUNT_POINT_PATH=/mnt/jbossshare
 SCRIPT_PWD=`pwd`
+CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BASE_DIR="$(readlink -f ${CURR_DIR})"
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | log; flag=${PIPESTATUS[0]}
 echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.4-on-RHEL8.4" | log; flag=${PIPESTATUS[0]}
@@ -168,8 +154,22 @@ fi
 
 ####################### Install openjdk: is it needed? it should be installed with eap7.4
 echo "Install openjdk, curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
-echo "sudo yum install java-1.8.4-openjdk curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
+echo "sudo yum install curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
 sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.8.4-openjdk
+####################### 
+
+## Install specific JDK version
+if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
+    echo "sudo yum install java-17-openjdk -y" | log; flag=${PIPESTATUS[0]}
+    sudo yum install java-17-openjdk -y | log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "openjdk11" ]]; then
+    echo "sudo yum install java-11-openjdk -y" | log; flag=${PIPESTATUS[0]}
+    sudo yum install java-11-openjdk -y | log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "openjdk8" ]]; then
+    echo "openjdk8 is shipped with EAP 7.4, proceed" | log; flag=${PIPESTATUS[0]}
+else
+    echo "${JDK_VERSION} is not supported"
+fi
 ####################### 
 
 ####################### Install JBoss EAP 7.4
@@ -191,14 +191,18 @@ echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]
 echo "systemctl restart sshd" | log; flag=${PIPESTATUS[0]}
 systemctl restart sshd | log; flag=${PIPESTATUS[0]}
 
+## OpenJDK 17 specific logic
+if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
+    cp ${BASE_DIR}/enable-elytron-se17-domain.cli $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
+    chmod 644 $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
+    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
+fi
+
 echo "Updating domain.xml" | log; flag=${PIPESTATUS[0]}
 yum install update -y
 yum install cifs-utils -y
 mountFileShare
 getDomainXmlFileFromShare
-
-JBOSS_EAP_PASSWORD_ENCODE=$(echo $JBOSS_EAP_PASSWORD | base64)
-
 
 sudo touch ${EAP_HOME}/wildfly/domain/configuration/addservercmd.txt
 sudo chmod 666 ${EAP_HOME}/wildfly/domain/configuration/addservercmd.txt
@@ -216,10 +220,13 @@ sudo firewall-cmd  --reload  | log; flag=${PIPESTATUS[0]}
 # sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 "embed-host-controller --std-out=echo --domain-config=domain.xml --host-config=host-slave.xml",\
-"/host=${HOST_VM_NAME_LOWERCASES}/core-service=management/security-realm=ManagementRealm/server-identity=secret:write-attribute(name=\"value\", value=\"${JBOSS_EAP_PASSWORD_ENCODE}\")",\
 "/host=${HOST_VM_NAME_LOWERCASES}/server-config=server-one:remove",\
 "/host=${HOST_VM_NAME_LOWERCASES}/server-config=server-two:remove",\
+"/host=${HOST_VM_NAME_LOWERCASES}/core-service=discovery-options/static-discovery=primary:remove",\
 "run-batch --file=${EAP_HOME}/wildfly/domain/configuration/addservercmd.txt",\
+"/host=${HOST_VM_NAME_LOWERCASES}/subsystem=elytron/authentication-configuration=slave:add(authentication-name=${JBOSS_EAP_USER}, credential-reference={clear-text=${JBOSS_EAP_PASSWORD}})",\
+"/host=${HOST_VM_NAME_LOWERCASES}/subsystem=elytron/authentication-context=slave-context:add(match-rules=[{authentication-configuration=slave}])",\
+"/host=${HOST_VM_NAME_LOWERCASES}:write-attribute(name=domain-controller.remote, value={host=${DOMAIN_CONTROLLER_PRIVATE_IP}, port=9990, protocol=remote+http, authentication-context=slave-context})",\
 "/host=${HOST_VM_NAME_LOWERCASES}/core-service=discovery-options/static-discovery=primary:write-attribute(name=host, value=${DOMAIN_CONTROLLER_PRIVATE_IP})",\
 "/host=${HOST_VM_NAME_LOWERCASES}:write-attribute(name=domain-controller.remote.username, value=${JBOSS_EAP_USER})",\
 "/host=${HOST_VM_NAME_LOWERCASES}/interface=unsecured:add(inet-address=${HOST_VM_IP})",\
@@ -243,8 +250,7 @@ sed -i 's/After=syslog.target network.target/After=syslog.target network.target 
 echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
 sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap7-domain.service | log; flag=${PIPESTATUS[0]}
 echo "Removing - User=jboss Group=jboss" | log; flag=${PIPESTATUS[0]}
-# sed -i '/User/d' /usr/lib/systemd/system/eap7-domain.service | log; flag=${PIPESTATUS[0]}
-# sed -i '/Group/d' /usr/lib/systemd/system/eap7-domain.service | log; flag=${PIPESTATUS[0]}
+
 echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
 systemctl daemon-reload | log; flag=${PIPESTATUS[0]}
 

@@ -73,18 +73,19 @@ param satelliteOrgName string = ''
 @description('Red Hat Satellite Server VM FQDN name.')
 param satelliteFqdn string = ''
 
+@description('The JDK version of the Virtual Machine')
+param jdkVersion string = 'openjdk17'
+
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jbosseap-setup-redhat.sh'
 var const_setupDomainMasterScript = 'jbosseap-setup-master.sh'
 var const_setupDomainSlaveScript = 'jbosseap-setup-slave.sh'
 var const_setupDomainStandaloneScript = 'jbosseap-setup-standalone.sh'
+var const_enableElytronSe17DomainCli = 'enable-elytron-se17-domain.cli'
 var const_azcliVersion = '2.15.0'
 var scriptFolder = 'scripts'
 var fileFolder = 'bin'
 var fileToBeDownloaded = 'eap-session-replication.war'
-var scriptArgs = '-a "${uri(artifactsLocation, '.')}" -t "${empty(artifactsLocationSasToken) ? '?' : 'artifactsLocationSasToken'}" -p ${fileFolder} -f ${fileToBeDownloaded} -s ${scriptFolder}'
-var const_arguments = '${scriptArgs} ${jbossEAPUserName} ${base64(jbossEAPPassword)} ${rhsmUserName} ${base64(rhsmPassword)} ${rhsmPoolEAP} ${eapStorageAccountName} ${containerName} ${resourceGroup().name} ${numberOfInstances} ${adminVmName} ${vmName} ${numberOfServerInstances} ${operatingMode} ${virtualNetworkNewOrExisting} ${connectSatellite} ${base64(satelliteActivationKey)} ${base64(satelliteOrgName)} ${satelliteFqdn}'
-
 
 resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'jbosseap-setup'
@@ -93,14 +94,112 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   identity: identity
   properties: {
     azCliVersion: const_azcliVersion
-    arguments: const_arguments
+    environmentVariables: [
+      {
+        name: 'ARTIFACTS_LOCATION'
+        value: uri(artifactsLocation, '.')
+      }
+      {
+        name: 'ARTIFACTS_LOCATION_SAS_TOKEN'
+        value: empty(artifactsLocationSasToken) ? '?' : artifactsLocationSasToken
+      }
+      {
+        name: 'PATH_TO_FILE'
+        value: fileFolder
+      }
+      {
+        name: 'FILE_TO_DOWNLOAD'
+        value: fileToBeDownloaded
+      }
+      {
+        name: 'PATH_TO_SCRIPT'
+        value: scriptFolder
+      }
+      {
+        name: 'JBOSS_EAP_USER'
+        value: jbossEAPUserName
+      }
+      {
+        name: 'JBOSS_EAP_PASSWORD_BASE64'
+        secureValue: base64(jbossEAPPassword)
+      }
+      {
+        name: 'RHSM_USER'
+        value: rhsmUserName
+      }
+      {
+        name: 'RHSM_PASSWORD_BASE64'
+        secureValue: base64(rhsmPassword)
+      }
+      {
+        name: 'EAP_POOL'
+        secureValue: rhsmPoolEAP
+      }
+      {
+        name: 'STORAGE_ACCOUNT_NAME'
+        value: eapStorageAccountName
+      }
+      {
+        name: 'CONTAINER_NAME'
+        value: containerName
+      }
+      {
+        name: 'RESOURCE_GROUP_NAME'
+        value: resourceGroup().name
+      }
+      {
+        name: 'NUMBER_OF_INSTANCE'
+        value: string(numberOfInstances)
+      }
+      {
+        name: 'ADMIN_VM_NAME'
+        value: adminVmName
+      }
+      {
+        name: 'VM_NAME_PREFIX'
+        value: vmName
+      }
+      {
+        name: 'NUMBER_OF_SERVER_INSTANCE'
+        value: string(numberOfServerInstances)
+      }
+      {
+        name: 'CONFIGURATION_MODE'
+        value: operatingMode
+      }
+      {
+        name: 'VNET_NEW_OR_EXISTING'
+        value: virtualNetworkNewOrExisting
+      }
+      {
+        name: 'CONNECT_SATELLITE'
+        value: string(connectSatellite)
+      }
+      {
+        name: 'SATELLITE_ACTIVATION_KEY_BASE64'
+        secureValue: base64(satelliteActivationKey)
+      }
+      {
+        name: 'SATELLITE_ORG_NAME_BASE64'
+        value: base64(satelliteOrgName)
+      }
+      {
+        name: 'SATELLITE_VM_FQDN'
+        value: satelliteFqdn
+      }
+      {
+        name: 'JDK_VERSION'
+        value: jdkVersion
+      }
+    ]
     primaryScriptUri: uri(const_scriptLocation, '${const_setupJBossScript}${artifactsLocationSasToken}')
     supportingScriptUris: [
       uri(const_scriptLocation, '${const_setupDomainMasterScript}${artifactsLocationSasToken}')
       uri(const_scriptLocation, '${const_setupDomainSlaveScript}${artifactsLocationSasToken}')
       uri(const_scriptLocation, '${const_setupDomainStandaloneScript}${artifactsLocationSasToken}')
+      uri(const_scriptLocation, '${const_enableElytronSe17DomainCli}${artifactsLocationSasToken}')
     ]
-    cleanupPreference: 'OnExpiration'
+    cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
   }
 }
