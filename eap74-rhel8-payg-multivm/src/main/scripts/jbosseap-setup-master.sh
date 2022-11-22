@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 log() {
     while IFS= read -r line; do
@@ -64,45 +64,29 @@ source ~/.bash_profile
 touch /etc/profile.d/eap_env.sh
 echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> /etc/profile.d/eap_env.sh
 
-while getopts "a:t:p:f:" opt; do
-    case $opt in
-        a)
-            artifactsLocation=$OPTARG #base uri of the file including the container
-        ;;
-        t)
-            token=$OPTARG #saToken for the uri - use "?" if the artifact is not secured via sasToken
-        ;;
-        p)
-            pathToFile=$OPTARG #path to the file relative to artifactsLocation
-        ;;
-        f)
-            fileToDownload=$OPTARG #filename of the file to download from storage
-        ;;
-    esac
-done
-
-# fileUrl="$artifactsLocation$pathToFile/$fileToDownload$token"
-
-JBOSS_EAP_USER=$9
-JBOSS_EAP_PASSWORD_BASE64=${10}
+JBOSS_EAP_USER=${1}
+JBOSS_EAP_PASSWORD_BASE64=${2}
 JBOSS_EAP_PASSWORD=$(echo $JBOSS_EAP_PASSWORD_BASE64 | base64 -d)
-RHSM_USER=${11}
-RHSM_PASSWORD_BASE64=${12}
+RHSM_USER=${3}
+RHSM_PASSWORD_BASE64=${4}
 RHSM_PASSWORD=$(echo $RHSM_PASSWORD_BASE64 | base64 -d)
-EAP_POOL=${13}
-STORAGE_ACCOUNT_NAME=${14}
-CONTAINER_NAME=${15}
-STORAGE_ACCESS_KEY=${16}
-STORAGE_ACCOUNT_PRIVATE_IP=${17}
-CONNECT_SATELLITE=${18}
-SATELLITE_ACTIVATION_KEY_BASE64=${19}
+EAP_POOL=${5}
+JDK_VERSION=${6}
+STORAGE_ACCOUNT_NAME=${7}
+CONTAINER_NAME=${8}
+STORAGE_ACCESS_KEY=${9}
+STORAGE_ACCOUNT_PRIVATE_IP=${10}
+CONNECT_SATELLITE=${11}
+SATELLITE_ACTIVATION_KEY_BASE64=${12}
 SATELLITE_ACTIVATION_KEY=$(echo $SATELLITE_ACTIVATION_KEY_BASE64 | base64 -d)
-SATELLITE_ORG_NAME_BASE64=${20}
+SATELLITE_ORG_NAME_BASE64=${13}
 SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
-SATELLITE_VM_FQDN=${21}
+SATELLITE_VM_FQDN=${14}
 
 MOUNT_POINT_PATH=/mnt/jbossshare
 HOST_VM_IP=$(hostname -I)
+CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BASE_DIR="$(readlink -f ${CURR_DIR})"
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | log; flag=${PIPESTATUS[0]}
 echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.4-on-RHEL8.4" | log; flag=${PIPESTATUS[0]}
@@ -167,9 +151,22 @@ fi
 
 ####################### Install openjdk: is it needed? it should be installed with eap7.4
 echo "Install openjdk, curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
-echo "sudo yum install java-1.8.4-openjdk curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
-sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.8.4-openjdk
+echo "sudo yum install curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
+sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}
 ####################### 
+
+## Install specific JDK version
+if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
+    echo "sudo yum install java-17-openjdk -y" | log; flag=${PIPESTATUS[0]}
+    sudo yum install java-17-openjdk -y | log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "openjdk11" ]]; then
+    echo "sudo yum install java-11-openjdk -y" | log; flag=${PIPESTATUS[0]}
+    sudo yum install java-11-openjdk -y | log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "openjdk8" ]]; then
+    echo "openjdk8 is shipped with EAP 7.4, proceed" | log; flag=${PIPESTATUS[0]}
+else
+    echo "${JDK_VERSION} is not supported"
+fi
 
 ####################### Install JBoss EAP 7.4
 echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
@@ -189,6 +186,13 @@ echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]
 
 echo "systemctl restart sshd" | log; flag=${PIPESTATUS[0]}
 systemctl restart sshd | log; flag=${PIPESTATUS[0]}
+
+## OpenJDK 17 specific logic
+if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
+    cp ${BASE_DIR}/enable-elytron-se17-domain.cli $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
+    chmod 644 $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
+    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
+fi
 
 echo "Updating domain.xml" | log; flag=${PIPESTATUS[0]}
 echo -e "\t stack UDP to TCP"           | log; flag=${PIPESTATUS[0]}
@@ -221,6 +225,7 @@ sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 '/profile=ha/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
 '/server-group=main-server-group:write-attribute(name="profile", value="ha")',\
 '/server-group=main-server-group:write-attribute(name="socket-binding-group", value="ha-sockets")',\
+"/host=master/subsystem=elytron/http-authentication-factory=management-http-authentication:write-attribute(name=mechanism-configurations,value=[{mechanism-name=DIGEST,mechanism-realm-configurations=[{realm-name=ManagementRealm}]}])",\
 "/host=master/interface=unsecure:add(inet-address=${HOST_VM_IP})",\
 "/host=master/interface=management:write-attribute(name=inet-address, value=${HOST_VM_IP})",\
 "/host=master/interface=public:add(inet-address=${HOST_VM_IP})" | log; flag=${PIPESTATUS[0]}
