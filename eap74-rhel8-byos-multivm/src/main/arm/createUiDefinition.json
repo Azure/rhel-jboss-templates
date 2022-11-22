@@ -33,6 +33,31 @@
                 "count": "1"
             },
             {
+                "name": "jdkVersion",
+                "type": "Microsoft.Common.DropDown",
+                "label": "JDK version",
+                "defaultValue": "OpenJDK 17",
+                "toolTip": "Choose JDK version.",
+                "constraints": {
+                    "allowedValues": [
+                        {
+                            "label": "OpenJDK 8",
+                            "value": "openjdk8"
+                        },
+                        {
+                            "label": "OpenJDK 11",
+                            "value": "openjdk11"
+                        },
+                        {
+                            "label": "OpenJDK 17",
+                            "value": "openjdk17"
+                        }
+                    ],
+                    "required": true
+                },
+                "visible": true
+            },
+            {
                 "name": "adminUsername",
                 "type": "Microsoft.Common.TextBox",
                 "label": "Username",
@@ -687,6 +712,7 @@
             "authenticationType": "[basics('authenticationType').authenticationType]",
             "adminPasswordOrSSHKey": "[coalesce(basics('authenticationType').password, basics('authenticationType').sshPublicKey)]",
             "vmSize": "[basics('vmSize')]",
+            "jdkVersion": "[basics('jdkVersion')]",
             "numberOfInstances": "[int(basics('numberOfInstances'))]",
             "virtualNetworkName": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.name, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.name)]",
             "addressPrefixes": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.addressPrefixes, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.addressPrefixes)]",
