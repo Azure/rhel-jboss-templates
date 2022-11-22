@@ -1,3 +1,5 @@
+# This is a temporary solution to: https://issues.redhat.com/browse/JBEAP-23983,
+# once the issue is fixed, this file should be removed from the offer.
 # This CLI script modifies the default domain configuration files (domain.xml,
 # host.xml, host-master.xml and host-slave.xml) in order to remove legacy
 # security, configure elytron and be able to be run the domain with Java SE 17.
