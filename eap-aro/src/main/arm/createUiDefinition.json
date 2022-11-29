@@ -1,0 +1,174 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+    "handler": "Microsoft.Azure.CreateUIDef",
+    "version": "0.1.2-preview",
+    "parameters": {
+        "basics": [
+            {
+                "name": "infoForBeforeDeployment",
+                "type": "Microsoft.Common.InfoBox",
+                "options": {
+                    "icon": "Info",
+                    "text": "The Azure identity deploying this offer must have one of the following two sets of Azure role-based access control roles:<br> <li><a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#contributor'>Contributor</a> <b>and</b> <a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#user-access-administrator'>User Access Administrator</a> of the current subscription.</li><li><a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#owner'>Owner</a> of the current subscription.</li>"
+                }
+            },
+            {
+                "name": "howToReportIssues",
+                "type": "Microsoft.Common.Section",
+                "label": "Report issues, get help, and share feedback",
+                "elements": [
+                    {
+                        "name": "help",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "See the documentation for this offer.",
+                            "link": {
+                                "label": "Offer documentation",
+                                "uri": "https://red.ht/eap-vm-docs"
+                            }
+                        }
+                    },
+                    {
+                        "name": "howToReportIssueText",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "If you encounter problems during the deployment of Red Hat JBoss EAP, report them here.",
+                            "link": {
+                                "label": "Issue tracker",
+                                "uri": "https://red.ht/eap-vm-issues?version=${project.version}"
+                            }
+                        }
+                    },
+                    {
+                        "name": "howToJoinSlack",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "If you want to interact directly with the Red Hat community, join the public community forum.",
+                            "link": {
+                                "label": "Join Community",
+                                "uri": "https://red.ht/eap-vms-community"
+                            }
+                        }
+                    },
+                    {
+                        "name": "survey",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "To get free help with Azure migration from the development team, fill out this survey.",
+                            "link": {
+                                "label": "Take survey",
+                                "uri": "https://red.ht/javaee-on-azure-survey"
+                            }
+                        }
+                    }
+                ],
+                "visible": true
+            }
+        ],
+        "steps": [
+            {
+                "name": "Cluster",
+                "label": "Configure cluster",
+                "subLabel": {
+                    "preValidation": "Provide required info for cluster configuration",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Configure cluster",
+                "elements": [
+                    {
+                        "name": "createClusterInfo",
+                        "type": "Microsoft.Common.Section",
+                        "label": "Provide information to create a new cluster",
+                        "elements": [
+                            {
+                                "name": "pullSecret",
+                                "type": "Microsoft.Common.PasswordBox",
+                                "label": {
+                                    "password": "Red Hat pull secret",
+                                    "confirmPassword": "Confirm secret"
+                                },
+                                "toolTip": "The pull secret text that you obtained from the Red Hat OpenShift Cluster Manager website.<br><br>To get pull secret text, see <a href='https://docs.microsoft.com/azure/openshift/tutorial-create-cluster#get-a-red-hat-pull-secret-optional' target='_blank'>Get a Red Hat pull secret</a>.",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^.{12,}$",
+                                    "validationMessage": "A valid Red Hat pull secret is required."
+                                }
+                            },
+                            {
+                                "name": "aroSpInfo",
+                                "type": "Microsoft.Common.InfoBox",
+                                "options": {
+                                    "icon": "Info",
+                                    "text": "An Azure Active Directory service principal is required for cluster creation. For more information on creating a service principal, consult the <a href='https://aka.ms/aro/sp-docs' target='_blank'>Azure Red Hat OpenShift product documentation</a>.<br><br>For your convenience, you can create the service principal using the following Azure CLI command with a local install or an Azure Cloud Shell. Copy the value of the <b>clientId</b> and <b>clientSecret</b> output from the following command into the corresponding fields below. <b>az ad sp create-for-rbac --sdk-auth</b>."
+                                }
+                            },
+                            {
+                                "name": "aadClientId",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Service principal client ID",
+                                "toolTip": "The client ID of an existing service principal",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^[0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12}$",
+                                    "validationMessage": "The application (client) ID must be a valid global unique identifier (GUID). Example: 00000000-0000-0000-0000-000000000000"
+                                }
+                            },
+                            {
+                                "name": "aadClientSecret",
+                                "type": "Microsoft.Common.PasswordBox",
+                                "label": {
+                                    "password": "Service principal client secret",
+                                    "confirmPassword": "Confirm secret"
+                                },
+                                "toolTip": "The client secret of an existing service principal",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^.{12,}$",
+                                    "validationMessage": "A valid client secret is required."
+                                }
+                            },
+                            {
+                                "name": "UserSPGraphRequest",
+                                "type": "Microsoft.Solutions.GraphApiControl",
+                                "toolTip": "Obtain the objectId of the service principal",
+                                "condition": "[greater(length(steps('Cluster').createClusterInfo.aadClientId), 0)]",
+                                "request": {
+                                    "method": "GET",
+                                    "path": "[concat('v1.0/servicePrincipals?$filter=appId eq \\'', steps('Cluster').createClusterInfo.aadClientId, '\\'')]",
+                                    "transforms": {
+                                        "objectID": "value|[*].id"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "RPObjectIDGraphRequest",
+                                "type": "Microsoft.Solutions.GraphApiControl",
+                                "toolTip": "Obtain the objectId of the Azure Red Hat OpenShift RP service principal",
+                                "request": {
+                                    "method": "GET",
+                                    "path": "v1.0/servicePrincipals?$filter=appId eq 'f1dd0a37-89c6-4e07-bcd1-ffd3d43d8875'",
+                                    "transforms": {
+                                        "objectID": "value|[*].id"
+                                    }
+                                }
+                            }
+                        ],
+                        "visible": true
+                    }
+                ]
+            }
+        ],
+        "outputs": {
+            "location": "[location()]",
+            "pullSecret": "[steps('Cluster').createClusterInfo.pullSecret]",
+            "aadClientId": "[steps('Cluster').createClusterInfo.aadClientId]",
+            "aadClientSecret": "[steps('Cluster').createClusterInfo.aadClientSecret]",
+            "aadObjectId": "[first(steps('Cluster').createClusterInfo.UserSPGraphRequest.transformed.objectID)]",
+            "rpObjectId": "[first(steps('Cluster').createClusterInfo.RPObjectIDGraphRequest.transformed.objectID)]"
+        }
+    }
+}
