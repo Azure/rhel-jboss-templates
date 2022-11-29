@@ -100,7 +100,7 @@ var const_cmdToGetKubeadminPassword = '${const_cmdToGetKubeadminCredentials} --q
 var const_cmdToGetApiServer = 'az aro show -g ${resourceGroup().name} -n ${clusterName} --query apiserverProfile.url -o tsv'
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
-  name: 'pid-e9412731-57c2-4e6a-9825-061ad30337c0-partnercenter'
+  name: 'pid-0cc5f6a1-9633-40d9-bc00-f010ad5b365a-partnercenter'
   params: {}
 }
 
