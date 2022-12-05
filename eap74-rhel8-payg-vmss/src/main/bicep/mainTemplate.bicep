@@ -38,7 +38,7 @@ param rhsmPoolEAP string = newGuid()
   'on'
   'off'
 ])
-param bootDiagnostics string = 'on'
+param bootDiagnostics string = 'off'
 
 @description('Specify whether to create a new or use an existing Storage Account.')
 @allowed([
@@ -125,21 +125,36 @@ param satelliteOrgName string = ''
 @description('Red Hat Satellite Server VM FQDN name.')
 param satelliteFqdn string = ''
 
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
+
+@description('true to set up Application Gateway ingress.')
+param enableAppGWIngress bool = false
+
+@description('Name of the existing or new Subnet')
+param subnetForAppGateway string = 'jboss-appgateway-subnet'
+
+@description('Address prefix of the subnet')
+param subnetPrefixForAppGateway string = '10.0.1.0/24'
+
+@description('Price tier for Key Vault.')
+param keyVaultSku string = 'Standard'
+
+@description('true to upload Java EE applications and deploy the applications to WebLogic domain.')
+param utcValue string = utcNow()
+
+@description('DNS prefix for ApplicationGateway')
+param dnsNameforApplicationGateway string = 'jbossgw'
+
+@description('The name of the secret in the specified KeyVault whose value is the SSL Certificate Data for Appliation Gateway frontend TLS/SSL.')
+param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
+
 var containerName = 'eapblobcontainer'
 var eapStorageAccountName_var = 'jbosstrg${uniqueString(resourceGroup().id)}'
 var eapstorageReplication = 'Standard_LRS'
-var loadBalancersName_var = 'jbosseap-lb'
 var vmssInstanceName_var = 'jbosseap-server${vmssName}'
 var nicName = 'jbosseap-server-nic'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
 var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
-var backendPoolName = 'jbosseap-server'
-var frontendName = 'LoadBalancerFrontEnd'
-var natRuleName = 'adminconsolerule'
-var natStartPort = 9000
-var natEndPort = 9120
-var adminBackendPort = 9990
-var healthProbe = 'eap-lb-health'
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -160,10 +175,112 @@ var imageReference = {
 var scriptFolder = 'bin'
 var fileToBeDownloaded = 'eap-session-replication.war'
 var scriptArgs = '-a \'${uri(artifactsLocation, '.')}\' -t "${artifactsLocationSasToken}" -p ${scriptFolder} -f ${fileToBeDownloaded}'
+var obj_uamiForDeploymentScript = {
+  type: 'UserAssigned'
+  userAssignedIdentities: {
+    '${uamiDeployment.outputs.uamiIdForDeploymentScript}': {}
+  }
+}
+var name_keyVaultName = take('jboss-kv${guidValue}', 24)
+var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}${take(uniqueString(utcValue), 6)}'
+var name_rgNameWithoutSpecialCharacter = replace(replace(replace(replace(resourceGroup().name, '.', ''), '(', ''), ')', ''), '_', '') // remove . () _ from resource group name
+var name_domainLabelforApplicationGateway = take('${name_dnsNameforApplicationGateway}-${toLower(name_rgNameWithoutSpecialCharacter)}', 63)
+var const_azureSubjectName = format('{0}.{1}.{2}', name_domainLabelforApplicationGateway, location, 'cloudapp.azure.com')
+var name_appgwFrontendSSLCertName = 'appGatewaySslCert'
+var name_appGateway = 'appgw${uniqueString(utcValue)}'
+var property_subnet_with_app_gateway = [
+  {
+    name: subnetName
+    properties: {
+      addressPrefix: subnetPrefix
+      networkSecurityGroup: {
+        id: nsg.id
+      }
+    }
+  }
+  {
+    // Assume it is acceptable to create a subnet for the App Gateway, even if the user
+    // has not requested an App Gateway.  In support of this assumption we can note: the user may want an App 
+    // Gateway after deployment.
+    name: subnetForAppGateway
+    properties: {
+      addressPrefix: subnetPrefixForAppGateway
+      networkSecurityGroup: {
+        id: nsg.id
+      }
+    }
+  }
+]
+var property_subnet_without_app_gateway = [
+  {
+    name: subnetName
+    properties: {
+      addressPrefix: subnetPrefix
+    }
+  }
+]
+var name_publicIPAddress = '-pubIp'
+var name_networkSecurityGroup = 'jboss-nsg'
+var name_appGatewayPublicIPAddress = 'gwip'
+
+module pids './modules/_pids/_pid.bicep' = {
+  name: 'initialization'
+}
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-b57c8aee-4919-4cbb-8399-f966d39d4064-partnercenter'
   params: {}
+}
+
+module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
+  name: 'uami-deployment'
+  params: {
+    location: location
+  }
+}
+
+module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep' = if (enableAppGWIngress) {
+  name: 'appgateway-certificates-secrets-deployment'
+  params: {
+    identity: obj_uamiForDeploymentScript
+    location: location
+    sku: keyVaultSku
+    subjectName: format('CN={0}', const_azureSubjectName)
+    keyVaultName: name_keyVaultName
+  }
+}
+
+// Get existing VNET.
+resource existingVnet 'Microsoft.Network/virtualNetworks@2022-05-01' existing = if (virtualNetworkNewOrExisting != 'new') {
+  name: virtualNetworkName
+  scope: resourceGroup(virtualNetworkResourceGroupName)
+}
+
+// Get existing subnet.
+resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-05-01' existing = if (virtualNetworkNewOrExisting != 'new') {
+  name: subnetForAppGateway
+  parent: existingVnet
+}
+
+module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
+  name: 'app-gateway-deployment'
+  params: {
+    appGatewayName: name_appGateway
+    dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
+    gatewayPublicIPAddressName: name_appGatewayPublicIPAddress
+    gatewaySubnetId: virtualNetworkNewOrExisting == 'new' ? resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetForAppGateway) : existingSubnet.id
+    gatewaySslCertName: name_appgwFrontendSSLCertName
+    location: location
+    sslCertDataSecretName: (enableAppGWIngress ? appgwSecretDeployment.outputs.sslCertDataSecretName : keyVaultSSLCertDataSecretName)
+    _pidAppgwStart: pids.outputs.appgwStart
+    _pidAppgwEnd: pids.outputs.appgwEnd
+    keyVaultName: name_keyVaultName
+  }
+  dependsOn: [
+    appgwSecretDeployment
+    pids
+    virtualNetworkName_resource
+  ]
 }
 
 resource bootStorageName 'Microsoft.Storage/storageAccounts@2022-05-01' = if (bootDiagnosticsCheck) {
@@ -190,6 +307,47 @@ resource eapStorageAccountName 'Microsoft.Storage/storageAccounts@2022-05-01' = 
   }
 }
 
+// Create new network security group.
+resource nsg 'Microsoft.Network/networkSecurityGroups@2022-05-01' = if (enableAppGWIngress && virtualNetworkNewOrExisting == 'new') {
+  name: name_networkSecurityGroup
+  location: location
+  properties: {
+    securityRules: [
+      {
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '65200-65535'
+          sourceAddressPrefix: 'GatewayManager'
+          destinationAddressPrefix: '*'
+          access: 'Allow'
+          priority: 500
+          direction: 'Inbound'
+        }
+        name: 'ALLOW_APPGW'
+      }
+      {
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          sourceAddressPrefix: 'Internet'
+          destinationAddressPrefix: '*'
+          access: 'Allow'
+          priority: 510
+          direction: 'Inbound'
+          destinationPortRanges: [
+            '80'
+            '443'
+            '9990'
+            '8080'
+          ]
+        }
+        name: 'ALLOW_HTTP_ACCESS'
+      }
+    ]
+  }
+}
+
 resource eapStorageAccountName_default_containerName 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-05-01' = {
   name: '${eapStorageAccountName_var}/default/${containerName}'
   properties: {
@@ -210,14 +368,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2022-05-
     addressSpace: {
       addressPrefixes: addressPrefixes
     }
-    subnets: [
-      {
-        name: subnetName
-        properties: {
-          addressPrefix: subnetPrefix
-        }
-      }
-    ]
+    subnets: enableAppGWIngress ? property_subnet_with_app_gateway : property_subnet_without_app_gateway
   }
 }
 
@@ -264,16 +415,14 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2022-08-01'
                     subnet: {
                       id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
                     }
-                    loadBalancerBackendAddressPools: [
+                    applicationGatewayBackendAddressPools: enableAppGWIngress ? [
                       {
-                        id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancersName_var, backendPoolName)
+                        id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name_appGateway, 'managedNodeBackendPool')
                       }
-                    ]
-                    loadBalancerInboundNatPools: [
-                      {
-                        id: resourceId('Microsoft.Network/loadBalancers/inboundNatPools', loadBalancersName_var, natRuleName)
-                      }
-                    ]
+                    ] : null
+                    publicIPAddressConfiguration: {
+                      name: '${vmssInstanceName_var}${name_publicIPAddress}'
+                    }
                   }
                 }
               ]
@@ -306,91 +455,11 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2022-08-01'
     }
   }
   dependsOn: [
-    loadBalancersName
     bootStorageName
     virtualNetworkName_resource
-
+    appgwDeployment
   ]
 }
 
-resource loadBalancersName 'Microsoft.Network/loadBalancers@2022-05-01' = {
-  name: loadBalancersName_var
-  location: location
-  sku: {
-    name: 'Basic'
-  }
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL VMSS'
-  }
-  properties: {
-    frontendIPConfigurations: [
-      {
-        name: frontendName
-        properties: {
-          privateIPAllocationMethod: 'Dynamic'
-          subnet: {
-            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
-          }
-          privateIPAddressVersion: 'IPv4'
-        }
-      }
-    ]
-    backendAddressPools: [
-      {
-        name: backendPoolName
-      }
-    ]
-    inboundNatPools: [
-      {
-        name: natRuleName
-        properties: {
-          frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancersName_var, frontendName)
-          }
-          protocol: 'Tcp'
-          frontendPortRangeStart: natStartPort
-          frontendPortRangeEnd: natEndPort
-          backendPort: adminBackendPort
-        }
-      }
-    ]
-    loadBalancingRules: [
-      {
-        name: '${loadBalancersName_var}-rule'
-        properties: {
-          frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancersName_var, frontendName)
-          }
-          frontendPort: 80
-          backendPort: 8080
-          enableFloatingIP: false
-          idleTimeoutInMinutes: 5
-          protocol: 'Tcp'
-          enableTcpReset: false
-          backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancersName_var, backendPoolName)
-          }
-          probe: {
-            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancersName_var, healthProbe)
-          }
-        }
-      }
-    ]
-    probes: [
-      {
-        name: healthProbe
-        properties: {
-          protocol: 'Tcp'
-          port: 8080
-          intervalInSeconds: 5
-          numberOfProbes: 2
-        }
-      }
-    ]
-  }
-  dependsOn: [
-    virtualNetworkName_resource
-  ]
-}
-
-output appURL string = uri('http://${loadBalancersName.properties.frontendIPConfigurations[0].properties.privateIPAddress}', 'eap-session-replication/')
+output appHttpURL string = enableAppGWIngress ? uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication/') : ''
+output appHttpsURL string = enableAppGWIngress ? uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication/') : ''
