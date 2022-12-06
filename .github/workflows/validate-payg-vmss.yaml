@@ -189,50 +189,19 @@ jobs:
                     --name vmss \
                     --parameters @rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/parameters-test-vmss.json \
                     --template-file rhel-jboss-templates/eap74-rhel8-payg-vmss/mainTemplate.json
-            - name: Deploy public load balancer
+            - name: Query public ip of Application Gateway
+              id: query_app_gateway_public_ip
               uses: azure/CLI@v1
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
-                    az deployment group create \
-                    --verbose \
-                    --resource-group ${{ env.vmssResourceGroup }} \
-                    --name vmss-public-load-balancer \
-                    --template-file rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/public-lb/publicLbTemplateForVmss.json
-            - name: Add VMs to public load balancer backend pool
-              uses: azure/CLI@v1
-              with:
-                azcliversion: ${{ env.azCliVersion }}
-                inlineScript: |
-                    # Configure VM scale set
-                    subId=$(az account show --query id -o tsv)
-
-                    # Add scale set to backend pool
-                    az vmss update -g ${{ env.vmssResourceGroup }} -n jbosseap-server${vmssName} --add virtualMachineProfile.networkProfile.networkInterfaceConfigurations[0].ipConfigurations[0].loadBalancerBackendAddressPools '{"id":"/subscriptions/'${subId}'/resourceGroups/'${{ env.vmssResourceGroup }}'/providers/Microsoft.Network/loadBalancers/jbosseap-lb-pub/backendAddressPools/jbosseap-vmss"}'
-
-                    # Get all instance IDs
-                    NUMBER_OF_INSTANCE=${{ env.numberOfInstances }}
-                    vmssInsIdStr=""
-                    for ((i = 0; i < NUMBER_OF_INSTANCE; i++)); do
-                        vmssInsIdStr="${vmssInsIdStr} ${i}"
-                    done
-                    # Upgrade the instances to make it work
-                    az vmss update-instances --instance-ids ${vmssInsIdStr} -g ${{ env.vmssResourceGroup }} -n jbosseap-server${vmssName}
-                    
-            - name: Query public ip of public load balancer
-              id: query_public_lb_ip
-              uses: azure/CLI@v1
-              with:
-                azcliversion: ${{ env.azCliVersion }}
-                inlineScript: |
-                    # query public ip address of load balancer
-                    publicip=$(az network public-ip show --name jbosseap-lb-pub-ip \
-                                --resource-group $vmssResourceGroup --query ipAddress -o tsv)
-                    
+                    # query public ip address of Application Gateway
+                    publicip=$(az network public-ip show --name gwip \
+                                --resource-group ${{ env.vmssResourceGroup }} --query dnsSettings.fqdn -o tsv)
                     echo "##[set-output name=publicip;]${publicip}"
             - name: Verify eap-session-replication application
               run: |
-                publicip=${{steps.query_public_lb_ip.outputs.publicip}}
+                publicip=${{steps.query_app_gateway_public_ip.outputs.publicip}}
                 echo "publicip: " $publicip
                 CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
 

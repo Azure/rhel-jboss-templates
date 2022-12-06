@@ -41,14 +41,20 @@ cat <<EOF > ${parametersPath}
         },
         "addressPrefixes": {
             "value": [
-                "10.0.0.0/16"
+                "10.0.0.0/23"
             ]
         },
         "subnetName": {
-            "value": "Subnet-1"
+            "value": "jboss-subnet"
         },
         "subnetPrefix": {
-            "value": "10.0.0.0/24"
+            "value": "10.0.0.0/28"
+        },
+        "subnetForAppGateway": {
+            "value": "jboss-appgateway-subnet"
+        },
+        "subnetPrefixForAppGateway": {
+            "value": "10.0.1.0/24"
         },
         "bootDiagnostics": {
             "value": "on"
@@ -85,6 +91,9 @@ cat <<EOF > ${parametersPath}
         },
         "rhsmPoolEAP": {
             "value": "${rhsmPoolEAP}"
+        },
+        "enableAppGWIngress": {
+            "value": true
         }
     }
 }
