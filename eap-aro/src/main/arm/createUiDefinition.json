@@ -80,6 +80,26 @@
                 "bladeTitle": "Configure cluster",
                 "elements": [
                     {
+                        "name": "createCluster",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Create a new cluster?",
+                        "defaultValue": "Yes",
+                        "toolTip": "Select 'Yes' to create a new cluster, or select 'No' to provide an existing cluster.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": "true"
+                                },
+                                {
+                                    "label": "No",
+                                    "value": "false"
+                                }
+                            ],
+                            "required": true
+                        }
+                    },
+                    {
                         "name": "createClusterInfo",
                         "type": "Microsoft.Common.Section",
                         "label": "Provide information to create a new cluster",
@@ -157,18 +177,51 @@
                                 }
                             }
                         ],
-                        "visible": true
+                        "visible":  "[bool(steps('Cluster').createCluster)]"
+                    },
+                    {
+                        "name": "clusterInfo",
+                        "type": "Microsoft.Common.Section",
+                        "label": "Provide information for an existing cluster",
+                        "elements": [
+                            {
+                                "name": "errInfo",
+                                "type": "Microsoft.Common.InfoBox",
+                                "visible": "[equals(length(steps('Cluster').clusterInfo.clusterSelector.id), 0)]",
+                                "options": {
+                                    "icon": "Error",
+                                    "text": "You must select an existing Azure Red Hat OpenShift cluster in current subscription and location."
+                                }
+                            },
+                            {
+                                "name": "clusterSelector",
+                                "type": "Microsoft.Solutions.ResourceSelector",
+                                "label": "Select cluster",
+                                "toolTip": "Select the existing cluster.",
+                                "resourceType": "Microsoft.RedHatOpenShift/OpenShiftClusters",
+                                "options": {
+                                    "filter": {
+                                        "subscription": "onBasics",
+                                        "location": "onBasics"
+                                    }
+                                }
+                            }
+                        ],
+                        "visible": "[not(bool(steps('Cluster').createCluster))]"
                     }
                 ]
             }
         ],
         "outputs": {
             "location": "[location()]",
+            "createCluster": "[bool(steps('Cluster').createCluster)]",
             "pullSecret": "[steps('Cluster').createClusterInfo.pullSecret]",
             "aadClientId": "[steps('Cluster').createClusterInfo.aadClientId]",
             "aadClientSecret": "[steps('Cluster').createClusterInfo.aadClientSecret]",
             "aadObjectId": "[first(steps('Cluster').createClusterInfo.UserSPGraphRequest.transformed.objectID)]",
-            "rpObjectId": "[first(steps('Cluster').createClusterInfo.RPObjectIDGraphRequest.transformed.objectID)]"
+            "rpObjectId": "[first(steps('Cluster').createClusterInfo.RPObjectIDGraphRequest.transformed.objectID)]",
+            "clusterName": "[last(split(steps('Cluster').clusterInfo.clusterSelector.id, '/'))]",
+            "clusterRGName": "[last(take(split(steps('Cluster').clusterInfo.clusterSelector.id, '/'), 5))]"
         }
     }
 }

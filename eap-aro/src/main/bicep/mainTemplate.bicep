@@ -13,7 +13,7 @@ param domain string = 'domain'
 
 @secure()
 @description('Pull secret from cloud.redhat.com. The json should be input as a string')
-param pullSecret string
+param pullSecret string = ''
 
 @description('Name of ARO vNet')
 param clusterVnetName string = 'aro-vnet'
@@ -51,8 +51,14 @@ param podCidr string = '10.128.0.0/14'
 })
 param serviceCidr string = '172.30.0.0/16'
 
+@description('Flag indicating whether to create a new cluster or not')
+param createCluster bool = true
+
 @description('Unique name for the cluster')
 param clusterName string = 'aro-cluster'
+
+@description('Name for the resource group of the existing cluster')
+param clusterRGName string = ''
 
 @description('Tags for resources')
 param tags object = {
@@ -79,7 +85,7 @@ param aadClientId string = ''
 
 @description('The secret of an Azure Active Directory client application')
 @secure()
-param aadClientSecret string
+param aadClientSecret string = ''
 
 @description('The service principal Object ID of an Azure Active Directory client application')
 param aadObjectId string = ''
@@ -89,15 +95,17 @@ param rpObjectId string = ''
 
 param guidValue string = take(replace(newGuid(), '-', ''), 6) 
 
+var const_clusterRGName = createCluster ? resourceGroup().name: clusterRGName
+var name_clusterName = createCluster ? 'aro-cluster' : clusterName
 var const_suffix = take(replace(guidValue, '-', ''), 6)
 var const_identityName = 'uami${const_suffix}'
 var const_contribRole = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
 var name_roleAssignmentName = guid(format('{0}{1}Role assignment in group{0}', resourceGroup().id, ref_identityId))
 var ref_identityId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', const_identityName)
-var const_cmdToGetKubeadminCredentials = 'az aro list-credentials -g ${resourceGroup().name} -n ${clusterName}'
+var const_cmdToGetKubeadminCredentials = 'az aro list-credentials -g ${const_clusterRGName} -n ${name_clusterName}'
 var const_cmdToGetKubeadminUsername = '${const_cmdToGetKubeadminCredentials} --query kubeadminUsername -o tsv'
 var const_cmdToGetKubeadminPassword = '${const_cmdToGetKubeadminCredentials} --query kubeadminPassword -o tsv'
-var const_cmdToGetApiServer = 'az aro show -g ${resourceGroup().name} -n ${clusterName} --query apiserverProfile.url -o tsv'
+var const_cmdToGetApiServer = 'az aro show -g ${const_clusterRGName} -n ${name_clusterName} --query apiserverProfile.url -o tsv'
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-0cc5f6a1-9633-40d9-bc00-f010ad5b365a-partnercenter'
@@ -126,7 +134,7 @@ resource uamiRoleAssign 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   }
 }
 
-resource clusterVnetName_resource 'Microsoft.Network/virtualNetworks@2022-05-01' = {
+resource clusterVnetName_resource 'Microsoft.Network/virtualNetworks@2022-05-01' = if(createCluster) {
   name: clusterVnetName
   location: location
   tags: tags
@@ -173,7 +181,7 @@ resource roleResourceDefinition 'Microsoft.Authorization/roleDefinitions@2022-04
   name: const_contribRole
 }
 
-resource assignRoleAppSp 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource assignRoleAppSp 'Microsoft.Authorization/roleAssignments@2022-04-01' = if(createCluster) {
   name: guid(resourceGroup().id, deployment().name, vnetRef.id, 'assignRoleAppSp')
   scope: vnetRef
   properties: {
@@ -187,7 +195,7 @@ resource assignRoleAppSp 'Microsoft.Authorization/roleAssignments@2022-04-01' = 
   ]
 }
 
-resource assignRoleRpSp 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource assignRoleRpSp 'Microsoft.Authorization/roleAssignments@2022-04-01' = if(createCluster) {
   name: guid(resourceGroup().id, deployment().name, vnetRef.id, 'assignRoleRpSp')
   scope: vnetRef
   properties: {
@@ -201,7 +209,7 @@ resource assignRoleRpSp 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   ]
 }
 
-resource clusterName_resource 'Microsoft.RedHatOpenShift/openShiftClusters@2022-04-01' = {
+resource clusterName_resource 'Microsoft.RedHatOpenShift/openShiftClusters@2022-04-01' = if(createCluster) {
   name: clusterName
   location: location
   tags: tags
@@ -257,7 +265,8 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
     artifactsLocation: artifactsLocation
     artifactsLocationSasToken: artifactsLocationSasToken
     location: location
-    clusterName: clusterName
+    clusterName: name_clusterName
+    clusterRGName: const_clusterRGName 
     identity: {
       type: 'UserAssigned'
       userAssignedIdentities: {
