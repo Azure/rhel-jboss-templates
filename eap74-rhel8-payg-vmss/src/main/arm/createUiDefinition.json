@@ -418,6 +418,57 @@
                 ]
             },
             {
+                "name": "AppGatewayConfig",
+                "label": "Azure Application Gateway",
+                "subLabel": {
+                    "preValidation": "Configure the Azure Application Gateway resources and settings",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Azure Application Gateway Settings",
+                "elements": [
+                    {
+                        "name": "connectToAGText",
+                        "type": "Microsoft.Common.TextBlock",
+                        "options": {
+                            "text": "Selecting 'Yes' here will cause the template to provision an Azure Application Gateway (WAF_v2 or later SKU), a public IP, and a backend pool consisting of the worker nodes in the cluster.  Further configuration may be necessary after deployment.",
+                            "link": {
+                                "label": "Learn more",
+                                "uri": "https://learn.microsoft.com/en-us/azure/application-gateway/overview"
+                            }
+                        }
+                    },
+                    {
+                        "name": "enableAppGateway",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Connect to Azure Application Gateway?",
+                        "defaultValue": "No",
+                        "toolTip": "Select 'Yes' to create an Azure Application Gateway as the load balancer for the cluster.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": true
+                                },
+                                {
+                                    "label": "No",
+                                    "value": false
+                                }
+                            ],
+                            "required": false
+                        }
+                    },
+                    {
+                        "name": "infoGenerateCertIndentity",
+                        "type": "Microsoft.Common.InfoBox",
+                        "visible": "[steps('AppGatewayConfig').enableAppGateway]",
+                        "options": {
+                            "icon": "Info",
+                            "text": "This option will create a self-signed TLS/SSL certificate for gateway TLS/SSL termination. The Azure identity deploying this feature must have one of the following two sets of Azure role-based access control roles:<br> <li><a href='https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#contributor'>Contributor</a> <b>and</b> <a href='https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#user-access-administrator'>User Access Administrator</a> of the current subscription.</li><li><a href='https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#owner'>Owner</a> of the current subscription.</li>"
+                        }
+                    }
+                ]
+            },
+            {
                 "name": "NetworkingConfig",
                 "label": "Networking",
                 "subLabel": {
@@ -435,8 +486,9 @@
                         }
                     },
                     {
-                        "name": "virtualNetwork",
+                        "name": "virtualNetworkWithoutAppGateway",
                         "type": "Microsoft.Network.VirtualNetworkCombo",
+                        "visible": "[not(steps('AppGatewayConfig').enableAppGateway)]",
                         "label": {
                             "virtualNetwork": "Virtual network",
                             "subnets": "Subnets"
@@ -454,7 +506,53 @@
                         },
                         "subnets": {
                             "jbossSubnet": {
-                                "label": "Subnet for jboss",
+                                "label": "Subnet for cluster",
+                                "defaultValue": {
+                                    "name": "jboss-subnet",
+                                    "addressPrefixSize": "/28"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/29",
+                                    "minAddressCount": "[add(int(basics('numberOfInstances')), 1)]",
+                                    "requireContiguousAddresses": false
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "virtualNetworkWithAppGateway",
+                        "type": "Microsoft.Network.VirtualNetworkCombo",
+                        "visible": "[steps('AppGatewayConfig').enableAppGateway]",
+                        "label": {
+                            "virtualNetwork": "Virtual network",
+                            "subnets": "Subnets"
+                        },
+                        "toolTip": {
+                            "virtualNetwork": "Name of the virtual network",
+                            "subnets": "Subnets for the virtual network"
+                        },
+                        "defaultValue": {
+                            "name": "[concat('jboss-vnet', substring(guid(), 0, 6))]",
+                            "addressPrefixSize": "/23"
+                        },
+                        "constraints": {
+                            "minAddressPrefixSize": "/23"
+                        },
+                        "subnets": {
+                            "gatewaySubnet": {
+                                "label": "Subnet for Application Gateway",
+                                "defaultValue": {
+                                    "name": "jboss-appgateway-subnet",
+                                    "addressPrefixSize": "/24"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/24",
+                                    "minAddressCount": 250,
+                                    "requireContiguousAddresses": false
+                                }
+                            },
+                            "jbossSubnet": {
+                                "label": "Subnet for cluster",
                                 "defaultValue": {
                                     "name": "jboss-subnet",
                                     "addressPrefixSize": "/28"
@@ -557,13 +655,14 @@
             "adminPasswordOrSSHKey": "[coalesce(basics('authenticationType').password, basics('authenticationType').sshPublicKey)]",
             "vmSize": "[basics('vmSize')]",
             "jdkVersion": "[basics('jdkVersion')]",
-            "virtualNetworkNewOrExisting": "[steps('NetworkingConfig').virtualNetwork.newOrExisting]",
-            "virtualNetworkName": "[steps('NetworkingConfig').virtualNetwork.name]",
-            "virtualNetworkResourceGroupName": "[steps('NetworkingConfig').virtualNetwork.resourceGroup]",
+            "virtualNetworkName": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.name, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.name)]",
+            "virtualNetworkResourceGroupName": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.resourceGroup, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.resourceGroup)]",
             
-            "addressPrefixes": "[steps('NetworkingConfig').virtualNetwork.addressPrefixes]",
-            "subnetName": "[steps('NetworkingConfig').virtualNetwork.subnets.jbossSubnet.name]",
-            "subnetPrefix": "[steps('NetworkingConfig').virtualNetwork.subnets.jbossSubnet.addressPrefix]",
+            "addressPrefixes": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.addressPrefixes, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.addressPrefixes)]",
+            "subnetName": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.jbossSubnet.name, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.subnets.jbossSubnet.name)]",
+            "subnetPrefix": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.jbossSubnet.addressPrefix, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.subnets.jbossSubnet.addressPrefix)]",
+            "subnetForAppGateway": "[steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.gatewaySubnet.name]",
+            "subnetPrefixForAppGateway": "[steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.gatewaySubnet.addressPrefix]",
             
             "bootDiagnostics": "[basics('basicsOptional').bootDiagnostics]",
             "bootStorageNewOrExisting": "[basics('basicsOptional').storageNewOrExisting]",
@@ -582,7 +681,11 @@
             "connectSatellite": "[steps('satelliteServerSettings').connectSatellite]",
             "satelliteActivationKey": "[steps('satelliteServerSettings').satelliteActivationKey]",
             "satelliteOrgName": "[steps('satelliteServerSettings').satelliteOrgName]",
-            "satelliteFqdn": "[steps('satelliteServerSettings').satelliteFqdn]"
+            "satelliteFqdn": "[steps('satelliteServerSettings').satelliteFqdn]",
+            
+            "enableAppGWIngress": "[steps('AppGatewayConfig').enableAppGateway]",
+            
+            "virtualNetworkNewOrExisting": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.newOrExisting, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.newOrExisting)]"
         }
     }
 }
