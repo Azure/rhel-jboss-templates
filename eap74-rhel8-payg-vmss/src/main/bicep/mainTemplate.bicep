@@ -139,7 +139,7 @@ param subnetPrefixForAppGateway string = '10.0.1.0/24'
 @description('Price tier for Key Vault.')
 param keyVaultSku string = 'Standard'
 
-@description('true to upload Java EE applications and deploy the applications to WebLogic domain.')
+@description('UTC value for generating unique names.')
 param utcValue string = utcNow()
 
 @description('DNS prefix for ApplicationGateway')
