@@ -139,7 +139,7 @@ param subnetPrefixForAppGateway string = '10.0.1.0/24'
 @description('Price tier for Key Vault.')
 param keyVaultSku string = 'Standard'
 
-@description('true to upload Java EE applications and deploy the applications to WebLogic domain.')
+@description('UTC value for generating unique names.')
 param utcValue string = utcNow()
 
 @description('DNS prefix for ApplicationGateway')
@@ -147,6 +147,9 @@ param dnsNameforApplicationGateway string = 'jbossgw'
 
 @description('The name of the secret in the specified KeyVault whose value is the SSL Certificate Data for Appliation Gateway frontend TLS/SSL.')
 param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
+
+@description('true to enable cookie based affinity.')
+param enableCookieBasedAffinity bool = false
 
 var containerName = 'eapblobcontainer'
 var eapStorageAccountName_var = 'jbosstrg${uniqueString(resourceGroup().id)}'
@@ -275,6 +278,7 @@ module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
     _pidAppgwStart: pids.outputs.appgwStart
     _pidAppgwEnd: pids.outputs.appgwEnd
     keyVaultName: name_keyVaultName
+    enableCookieBasedAffinity: enableCookieBasedAffinity
   }
   dependsOn: [
     appgwSecretDeployment
