@@ -11,6 +11,7 @@ param utcValue string = utcNow()
 param appGatewayName string = 'jbossappgw'
 param _pidAppgwEnd string = 'pid-networking-appgateway-end'
 param _pidAppgwStart string = 'pid-networking-appgateway-start'
+param enableCookieBasedAffinity bool = false
 
 var name_appGateway = appGatewayName
 var const_appGatewayFrontEndHTTPPort = 80
@@ -149,6 +150,7 @@ resource wafv2AppGateway 'Microsoft.Network/applicationGateways@2022-05-01' = {
         properties: {
           port: const_backendPort
           protocol: 'Http'
+          cookieBasedAffinity: enableCookieBasedAffinity? 'Enabled' :'Disabled'
         }
       }
     ]
