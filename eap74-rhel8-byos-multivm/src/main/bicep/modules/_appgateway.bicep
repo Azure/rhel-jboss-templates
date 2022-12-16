@@ -11,6 +11,7 @@ param _pidAppgwEnd string = 'pid-networking-appgateway-end'
 param _pidAppgwStart string = 'pid-networking-appgateway-start'
 param keyVaultName string = 'keyVaultName'
 param sslCertDataSecretName string = 'sslCertDataSecretName'
+param enableCookieBasedAffinity bool = false
 
 
 var name_appGateway = appGatewayName
@@ -33,6 +34,7 @@ module appgwDeployment1 './_azure-resources/_appGateway.bicep' = {
     sslCertData: existingKeyvault.getSecret(sslCertDataSecretName)
     _pidAppgwStart: _pidAppgwStart
     _pidAppgwEnd: _pidAppgwEnd
+    enableCookieBasedAffinity: enableCookieBasedAffinity
   }
   dependsOn: [
     existingKeyvault

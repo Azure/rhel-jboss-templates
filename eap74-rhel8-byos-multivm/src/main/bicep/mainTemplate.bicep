@@ -160,6 +160,9 @@ param dnsNameforApplicationGateway string = 'jbossgw'
 @description('The name of the secret in the specified KeyVault whose value is the SSL Certificate Data for Appliation Gateway frontend TLS/SSL.')
 param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
 
+@description('true to enable cookie based affinity.')
+param enableCookieBasedAffinity bool = false
+
 var name_managedDomain = 'managed-domain'
 var name_fileshare = 'jbossshare'
 var containerName = 'eapblobcontainer'
@@ -324,6 +327,7 @@ module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
     _pidAppgwStart: pids.outputs.appgwStart
     _pidAppgwEnd: pids.outputs.appgwEnd
     keyVaultName: name_keyVaultName
+    enableCookieBasedAffinity: enableCookieBasedAffinity
   }
   dependsOn: [
     appgwSecretDeployment

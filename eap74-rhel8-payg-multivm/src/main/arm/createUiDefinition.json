@@ -510,6 +510,13 @@
                             "icon": "Info",
                             "text": "This option will create a self-signed TLS/SSL certificate for gateway TLS/SSL termination. The Azure identity deploying this feature must have one of the following two sets of Azure role-based access control roles:<br> <li><a href='https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#contributor'>Contributor</a> <b>and</b> <a href='https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#user-access-administrator'>User Access Administrator</a> of the current subscription.</li><li><a href='https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#owner'>Owner</a> of the current subscription.</li>"
                         }
+                    },
+                    {
+                        "name": "enableCookieBasedAffinity",
+                        "type": "Microsoft.Common.CheckBox",
+                        "label": "Enable cookie based affinity",
+                        "toolTip": "If checked, enable cookie based affinity",
+                        "visible": "[steps('AppGatewayConfig').enableAppGateway]"
                     }
                 ]
             },
@@ -727,6 +734,7 @@
             "satelliteOrgName": "[steps('satelliteServerSettings').satelliteOrgName]",
             "satelliteFqdn": "[steps('satelliteServerSettings').satelliteFqdn]",
             "enableAppGWIngress": "[steps('AppGatewayConfig').enableAppGateway]",
+            "enableCookieBasedAffinity": "[bool(steps('AppGatewayConfig').enableCookieBasedAffinity)]",
             "virtualNetworkNewOrExisting": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.newOrExisting, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.newOrExisting)]"
         }
     }
