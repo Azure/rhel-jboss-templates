@@ -121,16 +121,18 @@ resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-previ
   name: const_identityName
 }
 
-resource uamiRoleAssign 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+
+// Assign Contributor role in subscription scope since we need the permission to get/update resource cross resource group.
+module deploymentScriptUAMICotibutorRoleAssignment 'modules/_rolesAssignment/_roleAssignmentinSubscription.bicep' = {
   name: name_roleAssignmentName
+  scope: subscription()
   dependsOn:[
     uami_resource
     roleResourceDefinition
   ]
-  properties:{
-    roleDefinitionId: roleResourceDefinition.id
+  params: {
+    roleDefinitionId: const_contribRole
     principalId: uami.properties.principalId
-    principalType: 'ServicePrincipal'
   }
 }
 
