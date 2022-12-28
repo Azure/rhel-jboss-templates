@@ -14,6 +14,9 @@ param identity object = {}
 @description('Unique name for the cluster')
 param clusterName string
 
+@description('Name for the resource group of the existing cluster')
+param clusterRGName string = ''
+
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jboss-setup.sh'
 var const_eapOperatorSubscriptionYaml = 'eap-operator-sub.yaml'
@@ -29,7 +32,7 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     environmentVariables: [
       {
         name: 'RESOURCE_GROUP'
-        value: resourceGroup().name
+        value: clusterRGName
       }
       {
         name: 'CLUSTER_NAME'
