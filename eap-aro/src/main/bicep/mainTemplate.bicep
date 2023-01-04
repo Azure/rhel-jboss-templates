@@ -93,6 +93,31 @@ param aadObjectId string = ''
 @description('The service principal Object ID of the Azure Red Hat OpenShift Resource Provider')
 param rpObjectId string = ''
 
+@description('Flag indicating whether to deploy a S2I application or not')
+param deployApplication bool = false
+
+@description('URL to the repository containing the application source code.')
+param srcRepoUrl string = ''
+
+@description('The Git repository reference to use for the source code. This can be a Git branch or tag reference.')
+param srcRepoRef string = ''
+
+@description('The directory within the source repository to build.')
+param srcRepoDir string = ''
+
+@description('Red Hat Container Registry Service account username')
+param conRegAccUserName string = ''
+
+@secure()
+@description('Red Hat Container Registry Service account password')
+param conRegAccPwd string = ''
+
+@description('The name of the project')
+param projectName string = 'eap-demo'
+
+@description('The number of application replicas to deploy')
+param appReplicas int = 2
+
 param guidValue string = take(replace(newGuid(), '-', ''), 6) 
 
 var const_clusterRGName = createCluster ? resourceGroup().name: clusterRGName
@@ -275,6 +300,14 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
         '${resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', const_identityName)}': {}
       }
     }
+    deployApplication: deployApplication
+    srcRepoUrl: srcRepoUrl
+    srcRepoRef: srcRepoRef
+    srcRepoDir: srcRepoDir
+    conRegAccUserName: conRegAccUserName
+    conRegAccPwd: conRegAccPwd
+    appReplicas: appReplicas
+    projectName: projectName
   }
   dependsOn: [
     clusterName_resource
@@ -283,3 +316,5 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
 
 output cmdToGetKubeadminCredentials string = const_cmdToGetKubeadminCredentials
 output cmdToLoginWithKubeadmin string = 'oc login $(${const_cmdToGetApiServer}) -u $(${const_cmdToGetKubeadminUsername}) -p $(${const_cmdToGetKubeadminPassword})'
+output consoleUrl string = jbossEAPDeployment.outputs.consoleUrl
+output appEndpoint string = deployApplication ? jbossEAPDeployment.outputs.appEndpoint : ''

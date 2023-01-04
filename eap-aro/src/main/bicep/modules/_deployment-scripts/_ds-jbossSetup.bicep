@@ -17,9 +17,35 @@ param clusterName string
 @description('Name for the resource group of the existing cluster')
 param clusterRGName string = ''
 
+@description('Flag indicating whether to deploy a S2I application or not')
+param deployApplication bool = true
+
+@description('URL to the repository containing the application source code.')
+param srcRepoUrl string = ''
+
+@description('The Git repository reference to use for the source code. This can be a Git branch or tag reference.')
+param srcRepoRef string = ''
+
+@description('The directory within the source repository to build.')
+param srcRepoDir string = ''
+
+@description('Red Hat Container Registry Service account username')
+param conRegAccUserName string = ''
+
+@secure()
+@description('Red Hat Container Registry Service account password')
+param conRegAccPwd string = ''
+
+@description('The name of the project')
+param projectName string = 'eap-demo'
+
+@description('The number of application replicas to deploy')
+param appReplicas int = 2
+
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jboss-setup.sh'
 var const_eapOperatorSubscriptionYaml = 'eap-operator-sub.yaml'
+var const_rhContainerRegistryPullSecretYaml = 'red-hat-container-registry-pull-secret.yaml.template'
 var const_azcliVersion = '2.15.0'
 
 resource jbossSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
@@ -38,12 +64,52 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         name: 'CLUSTER_NAME'
         value: clusterName
       }
+      {
+        name: 'DEPLOY_APPLICATION'
+        value: string(deployApplication)
+      }
+      {
+        name: 'SRC_REPO_URL'
+        value: srcRepoUrl
+      }
+      {
+        name: 'SRC_REPO_REF'
+        value: srcRepoRef
+      }
+      {
+        name: 'SRC_REPO_DIR'
+        value: srcRepoDir
+      }
+      {
+        name: 'CON_REG_ACC_USER_NAME'
+        value: base64(conRegAccUserName)
+      }
+      {
+        name: 'CON_REG_ACC_PWD'
+        value: base64(conRegAccPwd)
+      }
+      {
+        name: 'CON_REG_SECRET_NAME'
+        value: replace(conRegAccUserName, '|', '-')
+      }
+      {
+        name: 'PROJECT_NAME'
+        value: projectName
+      }
+      {
+        name: 'APP_REPLICAS'
+        value: string(appReplicas)
+      }
     ]
     primaryScriptUri: uri(const_scriptLocation, '${const_setupJBossScript}${artifactsLocationSasToken}')
     supportingScriptUris: [
       uri(const_scriptLocation, '${const_eapOperatorSubscriptionYaml}${artifactsLocationSasToken}')
+      uri(const_scriptLocation, '${const_rhContainerRegistryPullSecretYaml}${artifactsLocationSasToken}')
     ]
     cleanupPreference:'OnSuccess'
     retentionInterval: 'P1D'
   }
 }
+
+output consoleUrl string = jbossSetup.properties.outputs.consoleUrl
+output appEndpoint string = deployApplication ? jbossSetup.properties.outputs.appEndpoint : ''

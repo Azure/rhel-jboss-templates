@@ -210,6 +210,207 @@
                         "visible": "[not(bool(steps('Cluster').createCluster))]"
                     }
                 ]
+            },
+            {
+                "name": "Application",
+                "label": "Application",
+                "subLabel": {
+                    "preValidation": "Provide required info for Operator and application",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Operator and application",
+                "elements": [
+                    {
+                        "name": "deployApplication",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Deploy a Source-to-Image (S2I) application to OpenShift?",
+                        "defaultValue": "No",
+                        "toolTip": "Select 'Yes' to deploy a Source-to-Image (S2I) application, or select 'No' if you prefer to manually deploy application later.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": "true"
+                                },
+                                {
+                                    "label": "No",
+                                    "value": "false"
+                                }
+                            ],
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "appSrcInfo",
+                        "type": "Microsoft.Common.Section",
+                        "label": "Provide application deployment information",
+                        "elements": [
+                            {
+                                "name": "srcUrlInfo",
+                                "type": "Microsoft.Common.InfoBox",
+                                "options": {
+                                    "icon": "Info",
+                                    "text": "Please provide a public application source code repository URL which is accessible without credentials. To learn about Source-to-Image, please see: <a href='https://access.redhat.com/documentation/en-us/openjdk/11/html/using_openjdk_11_source-to-image_for_openshift/openjdk-overview-s2i-openshift'>Introduction to Red Hat Java source-to-image for OpenShift</a>"
+                                }
+                            },
+                            {
+                                "name": "srcRepoUrl",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Application source code repository URL",
+                                "placeholder": "Example: https://github.com/jboss-developer/jboss-eap-quickstarts",
+                                "toolTip": "Specify the source code repository URL of your application.",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "https?:\/\/github\\.com\/[a-zA-Z0-9_\\-]*\/[a-zA-Z0-9_\\-]*",
+                                    "validationMessage": "The value must be a valid container image path. For example, https://github.com/jboss-developer/jboss-eap-quickstarts"
+                                }
+                            },
+                            {
+                                "name": "srcRepoRef",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Application source code repository reference",
+                                "placeholder": "Example: 7.4.x",
+                                "toolTip": "Specify the source code repository reference of your application.",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "[\\w\\d\\W]{1,250}",
+                                    "validationMessage": "The value must be a valid source code repository reference. For example, 7.4.x"
+                                }
+                            },
+                            {
+                                "name": "srcRepoDir",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "The directory within the source repository to build",
+                                "placeholder": "Example: helloworld-html5",
+                                "toolTip": "Specify the directory of your application.",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "[\\w\\d\\W]{1,250}",
+                                    "validationMessage": "The value must be a valid directory path. For example, helloworld-html5"
+                                }
+                            }
+                        ],
+                        "visible": "[bool(steps('Application').deployApplication)]"
+                    },
+                    {
+                        "name": "rhContainerRegistryAccountInfo",
+                        "type": "Microsoft.Common.Section",
+                        "label": "Provide Red Hat Container Registry service account information",
+                        "elements": [
+                            {
+                                "name": "conRegAccInfo",
+                                "type": "Microsoft.Common.InfoBox",
+                                "options": {
+                                    "icon": "Info",
+                                    "text": "Please provide the username and password of your Red Hat Container Registry Service account. To learn how to create an account, please see: <a href='https://access.redhat.com/RegistryAuthentication#creating-registry-service-accounts-6'>Creating Registry Service Accounts</a>"
+                                }
+                            },
+                            {
+                                "name": "conRegAccUserName",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Red Hat Container Registry Service account username",
+                                "placeholder": "Example: 12345678|azureuser",
+                                "toolTip": "Use only letters and numbers",
+                                "constraints": {
+                                    "required": true,
+                                    "validations": [
+                                        {
+                                            "regex": "[0-9]+\\|[a-zA-Z]+",
+                                            "message": "The valid user name should be a string like: 12345678|azureuser."
+                                        }
+                                    ]
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "conRegAccPwd",
+                                "type": "Microsoft.Common.PasswordBox",
+                                "label": {
+                                    "password": "Red Hat Container Registry Service account password",
+                                    "confirmPassword": "Confirm password"
+                                },
+                                "toolTip": "The authentication token using a registry service account to configure access to the Red Hat Container Registry.<br><br>To get pull secret text, see <a href='https://access.redhat.com/RegistryAuthentication#registry-service-accounts-for-shared-environments-4' target='_blank'>Create an authentication token using a registry service account</a>.",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^.{12,}$",
+                                    "validationMessage": "A valid password is required."
+                                }
+                            }
+                        ],
+                        "visible": "[bool(steps('Application').deployApplication)]"
+                    },
+                    {
+                        "name": "imageStreamTemplateInfo",
+                        "type": "Microsoft.Common.Section",
+                        "label": "Infomation about JBoss EAP for OpenShift Imagestreams and Templates.",
+                        "elements": [
+                            {
+                                "name": "imageStreamTemplateInfo",
+                                "type": "Microsoft.Common.InfoBox",
+                                "options": {
+                                    "icon": "Warning",
+                                    "text": "Please be aware of that we are using eap74-openjdk11-image-stream and related templates."
+                                }
+                            }
+                        ],
+                        "visible": "[bool(steps('Application').deployApplication)]"
+                    },
+                    {
+                        "name": "appReplicas",
+                        "type": "Microsoft.Common.Slider",
+                        "min": 1,
+                        "max": 20,
+                        "label": "Number of application replicas",
+                        "defaultValue": 2,
+                        "showStepMarkers": false,
+                        "toolTip": "The number of application replicas to deploy.",
+                        "constraints": {
+                            "required": true
+                        },
+                        "visible": "[bool(steps('Application').deployApplication)]"
+                    },
+                    {
+                        "name": "applicationOptional",
+                        "type": "Microsoft.Common.Section",
+                        "label": "Optional Application Configuration",
+                        "elements": [
+                            {
+                                "name": "applicationOptionalAcceptDefaults",
+                                "type": "Microsoft.Common.OptionsGroup",
+                                "label": "Accept defaults for optional configuration?",
+                                "defaultValue": "Yes",
+                                "toolTip": "Select 'No' to edit optional application configuration.",
+                                "constraints": {
+                                    "allowedValues": [
+                                        {
+                                            "label": "Yes",
+                                            "value": "false"
+                                        },
+                                        {
+                                            "label": "No",
+                                            "value": "true"
+                                        }
+                                    ],
+                                    "required": true
+                                }
+                            },
+                            {
+                                "name": "projectName",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Project name",
+                                "defaultValue": "eap-demo",
+                                "toolTip": "The name of the project",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^[a-z0-9A-Z-]{3,63}$",
+                                    "validationMessage": "The project Name must be between 3 and 63 characters long and contain letters, numbers and hyphens only."
+                                },
+                                "visible": "[bool(steps('Application').applicationOptional.applicationOptionalAcceptDefaults)]"
+                            }
+                        ],
+                        "visible": "[bool(steps('Application').deployApplication)]"
+                    }
+                ]
             }
         ],
         "outputs": {
@@ -221,7 +422,15 @@
             "aadObjectId": "[first(steps('Cluster').createClusterInfo.UserSPGraphRequest.transformed.objectID)]",
             "rpObjectId": "[first(steps('Cluster').createClusterInfo.RPObjectIDGraphRequest.transformed.objectID)]",
             "clusterName": "[last(split(steps('Cluster').clusterInfo.clusterSelector.id, '/'))]",
-            "clusterRGName": "[last(take(split(steps('Cluster').clusterInfo.clusterSelector.id, '/'), 5))]"
+            "clusterRGName": "[last(take(split(steps('Cluster').clusterInfo.clusterSelector.id, '/'), 5))]",
+            "deployApplication": "[bool(steps('Application').deployApplication)]",
+            "srcRepoUrl": "[steps('Application').appSrcInfo.srcRepoUrl]",
+            "srcRepoRef": "[steps('Application').appSrcInfo.srcRepoRef]",
+            "srcRepoDir": "[steps('Application').appSrcInfo.srcRepoDir]",
+            "conRegAccUserName": "[steps('Application').rhContainerRegistryAccountInfo.conRegAccUserName]",
+            "conRegAccPwd": "[steps('Application').rhContainerRegistryAccountInfo.conRegAccPwd]",
+            "appReplicas": "[int(steps('Application').appReplicas)]",
+            "projectName": "[steps('Application').applicationOptional.projectName]"
         }
     }
 }
