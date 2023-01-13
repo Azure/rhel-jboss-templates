@@ -155,12 +155,12 @@ param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
 param enableCookieBasedAffinity bool = false
 
 var containerName = 'eapblobcontainer'
-var eapStorageAccountName_var = 'jbosstrg${uniqueString(resourceGroup().id)}'
+var var_eapStorageAccountName = 'jbosstrg${uniqueString(resourceGroup().id)}'
 var eapstorageReplication = 'Standard_LRS'
-var vmssInstanceName_var = 'jbosseap-server${vmssName}'
+var var_vmssInstanceName = 'jbosseap-server${vmssName}'
 var nicName = 'jbosseap-server-nic'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
-var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
+var var_bootStorageName = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -339,7 +339,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2022-05-01' = if (enableAp
 }
 
 resource bootStorageName 'Microsoft.Storage/storageAccounts@2022-05-01' = if (bootDiagnosticsCheck) {
-  name: bootStorageName_var
+  name: var_bootStorageName
   location: location
   sku: {
     name: bootStorageReplication
@@ -351,7 +351,7 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@2022-05-01' = if (bo
 }
 
 resource eapStorageAccountName 'Microsoft.Storage/storageAccounts@2022-05-01' = {
-  name: eapStorageAccountName_var
+  name: var_eapStorageAccountName
   location: location
   sku: {
     name: eapstorageReplication
@@ -363,7 +363,7 @@ resource eapStorageAccountName 'Microsoft.Storage/storageAccounts@2022-05-01' = 
 }
 
 resource eapStorageAccountName_default_containerName 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-05-01' = {
-  name: '${eapStorageAccountName_var}/default/${containerName}'
+  name: '${var_eapStorageAccountName}/default/${containerName}'
   properties: {
     publicAccess: 'None'
   }
@@ -387,7 +387,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2022-05-
 }
 
 resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2022-08-01' = {
-  name: vmssInstanceName_var
+  name: var_vmssInstanceName
   location: location
   sku: {
     name: vmSize
@@ -412,7 +412,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2022-08-01'
         imageReference: imageReference
       }
       osProfile: {
-        computerNamePrefix: vmssInstanceName_var
+        computerNamePrefix: var_vmssInstanceName
         adminUsername: adminUsername
         adminPassword: adminPasswordOrSSHKey
         linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
@@ -436,7 +436,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2022-08-01'
                       }
                     ] : null
                     publicIPAddressConfiguration: {
-                      name: '${vmssInstanceName_var}${name_publicIPAddress}'
+                      name: '${var_vmssInstanceName}${name_publicIPAddress}'
                     }
                   }
                 }
@@ -445,7 +445,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2022-08-01'
           }
         ]
       }
-      diagnosticsProfile: ((bootDiagnostics == 'on') ? json('{"bootDiagnostics": {"enabled": true,"storageUri": "${reference(resourceId(storageAccountResourceGroupName, 'Microsoft.Storage/storageAccounts/', bootStorageName_var), '2021-06-01').primaryEndpoints.blob}"}}') : json('{"bootDiagnostics": {"enabled": false}}'))
+      diagnosticsProfile: ((bootDiagnostics == 'on') ? json('{"bootDiagnostics": {"enabled": true,"storageUri": "${reference(resourceId(storageAccountResourceGroupName, 'Microsoft.Storage/storageAccounts/', var_bootStorageName), '2021-06-01').primaryEndpoints.blob}"}}') : json('{"bootDiagnostics": {"enabled": false}}'))
       extensionProfile: {
         extensions: [
           {
@@ -461,7 +461,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2022-08-01'
                 ]
               }
               protectedSettings: {
-                commandToExecute: 'sh jbosseap-setup-redhat.sh ${scriptArgs} \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${eapStorageAccountName_var}\' \'${containerName}\' \'${base64(listKeys(eapStorageAccountName.id, '2021-04-01').keys[0].value)}\' \'${rhsmPoolRHEL}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\''
+                commandToExecute: 'sh jbosseap-setup-redhat.sh ${scriptArgs} \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${var_eapStorageAccountName}\' \'${containerName}\' \'${base64(listKeys(eapStorageAccountName.id, '2021-04-01').keys[0].value)}\' \'${rhsmPoolRHEL}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\''
               }
             }
           }
