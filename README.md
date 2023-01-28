@@ -7,11 +7,10 @@ This repo contains JBoss EAP Marketplace templates for use on Azure Marketplace.
 ### Red Hat JBoss EAP on VMs
 
 There are three different types of EAP on VM offers based on their outcomes.
+
 #### JBoss EAP standalone on RHEL VM(PAYG/BYOS)
 
-The offer provisions the following Azure resources and a Red Hat JBoss EAP server on a single Azure virtual machine.
-
-* The offer includes a choice of Red Hat OpenJDK 8, 11, and 17.
+This offer provisions a single Red Hat JBoss EAP server with JBoss EAP management console. All supporting Azure resources are automatically provisioned.
 
 * Computing resources
     * A RHEL 8.6 VM with the following settings based on user's choice:
@@ -21,13 +20,13 @@ The offer provisions the following Azure resources and a Red Hat JBoss EAP serve
     * A network security group if users choose to create a new virtual network.
     * A network interface with a private IP address.
 * Key software components
-    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The `EAP_HOME` is `/opt/rh/eap7/root/usr/share/wildfly`.
-    * OpenJDK 8, 11, or 17. The `JAVA_HOME` is a subdirectory of `/usr/lib/jvm`, depending on the selected JDK version.
+    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The **EAP_HOME** is **/opt/rh/eap7/root/usr/share/wildfly**.
+    * OpenJDK 8, 11, or 17. The **JAVA_HOME** is a subdirectory of **/usr/lib/jvm**, depending on the selected JDK version.
     * This JBoss EAP host can be registered to an existing Red Hat Satellite server for management.
 
 #### JBoss EAP Cluster on VM Scale Sets(PAYG/BYOS)
 
-The offer provisions the following Azure resources and a cluster of Red Hat JBoss EAP servers on an Azure virtual machine scale set.
+This offer provisions a Red Hat JBoss EAP server, JBoss EAP management console, and an EAP cluster on Azure Virtual Machine Scale Sets. All supporting Azure resources are automatically provisioned.
 
 * Computing resources
     * A virtual machine scale sets(VMSS) based on RHEL 8.6 image with the following settings based on user's choice:
@@ -45,12 +44,16 @@ The offer provisions the following Azure resources and a cluster of Red Hat JBos
     * A storage account for setting up Azure ping protocol for JGroups usage.
     * A network interface with a private IP address.
 * Key software components
-    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The `EAP_HOME` is `/opt/rh/eap7/root/usr/share/wildfly`.
-    * OpenJDK 8, 11, or 17. The `JAVA_HOME` is a subdirectory of `/usr/lib/jvm`, depending on the selected JDK version.
+    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The **EAP_HOME** is **/opt/rh/eap7/root/usr/share/wildfly**.
+    * OpenJDK 8, 11, or 17. The **JAVA_HOME** is a subdirectory of **/usr/lib/jvm**, depending on the selected JDK version.
     * This JBoss EAP host can be registered to an existing Red Hat Satellite server for management.
 
 #### JBoss EAP Cluster on VMs(PAYG/BYOS)
-The offer provisions the following Azure resources and Red Hat JBoss EAP server cluster on an arbitrary number of Azure virtual machines.
+
+
+This offer provisions a Red Hat JBoss EAP server, JBoss EAP management console, and an EAP cluster. All supporting Azure resources are automatically provisioned.
+
+* The offer includes a choice of Red Hat OpenJDK 8, 11, and 17.
 
 * Computing resources
     * VMs with the followings configurations:
@@ -69,13 +72,14 @@ The offer provisions the following Azure resources and Red Hat JBoss EAP server 
     * A storage account for setting up Azure ping protocol for JGroups usage.
     * A storage account for sharing configuration files between virtual machines.
 * Key software components
-    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The `EAP_HOME` is `/opt/rh/eap7/root/usr/share/wildfly`.
-    * OpenJDK 8, 11, or 17. The `JAVA_HOME` is a subdirectory of `/usr/lib/jvm`, depending on the selected JDK version.
+    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The **EAP_HOME** is **/opt/rh/eap7/root/usr/share/wildfly**.
+    * OpenJDK 8, 11, or 17. The **JAVA_HOME** is a subdirectory of **/usr/lib/jvm**, depending on the selected JDK version.
     * This JBoss EAP host can be registered to an existing Red Hat Satellite server for management.
 
 ### Red Hat JBoss EAP on ARO
 
-This offer provisions:
+This offer provisions the JBoss EAP operator on Azure Red Hat OpenShift and any necessary supporting azure resources.
+
 * Network resources
     * An virtual network and a subnet.
 * Computing resources
