@@ -21,8 +21,8 @@ The offer provisions the following Azure resources and a Red Hat JBoss EAP serve
     * A network security group if users choose to create a new virtual network.
     * A network interface with a private IP address.
 * Key software components
-    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The `EAP_HOME` is `/opt/rh/eap7/root/usr/share/wildfly`.
-    * OpenJDK 8, 11, or 17. The `JAVA_HOME` is a subdirectory of `/usr/lib/jvm`, depending on the selected JDK version.
+    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The **EAP_HOME** is **/opt/rh/eap7/root/usr/share/wildfly**.
+    * OpenJDK 8, 11, or 17. The **JAVA_HOME** is a subdirectory of **/usr/lib/jvm**, depending on the selected JDK version.
     * This JBoss EAP host can be registered to an existing Red Hat Satellite server for management.
 
 #### JBoss EAP Cluster on VM Scale Sets(PAYG/BYOS)
@@ -45,8 +45,8 @@ The offer provisions the following Azure resources and a cluster of Red Hat JBos
     * A storage account for setting up Azure ping protocol for JGroups usage.
     * A network interface with a private IP address.
 * Key software components
-    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The `EAP_HOME` is `/opt/rh/eap7/root/usr/share/wildfly`.
-    * OpenJDK 8, 11, or 17. The `JAVA_HOME` is a subdirectory of `/usr/lib/jvm`, depending on the selected JDK version.
+    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The **EAP_HOME** is **/opt/rh/eap7/root/usr/share/wildfly**.
+    * OpenJDK 8, 11, or 17. The **JAVA_HOME** is a subdirectory of **/usr/lib/jvm**, depending on the selected JDK version.
     * This JBoss EAP host can be registered to an existing Red Hat Satellite server for management.
 
 #### JBoss EAP Cluster on VMs(PAYG/BYOS)
@@ -69,8 +69,8 @@ The offer provisions the following Azure resources and Red Hat JBoss EAP server 
     * A storage account for setting up Azure ping protocol for JGroups usage.
     * A storage account for sharing configuration files between virtual machines.
 * Key software components
-    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The `EAP_HOME` is `/opt/rh/eap7/root/usr/share/wildfly`.
-    * OpenJDK 8, 11, or 17. The `JAVA_HOME` is a subdirectory of `/usr/lib/jvm`, depending on the selected JDK version.
+    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The **EAP_HOME** is **/opt/rh/eap7/root/usr/share/wildfly**.
+    * OpenJDK 8, 11, or 17. The **JAVA_HOME** is a subdirectory of **/usr/lib/jvm**, depending on the selected JDK version.
     * This JBoss EAP host can be registered to an existing Red Hat Satellite server for management.
 
 ### Red Hat JBoss EAP on ARO
