@@ -258,7 +258,7 @@
                                             "value": "1"
                                         },
                                         {
-                                            "label": "The Red Hat sample application: https://github.com/redhat-mw-demos/eap-on-aro-helloworld)",
+                                            "label": "Sample application (https://github.com/redhat-mw-demos/eap-on-aro-helloworld)",
                                             "value": "2"
                                         }
                                     ],
