@@ -213,9 +213,9 @@
             },
             {
                 "name": "Application",
-                "label": "Application",
+                "label": "EAP Application",
                 "subLabel": {
-                    "preValidation": "Provide required info for Operator and application",
+                    "preValidation": "Provide required info for Operator and EAP application",
                     "postValidation": "Done"
                 },
                 "bladeTitle": "Operator and application",
@@ -225,7 +225,7 @@
                         "type": "Microsoft.Common.OptionsGroup",
                         "label": "Deploy a Source-to-Image (S2I) application to OpenShift?",
                         "defaultValue": "No",
-                        "toolTip": "Select 'Yes' to deploy a Source-to-Image (S2I) application, or select 'No' if you prefer to manually deploy application later.",
+                        "toolTip": "Select 'Yes' to deploy a Source-to-Image (S2I) JBoss EAP application, or select 'No' if you prefer to manually deploy application later.",
                         "constraints": {
                             "allowedValues": [
                                 {
@@ -249,7 +249,7 @@
                                 "name": "appOption",
                                 "type": "Microsoft.Common.OptionsGroup",
                                 "label": "Deploy your own application or a sample application?",
-                                "defaultValue": "Your own application",
+                                "defaultValue": "Sample application (https://github.com/redhat-mw-demos/eap-on-aro-helloworld)",
                                 "toolTip": "Depoly an application",
                                 "constraints": {
                                     "allowedValues": [
