@@ -80,7 +80,8 @@ wait_subscription_created() {
 }
 
 wait_maven_build_complete() {
-    logFile=$1
+    application_name=$1
+    logFile=$2
     cnt=0
     isSuccess="false"
     while [[ "${isSuccess,,}" == "false" ]];
@@ -96,7 +97,7 @@ wait_maven_build_complete() {
                 echo "Found BUILD SUCCESS in log" >> $logFile 
                 isSuccess="true"
             fi
-        done <<< `oc logs buildconfig/eap-app-build-artifacts`
+        done <<< `oc logs buildconfig/${application_name}-build-artifacts`
         if [[ "${isSuccess,,}" == "false" ]]; then
 	        echo "Unable to confirm the Maven build progress, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile 
 	        sleep 5
@@ -106,7 +107,8 @@ wait_maven_build_complete() {
 }
 
 wait_image_push_complete() {
-    logFile=$1
+    application_name=$1
+    logFile=$2
     cnt=0
     isSuccess="false"
     while [[ "${isSuccess,,}" == "false" ]];
@@ -122,7 +124,7 @@ wait_image_push_complete() {
                 echo "Found Push successful in log" >> $logFile 
                 isSuccess="true"
             fi
-        done <<< `oc logs buildconfig/eap-app`
+        done <<< `oc logs buildconfig/${application_name}`
         if [[ "${isSuccess,,}" == "false" ]]; then
 	        echo "Unable to confirm the image push progress, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile 
 	        sleep 5
@@ -237,13 +239,15 @@ wait_project_created() {
 
 wait_application_created() {
     project_name=$1
-    src_repo_url=$2
-    src_repo_ref=$3
-    src_repo_dir=$4
-    logFile=$5
+    application_name=$2
+    src_repo_url=$3
+    src_repo_ref=$4
+    src_repo_dir=$5
+    logFile=$6
     cnt=0
     oc new-app --template=eap74-basic-s2i \
         -p IMAGE_STREAM_NAMESPACE=${project_name} \
+        -p APPLICATION_NAME=${application_name} \
         -p EAP_IMAGE_NAME=jboss-eap74-openjdk11-openshift:7.4.0 \
         -p EAP_RUNTIME_IMAGE_NAME=jboss-eap74-openjdk11-runtime-openshift:7.4.0 \
         -p SOURCE_REPOSITORY_URL=${src_repo_url} \
@@ -260,6 +264,7 @@ wait_application_created() {
         sleep 5
         oc new-app --template=eap74-basic-s2i \
             -p IMAGE_STREAM_NAMESPACE=${project_name} \
+            -p APPLICATION_NAME=${application_name} \
             -p EAP_IMAGE_NAME=jboss-eap74-openjdk11-openshift:7.4.0 \
             -p EAP_RUNTIME_IMAGE_NAME=jboss-eap74-openjdk11-runtime-openshift:7.4.0 \
             -p SOURCE_REPOSITORY_URL=${src_repo_url} \
@@ -408,7 +413,7 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
     # Create a new application
     echo "Create a new application" >> $logFile
-    wait_application_created ${PROJECT_NAME} ${SRC_REPO_URL} ${SRC_REPO_REF} ${SRC_REPO_DIR} $logFile
+    wait_application_created ${PROJECT_NAME} ${APPLICATION_NAME} ${SRC_REPO_URL} ${SRC_REPO_REF} ${SRC_REPO_DIR} $logFile
     if [[ $? != 0 ]]; then
         echo "Failed to complete application creation progress." >&2
         exit 1
@@ -416,7 +421,7 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
     # Check Maven build progress
     echo "Check Maven build progress" >> $logFile
-    wait_maven_build_complete ${logFile}
+    wait_maven_build_complete ${APPLICATION_NAME} ${logFile}
     if [[ $? != 0 ]]; then
         echo "Failed to complete Maven build progress." >&2
         exit 1
@@ -424,7 +429,7 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
     # Check image push progress
     echo "Check image push progress" >> $logFile
-    wait_image_push_complete ${logFile}
+    wait_image_push_complete ${APPLICATION_NAME} ${logFile}
     if [[ $? != 0 ]]; then
         echo "Failed to complete image push progress." >&2
         exit 1
@@ -432,14 +437,14 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
     # Scale up the application instance
     echo "Scale up the application instance" >> $logFile
-    oc scale deploymentconfig eap-app --replicas=${APP_REPLICAS} >> $logFile 
+    oc scale deploymentconfig ${APPLICATION_NAME} --replicas=${APP_REPLICAS} >> $logFile 
     if [[ $? != 0 ]]; then
         echo "Failed to kick off scalation progress." >&2
         exit 1
     fi
 
     # Wait until the application scalation completes
-    wait_scalation_complete eap-app ${PROJECT_NAME} ${logFile}
+    wait_scalation_complete ${APPLICATION_NAME} ${PROJECT_NAME} ${logFile}
     if [[ $? != 0 ]]; then
         echo "The application is not available." >> $logFile
         exit 1
@@ -448,9 +453,9 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     # Get the route of the application
     echo "Get the route of the application" >> $logFile
     appEndpoint=
-    wait_route_available eap-app ${PROJECT_NAME} $logFile
+    wait_route_available ${APPLICATION_NAME} ${PROJECT_NAME} $logFile
     if [[ $? -ne 0 ]]; then
-        echo "The route eap-app is not available." >> $logFile
+        echo "The route ${APPLICATION_NAME} is not available." >> $logFile
         exit 1
     fi
     echo "appEndpoint is ${appEndpoint}"

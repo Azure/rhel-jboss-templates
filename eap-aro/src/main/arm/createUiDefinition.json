@@ -246,12 +246,33 @@
                         "label": "Provide application deployment information",
                         "elements": [
                             {
+                                "name": "appOption",
+                                "type": "Microsoft.Common.OptionsGroup",
+                                "label": "Deploy your own application or a sample application?",
+                                "defaultValue": "Your own application",
+                                "toolTip": "Depoly an application",
+                                "constraints": {
+                                    "allowedValues": [
+                                        {
+                                            "label": "Your own application",
+                                            "value": "1"
+                                        },
+                                        {
+                                            "label": "Sample application (https://github.com/redhat-mw-demos/eap-on-aro-helloworld)",
+                                            "value": "2"
+                                        }
+                                    ],
+                                    "required": true
+                                }
+                            },
+                            {
                                 "name": "srcUrlInfo",
                                 "type": "Microsoft.Common.InfoBox",
                                 "options": {
                                     "icon": "Info",
                                     "text": "Please provide a public application source code repository URL which is accessible without credentials. To learn about Source-to-Image, please see: <a href='https://access.redhat.com/documentation/en-us/openjdk/11/html/using_openjdk_11_source-to-image_for_openshift/openjdk-overview-s2i-openshift'>Introduction to Red Hat Java source-to-image for OpenShift</a>"
-                                }
+                                },
+                                "visible": "[equals(steps('Application').appSrcInfo.appOption, '1')]"
                             },
                             {
                                 "name": "srcRepoUrl",
@@ -263,7 +284,8 @@
                                     "required": true,
                                     "regex": "https?:\/\/github\\.com\/[a-zA-Z0-9_\\-]*\/[a-zA-Z0-9_\\-]*",
                                     "validationMessage": "The value must be a valid container image path. For example, https://github.com/jboss-developer/jboss-eap-quickstarts"
-                                }
+                                },
+                                "visible": "[equals(steps('Application').appSrcInfo.appOption, '1')]"
                             },
                             {
                                 "name": "srcRepoRef",
@@ -275,7 +297,8 @@
                                     "required": true,
                                     "regex": "[\\w\\d\\W]{1,250}",
                                     "validationMessage": "The value must be a valid source code repository reference. For example, 7.4.x"
-                                }
+                                },
+                                "visible": "[equals(steps('Application').appSrcInfo.appOption, '1')]"
                             },
                             {
                                 "name": "srcRepoDir",
@@ -287,7 +310,8 @@
                                     "required": true,
                                     "regex": "[\\w\\d\\W]{1,250}",
                                     "validationMessage": "The value must be a valid directory path. For example, helloworld-html5"
-                                }
+                                },
+                                "visible": "[equals(steps('Application').appSrcInfo.appOption, '1')]"
                             }
                         ],
                         "visible": "[bool(steps('Application').deployApplication)]"
@@ -403,12 +427,25 @@
                                 "constraints": {
                                     "required": true,
                                     "regex": "^[a-z0-9A-Z-]{3,63}$",
-                                    "validationMessage": "The project Name must be between 3 and 63 characters long and contain letters, numbers and hyphens only."
+                                    "validationMessage": "The project name must be between 3 and 63 characters long and contain letters, numbers and hyphens only."
+                                },
+                                "visible": "[bool(steps('Application').applicationOptional.applicationOptionalAcceptDefaults)]"
+                            },
+                            {
+                                "name": "applicationName",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Application name",
+                                "defaultValue": "eap-app",
+                                "toolTip": "The name of the application",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^[a-z0-9A-Z-]{3,63}$",
+                                    "validationMessage": "The application name must be between 3 and 63 characters long and contain letters, numbers and hyphens only."
                                 },
                                 "visible": "[bool(steps('Application').applicationOptional.applicationOptionalAcceptDefaults)]"
                             }
                         ],
-                        "visible": "[bool(steps('Application').deployApplication)]"
+                        "visible": "[and(bool(steps('Application').deployApplication), equals(steps('Application').appSrcInfo.appOption, '1'))]"
                     }
                 ]
             }
@@ -424,13 +461,14 @@
             "clusterName": "[last(split(steps('Cluster').clusterInfo.clusterSelector.id, '/'))]",
             "clusterRGName": "[last(take(split(steps('Cluster').clusterInfo.clusterSelector.id, '/'), 5))]",
             "deployApplication": "[bool(steps('Application').deployApplication)]",
-            "srcRepoUrl": "[steps('Application').appSrcInfo.srcRepoUrl]",
-            "srcRepoRef": "[steps('Application').appSrcInfo.srcRepoRef]",
-            "srcRepoDir": "[steps('Application').appSrcInfo.srcRepoDir]",
+            "srcRepoUrl": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').appSrcInfo.srcRepoUrl, 'https://github.com/redhat-mw-demos/eap-on-aro-helloworld')]",
+            "srcRepoRef": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').appSrcInfo.srcRepoRef, 'main')]",
+            "srcRepoDir": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').appSrcInfo.srcRepoDir, '/')]",
             "conRegAccUserName": "[steps('Application').rhContainerRegistryAccountInfo.conRegAccUserName]",
             "conRegAccPwd": "[steps('Application').rhContainerRegistryAccountInfo.conRegAccPwd]",
             "appReplicas": "[int(steps('Application').appReplicas)]",
-            "projectName": "[steps('Application').applicationOptional.projectName]"
+            "projectName": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').applicationOptional.projectName, 'sample-jboss-eap')]",
+            "applicationName": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').applicationOptional.applicationName, 'helloworld')]"
         }
     }
 }

@@ -115,6 +115,9 @@ param conRegAccPwd string = ''
 @description('The name of the project')
 param projectName string = 'eap-demo'
 
+@description('The name of the application')
+param applicationName string = 'eap-app'
+
 @description('The number of application replicas to deploy')
 param appReplicas int = 2
 
@@ -308,6 +311,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
     conRegAccPwd: conRegAccPwd
     appReplicas: appReplicas
     projectName: projectName
+    applicationName: applicationName
   }
   dependsOn: [
     clusterName_resource

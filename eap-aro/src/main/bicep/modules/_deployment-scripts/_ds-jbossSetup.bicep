@@ -39,6 +39,9 @@ param conRegAccPwd string = ''
 @description('The name of the project')
 param projectName string = 'eap-demo'
 
+@description('The name of the application')
+param applicationName string = 'eap-app'
+
 @description('The number of application replicas to deploy')
 param appReplicas int = 2
 
@@ -95,6 +98,10 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       {
         name: 'PROJECT_NAME'
         value: projectName
+      }
+      {
+        name: 'APPLICATION_NAME'
+        value: applicationName
       }
       {
         name: 'APP_REPLICAS'
