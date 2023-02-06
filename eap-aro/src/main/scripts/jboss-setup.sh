@@ -277,7 +277,7 @@ wait_file_based_creation() {
     deploymentFile=$1
     logFile=$2
     cnt=0
-    oc create -f ${deploymentFile} 2>/dev/null
+    oc apply -f ${deploymentFile} 2>/dev/null
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -287,7 +287,7 @@ wait_file_based_creation() {
         cnt=$((cnt+1))
         echo "Unable to complete creation, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc create -f ${deploymentFile} 2>/dev/null
+        oc apply -f ${deploymentFile} 2>/dev/null
     done
 }
 
