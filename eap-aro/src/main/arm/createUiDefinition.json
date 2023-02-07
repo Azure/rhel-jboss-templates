@@ -248,7 +248,7 @@
                             "text": "Source-to-Image (S2I) is a toolkit and workflow for building reproducible container images from source code.",
                             "link": {
                                 "label": "S2I Reference",
-                                "uri": "https://github.com/openshift/source-to-image#readme"
+                                "uri": "http://red.ht/eap-aro-s2i"
                             }
                         }
                     },
