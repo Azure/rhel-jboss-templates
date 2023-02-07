@@ -123,7 +123,7 @@
                                 "type": "Microsoft.Common.InfoBox",
                                 "options": {
                                     "icon": "Info",
-                                    "text": "An Azure Active Directory service principal is required for cluster creation. For more information on creating a service principal, consult the <a href='https://aka.ms/aro/sp-docs' target='_blank'>Azure Red Hat OpenShift product documentation</a>.<br><br>For your convenience, you can create the service principal using the following Azure CLI command with a local install or an Azure Cloud Shell. Copy the value of the <b>clientId</b> and <b>clientSecret</b> output from the following command into the corresponding fields below. <b>az ad sp create-for-rbac --sdk-auth</b>."
+                                    "text": "An Azure Active Directory service principal is required for cluster creation. For more information on creating a service <br>principal, consult the <a href='https://aka.ms/aro/sp-docs' target='_blank'>Azure Red Hat OpenShift product documentation</a>.<br><br>For your convenience, you can create the service principal using the following Azure CLI command with a local install or <br>an Azure Cloud Shell. Copy the value of the <b>clientId</b> and <b>clientSecret</b> output from the following command into the <br>corresponding fields below.  <b>az ad sp create-for-rbac --sdk-auth</b>."
                                 }
                             },
                             {
@@ -223,9 +223,9 @@
                     {
                         "name": "deployApplication",
                         "type": "Microsoft.Common.OptionsGroup",
-                        "label": "Deploy a Source-to-Image (S2I) application to OpenShift?",
+                        "label": "Deploy an application to OpenShift using Source-to-Image (S2I)?",
                         "defaultValue": "No",
-                        "toolTip": "Select 'Yes' to deploy a Source-to-Image (S2I) JBoss EAP application, or select 'No' if you prefer to manually deploy application later.",
+                        "toolTip": "Select 'Yes' to deploy a JBoss EAP application to OpenShift using Source-to-Image (S2I), or select 'No' if you prefer to manually deploy application later.",
                         "constraints": {
                             "allowedValues": [
                                 {
@@ -238,6 +238,18 @@
                                 }
                             ],
                             "required": true
+                        }
+                    },
+                    {
+                        "name": "s2iExplainerLink",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "Source-to-Image (S2I) is a toolkit and workflow for building reproducible container images from source code.",
+                            "link": {
+                                "label": "S2I Reference",
+                                "uri": "https://github.com/openshift/source-to-image#readme"
+                            }
                         }
                     },
                     {
@@ -270,7 +282,7 @@
                                 "type": "Microsoft.Common.InfoBox",
                                 "options": {
                                     "icon": "Info",
-                                    "text": "Please provide a public application source code repository URL which is accessible without credentials. To learn about Source-to-Image, please see: <a href='https://access.redhat.com/documentation/en-us/openjdk/11/html/using_openjdk_11_source-to-image_for_openshift/openjdk-overview-s2i-openshift'>Introduction to Red Hat Java source-to-image for OpenShift</a>"
+                                    "text": "Please provide a public application source code repository URL which is accessible without credentials. To learn<br>about Source-to-Image, please see: <a href='https://access.redhat.com/documentation/en-us/openjdk/11/html/using_openjdk_11_source-to-image_for_openshift/openjdk-overview-s2i-openshift'>Introduction to Red Hat Java source-to-image for OpenShift</a>"
                                 },
                                 "visible": "[equals(steps('Application').appSrcInfo.appOption, '1')]"
                             },
@@ -279,7 +291,7 @@
                                 "type": "Microsoft.Common.TextBox",
                                 "label": "Application source code repository URL",
                                 "placeholder": "Example: https://github.com/jboss-developer/jboss-eap-quickstarts",
-                                "toolTip": "Specify the source code repository URL of your application.",
+                                "toolTip": "The Git source code repository URL.",
                                 "constraints": {
                                     "required": true,
                                     "regex": "https?:\/\/github\\.com\/[a-zA-Z0-9_\\-]*\/[a-zA-Z0-9_\\-]*",
@@ -292,7 +304,7 @@
                                 "type": "Microsoft.Common.TextBox",
                                 "label": "Application source code repository reference",
                                 "placeholder": "Example: 7.4.x",
-                                "toolTip": "Specify the source code repository reference of your application.",
+                                "toolTip": "The Git repository reference to use for the source code. This can be a Git branch or tag reference.",
                                 "constraints": {
                                     "required": true,
                                     "regex": "[\\w\\d\\W]{1,250}",
@@ -326,7 +338,7 @@
                                 "type": "Microsoft.Common.InfoBox",
                                 "options": {
                                     "icon": "Info",
-                                    "text": "Please provide the username and password of your Red Hat Container Registry Service account. To learn how to create an account, please see: <a href='https://access.redhat.com/RegistryAuthentication#creating-registry-service-accounts-6'>Creating Registry Service Accounts</a>"
+                                    "text": "Please provide the username and password of your Red Hat Container Registry Service account. To learn how<br>to create an account, please see: <a href='https://access.redhat.com/RegistryAuthentication#creating-registry-service-accounts-6'>Creating Registry Service Accounts</a>. The registry is necessary to<br>pull the container image for JBoss EAP on which run your application."
                                 }
                             },
                             {
@@ -373,7 +385,7 @@
                                 "type": "Microsoft.Common.InfoBox",
                                 "options": {
                                     "icon": "Warning",
-                                    "text": "Please be aware of that we are using eap74-openjdk11-image-stream and related templates."
+                                    "text": "This offer uses the <b>eap74-openjdk11-image-stream</b> and related templates. If you need another image stream,<br>deploy the application separately."
                                 }
                             }
                         ],
