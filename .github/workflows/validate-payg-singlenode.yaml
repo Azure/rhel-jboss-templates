@@ -173,7 +173,7 @@ jobs:
                 dsConnectionURL=jdbc:postgresql://contoso.postgres.database:5432/testdb
                 dbUser=contosoDbUser
                 dbPassword=contosoDbPwd
-                if ${{ inputs.databaseType == 'postgres' || github.event.client_payload.databaseType == 'postgres' }}; then
+                if ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}; then
                   enableDB=true
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ env.postgresqlHost }}:5432/testdb"
@@ -211,7 +211,7 @@ jobs:
               with:
                 name: parameters-test-single
                 path: rhel-jboss-templates/eap74-rhel8-payg/src/test/parameters-test-single.json
-            - name: Create Resource Group
+            - name: Create Resource Group if needed
               if: ${{ inputs.databaseType == 'none' || github.event.client_payload.databaseType == 'none' }}
               uses: azure/CLI@v1
               with:
@@ -240,8 +240,8 @@ jobs:
                     # Create NSG rule to allow inbound traffic to port 9990
                     az network nsg rule create -g ${{ env.singleResourceGroup }} --nsg-name ${{ env.nsgName }} -n rule_9990 --priority 100 \
                       --source-address-prefixes '*' --source-port-ranges '*' \
-                      --destination-address-prefixes '*' --destination-port-ranges 9990 --access Allow \
-                      --protocol '*' --description "allow 9990"
+                      --destination-address-prefixes '*' --destination-port-ranges 9990 8080 --access Allow \
+                      --protocol '*' --description "allow 9990,8080"
                     # Create public IP
                     az network public-ip create --name ${{ env.testPubIpName }} --resource-group ${{ env.singleResourceGroup }}
                     # Query VM NIC name
