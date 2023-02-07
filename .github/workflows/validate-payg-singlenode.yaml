@@ -145,6 +145,10 @@ jobs:
                 git status
                 git commit -m "test branch for pipeline"
                 git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f
+            - uses: azure/login@v1
+              id: azure-login
+              with:
+                creds: ${{ env.azureCredentials }}
             - name: Deploy an instance of Azure Database for PostgreSQL
               if: ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}
               run: |
@@ -207,10 +211,6 @@ jobs:
               with:
                 name: parameters-test-single
                 path: rhel-jboss-templates/eap74-rhel8-payg/src/test/parameters-test-single.json
-            - uses: azure/login@v1
-              id: azure-login
-              with:
-                creds: ${{ env.azureCredentials }}
             - name: Create Resource Group
               if: ${{ inputs.databaseType == 'none' || github.event.client_payload.databaseType == 'none' }}
               uses: azure/CLI@v1
