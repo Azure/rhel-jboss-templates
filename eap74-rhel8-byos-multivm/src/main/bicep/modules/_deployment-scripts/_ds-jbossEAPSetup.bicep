@@ -79,6 +79,9 @@ param satelliteFqdn string = ''
 @description('The JDK version of the Virtual Machine')
 param jdkVersion string = 'openjdk17'
 
+@description('NIC name prefix')
+param nicName string
+
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jbosseap-setup-redhat.sh'
 var const_setupDomainMasterScript = 'jbosseap-setup-master.sh'
@@ -199,6 +202,10 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       {
         name: 'JDK_VERSION'
         value: jdkVersion
+      }
+      {
+        name: 'NIC_NAME'
+        value: nicName
       }
     ]
     primaryScriptUri: uri(const_scriptLocation, '${const_setupJBossScript}${artifactsLocationSasToken}')
