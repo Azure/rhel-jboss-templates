@@ -221,6 +221,18 @@
                 "bladeTitle": "Operator and application",
                 "elements": [
                     {
+                        "name": "s2iExplainerLink",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "Source-to-Image (S2I) is a toolkit and workflow for building reproducible container images from source code. See the documentation to learn more.",
+                            "link": {
+                                "label": "S2I Documentation",
+                                "uri": "http://red.ht/eap-aro-s2i"
+                            }
+                        }
+                    },
+                    {
                         "name": "deployApplication",
                         "type": "Microsoft.Common.OptionsGroup",
                         "label": "Deploy an application to OpenShift using Source-to-Image (S2I)?",
@@ -238,18 +250,6 @@
                                 }
                             ],
                             "required": true
-                        }
-                    },
-                    {
-                        "name": "s2iExplainerLink",
-                        "type": "Microsoft.Common.TextBlock",
-                        "visible": true,
-                        "options": {
-                            "text": "Source-to-Image (S2I) is a toolkit and workflow for building reproducible container images from source code.",
-                            "link": {
-                                "label": "S2I Reference",
-                                "uri": "http://red.ht/eap-aro-s2i"
-                            }
                         }
                     },
                     {
@@ -302,11 +302,11 @@
                             {
                                 "name": "srcRepoRef",
                                 "type": "Microsoft.Common.TextBox",
-                                "label": "Application source code repository reference",
-                                "placeholder": "Example: 7.4.x",
+                                "label": "Git branch or tag name. If blank, 'main' is used.",
+                                "placeholder": "Example: main",
                                 "toolTip": "The Git repository reference to use for the source code. This can be a Git branch or tag reference.",
                                 "constraints": {
-                                    "required": true,
+                                    "required": false,
                                     "regex": "[\\w\\d\\W]{1,250}",
                                     "validationMessage": "The value must be a valid source code repository reference. For example, 7.4.x"
                                 },
@@ -315,11 +315,11 @@
                             {
                                 "name": "srcRepoDir",
                                 "type": "Microsoft.Common.TextBox",
-                                "label": "The directory within the source repository to build",
+                                "label": "The directory within the source repository to build. If blank, '/' is used.",
                                 "placeholder": "Example: helloworld-html5",
                                 "toolTip": "Specify the directory of your application.",
                                 "constraints": {
-                                    "required": true,
+                                    "required": false,
                                     "regex": "[\\w\\d\\W]{1,250}",
                                     "validationMessage": "The value must be a valid directory path. For example, helloworld-html5"
                                 },
@@ -338,7 +338,7 @@
                                 "type": "Microsoft.Common.InfoBox",
                                 "options": {
                                     "icon": "Info",
-                                    "text": "Please provide the username and password of your Red Hat Container Registry Service account. To learn how<br>to create an account, please see: <a href='https://access.redhat.com/RegistryAuthentication#creating-registry-service-accounts-6'>Creating Registry Service Accounts</a>. The registry is necessary to<br>pull the container image for JBoss EAP on which run your application."
+                                    "text": "Please provide the username and password of your Red Hat Container Registry Service account. To learn how<br>to create an account, please see: <a href='https://access.redhat.com/RegistryAuthentication#creating-registry-service-accounts-6'>Creating Registry Service Accounts</a>. The registry is necessary to<br>pull the container image for JBoss EAP on which to run your application."
                                 }
                             },
                             {
@@ -474,8 +474,8 @@
             "clusterRGName": "[last(take(split(steps('Cluster').clusterInfo.clusterSelector.id, '/'), 5))]",
             "deployApplication": "[bool(steps('Application').deployApplication)]",
             "srcRepoUrl": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').appSrcInfo.srcRepoUrl, 'https://github.com/redhat-mw-demos/eap-on-aro-helloworld')]",
-            "srcRepoRef": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').appSrcInfo.srcRepoRef, 'main')]",
-            "srcRepoDir": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').appSrcInfo.srcRepoDir, '/')]",
+            "srcRepoRef": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), if(equals(length(steps('Application').appSrcInfo.srcRepoRef),0), 'main', steps('Application').appSrcInfo.srcRepoRef), 'main')]",
+            "srcRepoDir": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), if(equals(length(steps('Application').appSrcInfo.srcRepoDir),0), '/', steps('Application').appSrcInfo.srcRepoDir), '/')]",
             "conRegAccUserName": "[steps('Application').rhContainerRegistryAccountInfo.conRegAccUserName]",
             "conRegAccPwd": "[steps('Application').rhContainerRegistryAccountInfo.conRegAccPwd]",
             "appReplicas": "[int(steps('Application').appReplicas)]",
