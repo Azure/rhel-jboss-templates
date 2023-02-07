@@ -282,7 +282,7 @@
                                 "type": "Microsoft.Common.InfoBox",
                                 "options": {
                                     "icon": "Info",
-                                    "text": "Please provide a public application source code repository URL which is accessible without credentials. To learn<br>about Source-to-Image, please see: <a href='https://access.redhat.com/documentation/en-us/openjdk/11/html/using_openjdk_11_source-to-image_for_openshift/openjdk-overview-s2i-openshift'>Introduction to Red Hat Java source-to-image for OpenShift</a>"
+                                    "text": "Please provide a public application source code repository URL which is accessible without credentials. To learn<br>about Source-to-Image and Java, please see: <a href='http://red.ht/eap-aro-jdk-s2i'>Introduction to Red Hat Java source-to-image for OpenShift</a>"
                                 },
                                 "visible": "[equals(steps('Application').appSrcInfo.appOption, '1')]"
                             },
