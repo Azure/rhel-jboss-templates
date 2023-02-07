@@ -37,6 +37,6 @@ if [ $dbType == "postgresql" ]; then
 
     # Register JDBC driver and create data source
     sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
-    '/subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql,driver-module-name=com.postgresql,driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource)', \
-    'data-source add --driver-name=postgresql --name="'${jdbcDataSourceName}'" --jndi-name="'${jdbcDSJNDIName}'" --connection-url="'${dsConnectionString}'" --user-name="'${databaseUser}'" --password="'${databasePassword}'" --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter' | log; flag=${PIPESTATUS[0]}
+    "/subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql,driver-module-name=com.postgresql,driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource)",\
+    "data-source add --driver-name=postgresql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=${databasePassword} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter" | log; flag=${PIPESTATUS[0]}
 fi
