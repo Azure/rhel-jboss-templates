@@ -33,7 +33,7 @@ if [ $dbType == "postgresql" ]; then
     curl --retry ${retryMaxAttempt} -Lo ${jdbcDriverModuleDirectory}/${jdbcDriverName} https://jdbc.postgresql.org/download/${jdbcDriverName}
 
     # Replace placeholder strings with user-input parameters
-    sed -i "s/\${POSTGRESQL_JDBC_DRIVER_NAME}/${jdbcDriverName}/g" $jdbcDriverModule
+    sed -i "s/\${POSTGRESQL_JDBC_DRIVER_NAME}/${jdbcDriverName}/g" $jdbcDriverModuleDirectory/$jdbcDriverModule
 
     # Register JDBC driver and create data source
     sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
