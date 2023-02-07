@@ -88,6 +88,23 @@ param rhsmPassword string = newGuid()
 @maxLength(32)
 param rhsmPoolEAP string = take(newGuid(), 32)
 
+@description('Boolean value indicating, if user wants to enable database connection.')
+param enableDB bool = false
+@allowed([
+  'postgresql'
+])
+@description('One of the supported database types')
+param databaseType string = 'postgresql'
+@description('JNDI Name for JDBC Datasource')
+param jdbcDataSourceJNDIName string = 'jdbc/contoso'
+@description('JDBC Connection String')
+param dsConnectionURL string = 'jdbc:postgresql://contoso.postgres.database:5432/testdb'
+@description('User id of Database')
+param dbUser string = 'contosoDbUser'
+@secure()
+@description('Password for Database')
+param dbPassword string = newGuid()
+
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated')
 param artifactsLocation string = deployment().properties.templateLink.uri
 
@@ -230,6 +247,14 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   ]
 }
 
+module dbConnectionStartPid './modules/_pids/_empty.bicep' = if (enableDB) {
+  name: 'fc3c1d44-5bb6-56af-bc0f-9e6c1d5bf810'
+  params: {}
+  dependsOn: [
+    vmName_resource
+  ]
+}
+
 resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = {
   parent: vmName_resource
   name: 'jbosseap-setup-extension'
@@ -242,10 +267,20 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
     settings: {
       fileUris: [
         uri(artifactsLocation, 'scripts/jbosseap-setup-redhat.sh${artifactsLocationSasToken}')
+        uri(artifactsLocation, 'scripts/create-ds.sh${artifactsLocationSasToken}')
+        uri(artifactsLocation, 'scripts/postgresql-module.xml.template${artifactsLocationSasToken}')
       ]
     }
     protectedSettings: {
-      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\''
+      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\''
     }
   }
+}
+
+module dbConnectionEndPid './modules/_pids/_empty.bicep' = if (enableDB) {
+  name: 'b742ad57-826f-5a4f-981f-eb4d152c3c21'
+  params: {}
+  dependsOn: [
+    vmName_jbosseap_setup_extension
+  ]
 }
