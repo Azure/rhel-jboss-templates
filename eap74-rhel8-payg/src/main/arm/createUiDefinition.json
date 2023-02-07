@@ -626,9 +626,7 @@
                                 },
                                 "toolTip": "Database password",
                                 "constraints": {
-                                    "required": true,
-                                    "regex": "^((?=.*[0-9])(?=.*[a-zA-Z!@#$%^&*])).{6,128}$",
-                                    "validationMessage": "The password must be between 6 and 128 characters long and have at least one number."
+                                    "required": true
                                 },
                                 "options": {
                                     "hideConfirmation": false
