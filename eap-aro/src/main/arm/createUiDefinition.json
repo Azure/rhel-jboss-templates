@@ -241,6 +241,18 @@
                         }
                     },
                     {
+                        "name": "s2iExplainerLink",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "Source-to-Image (S2I) is a toolkit and workflow for building reproducible container images from source code.",
+                            "link": {
+                                "label": "S2I Reference",
+                                "uri": "https://github.com/openshift/source-to-image#readme"
+                            }
+                        }
+                    },
+                    {
                         "name": "appSrcInfo",
                         "type": "Microsoft.Common.Section",
                         "label": "Provide application deployment information",
