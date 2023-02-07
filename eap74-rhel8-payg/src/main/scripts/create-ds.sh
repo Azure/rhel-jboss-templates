@@ -23,6 +23,7 @@ mkdir -p "$jdbcDriverModuleDirectory"
 jdbcDriverModuleTemplate=${dbType}-module.xml.template
 jdbcDriverModule=module.xml
 cp $jdbcDriverModuleTemplate $jdbcDriverModule
+chmod 777 $jdbcDriverModule
 
 # retry attempt for curl command
 retryMaxAttempt=5

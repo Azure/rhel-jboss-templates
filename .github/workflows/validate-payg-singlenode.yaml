@@ -178,7 +178,7 @@ jobs:
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ env.postgresqlHost }}:5432/testdb"
                   dbUser=testuser@${{ env.dbInstanceName }}
-                  dbPassword=${{ env.postgresqlDBPassword }}
+                  dbPassword=${{ env.dbPassword }}
                 fi
 
                 echo "generate parameter file for single"
