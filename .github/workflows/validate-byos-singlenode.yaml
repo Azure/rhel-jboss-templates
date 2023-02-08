@@ -3,6 +3,14 @@ name: Validate byos offer
 on:
   workflow_dispatch:
     inputs:
+      databaseType:
+        description: 'Database connection'
+        required: true
+        default: 'postgresql'
+        type: choice
+        options:
+        - postgresql
+        - none
       isForDemo:
         description: 'If set to true, resources will not be deleted'
         required: true
@@ -16,6 +24,8 @@ env:
     vmName: ${{ github.run_id }}${{ github.run_number }}vm
     adminUsername: azureadmin
     password: ${{ secrets.VM_PASSWORD }}
+    dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
+    dbPassword: ${{ secrets.DATABASE_PASSWORD }}
     singleStorageAccountName: ${{ github.run_id }}${{ github.run_number }}singlesa
     jbossEAPUserName: jbossadmin
     jbossEAPPassword: ${{ secrets.JBOSS_EAP_USER_PASSWORD }}
@@ -135,8 +145,47 @@ jobs:
                 git status
                 git commit -m "test branch for pipeline"
                 git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f
+            - uses: azure/login@v1
+              id: azure-login
+              with:
+                creds: ${{ env.azureCredentials }}
+            - name: Accept Image Terms
+              id: accept-terms
+              run: |
+                  echo "accept terms for VM image"
+                  az vm image terms accept --urn redhat:rhel-byos:rhel-lvm84:latest
+            - name: Deploy an instance of Azure Database for PostgreSQL
+              if: ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}
+              run: |
+                az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
+                az postgres server create \
+                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --admin-user testuser --admin-password ${{ env.dbPassword }} \
+                  --location ${{ env.location }}
+                host=$(az postgres server show \
+                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --query "fullyQualifiedDomainName" -o tsv)
+                echo "postgresqlHost=${host}" >> $GITHUB_ENV
+                # Allow Azure services to access
+                az postgres server firewall-rule create \
+                  --resource-group ${{ env.singleResourceGroup }} --server ${{ env.dbInstanceName }} \
+                  --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+                az postgres db create --resource-group ${{ env.singleResourceGroup }} --server ${{ env.dbInstanceName }} --name testdb
             - name: Prepare parameter file
               run: |
+                enableDB=false
+                databaseType=postgresql
+                dsConnectionURL=jdbc:postgresql://contoso.postgres.database:5432/testdb
+                dbUser=contosoDbUser
+                dbPassword=contosoDbPwd
+                if ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}; then
+                  enableDB=true
+                  databaseType=postgresql
+                  dsConnectionURL="jdbc:postgresql://${{ env.postgresqlHost }}:5432/testdb"
+                  dbUser=testuser@${{ env.dbInstanceName }}
+                  dbPassword=${{ env.dbPassword }}
+                fi
+
                 echo "generate parameter file for single"
                 bash rhel-jboss-templates/eap74-rhel8-byos/src/test/scripts/gen-parameters.sh \
                 <<< "rhel-jboss-templates/eap74-rhel8-byos/src/test/parameters-test-single.json  \
@@ -154,23 +203,22 @@ jobs:
                 ${rhsmUserName} \
                 ${rhsmPassword} \
                 ${rhsmPoolEAP} \
-                ${rhsmPoolRHEL}"
+                ${rhsmPoolRHEL} \
+                ${enableDB} \
+                ${databaseType} \
+                jdbc/JavaEECafeDB \
+                ${dsConnectionURL} \
+                ${dbUser} \
+                ${dbPassword}"
+
             - name: Archive parameters-test-single.json
               uses: actions/upload-artifact@v1
               if: success()
               with:
                 name: parameters-test-single
                 path: rhel-jboss-templates/eap74-rhel8-byos/src/test/parameters-test-single.json
-            - uses: azure/login@v1
-              id: azure-login
-              with:
-                creds: ${{ env.azureCredentials }}
-            - name: Accept Image Terms
-              id: accept-terms
-              run: |
-                  echo "accept terms for VM image"
-                  az vm image terms accept --urn redhat:rhel-byos:rhel-lvm84:latest
-            - name: Create Resource Group
+            - name: Create Resource Group if needed
+              if: ${{ inputs.databaseType == 'none' || github.event.client_payload.databaseType == 'none' }}
               uses: azure/CLI@v1
               with:
                 azcliversion: ${{ env.azCliVersion }}
@@ -198,8 +246,8 @@ jobs:
                     # Create NSG rule to allow inbound traffic to port 9990
                     az network nsg rule create -g ${{ env.singleResourceGroup }} --nsg-name ${{ env.nsgName }} -n rule_9990 --priority 100 \
                       --source-address-prefixes '*' --source-port-ranges '*' \
-                      --destination-address-prefixes '*' --destination-port-ranges 9990 --access Allow \
-                      --protocol '*' --description "allow 9990"
+                      --destination-address-prefixes '*' --destination-port-ranges 9990 8080 --access Allow \
+                      --protocol '*' --description "allow 9990,8080"
                     # Create public IP
                     az network public-ip create --name ${{ env.testPubIpName }} --resource-group ${{ env.singleResourceGroup }}
                     # Query VM NIC name
