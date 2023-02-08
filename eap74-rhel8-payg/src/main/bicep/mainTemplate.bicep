@@ -88,23 +88,6 @@ param rhsmPassword string = newGuid()
 @maxLength(32)
 param rhsmPoolEAP string = take(newGuid(), 32)
 
-@description('Boolean value indicating, if user wants to enable database connection.')
-param enableDB bool = false
-@allowed([
-  'postgresql'
-])
-@description('One of the supported database types')
-param databaseType string = 'postgresql'
-@description('JNDI Name for JDBC Datasource')
-param jdbcDataSourceJNDIName string = 'jdbc/contoso'
-@description('JDBC Connection String')
-param dsConnectionURL string = 'jdbc:postgresql://contoso.postgres.database:5432/testdb'
-@description('User id of Database')
-param dbUser string = 'contosoDbUser'
-@secure()
-@description('Password for Database')
-param dbPassword string = newGuid()
-
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated')
 param artifactsLocation string = deployment().properties.templateLink.uri
 
@@ -123,6 +106,23 @@ param satelliteOrgName string = ''
 
 @description('Red Hat Satellite Server VM FQDN name.')
 param satelliteFqdn string = ''
+
+@description('Boolean value indicating, if user wants to enable database connection.')
+param enableDB bool = false
+@allowed([
+  'postgresql'
+])
+@description('One of the supported database types')
+param databaseType string = 'postgresql'
+@description('JNDI Name for JDBC Datasource')
+param jdbcDataSourceJNDIName string = 'jdbc/contoso'
+@description('JDBC Connection String')
+param dsConnectionURL string = 'jdbc:postgresql://contoso.postgres.database:5432/testdb'
+@description('User id of Database')
+param dbUser string = 'contosoDbUser'
+@secure()
+@description('Password for Database')
+param dbPassword string = newGuid()
 
 var nicName_var = '${uniqueString(resourceGroup().id)}-nic'
 var networkSecurityGroupName_var = 'jbosseap-nsg'
