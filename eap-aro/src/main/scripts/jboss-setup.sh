@@ -154,14 +154,14 @@ wait_deployment_complete() {
     done
 }
 
-wait_scalation_complete() {
-    deploymentConfigName=$1
-    namespaceName=$2
+wait_image_deployment_complete() {
+    application_name=$1
+    project_name=$2
     logFile=$3
 
     cnt=0
-    read -r -a replicas <<< `oc get deploymentconfig ${deploymentConfigName} -n ${namespaceName} -o=jsonpath='{.spec.replicas}{" "}{.status.readyReplicas}{" "}{.status.availableReplicas}{" "}{.status.updatedReplicas}{"\n"}'`
-    while [[ ${#replicas[@]} -ne 4 || ${replicas[0]} != ${replicas[1]} || ${replicas[1]} != ${replicas[2]} || ${replicas[2]} != ${replicas[3]} ]]
+    read -r -a replicas <<< `oc get wildflyserver ${application_name} -n ${project_name} -o=jsonpath='{.spec.replicas}{" "}{.status.replicas}{"\n"}'`
+    while [[ ${#replicas[@]} -ne 2 || ${replicas[0]} != ${replicas[1]} ]]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
             echo "Timeout and exit due to the maximum retries reached." >> $logFile 
@@ -169,18 +169,18 @@ wait_scalation_complete() {
         fi
         cnt=$((cnt+1))
         # Delete pods in ImagePullBackOff status
-        podIds=`oc get pod -n ${namespaceName} | grep ImagePullBackOff | awk '{print $1}'`
+        podIds=`oc get pod -n ${project_name} | grep ImagePullBackOff | awk '{print $1}'`
         read -r -a podIds <<< `echo $podIds`
         for podId in "${podIds[@]}"
         do
             echo "Delete pod ${podId} in ImagePullBackOff status" >> $logFile
-            oc delete pod ${podId} -n ${namespaceName}
+            oc delete pod ${podId} -n ${project_name}
         done
         sleep 5
-        echo "Wait until the deploymentConfig ${deploymentConfigName} completes, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
-        read -r -a replicas <<< `oc get deploymentconfig ${deploymentConfigName} -n ${namespaceName} -o=jsonpath='{.spec.replicas}{" "}{.status.readyReplicas}{" "}{.status.availableReplicas}{" "}{.status.updatedReplicas}{"\n"}'`
+        echo "Wait until the deploymentConfig ${application_name} completes, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        read -r -a replicas <<< `oc get wildflyserver ${application_name} -n ${project_name} -o=jsonpath='{.spec.replicas}{" "}{.status.replicas}{"\n"}'`
     done
-    echo "Deployment ${deploymentConfigName} completed." >> $logFile
+    echo "Deployment ${application_name} completed." >> $logFile
 }
 
 wait_route_available() {
@@ -237,7 +237,7 @@ wait_project_created() {
     done
 }
 
-wait_application_created() {
+wait_application_image_created() {
     project_name=$1
     application_name=$2
     src_repo_url=$3
@@ -245,14 +245,14 @@ wait_application_created() {
     src_repo_dir=$5
     logFile=$6
     cnt=0
-    oc new-app --template=eap74-basic-s2i \
-        -p IMAGE_STREAM_NAMESPACE=${project_name} \
-        -p APPLICATION_NAME=${application_name} \
-        -p EAP_IMAGE_NAME=jboss-eap74-openjdk11-openshift:7.4.0 \
-        -p EAP_RUNTIME_IMAGE_NAME=jboss-eap74-openjdk11-runtime-openshift:7.4.0 \
+    oc process eap-s2i-build \
+        -p APPLICATION_IMAGE=${application_name} \
+        -p EAP_IMAGE=jboss-eap74-openjdk11-openshift:7.4.0 \
+        -p EAP_RUNTIME_IMAGE=jboss-eap74-openjdk11-runtime-openshift:7.4.0 \
+        -p EAP_IMAGESTREAM_NAMESPACE=${project_name} \
         -p SOURCE_REPOSITORY_URL=${src_repo_url} \
         -p SOURCE_REPOSITORY_REF=${src_repo_ref} \
-        -p CONTEXT_DIR=${src_repo_dir} 2>/dev/null
+        -p CONTEXT_DIR=${src_repo_dir} | oc apply -f - 2>/dev/null
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -260,16 +260,16 @@ wait_application_created() {
             return 1
         fi
         cnt=$((cnt+1))
-        echo "Unable to create the application, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        echo "Unable to create the application image, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc new-app --template=eap74-basic-s2i \
-            -p IMAGE_STREAM_NAMESPACE=${project_name} \
-            -p APPLICATION_NAME=${application_name} \
-            -p EAP_IMAGE_NAME=jboss-eap74-openjdk11-openshift:7.4.0 \
-            -p EAP_RUNTIME_IMAGE_NAME=jboss-eap74-openjdk11-runtime-openshift:7.4.0 \
+        oc process eap-s2i-build \
+            -p APPLICATION_IMAGE=${application_name} \
+            -p EAP_IMAGE=jboss-eap74-openjdk11-openshift:7.4.0 \
+            -p EAP_RUNTIME_IMAGE=jboss-eap74-openjdk11-runtime-openshift:7.4.0 \
+            -p EAP_IMAGESTREAM_NAMESPACE=${project_name} \
             -p SOURCE_REPOSITORY_URL=${src_repo_url} \
             -p SOURCE_REPOSITORY_REF=${src_repo_ref} \
-            -p CONTEXT_DIR=${src_repo_dir} 2>/dev/null
+            -p CONTEXT_DIR=${src_repo_dir} | oc apply -f - 2>/dev/null
     done
 }
 
@@ -285,9 +285,27 @@ wait_file_based_creation() {
             return 1
         fi
         cnt=$((cnt+1))
-        echo "Unable to complete creation, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        echo "Unable to apply file, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
         oc apply -f ${deploymentFile} 2>/dev/null
+    done
+}
+
+wait_file_based_replacement() {
+    templateFile=$1
+    logFile=$2
+    cnt=0
+    oc replace --force -f ${templateFile} 2>/dev/null
+    while [ $? -ne 0 ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
+            return 1
+        fi
+        cnt=$((cnt+1))
+        echo "Unable to complete replacement, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        sleep 5
+        oc replace --force -f ${templateFile} 2>/dev/null
     done
 }
 
@@ -392,30 +410,20 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
         exit 1
     fi
 
-    # Import command for templates, we assume it is the first time
-    echo "Import command for templates, we assume it is the first time" >> $logFile
-    for resource in \
-        eap74-amq-persistent-s2i.json \
-        eap74-amq-s2i.json \
-        eap74-basic-s2i.json \
-        eap74-https-s2i.json \
-        eap74-sso-s2i.json
-
-    do
-        echo "Now import ${resource}" >> $logFile
-        resourceFile="https://raw.githubusercontent.com/jboss-container-images/jboss-eap-openshift-templates/eap74/templates/${resource}"
-        wait_file_based_creation ${resourceFile} $logFile
-        if [[ $? != 0 ]]; then
-            echo "Failed to import command for JDK 11." >&2
-            exit 1
-        fi
-    done
-
-    # Create a new application
-    echo "Create a new application" >> $logFile
-    wait_application_created ${PROJECT_NAME} ${APPLICATION_NAME} ${SRC_REPO_URL} ${SRC_REPO_REF} ${SRC_REPO_DIR} $logFile
+    # Import eap-s2i-build template
+    echo "Import eap-s2i-build template" >> $logFile
+    eapS2iBuildTemplate="https://raw.githubusercontent.com/jboss-container-images/jboss-eap-openshift-templates/master/eap-s2i-build.yaml"
+    wait_file_based_replacement ${eapS2iBuildTemplate} $logFile
     if [[ $? != 0 ]]; then
-        echo "Failed to complete application creation progress." >&2
+        echo "Failed to import eap-s2i-build template." >&2
+        exit 1
+    fi
+
+    # Create a new application image
+    echo "Create a new application image" >> $logFile
+    wait_application_image_created ${PROJECT_NAME} ${APPLICATION_NAME} ${SRC_REPO_URL} ${SRC_REPO_REF} ${SRC_REPO_DIR} $logFile
+    if [[ $? != 0 ]]; then
+        echo "Failed to complete application image creation progress." >&2
         exit 1
     fi
 
@@ -434,26 +442,30 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
         echo "Failed to complete image push progress." >&2
         exit 1
     fi
+    
+    # Create image deployment YAML file
+    echo "Create image deployment YAML file" >> $logFile
+    appDeploymentTemplate=app-deployment.yaml.template >> $logFile
+    appDeploymentFile=app-deployment.yaml >> $logFile
+    envsubst < "$appDeploymentTemplate" > "$appDeploymentFile"
 
-    # Scale up the application instance
-    echo "Scale up the application instance" >> $logFile
-    oc scale deploymentconfig ${APPLICATION_NAME} --replicas=${APP_REPLICAS} >> $logFile 
+    # Apply image deployment file
+    echo "Apply image deployment file" >> $logFile
+    wait_file_based_creation ${appDeploymentFile} ${logFile}
     if [[ $? != 0 ]]; then
-        echo "Failed to kick off scalation progress." >&2
+        echo "Failed to apply image deployment file." >&2
         exit 1
     fi
 
-    # Wait until the application scalation completes
-    wait_scalation_complete ${APPLICATION_NAME} ${PROJECT_NAME} ${logFile}
-    if [[ $? != 0 ]]; then
-        echo "The application is not available." >> $logFile
-        exit 1
-    fi
+    # Wait image deployment
+    echo "Wait image deployment" >> $logFile
+    wait_image_deployment_complete ${APPLICATION_NAME} ${PROJECT_NAME} $logFile
 
     # Get the route of the application
     echo "Get the route of the application" >> $logFile
+    oc expose svc/${APPLICATION_NAME}-loadbalancer
     appEndpoint=
-    wait_route_available ${APPLICATION_NAME} ${PROJECT_NAME} $logFile
+    wait_route_available ${APPLICATION_NAME}-loadbalancer ${PROJECT_NAME} $logFile
     if [[ $? -ne 0 ]]; then
         echo "The route ${APPLICATION_NAME} is not available." >> $logFile
         exit 1

@@ -49,6 +49,7 @@ var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jboss-setup.sh'
 var const_eapOperatorSubscriptionYaml = 'eap-operator-sub.yaml'
 var const_rhContainerRegistryPullSecretYaml = 'red-hat-container-registry-pull-secret.yaml.template'
+var const_appDeploymentYaml = 'app-deployment.yaml.template'
 var const_azcliVersion = '2.15.0'
 
 resource jbossSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
@@ -112,6 +113,7 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     supportingScriptUris: [
       uri(const_scriptLocation, '${const_eapOperatorSubscriptionYaml}${artifactsLocationSasToken}')
       uri(const_scriptLocation, '${const_rhContainerRegistryPullSecretYaml}${artifactsLocationSasToken}')
+      uri(const_scriptLocation, '${const_appDeploymentYaml}${artifactsLocationSasToken}')
     ]
     cleanupPreference:'OnSuccess'
     retentionInterval: 'P1D'
