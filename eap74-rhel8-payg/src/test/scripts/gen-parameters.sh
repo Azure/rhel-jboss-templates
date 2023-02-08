@@ -77,6 +77,9 @@ cat <<EOF > ${parametersPath}
         "rhsmPassword": {
             "value": "${rhsmPassword}"
         },
+        "rhsmPoolEAP": {
+            "value": "${rhsmPoolEAP}"
+        },
         "enableDB": {
             "value": ${enableDB}
         },
