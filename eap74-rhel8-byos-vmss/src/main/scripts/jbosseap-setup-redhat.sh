@@ -59,6 +59,12 @@ SATELLITE_ORG_NAME_BASE64=${20}
 SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
 SATELLITE_VM_FQDN=${21}
 JDK_VERSION=${22}
+enableDB=${23}
+dbType=${24}
+jdbcDSJNDIName=${25}
+dsConnectionString=${26}
+databaseUser=${27}
+databasePassword=${28}
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | log; flag=${PIPESTATUS[0]}
@@ -239,6 +245,19 @@ if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration F
 
 # Seeing a race condition timing error so sleep to delay
 sleep 20
+
+# Configure JDBC driver and data source
+if [ "$enableDB" == "True" ]; then
+    jdbcDataSourceName=dataSource-$dbType
+    ./create-ds.sh $EAP_HOME/wildfly "$dbType" "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword"
+
+    # Test connection for the created data source
+    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --connect "/subsystem=datasources/data-source=dataSource-$dbType:test-connection-in-pool" | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ]; then 
+        echo "ERROR! Test data source connection failed." >&2 log
+        exit $flag
+    fi
+fi
 
 echo "Red Hat JBoss EAP Cluster Intallation End " | log; flag=${PIPESTATUS[0]}
 /bin/date +%H:%M:%S  | log; flag=${PIPESTATUS[0]}
