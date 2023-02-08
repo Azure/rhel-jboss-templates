@@ -172,7 +172,7 @@ fi
 # Seeing a race condition timing error so sleep to delay
 sleep 20
 
-# Configure JDBC provider and data source
+# Configure JDBC driver and data source
 if [ "$enableDB" == "True" ]; then
     jdbcDataSourceName=dataSource-$dbType
     ./create-ds.sh $EAP_HOME "$dbType" "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword"
