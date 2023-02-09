@@ -10,75 +10,19 @@ There are three different types of EAP on VM offers based on their outcomes.
 
 #### JBoss EAP standalone on RHEL VM(PAYG/BYOS)
 
-This offer provisions a single Red Hat JBoss EAP server with JBoss EAP management console. All supporting Azure resources are automatically provisioned.
-
-* Computing resources
-    * A RHEL 8.6 VM with the following settings based on user's choice:
-        * Choice of VM size
-* Network resources
-    * A virtual network and a subnet if users choose to create a new virtual network. You can also choose to deploy into a pre-existing virtual network.
-    * A network security group if users choose to create a new virtual network.
-    * A network interface with a private IP address.
-* Key software components
-    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The **EAP_HOME** is **/opt/rh/eap7/root/usr/share/wildfly**.
-    * OpenJDK 8, 11, or 17. The **JAVA_HOME** is a subdirectory of **/usr/lib/jvm**, depending on the selected JDK version.
-    * This JBoss EAP host can be registered to an existing Red Hat Satellite server for management.
+[Deployment description](eap74-rhel8-payg/src/main/resources/marketing-artifacts/partner-center.html)
 
 #### JBoss EAP Cluster on VM Scale Sets(PAYG/BYOS)
 
-This offer provisions a Red Hat JBoss EAP server, JBoss EAP management console, and an EAP cluster on Azure Virtual Machine Scale Sets. All supporting Azure resources are automatically provisioned.
-
-* Computing resources
-    * A virtual machine scale sets(VMSS) based on RHEL 8.6 image with the following settings based on user's choice:
-        * Number of instances
-        * Choice of VM size
-    * An OS disk attached to the VM.
-* Network resources
-    * A virtual network and a subnet if users choose to create a new virtual network. You can also choose to deploy into a pre-existing virtual network.
-    * A network security group if users choose to create a new virtual network.
-    * A public IP address for application gateway if users choose to enable.
-* Load balancing resources
-    * An application gateway if users choose to enable.
-* Storage resources
-    * A storage account if users choose to enable boot diagnostics and create a new storage account.
-    * A storage account for setting up Azure ping protocol for JGroups usage.
-    * A network interface with a private IP address.
-* Key software components
-    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The **EAP_HOME** is **/opt/rh/eap7/root/usr/share/wildfly**.
-    * OpenJDK 8, 11, or 17. The **JAVA_HOME** is a subdirectory of **/usr/lib/jvm**, depending on the selected JDK version.
-    * This JBoss EAP host can be registered to an existing Red Hat Satellite server for management.
+[Deployment description](eap74-rhel8-payg-vmss/src/main/resources/marketing-artifacts/partner-center.html)
 
 #### JBoss EAP Cluster on VMs(PAYG/BYOS)
 
-
-This offer provisions a Red Hat JBoss EAP server, JBoss EAP management console, and an EAP cluster. All supporting Azure resources are automatically provisioned.
-
-* The offer includes a choice of Red Hat OpenJDK 8, 11, and 17.
-
-* Computing resources
-    * VMs with the followings configurations:
-      * A VM to run the JBoss EAP management console and an arbitrary number of VMs to run JBoss EAP servers
-      * Choice of VM size
-    * A number of OS disks attached to the VM.
-* Network resources
-    * An virtual network and a subnet if users choose to create a new virtual network. Users can also bring their own.
-    * A network security group if users choose to create a new virtual network.
-    * A public IP address for application gateway if users choose to enable.
-    * A number of network interface for virtual machines based on user's choice of "Number of instances".
-    * A number of public IP addresses for virtual machines based on user's choice of "Number of instances".
-* Load balancing resources
-    * An application gateway if users choose to enable.
-* Storage resources
-    * A storage account for setting up Azure ping protocol for JGroups usage.
-    * A storage account for sharing configuration files between virtual machines.
-* Key software components
-    * A JBoss EAP 7.4 standalone instance with user provided admin credentials. The **EAP_HOME** is **/opt/rh/eap7/root/usr/share/wildfly**.
-    * OpenJDK 8, 11, or 17. The **JAVA_HOME** is a subdirectory of **/usr/lib/jvm**, depending on the selected JDK version.
-    * This JBoss EAP host can be registered to an existing Red Hat Satellite server for management.
+[Deployment description](eap74-rhel8-payg-multivm/src/main/resources/marketing-artifacts/partner-center.html)
 
 ### Red Hat JBoss EAP on ARO
 
-[Partner center verbiage](eap-aro/src/main/resources/marketing-artifacts/partner-center.html)
+[Deployment description](eap-aro/src/main/resources/marketing-artifacts/partner-center.html)
 
 ## Build zipped offers
 1. Clean up the folder offers. This step is optional.
