@@ -1,32 +1,35 @@
 <h1>Name</h1>
-<p>JBoss EAP Cluster on Azure Red Hat OpenShift</p>
+<p>JBoss EAP on Azure Red Hat OpenShift</p>
 <h1>Search results summary</h1>
 <p>Run JBoss EAP workloads on Azure Red Hat OpenShift</p>
 <h1>Short description</h1>
-<p>JBoss EAP is a leading Java application server running some of the most mission-critical enterprise applications in the world. This offer accelerates deploying JBoss EAP workloads to Azure Red Hat OpenShift</p>
+<p>JBoss EAP is a leading Java application server running some of the most mission-critical enterprise applications in the world.
+  This offer accelerates deploying JBoss EAP workloads to Azure Red Hat OpenShift.</p>
 <h1>Description</h1>
-
-<p>This offer provisions the JBoss EAP operator on Azure Red Hat OpenShift and any necessary supporting Azure resources.</p>
+<p>JBoss EAP is a leading Java application server running some of the most mission-critical enterprise applications in the world. This
+   solution automates most boilerplate steps to provision JBoss EAP on an Azure Red Hat OpenShift (ARO) cluster. Once initial provisioning
+   is complete, you are completely free to customize deployments further. The solution is jointly developed by Red Hat and Microsoft.</p>
+<p>The following resources are automatically provisioned by the offer.</p>
 <ul>
-<li>Network resources<ul>
-<li>An virtual network and a subnet.</li>
+  <li>ARO cluster (alternatively, you can deploy to an existing ARO cluster)</li>
+  <li>JBoss EAP Operator</li>
+  <li>Sample getting started application</li>
+  <li>Custom application deployment using Source-to-Image (S2I), based on JDK 11 and JBoss EAP 7.4</li>
+  <li>Virtual network and subnet</li>
 </ul>
-</li>
-<li>Computing resources<ul>
-<li>An Azure Red Hat OpenShift.</li>
+<p>This offer requires a JBoss EAP subscription and works on a Bring-Your-Own-Subscription (BYOS) basis. Red Hat and Microsoft also
+provide basic step-by-step instructions on getting started with JBoss EAP and ARO without automated provisioning.</p>
+<p>Red Hat and Microsoft provide similar solutions targeting Azure Virtual Machines and App Service. These options are linked in the
+<i>Learn more</i> section below.</p>
+<p><i>You can reach out to the engineering team developing these offers by clicking the CONTACT ME button on the
+<a href="https://aka.ms/eap-contact-me">marketplace
+JBoss EAP on Azure overview</a> page. Program managers, architects and engineers will get in touch and can assist you for free with
+your Azure migration.</i></p>
+<h2>Links</h2>
+<ul>
+    <li><a href="https://learn.microsoft.com/en-us/azure/developer/java/ee/jboss-on-azure">JBoss EAP on Azure</a></li>
+    <li><a href="https://aka.ms/eap-contact-me">JBoss EAP on Azure Marketplace Overview</a></li>
+    <li><a href="https://aka.ms/eap-vm-clutser-portal">JBoss EAP Cluster on Azure VMs</a></li>
+    <li><a href="https://aka.ms/eap-vm-single-portal">Standalone JBoss EAP on Azure VM</a></li>
+    <li><a href="https://aka.ms/eap-app-service-portal">JBoss EAP on App Service</a></li>
 </ul>
-</li>
-<li>Managed identity(to be removed)<ul>
-<li>An user assigned managed identity for running deployment scripts on created ARO.</li>
-</ul>
-</li>
-<li>Software components<ul>
-<li>The latest version of JBoss EAP Operator.</li>
-<li>Source-to-Image application deployment if users choose to enable. The deployment environment is based on JDK 11 and EAP7.4.</li>
-</ul>
-</li>
-</ul>
-
-<p>Red Hat JBoss Enterprise Application Platform (JBoss EAP) is a leading Java application server running some of the most mission-critical enterprise applications in the world.</p>
-<p>This offer automatically provisions several Azure resources to quickly create a JBoss EAP deployment on Azure Red Hat OpenShift. The automatically provisioned resources include virtual network, Azure Red Hat OpenShift cluster, network security group, and JBoss EAP Operator for OpenShift. The offer supports the latest versions of JBoss EAP 7, OpenJDK 8, and RHEL 8.</p>
-<p>This offer requires a JBoss EAP subscription and works on a Bring-Your-Own-Subscription (BYOS) basis.</p>
