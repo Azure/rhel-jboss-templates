@@ -78,17 +78,7 @@ This offer provisions a Red Hat JBoss EAP server, JBoss EAP management console, 
 
 ### Red Hat JBoss EAP on ARO
 
-This offer provisions the JBoss EAP operator on Azure Red Hat OpenShift and any necessary supporting azure resources.
-
-* Network resources
-    * An virtual network and a subnet.
-* Computing resources
-    * An Azure Red Hat OpenShift.
-* Managed identity(to be removed)
-    * An user assigned managed identity for running deployment scripts on created ARO.
-* Software components
-    * The latest version of JBoss EAP Operator.
-    * Source-to-Image application deployment if users choose to enable. The deployment environment is based on JDK 11 and EAP7.4.
+[Partner center verbiage](eap-aro/src/main/resources/marketing-artifacts/partner-center.html)
 
 ## Build zipped offers
 1. Clean up the folder offers. This step is optional.
