@@ -592,6 +592,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
     satelliteOrgName: satelliteOrgName
     satelliteFqdn: satelliteFqdn
     jdkVersion: jdkVersion
+    nicName: nicName_var
   }
   dependsOn: [
     vmName_resource
