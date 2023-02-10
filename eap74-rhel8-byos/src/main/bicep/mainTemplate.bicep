@@ -112,6 +112,8 @@ param satelliteOrgName string = ''
 @description('Red Hat Satellite Server VM FQDN name.')
 param satelliteFqdn string = ''
 
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
+
 var nicName_var = '${uniqueString(resourceGroup().id)}-nic'
 var networkSecurityGroupName_var = 'jbosseap-nsg'
 var bootDiagnosticsCheck = ((storageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
@@ -127,10 +129,24 @@ var linuxConfiguration = {
     ]
   }
 }
+var name_postDeploymentDsName = format('updateNicPrivateIpStatic{0}', guidValue)
+var obj_uamiForDeploymentScript = {
+  type: 'UserAssigned'
+  userAssignedIdentities: {
+    '${uamiDeployment.outputs.uamiIdForDeploymentScript}': {}
+  }
+}
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-e9412731-57c2-4e6a-9825-061ad30337c0-partnercenter'
   params: {}
+}
+
+module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
+  name: 'uami-deployment'
+  params: {
+    location: location
+  }
 }
 
 resource bootStorageName 'Microsoft.Storage/storageAccounts@2022-05-01' = if (bootDiagnosticsCheck) {
@@ -258,4 +274,21 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
       commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${rhsmPoolRHEL}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\''
     }
   }
+}
+
+module updateNicPrivateIpStatic 'modules/_deployment-scripts/_dsPostDeployment.bicep' = {
+  name: name_postDeploymentDsName
+  params: {
+    name: name_postDeploymentDsName
+    location: location
+    _artifactsLocation: artifactsLocation
+    _artifactsLocationSasToken: artifactsLocationSasToken
+    identity: obj_uamiForDeploymentScript
+    resourceGroupName: resourceGroup().name
+    nicName: nicName_var
+  }
+  dependsOn: [
+    nicName
+    uamiDeployment
+  ]
 }
