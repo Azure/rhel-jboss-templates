@@ -163,6 +163,23 @@ param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
 @description('true to enable cookie based affinity.')
 param enableCookieBasedAffinity bool = false
 
+@description('Boolean value indicating, if user wants to enable database connection.')
+param enableDB bool = false
+@allowed([
+  'postgresql'
+])
+@description('One of the supported database types')
+param databaseType string = 'postgresql'
+@description('JNDI Name for JDBC Datasource')
+param jdbcDataSourceJNDIName string = 'jdbc/contoso'
+@description('JDBC Connection String')
+param dsConnectionURL string = 'jdbc:postgresql://contoso.postgres.database:5432/testdb'
+@description('User id of Database')
+param dbUser string = 'contosoDbUser'
+@secure()
+@description('Password for Database')
+param dbPassword string = newGuid()
+
 var name_managedDomain = 'managed-domain'
 var name_fileshare = 'jbossshare'
 var containerName = 'eapblobcontainer'
@@ -580,6 +597,15 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i
   ]
 }]
 
+module dbConnectionStartPid './modules/_pids/_empty.bicep' = if (enableDB) {
+  name: '5edb2db7-51ee-5b9f-8297-f6a0d51fd850'
+  params: {}
+  dependsOn: [
+    vmName_resource
+    eapStorageAccount
+  ]
+}
+
 module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' = {
   name: name_jbossEAPDsName
   params: {
@@ -606,10 +632,24 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
     satelliteOrgName: satelliteOrgName
     satelliteFqdn: satelliteFqdn
     jdkVersion: jdkVersion
+    enableDB: enableDB
+    databaseType: databaseType
+    jdbcDataSourceJNDIName: jdbcDataSourceJNDIName
+    dsConnectionURL: dsConnectionURL
+    dbUser: dbUser
+    dbPassword: dbPassword
   }
   dependsOn: [
     vmName_resource
     eapStorageAccount
+  ]
+}
+
+module dbConnectionEndPid './modules/_pids/_empty.bicep' = if (enableDB) {
+  name: '73af7d0c-6589-580d-99a5-bcd969f42d0b'
+  params: {}
+  dependsOn: [
+    jbossEAPDeployment
   ]
 }
 
