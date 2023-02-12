@@ -117,13 +117,13 @@ param artifactsLocationSasToken string = ''
 param connectSatellite bool = false
 
 @description('Red Hat Satellite Server activation key.')
-param satelliteActivationKey string = ''
+param satelliteActivationKey string = newGuid()
 
 @description('Red Hat Satellite Server organization name.')
-param satelliteOrgName string = ''
+param satelliteOrgName string = newGuid()
 
 @description('Red Hat Satellite Server VM FQDN name.')
-param satelliteFqdn string = ''
+param satelliteFqdn string = newGuid()
 
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
