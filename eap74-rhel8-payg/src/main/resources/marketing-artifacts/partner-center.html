@@ -47,7 +47,10 @@ This offer accelerates deploying a JBoss EAP workload to an Azure Virtual Machin
 <p>The following resources are automatically provisioned by the offer.</p>
 <ul>
 <li>Red Hat Enterprise Linux (RHEL) VM</li>
-<li>JBoss EAP standalone instance (<strong>EAP_HOME</strong> is <strong>/opt/rh/eap7/root/usr/share/wildfly</strong>).</li>
+<li>JBoss EAP standalone instance (<strong>EAP_HOME</strong> is <strong>/opt/rh/eap7/root/usr/share/wildfly</strong>).<ul>
+<li>Database data source connection if user selects to connect a database</li>
+</ul>
+</li>
 <li>JBoss EAP management console</li>
 <li>Red Hat build of OpenJDK (<strong>JAVA_HOME</strong> is a subdirectory of <strong>/usr/lib/jvm</strong>,
 depending on the selected JDK version).</li>
