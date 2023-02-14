@@ -140,6 +140,13 @@ var linuxConfiguration = {
   }
 }
 
+/*
+* Beginning of the offer deployment
+*/
+module pids './modules/_pids/_pid.bicep' = {
+  name: 'initialization'
+}
+
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-e9412731-57c2-4e6a-9825-061ad30337c0-partnercenter'
   params: {}
@@ -247,10 +254,13 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   ]
 }
 
-module dbConnectionStartPid './modules/_pids/_empty.bicep' = if (enableDB) {
-  name: 'fc3c1d44-5bb6-56af-bc0f-9e6c1d5bf810'
-  params: {}
+module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
+  name: 'dbConnectionStartPid'
+  params: {
+    name: pids.outputs.dbStart
+  }
   dependsOn: [
+    pids
     vmName_resource
   ]
 }
@@ -277,10 +287,13 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
   }
 }
 
-module dbConnectionEndPid './modules/_pids/_empty.bicep' = if (enableDB) {
-  name: 'b742ad57-826f-5a4f-981f-eb4d152c3c21'
-  params: {}
+module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
+  name: 'dbConnectionEndPid'
+  params: {
+    name: pids.outputs.dbEnd
+  }
   dependsOn: [
+    pids
     vmName_jbosseap_setup_extension
   ]
 }

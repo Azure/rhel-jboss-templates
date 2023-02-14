@@ -300,7 +300,6 @@ module failFastDeployment 'modules/_deployment-scripts/_ds-failfast.bicep' = {
     satelliteFqdn: satelliteFqdn
   }
   dependsOn: [
-    partnerCenterPid
     uamiDeployment
   ]
 }
@@ -597,10 +596,13 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i
   ]
 }]
 
-module dbConnectionStartPid './modules/_pids/_empty.bicep' = if (enableDB) {
-  name: '5edb2db7-51ee-5b9f-8297-f6a0d51fd850'
-  params: {}
+module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
+  name: 'dbConnectionStartPid'
+  params: {
+    name: pids.outputs.dbStart
+  }
   dependsOn: [
+    pids
     vmName_resource
     eapStorageAccount
   ]
@@ -645,10 +647,13 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
   ]
 }
 
-module dbConnectionEndPid './modules/_pids/_empty.bicep' = if (enableDB) {
-  name: '73af7d0c-6589-580d-99a5-bcd969f42d0b'
-  params: {}
+module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
+  name: 'dbConnectionEndPid'
+  params: {
+    name: pids.outputs.dbEnd
+  }
   dependsOn: [
+    pids
     jbossEAPDeployment
   ]
 }

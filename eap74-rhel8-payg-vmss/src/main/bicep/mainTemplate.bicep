@@ -393,10 +393,13 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2022-05-
   }
 }
 
-module dbConnectionStartPid './modules/_pids/_empty.bicep' = if (enableDB) {
-  name: '5d244bcd-2277-5f17-a92a-9c06df55a6ac'
-  params: {}
+module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
+  name: 'dbConnectionStartPid'
+  params: {
+    name: pids.outputs.dbStart
+  }
   dependsOn: [
+    pids
     appgwDeployment
     virtualNetworkName_resource
     bootStorageName
@@ -494,10 +497,13 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2022-08-01'
   ]
 }
 
-module dbConnectionEndPid './modules/_pids/_empty.bicep' = if (enableDB) {
-  name: 'dfe281b6-b9c5-59ea-b1cd-2b6de35b842e'
-  params: {}
+module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
+  name: 'dbConnectionEndPid'
+  params: {
+    name: pids.outputs.dbEnd
+  }
   dependsOn: [
+    pids
     vmssInstanceName
   ]
 }

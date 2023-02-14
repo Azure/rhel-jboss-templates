@@ -7,3 +7,5 @@ module pidStart './_empty.bicep' = if (name != 'pid'){
 
 output appgwEnd string = '62974874-11fb-4fb8-b158-1c1423c60a2f'
 output appgwStart string = '30186e04-251a-48df-8669-3c9bcd4bbb25'
+output dbEnd string = '97e0dcfa-fb7d-52be-9575-4ef4c5e0205a'
+output dbStart string = '52b387ed-c667-5804-8abe-34a7d477366c'
