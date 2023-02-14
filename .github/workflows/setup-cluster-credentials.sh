@@ -33,7 +33,7 @@ USER_NAME=
 USER_EMAIL=
 # Personal token for preceding GitHub account.
 GIT_TOKEN=
-# Password for database user db2inst1 (IBM DB2) and testuser (other database types)
+# Password for database user 'testuser'
 DATABASE_PASSWORD=
 
 # End set environment variables
