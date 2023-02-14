@@ -497,7 +497,7 @@ jobs:
                     --name multivm-standalone \
                     --parameters @rhel-jboss-templates/eap74-rhel8-byos-multivm/src/test/parameters-test-standalone.json \
                     --template-file rhel-jboss-templates/eap74-rhel8-byos-multivm/mainTemplate.json
-            - name: Query public ip of public Application Gateway
+            - name: Query public ip of Application Gateway
               id: query_app_gateway_public_ip
               uses: azure/CLI@v1
               with:
