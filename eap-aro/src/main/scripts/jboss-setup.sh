@@ -237,6 +237,26 @@ wait_project_created() {
     done
 }
 
+wait_add_view_role() {
+    namespaceName=$1
+    logFile=$2
+    cnt=0
+    oc policy add-role-to-user view system:serviceaccount:${namespaceName}:default -n ${namespaceName} 2>/dev/null
+    while [ $? -ne 0 ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
+            return 1
+        fi
+        cnt=$((cnt+1))
+        echo "Unable to add view role to project ${namespaceName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        sleep 5
+        oc policy add-role-to-user view system:serviceaccount:${namespaceName}:default -n ${namespaceName} 2>/dev/null
+    done
+}
+
+
+
 wait_application_image_created() {
     project_name=$1
     application_name=$2
@@ -377,6 +397,15 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
         echo "Failed to create project ${PROJECT_NAME}." >&2
         exit 1
     fi
+
+    # Enable the containers to "view" the namespace
+    wait_add_view_role ${PROJECT_NAME} ${logFile}
+    if [[ $? -ne 0 ]]; then
+        echo "Add view role to ${PROJECT_NAME}." >&2
+        exit 1
+    fi
+    
+    
     oc project ${PROJECT_NAME}
 
     # Create secret YAML file
