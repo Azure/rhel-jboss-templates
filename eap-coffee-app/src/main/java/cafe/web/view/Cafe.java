@@ -2,7 +2,12 @@ package cafe.web.view;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.invoke.MethodHandles;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
+import java.util.logging.Logger;
+
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
@@ -23,6 +28,7 @@ import cafe.model.entity.Coffee;
 public class Cafe implements Serializable {
 
 	private static final long serialVersionUID = 1L;
+	private static final Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass().getName());
 
 	private String baseUri;
 	private transient Client client;
@@ -56,7 +62,12 @@ public class Cafe implements Serializable {
 	}
 
     public String getHostName() {
-        return System.getenv("HOSTNAME");
+        try {
+            return InetAddress.getLocalHost().toString();
+        } catch (UnknownHostException ex) {
+            logger.severe("Can't get local host info.");
+            return "";
+        }
     }
 
 	@PostConstruct
