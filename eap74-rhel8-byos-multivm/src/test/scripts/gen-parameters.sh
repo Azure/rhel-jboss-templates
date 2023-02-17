@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 #read arguments from stdin
-read parametersPath gitUserName testbranchName location vmName asName adminUsername password numberOfInstances operatingMode virtualNetworkResourceGroupName bootStorageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword rhsmUserName rhsmPassword rhsmPoolEAP rhsmPoolRHEL
+read parametersPath gitUserName testbranchName location vmName asName adminUsername password numberOfInstances operatingMode virtualNetworkResourceGroupName bootStorageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword rhsmUserName rhsmPassword rhsmPoolEAP rhsmPoolRHEL enableDB databaseType jdbcDataSourceJNDIName dsConnectionURL dbUser dbPassword
  
 cat <<EOF > ${parametersPath}
 {
@@ -103,6 +103,24 @@ cat <<EOF > ${parametersPath}
         },
         "enableAppGWIngress": {
             "value": true
+        },
+        "enableDB": {
+            "value": ${enableDB}
+        },
+        "databaseType": {
+            "value": "${databaseType}"
+        },
+        "jdbcDataSourceJNDIName": {
+            "value": "${jdbcDataSourceJNDIName}"
+        },
+        "dsConnectionURL": {
+            "value": "${dsConnectionURL}"
+        },
+        "dbUser": {
+            "value": "${dbUser}"
+        },
+        "dbPassword": {
+            "value": "${dbPassword}"
         }
     }
 }

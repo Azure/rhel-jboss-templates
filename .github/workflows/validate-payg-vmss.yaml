@@ -3,6 +3,14 @@ name: Validate payg-vmss offer
 on:
   workflow_dispatch:
     inputs:
+      databaseType:
+        description: 'Database connection'
+        required: true
+        default: 'postgresql'
+        type: choice
+        options:
+        - postgresql
+        - none
       isForDemo:
         description: 'If set to true, resources will not be deleted'
         required: true
@@ -26,6 +34,8 @@ env:
     rhsmPassword: ${{ secrets.RHSM_PASSWORD }}
     rhsmPoolEAP: ${{ secrets.RHSM_POOL }}
     userAssignedManagedIdentity: ${{ secrets.USER_ASSIGNED_MANAGED_IDENTITY_ID }}
+    dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
+    dbPassword: ${{ secrets.DATABASE_PASSWORD }}
     gitUserName: ${{ secrets.USER_NAME }}
     vmssTestBranchName: vmss-cicd-${{ github.run_id }}-${{ github.run_number }}
     gitEmail: ${{ secrets.USER_EMAIL }}
@@ -139,8 +149,42 @@ jobs:
                 git status
                 git commit -m "test branch for pipeline"
                 git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f
+            - uses: azure/login@v1
+              id: azure-login
+              with:
+                creds: ${{ env.azureCredentials }}
+            - name: Deploy an instance of Azure Database for PostgreSQL
+              if: ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}
+              run: |
+                az group create -n ${{ env.vmssResourceGroup}} -l ${{ env.location }}
+                az postgres server create \
+                  --resource-group ${{ env.vmssResourceGroup}} --name ${{ env.dbInstanceName }} \
+                  --admin-user testuser --admin-password ${{ env.dbPassword }} \
+                  --location ${{ env.location }}
+                host=$(az postgres server show \
+                  --resource-group ${{ env.vmssResourceGroup}} --name ${{ env.dbInstanceName }} \
+                  --query "fullyQualifiedDomainName" -o tsv)
+                echo "postgresqlHost=${host}" >> $GITHUB_ENV
+                # Allow Azure services to access
+                az postgres server firewall-rule create \
+                  --resource-group ${{ env.vmssResourceGroup}} --server ${{ env.dbInstanceName }} \
+                  --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+                az postgres db create --resource-group ${{ env.vmssResourceGroup}} --server ${{ env.dbInstanceName }} --name testdb
             - name: Prepare parameter file
               run: |
+                enableDB=false
+                databaseType=postgresql
+                dsConnectionURL=jdbc:postgresql://contoso.postgres.database:5432/testdb
+                dbUser=contosoDbUser
+                dbPassword=contosoDbPwd
+                if ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}; then
+                  enableDB=true
+                  databaseType=postgresql
+                  dsConnectionURL="jdbc:postgresql://${{ env.postgresqlHost }}:5432/testdb"
+                  dbUser=testuser@${{ env.dbInstanceName }}
+                  dbPassword=${{ env.dbPassword }}
+                fi
+
                 echo "generate parameter file for vmss"
                 bash rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/scripts/gen-parameters.sh \
                 <<< "rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/parameters-test-vmss.json  \
@@ -158,7 +202,13 @@ jobs:
                 ${jbossEAPPassword} \
                 ${rhsmUserName} \
                 ${rhsmPassword} \
-                ${rhsmPoolEAP}"
+                ${rhsmPoolEAP} \
+                ${enableDB} \
+                ${databaseType} \
+                jdbc/JavaEECafeDB \
+                ${dsConnectionURL} \
+                ${dbUser} \
+                ${dbPassword}"
 
             - name: Archive parameters-test-vmss.json
               uses: actions/upload-artifact@v1
@@ -166,11 +216,8 @@ jobs:
               with:
                 name: parameters-test-vmss
                 path: rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/parameters-test-vmss.json
-            - uses: azure/login@v1
-              id: azure-login
-              with:
-                creds: ${{ env.azureCredentials }}
-            - name: Create Resource Group
+            - name: Create Resource Group if needed
+              if: ${{ inputs.databaseType == 'none' || github.event.client_payload.databaseType == 'none' }}
               uses: azure/CLI@v1
               with:
                 azcliversion: ${{ env.azCliVersion }}
