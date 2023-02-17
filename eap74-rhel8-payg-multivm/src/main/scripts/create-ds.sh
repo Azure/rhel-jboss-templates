@@ -1,4 +1,5 @@
 #!/bin/sh
+set -Eeuo pipefail
 
 log() {
     while IFS= read -r line; do
