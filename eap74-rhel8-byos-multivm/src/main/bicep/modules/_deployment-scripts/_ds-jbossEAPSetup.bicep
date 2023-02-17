@@ -79,7 +79,7 @@ param satelliteFqdn string = newGuid()
 @description('The JDK version of the Virtual Machine')
 param jdkVersion string = 'openjdk17'
 
-@description('Boolean value indicating, if user wants to enable database connection.')
+@description('Boolean value indicating if user wants to enable database connection.')
 param enableDB bool = false
 @allowed([
   'postgresql'

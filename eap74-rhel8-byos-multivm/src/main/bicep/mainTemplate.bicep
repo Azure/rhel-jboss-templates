@@ -163,7 +163,7 @@ param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
 @description('true to enable cookie based affinity.')
 param enableCookieBasedAffinity bool = false
 
-@description('Boolean value indicating, if user wants to enable database connection.')
+@description('Boolean value indicating if user wants to enable database connection.')
 param enableDB bool = false
 @allowed([
   'postgresql'
