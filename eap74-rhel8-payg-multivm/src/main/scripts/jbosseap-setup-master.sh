@@ -82,6 +82,12 @@ SATELLITE_ACTIVATION_KEY=$(echo $SATELLITE_ACTIVATION_KEY_BASE64 | base64 -d)
 SATELLITE_ORG_NAME_BASE64=${13}
 SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
 SATELLITE_VM_FQDN=${14}
+enableDB=${15}
+dbType=${16}
+jdbcDSJNDIName=${17}
+dsConnectionString=${18}
+databaseUser=${19}
+databasePassword=${20}
 
 MOUNT_POINT_PATH=/mnt/jbossshare
 HOST_VM_IP=$(hostname -I)
@@ -269,6 +275,14 @@ if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration F
 
 # Seeing a race condition timing error so sleep to delay
 sleep 20
+
+# Configure JDBC driver and data source
+if [ "$enableDB" == "True" ]; then
+    echo "Start to configure JDBC driver and data source" | log
+    jdbcDataSourceName=dataSource-$dbType
+    ./create-ds.sh $EAP_HOME/wildfly "$dbType" "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true false
+    echo "Complete to configure JDBC driver and data source" | log
+fi
 
 echo "Red Hat JBoss EAP Cluster Intallation End " | log; flag=${PIPESTATUS[0]}
 /bin/date +%H:%M:%S | log

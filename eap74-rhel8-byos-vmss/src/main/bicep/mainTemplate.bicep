@@ -120,13 +120,13 @@ param artifactsLocationSasToken string = ''
 param connectSatellite bool = false
 
 @description('Red Hat Satellite Server activation key.')
-param satelliteActivationKey string = ''
+param satelliteActivationKey string = newGuid()
 
 @description('Red Hat Satellite Server organization name.')
-param satelliteOrgName string = ''
+param satelliteOrgName string = newGuid()
 
 @description('Red Hat Satellite Server VM FQDN name.')
-param satelliteFqdn string = ''
+param satelliteFqdn string = newGuid()
 
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
@@ -153,6 +153,23 @@ param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
 
 @description('true to enable cookie based affinity.')
 param enableCookieBasedAffinity bool = false
+
+@description('Boolean value indicating, if user wants to enable database connection.')
+param enableDB bool = false
+@allowed([
+  'postgresql'
+])
+@description('One of the supported database types')
+param databaseType string = 'postgresql'
+@description('JNDI Name for JDBC Datasource')
+param jdbcDataSourceJNDIName string = 'jdbc/contoso'
+@description('JDBC Connection String')
+param dsConnectionURL string = 'jdbc:postgresql://contoso.postgres.database:5432/testdb'
+@description('User id of Database')
+param dbUser string = 'contosoDbUser'
+@secure()
+@description('Password for Database')
+param dbPassword string = newGuid()
 
 var containerName = 'eapblobcontainer'
 var var_eapStorageAccountName = 'jbosstrg${uniqueString(resourceGroup().id)}'
@@ -243,6 +260,16 @@ module pids './modules/_pids/_pid.bicep' = {
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-b57c8aee-4919-4cbb-8399-f966d39d4064-partnercenter'
   params: {}
+}
+
+module byosVmssStartPid './modules/_pids/_pid.bicep' = {
+  name: 'byosVmssStartPid'
+  params: {
+    name: pids.outputs.byosVmssStart
+  }
+  dependsOn: [
+    pids
+  ]
 }
 
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
@@ -386,6 +413,19 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2022-05-
   }
 }
 
+module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
+  name: 'dbConnectionStartPid'
+  params: {
+    name: pids.outputs.dbStart
+  }
+  dependsOn: [
+    pids
+    appgwDeployment
+    virtualNetworkName_resource
+    bootStorageName
+  ]
+}
+
 resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2022-08-01' = {
   name: var_vmssInstanceName
   location: location
@@ -458,10 +498,12 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2022-08-01'
               settings: {
                 fileUris: [
                   uri(artifactsLocation, 'scripts/jbosseap-setup-redhat.sh${artifactsLocationSasToken}')
+                  uri(artifactsLocation, 'scripts/create-ds.sh${artifactsLocationSasToken}')
+                  uri(artifactsLocation, 'scripts/postgresql-module.xml.template${artifactsLocationSasToken}')
                 ]
               }
               protectedSettings: {
-                commandToExecute: 'sh jbosseap-setup-redhat.sh ${scriptArgs} \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${var_eapStorageAccountName}\' \'${containerName}\' \'${base64(listKeys(eapStorageAccountName.id, '2021-04-01').keys[0].value)}\' \'${rhsmPoolRHEL}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\''
+                commandToExecute: 'sh jbosseap-setup-redhat.sh ${scriptArgs} \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${var_eapStorageAccountName}\' \'${containerName}\' \'${base64(listKeys(eapStorageAccountName.id, '2021-04-01').keys[0].value)}\' \'${rhsmPoolRHEL}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\''
               }
             }
           }
@@ -473,6 +515,27 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2022-08-01'
     appgwDeployment
     virtualNetworkName_resource
     bootStorageName
+  ]
+}
+
+module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
+  name: 'dbConnectionEndPid'
+  params: {
+    name: pids.outputs.dbEnd
+  }
+  dependsOn: [
+    pids
+    vmssInstanceName
+  ]
+}
+
+module byosVmssEndPid './modules/_pids/_pid.bicep' = {
+  name: 'byosVmssEndPid'
+  params: {
+    name: pids.outputs.byosVmssEnd
+  }
+  dependsOn: [
+    dbConnectionEndPid
   ]
 }
 

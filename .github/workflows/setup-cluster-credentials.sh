@@ -33,6 +33,8 @@ USER_NAME=
 USER_EMAIL=
 # Personal token for preceding GitHub account.
 GIT_TOKEN=
+# Password for database user 'testuser'
+DATABASE_PASSWORD=
 
 # End set environment variables
 ################################################
@@ -40,6 +42,11 @@ GIT_TOKEN=
 
 set -Eeuo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
+
+isOsMac="false"
+if [[ $OSTYPE == 'darwin'* ]]; then
+    isOsMac="true"
+fi
 
 cleanup() {
   trap - SIGINT SIGTERM ERR EXIT
@@ -95,6 +102,11 @@ fi
 # get VM_PASSWORD if not set at the beginning of this file
 if [ "$VM_PASSWORD" == '' ] ; then
     read -r -p "Enter password for vm azureadmin user: " VM_PASSWORD
+fi
+
+# get DATABASE_PASSWORD if not set at the beginning of this file
+if [ "$DATABASE_PASSWORD" == '' ] ; then
+    read -r -p "Enter password for database user 'testuser': " DATABASE_PASSWORD
 fi
 
 # get USER_EMAIL if not set at the beginning of this file
@@ -178,7 +190,12 @@ SUBSCRIPTION_ID=$(az account show --query id --output tsv --only-show-errors)
 
 ### AZ ACTION CREATE
 
-SERVICE_PRINCIPAL=$(az ad sp create-for-rbac --name ${SERVICE_PRINCIPAL_NAME} --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION_ID}" --sdk-auth --only-show-errors | base64 -w0)
+if [[ "${isOsMac}" == "true" ]]; then
+    SERVICE_PRINCIPAL=$(az ad sp create-for-rbac --name ${SERVICE_PRINCIPAL_NAME} --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION_ID}" --sdk-auth --only-show-errors | base64)
+else
+    SERVICE_PRINCIPAL=$(az ad sp create-for-rbac --name ${SERVICE_PRINCIPAL_NAME} --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION_ID}" --sdk-auth --only-show-errors | base64 -w0)
+fi
+
 SP_ID=$( az ad sp list --display-name $SERVICE_PRINCIPAL_NAME --query [0].id -o tsv)
 az role assignment create --assignee ${SP_ID} --role "User Access Administrator"
 AZURE_CREDENTIALS=$(echo $SERVICE_PRINCIPAL | base64 -d)
@@ -196,6 +213,7 @@ if $USE_GITHUB_CLI; then
     gh ${GH_FLAGS} secret set RHSM_PASSWORD -b"${RHSM_PASSWORD}"
     gh ${GH_FLAGS} secret set RHSM_POOL -b"${RHSM_POOL}"
     gh ${GH_FLAGS} secret set RHSM_POOL_FOR_RHEL -b"${RHSM_POOL_FOR_RHEL}"
+    gh ${GH_FLAGS} secret set DATABASE_PASSWORD -b"${DATABASE_PASSWORD}" 
     gh ${GH_FLAGS} secret set USER_EMAIL -b"${USER_EMAIL}"
     gh ${GH_FLAGS} secret set USER_NAME -b"${USER_NAME}"
     gh ${GH_FLAGS} secret set GIT_TOKEN -b"${GIT_TOKEN}"
@@ -230,6 +248,8 @@ if [ $USE_GITHUB_CLI == false ]; then
   msg "${GREEN}${RHSM_POOL}"
   msg "${YELLOW}\"RHSM_POOL_FOR_RHEL\""
   msg "${GREEN}${RHSM_POOL_FOR_RHEL}"
+  msg "${YELLOW}\"DATABASE_PASSWORD\""
+  msg "${GREEN}${DATABASE_PASSWORD}"
   msg "${YELLOW}\"DISAMBIG_PREFIX\""
   msg "${GREEN}${DISAMBIG_PREFIX}"
   msg "${YELLOW}\"USER_EMAIL\""

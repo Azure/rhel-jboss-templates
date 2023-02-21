@@ -135,13 +135,13 @@ param artifactsLocationSasToken string = ''
 param connectSatellite bool = false
 
 @description('Red Hat Satellite Server activation key.')
-param satelliteActivationKey string = ''
+param satelliteActivationKey string = newGuid()
 
 @description('Red Hat Satellite Server organization name.')
-param satelliteOrgName string = ''
+param satelliteOrgName string = newGuid()
 
 @description('Red Hat Satellite Server VM FQDN name.')
-param satelliteFqdn string = ''
+param satelliteFqdn string = newGuid()
 
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
@@ -159,6 +159,23 @@ param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
 
 @description('true to enable cookie based affinity.')
 param enableCookieBasedAffinity bool = false
+
+@description('Boolean value indicating, if user wants to enable database connection.')
+param enableDB bool = false
+@allowed([
+  'postgresql'
+])
+@description('One of the supported database types')
+param databaseType string = 'postgresql'
+@description('JNDI Name for JDBC Datasource')
+param jdbcDataSourceJNDIName string = 'jdbc/contoso'
+@description('JDBC Connection String')
+param dsConnectionURL string = 'jdbc:postgresql://contoso.postgres.database:5432/testdb'
+@description('User id of Database')
+param dbUser string = 'contosoDbUser'
+@secure()
+@description('Password for Database')
+param dbPassword string = newGuid()
 
 var name_managedDomain = 'managed-domain'
 var name_fileshare = 'jbossshare'
@@ -255,6 +272,16 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
+module paygMultivmStartPid './modules/_pids/_pid.bicep' = {
+  name: 'paygMultivmStartPid'
+  params: {
+    name: pids.outputs.paygMultivmStart
+  }
+  dependsOn: [
+    pids
+  ]
+}
+
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
   name: 'uami-deployment'
   params: {
@@ -275,7 +302,6 @@ module failFastDeployment 'modules/_deployment-scripts/_ds-failfast.bicep' = {
     satelliteFqdn: satelliteFqdn
   }
   dependsOn: [
-    partnerCenterPid
     uamiDeployment
   ]
 }
@@ -567,6 +593,18 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i
   ]
 }]
 
+module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
+  name: 'dbConnectionStartPid'
+  params: {
+    name: pids.outputs.dbStart
+  }
+  dependsOn: [
+    pids
+    vmName_resource
+    eapStorageAccount
+  ]
+}
+
 module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' = {
   name: name_jbossEAPDsName
   params: {
@@ -592,10 +630,27 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
     satelliteOrgName: satelliteOrgName
     satelliteFqdn: satelliteFqdn
     jdkVersion: jdkVersion
+    enableDB: enableDB
+    databaseType: databaseType
+    jdbcDataSourceJNDIName: jdbcDataSourceJNDIName
+    dsConnectionURL: dsConnectionURL
+    dbUser: dbUser
+    dbPassword: dbPassword
   }
   dependsOn: [
     vmName_resource
     eapStorageAccount
+  ]
+}
+
+module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
+  name: 'dbConnectionEndPid'
+  params: {
+    name: pids.outputs.dbEnd
+  }
+  dependsOn: [
+    pids
+    jbossEAPDeployment
   ]
 }
 
@@ -614,6 +669,16 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@2022-08-01' = {
   }
   dependsOn: [
     failFastDeployment
+  ]
+}
+
+module paygMultivmEndPid './modules/_pids/_pid.bicep' = {
+  name: 'paygMultivmEndPid'
+  params: {
+    name: pids.outputs.paygMultivmEnd
+  }
+  dependsOn: [
+    dbConnectionEndPid
   ]
 }
 

@@ -99,13 +99,30 @@ param artifactsLocationSasToken string = ''
 param connectSatellite bool = false
 
 @description('Red Hat Satellite Server activation key.')
-param satelliteActivationKey string = ''
+param satelliteActivationKey string = newGuid()
 
 @description('Red Hat Satellite Server organization name.')
-param satelliteOrgName string = ''
+param satelliteOrgName string = newGuid()
 
 @description('Red Hat Satellite Server VM FQDN name.')
-param satelliteFqdn string = ''
+param satelliteFqdn string = newGuid()
+
+@description('Boolean value indicating, if user wants to enable database connection.')
+param enableDB bool = false
+@allowed([
+  'postgresql'
+])
+@description('One of the supported database types')
+param databaseType string = 'postgresql'
+@description('JNDI Name for JDBC Datasource')
+param jdbcDataSourceJNDIName string = 'jdbc/contoso'
+@description('JDBC Connection String')
+param dsConnectionURL string = 'jdbc:postgresql://contoso.postgres.database:5432/testdb'
+@description('User id of Database')
+param dbUser string = 'contosoDbUser'
+@secure()
+@description('Password for Database')
+param dbPassword string = newGuid()
 
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
@@ -132,6 +149,13 @@ var obj_uamiForDeploymentScript = {
   }
 }
 
+/*
+* Beginning of the offer deployment
+*/
+module pids './modules/_pids/_pid.bicep' = {
+  name: 'initialization'
+}
+
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-e9412731-57c2-4e6a-9825-061ad30337c0-partnercenter'
   params: {}
@@ -142,6 +166,15 @@ module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
   params: {
     location: location
   }
+
+module paygSingleStartPid './modules/_pids/_pid.bicep' = {
+  name: 'paygSingleStartPid'
+  params: {
+    name: pids.outputs.paygSingleStart
+  }
+  dependsOn: [
+    pids
+  ]
 }
 
 resource bootStorageName 'Microsoft.Storage/storageAccounts@2022-05-01' = if (bootDiagnosticsCheck) {
@@ -245,6 +278,17 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   ]
 }
 
+module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
+  name: 'dbConnectionStartPid'
+  params: {
+    name: pids.outputs.dbStart
+  }
+  dependsOn: [
+    pids
+    vmName_resource
+  ]
+}
+
 resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = {
   parent: vmName_resource
   name: 'jbosseap-setup-extension'
@@ -257,10 +301,12 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
     settings: {
       fileUris: [
         uri(artifactsLocation, 'scripts/jbosseap-setup-redhat.sh${artifactsLocationSasToken}')
+        uri(artifactsLocation, 'scripts/create-ds.sh${artifactsLocationSasToken}')
+        uri(artifactsLocation, 'scripts/postgresql-module.xml.template${artifactsLocationSasToken}')
       ]
     }
     protectedSettings: {
-      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\''
+      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\''
     }
   }
 }
@@ -279,5 +325,24 @@ module updateNicPrivateIpStatic 'modules/_deployment-scripts/_dsPostDeployment.b
   dependsOn: [
     nicName
     uamiDeployment
+
+module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
+  name: 'dbConnectionEndPid'
+  params: {
+    name: pids.outputs.dbEnd
+  }
+  dependsOn: [
+    pids
+    vmName_jbosseap_setup_extension
+  ]
+}
+
+module paygSingleEndPid './modules/_pids/_pid.bicep' = {
+  name: 'paygSingleEndPid'
+  params: {
+    name: pids.outputs.paygSingleEnd
+  }
+  dependsOn: [
+    dbConnectionEndPid
   ]
 }
