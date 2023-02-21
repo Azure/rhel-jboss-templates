@@ -157,6 +157,16 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
+module byosSingleStartPid './modules/_pids/_pid.bicep' = {
+  name: 'byosSingleStartPid'
+  params: {
+    name: pids.outputs.byosSingleStart
+  }
+  dependsOn: [
+    pids
+  ]
+}
+
 resource bootStorageName 'Microsoft.Storage/storageAccounts@2022-05-01' = if (bootDiagnosticsCheck) {
   name: bootStorageName_var
   location: location
@@ -305,5 +315,15 @@ module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
   dependsOn: [
     pids
     vmName_jbosseap_setup_extension
+  ]
+}
+
+module byosSingleEndPid './modules/_pids/_pid.bicep' = {
+  name: 'byosSingleEndPid'
+  params: {
+    name: pids.outputs.byosSingleEnd
+  }
+  dependsOn: [
+    dbConnectionEndPid
   ]
 }
