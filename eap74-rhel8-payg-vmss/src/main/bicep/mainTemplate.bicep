@@ -252,6 +252,16 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
+module paygVmssStartPid './modules/_pids/_pid.bicep' = {
+  name: 'paygVmssStartPid'
+  params: {
+    name: pids.outputs.paygVmssStart
+  }
+  dependsOn: [
+    pids
+  ]
+}
+
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
   name: 'uami-deployment'
   params: {
@@ -505,6 +515,16 @@ module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
   dependsOn: [
     pids
     vmssInstanceName
+  ]
+}
+
+module paygVmssEndPid './modules/_pids/_pid.bicep' = {
+  name: 'paygVmssEndPid'
+  params: {
+    name: pids.outputs.paygVmssEnd
+  }
+  dependsOn: [
+    dbConnectionEndPid
   ]
 }
 
