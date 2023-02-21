@@ -262,6 +262,16 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
+module byosVmssStartPid './modules/_pids/_pid.bicep' = {
+  name: 'byosVmssStartPid'
+  params: {
+    name: pids.outputs.byosVmssStart
+  }
+  dependsOn: [
+    pids
+  ]
+}
+
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
   name: 'uami-deployment'
   params: {
@@ -516,6 +526,16 @@ module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
   dependsOn: [
     pids
     vmssInstanceName
+  ]
+}
+
+module byosVmssEndPid './modules/_pids/_pid.bicep' = {
+  name: 'byosVmssEndPid'
+  params: {
+    name: pids.outputs.byosVmssEnd
+  }
+  dependsOn: [
+    dbConnectionEndPid
   ]
 }
 
