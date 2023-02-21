@@ -280,6 +280,16 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
+module byosMultivmStartPid './modules/_pids/_pid.bicep' = {
+  name: 'byosMultivmStartPid'
+  params: {
+    name: pids.outputs.byosMultivmStart
+  }
+  dependsOn: [
+    pids
+  ]
+}
+
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
   name: 'uami-deployment'
   params: {
@@ -671,6 +681,16 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@2022-08-01' = {
     platformUpdateDomainCount: 2
     platformFaultDomainCount: 2
   }
+}
+
+module byosMultivmEndPid './modules/_pids/_pid.bicep' = {
+  name: 'byosMultivmEndPid'
+  params: {
+    name: pids.outputs.byosMultivmEnd
+  }
+  dependsOn: [
+    dbConnectionEndPid
+  ]
 }
 
 output appHttpURL string = (enableAppGWIngress && (operatingMode != name_managedDomain)) ? uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication') : ''
