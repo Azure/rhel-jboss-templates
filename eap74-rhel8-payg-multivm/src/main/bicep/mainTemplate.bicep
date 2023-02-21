@@ -272,6 +272,16 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
+module paygMultivmStartPid './modules/_pids/_pid.bicep' = {
+  name: 'paygMultivmStartPid'
+  params: {
+    name: pids.outputs.paygMultivmStart
+  }
+  dependsOn: [
+    pids
+  ]
+}
+
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
   name: 'uami-deployment'
   params: {
@@ -659,6 +669,16 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@2022-08-01' = {
   }
   dependsOn: [
     failFastDeployment
+  ]
+}
+
+module paygMultivmEndPid './modules/_pids/_pid.bicep' = {
+  name: 'paygMultivmEndPid'
+  params: {
+    name: pids.outputs.paygMultivmEnd
+  }
+  dependsOn: [
+    dbConnectionEndPid
   ]
 }
 
