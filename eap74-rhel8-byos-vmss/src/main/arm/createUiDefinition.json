@@ -653,6 +653,126 @@
                         }
                     }
                 ]
+            },
+            {
+                "name": "section_database",
+                "type": "Microsoft.Common.Section",
+                "label": "Database",
+                "subLabel": {
+                    "preValidation": "Configure integrations to database",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Database",
+                "elements": [
+                    {
+                        "name": "aboutDatabase",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "Select 'Yes' and specify connection settings to configure JBoss EAP to connect to a pre-existing database. The database must be network accessible to the VNET and subnets that are configured in Networking."
+                        }
+                    },
+                    {
+                        "name": "enableDB",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Connect to database?",
+                        "defaultValue": "No",
+                        "toolTip": "Select 'Yes' to configure the connection to a database. The default is 'No'.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": "true"
+                                },
+                                {
+                                    "label": "No",
+                                    "value": "false"
+                                }
+                            ],
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "databaseConnectionInfo",
+                        "type": "Microsoft.Common.Section",
+                        "label": "Connection settings",
+                        "elements": [
+                            {
+                                "name": "databaseType",
+                                "type": "Microsoft.Common.DropDown",
+                                "label": "Choose database type",
+                                "toolTip": "Choose database type",
+                                "defaultValue": "PostgreSQL",
+                                "constraints": {
+                                    "allowedValues": [
+                                        {
+                                            "label": "PostgreSQL",
+                                            "value": "postgresql"
+                                        }
+                                    ],
+                                    "required": true
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "jdbcDataSourceJNDIName",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "JNDI name",
+                                "toolTip": "The JNDI name for the database JDBC connection",
+                                "defaultValue": "",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^[a-zA-Z0-9./_-]{1,30}$",
+                                    "validationMessage": "The value must be 1-30 characters long and must only contain letters, numbers, hyphens (-), underscores (_), periods (.) and slashes (/)."
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "postgresDsConnectionURL",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Data source connection string (jdbc:postgresql://&lt;host&gt;:&lt;port&gt;/&lt;database&gt;)",
+                                "toolTip": "The JDBC connection string for the database",
+                                "defaultValue": "",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^jdbc:postgresql:\/\/([^\/]+):([0-9]+)\/([\\w-]+)",
+                                    "validationMessage": "A valid JDBC URL for the chosen database type must be provided"
+                                },
+                                "visible": "[equals(steps('section_database').databaseConnectionInfo.databaseType, 'postgresql')]"
+                            },
+                            {
+                                "name": "dbUser",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Database username",
+                                "toolTip": "Database username",
+                                "defaultValue": "",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^(?=.{1,128}$)[a-zA-Z](?!.*--)(?!.*@@)(?!.*-@)(?!.*@-)[a-zA-Z0-9-@]*[a-zA-Z0-9]$",
+                                    "validationMessage": "The value must be 1-128 characters long and must only contain letters, numbers, hyphen (-) and the at sign, no hyphen allowed at the beginning and the end of the database username."
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "dbPassword",
+                                "type": "Microsoft.Common.PasswordBox",
+                                "label": {
+                                    "password": "Database password",
+                                    "confirmPassword": "Confirm password"
+                                },
+                                "toolTip": "Database password",
+                                "constraints": {
+                                    "required": true
+                                },
+                                "options": {
+                                    "hideConfirmation": false
+                                },
+                                "visible": true
+                            }
+                        ],
+                        "visible": "[bool(steps('section_database').enableDB)]"
+                    }
+                ]
             }
         ],
         "outputs": {
@@ -690,7 +810,14 @@
             "satelliteFqdn": "[steps('jbossEAPSettings').satelliteFqdn]",
             "enableAppGWIngress": "[steps('AppGatewayConfig').enableAppGateway]",
             "enableCookieBasedAffinity": "[bool(steps('AppGatewayConfig').enableCookieBasedAffinity)]",
-            "virtualNetworkNewOrExisting": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.newOrExisting, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.newOrExisting)]"
+            "virtualNetworkNewOrExisting": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.newOrExisting, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.newOrExisting)]",
+
+            "enableDB": "[bool(steps('section_database').enableDB)]",
+            "databaseType": "[steps('section_database').databaseConnectionInfo.databaseType]",
+            "jdbcDataSourceJNDIName": "[steps('section_database').databaseConnectionInfo.jdbcDataSourceJNDIName]",
+            "dsConnectionURL": "[steps('section_database').databaseConnectionInfo.postgresDsConnectionURL]",
+            "dbUser": "[steps('section_database').databaseConnectionInfo.dbUser]",
+            "dbPassword": "[steps('section_database').databaseConnectionInfo.dbPassword]"
         }
     }
 }

@@ -3,6 +3,14 @@ name: Validate payg-multivm offer
 on:
   workflow_dispatch:
     inputs:
+      databaseType:
+        description: 'Database connection'
+        required: true
+        default: 'postgresql'
+        type: choice
+        options:
+        - postgresql
+        - none
       isForDemo:
         description: 'If set to true, resources will not be deleted'
         required: true
@@ -22,6 +30,9 @@ env:
     standaloneOperatingMode: standalone
     domainBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}domainsa
     standaloneBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}standalonesa
+    dependencyResourceGroup: multivm-dep-${{ github.run_id }}-${{ github.run_number }}
+    dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
+    dbPassword: ${{ secrets.DATABASE_PASSWORD }}
     jbossEAPUserName: jbossadmin
     jbossEAPPassword: ${{ secrets.JBOSS_EAP_USER_PASSWORD }}
     rhsmUserName: ${{ secrets.RHSM_USERNAME }}
@@ -87,9 +98,8 @@ jobs:
                 multivmArtifactName=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.artifactId}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
                 multivmArtifactName=${multivmArtifactName}-${multivmVersion}-arm-assembly
                 unzip rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${multivmArtifactName}.zip -d rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${multivmArtifactName}
-                
-                echo "##[set-output name=multivmArtifactName;]${multivmArtifactName}"
-                echo "##[set-output name=multivmArtifactPath;]rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${multivmArtifactName}"
+                echo "multivmArtifactName=${multivmArtifactName}" >> "$GITHUB_OUTPUT"
+                echo "multivmArtifactPath=rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${multivmArtifactName}" >> "$GITHUB_OUTPUT"
             - name: Archive rhel-jboss-templates eap74-rhel8-payg-multivm offer templates
               uses: actions/upload-artifact@v3
               if: success()
@@ -100,10 +110,41 @@ jobs:
               id: setup-env-variables-based-on-dispatch-event
               run: |
                 isForDemo=${{ github.event.inputs.isForDemo }}
-                echo "##[set-output name=isForDemo;]${isForDemo}"
-                echo "isForDemo=${isForDemo}" >> $GITHUB_ENV
-    deploy-multivm-domain:
+                echo "isForDemo=${isForDemo}" >> "$GITHUB_OUTPUT"
+    deploy-dependent-resources:
         needs: preflight
+        runs-on: ubuntu-latest
+        outputs:
+          postgresqlHost: ${{ steps.deploy-postgresql.outputs.postgresqlHost }}
+        steps:
+            - uses: azure/login@v1
+              id: azure-login
+              with:
+                creds: ${{ env.azureCredentials }}
+            - name: Create Resource Group
+              run: |
+                az group create -n ${{ env.dependencyResourceGroup}} -l ${{ env.location }}
+            - name: Deploy an instance of Azure Database for PostgreSQL
+              id: deploy-postgresql
+              if: ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}
+              run: |
+                az postgres server create \
+                  --resource-group ${{ env.dependencyResourceGroup}} --name ${{ env.dbInstanceName }} \
+                  --admin-user testuser --admin-password ${{ env.dbPassword }} \
+                  --location ${{ env.location }}
+                host=$(az postgres server show \
+                  --resource-group ${{ env.dependencyResourceGroup}} --name ${{ env.dbInstanceName }} \
+                  --query "fullyQualifiedDomainName" -o tsv)
+                # Allow Azure services to access
+                az postgres server firewall-rule create \
+                  --resource-group ${{ env.dependencyResourceGroup}} --server ${{ env.dbInstanceName }} \
+                  --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+                az postgres db create --resource-group ${{ env.dependencyResourceGroup}} --server ${{ env.dbInstanceName }} --name testdb
+                echo "postgresqlHost=${host}" >> "$GITHUB_OUTPUT"
+    deploy-multivm-domain:
+        needs: 
+          - preflight
+          - deploy-dependent-resources
         runs-on: ubuntu-latest
         steps:
             - name: Get versions of external dependencies
@@ -125,7 +166,7 @@ jobs:
                 multivmVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
                 multivmArtifactName=eap74-rhel8-payg-multivm-${multivmVersion}-arm-assembly
 
-                echo "##[set-output name=multivmArtifactName;]${multivmArtifactName}"
+                echo "multivmArtifactName=${multivmArtifactName}" >> "$GITHUB_OUTPUT"
             - name: Download artifact for deployment
               uses: actions/download-artifact@v1
               with:
@@ -147,8 +188,25 @@ jobs:
                 git status
                 git commit -m "test branch for pipeline"
                 git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f
+            - uses: azure/login@v1
+              id: azure-login
+              with:
+                creds: ${{ env.azureCredentials }}
             - name: Prepare parameter file
               run: |
+                enableDB=false
+                databaseType=postgresql
+                dsConnectionURL=jdbc:postgresql://contoso.postgres.database:5432/testdb
+                dbUser=contosoDbUser
+                dbPassword=contosoDbPwd
+                if ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}; then
+                  enableDB=true
+                  databaseType=postgresql
+                  dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlHost }}:5432/testdb"
+                  dbUser=testuser@${{ env.dbInstanceName }}
+                  dbPassword=${{ env.dbPassword }}
+                fi
+
                 echo "generate parameter file for domain mode"
                 # Generate parameters for db template deployment
                 bash rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/scripts/gen-parameters.sh \
@@ -169,7 +227,13 @@ jobs:
                 ${jbossEAPPassword} \
                 ${rhsmUserName} \
                 ${rhsmPassword} \
-                ${rhsmPoolEAP}"
+                ${rhsmPoolEAP} \
+                ${enableDB} \
+                ${databaseType} \
+                jdbc/JavaEECafeDB \
+                ${dsConnectionURL} \
+                ${dbUser} \
+                ${dbPassword}"
 
             - name: Archive parameters-test-domain.json
               uses: actions/upload-artifact@v1
@@ -177,10 +241,6 @@ jobs:
               with:
                 name: parameters-test-domain
                 path: rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/parameters-test-domain.json
-            - uses: azure/login@v1
-              id: azure-login
-              with:
-                creds: ${{ env.azureCredentials }}
             - name: Create Resource Group
               uses: azure/CLI@v1
               with:
@@ -221,7 +281,7 @@ jobs:
                         --name javaee-cafe.war \
                         --account-name ${{ env.domainBootStorageAccountName }} -o tsv)
                     
-                    echo "##[set-output name=appbloburl;]${appbloburl}"
+                    echo "appbloburl=${appbloburl}" >> "$GITHUB_OUTPUT"
             - name: Query public ip of admin VM
               id: query_admin_public_ip
               uses: azure/CLI@v1
@@ -231,7 +291,7 @@ jobs:
                     # query public ip address of admin VM
                     publicip=$(az vm show --resource-group ${{ env.domainResourceGroup }} --name ${{ github.run_id }}${{ github.run_number }}vm-adminVM -d --query publicIps -o tsv)
                     
-                    echo "##[set-output name=publicip;]${publicip}"
+                    echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Deploy cafe application
               run: |
                 appbloburl=${{steps.upload_cafe_app.outputs.appbloburl}}
@@ -253,7 +313,7 @@ jobs:
                     publicip=$(az network public-ip show --name gwip \
                                 --resource-group $domainResourceGroup --query dnsSettings.fqdn -o tsv)
                     
-                    echo "##[set-output name=publicip;]${publicip}"
+                    echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Verify cafe application
               run: |
                 publicip=${{steps.query_app_gateway_public_ip.outputs.publicip}}
@@ -299,7 +359,9 @@ jobs:
                 cd rhel-jboss-templates
                 git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $domainTestBranchName        
     deploy-multivm-standalone:
-        needs: preflight
+        needs: 
+          - preflight
+          - deploy-dependent-resources
         runs-on: ubuntu-latest
         steps:
             - name: Get versions of external dependencies
@@ -321,7 +383,7 @@ jobs:
                 multivmVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
                 multivmArtifactName=eap74-rhel8-payg-multivm-${multivmVersion}-arm-assembly
 
-                echo "##[set-output name=multivmArtifactName;]${multivmArtifactName}"
+                echo "multivmArtifactName=${multivmArtifactName}" >> "$GITHUB_OUTPUT"
             - name: Download artifact for test branch
               uses: actions/download-artifact@v1
               with:
@@ -343,8 +405,25 @@ jobs:
                 git status
                 git commit -m "test branch for pipeline"
                 git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f
+            - uses: azure/login@v1
+              id: azure-login
+              with:
+                creds: ${{ env.azureCredentials }}
             - name: Prepare parameter file
               run: |
+                enableDB=false
+                databaseType=postgresql
+                dsConnectionURL=jdbc:postgresql://contoso.postgres.database:5432/testdb
+                dbUser=contosoDbUser
+                dbPassword=contosoDbPwd
+                if ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}; then
+                  enableDB=true
+                  databaseType=postgresql
+                  dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlHost }}:5432/testdb"
+                  dbUser=testuser@${{ env.dbInstanceName }}
+                  dbPassword=${{ env.dbPassword }}
+                fi
+
                 echo "generate parameter file for standalone mode"
                 bash rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/scripts/gen-parameters.sh \
                 <<< "rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/parameters-test-standalone.json  \
@@ -364,7 +443,13 @@ jobs:
                 ${jbossEAPPassword} \
                 ${rhsmUserName} \
                 ${rhsmPassword} \
-                ${rhsmPoolEAP}"
+                ${rhsmPoolEAP} \
+                ${enableDB} \
+                ${databaseType} \
+                jdbc/JavaEECafeDB \
+                ${dsConnectionURL} \
+                ${dbUser} \
+                ${dbPassword}"
 
             - name: Archive parameters-test-standalone.json
               uses: actions/upload-artifact@v1
@@ -372,10 +457,6 @@ jobs:
               with:
                 name: parameters-test-standalone
                 path: rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/parameters-test-standalone.json
-            - uses: azure/login@v1
-              id: azure-login
-              with:
-                creds: ${{ env.azureCredentials }}
             - name: Create Resource Group
               uses: azure/CLI@v1
               with:
@@ -405,7 +486,7 @@ jobs:
                     publicip=$(az network public-ip show --name gwip \
                                 --resource-group $standaloneResourceGroup --query dnsSettings.fqdn -o tsv)
                     
-                    echo "##[set-output name=publicip;]${publicip}"
+                    echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Verify eap-session-replication application
               run: |
                 publicip=${{steps.query_app_gateway_public_ip.outputs.publicip}}
@@ -448,3 +529,18 @@ jobs:
               run: |
                 cd rhel-jboss-templates
                 git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $standaloneTestBranchName        
+    cleanup-dependent-resource:
+      needs:
+        - preflight
+        - deploy-multivm-domain
+        - deploy-multivm-standalone
+      if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
+      runs-on: ubuntu-latest
+      steps:
+        - uses: azure/login@v1
+          id: azure-login
+          with:
+            creds: ${{ secrets.AZURE_CREDENTIALS }}
+        - name: Delete dependent resources
+          run: |
+              az group delete --yes --no-wait --name ${{ env.dependencyResourceGroup }}

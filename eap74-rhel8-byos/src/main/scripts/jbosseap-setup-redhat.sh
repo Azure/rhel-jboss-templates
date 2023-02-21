@@ -27,6 +27,12 @@ SATELLITE_ORG_NAME_BASE64=${9}
 SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
 SATELLITE_VM_FQDN=${10}
 JDK_VERSION=${11}
+enableDB=${12}
+dbType=${13}
+jdbcDSJNDIName=${14}
+dsConnectionString=${15}
+databaseUser=${16}
+databasePassword=${17}
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
 export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"
@@ -176,6 +182,19 @@ if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration F
 
 # Seeing a race condition timing error so sleep to delay
 sleep 20
+
+# Configure JDBC driver and data source
+if [ "$enableDB" == "True" ]; then
+    jdbcDataSourceName=dataSource-$dbType
+    ./create-ds.sh $EAP_HOME "$dbType" "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword"
+
+    # Test connection for the created data source
+    sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --connect "/subsystem=datasources/data-source=dataSource-$dbType:test-connection-in-pool" | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ]; then 
+        echo "ERROR! Test data source connection failed." >&2 log
+        exit $flag
+    fi
+fi
 
 echo "ALL DONE!" | log; flag=${PIPESTATUS[0]}
 /bin/date +%H:%M:%S | log

@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<module xmlns="urn:jboss:module:1.1" name="com.postgresql">
+  <resources>
+    <resource-root path="${POSTGRESQL_JDBC_DRIVER_NAME}"/>
+  </resources>
+  <dependencies>
+    <module name="javaee.api"/>
+    <module name="sun.jdk"/>
+    <module name="ibm.jdk"/>
+    <module name="javax.api"/>
+    <module name="javax.transaction.api"/>
+  </dependencies>
+</module>

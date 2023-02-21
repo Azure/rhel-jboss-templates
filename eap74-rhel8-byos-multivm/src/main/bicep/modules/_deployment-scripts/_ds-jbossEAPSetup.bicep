@@ -68,19 +68,36 @@ param virtualNetworkNewOrExisting string = 'new'
 param connectSatellite bool = false
 
 @description('Red Hat Satellite Server activation key.')
-param satelliteActivationKey string = ''
+param satelliteActivationKey string = newGuid()
 
 @description('Red Hat Satellite Server organization name.')
-param satelliteOrgName string = ''
+param satelliteOrgName string = newGuid()
 
 @description('Red Hat Satellite Server VM FQDN name.')
-param satelliteFqdn string = ''
+param satelliteFqdn string = newGuid()
 
 @description('The JDK version of the Virtual Machine')
 param jdkVersion string = 'openjdk17'
 
 @description('NIC name prefix')
 param nicName string
+
+@description('Boolean value indicating if user wants to enable database connection.')
+param enableDB bool = false
+@allowed([
+  'postgresql'
+])
+@description('One of the supported database types')
+param databaseType string = 'postgresql'
+@description('JNDI Name for JDBC Datasource')
+param jdbcDataSourceJNDIName string = 'jdbc/contoso'
+@description('JDBC Connection String')
+param dsConnectionURL string = 'jdbc:postgresql://contoso.postgres.database:5432/testdb'
+@description('User id of Database')
+param dbUser string = 'contosoDbUser'
+@secure()
+@description('Password for Database')
+param dbPassword string = newGuid()
 
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jbosseap-setup-redhat.sh'
@@ -206,6 +223,28 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       {
         name: 'NIC_NAME'
         value: nicName
+        name: 'ENABLE_DB'
+        value: string(enableDB)
+      }
+      {
+        name: 'DATABASE_TYPE'
+        value: databaseType
+      }
+      {
+        name: 'JDBC_DATA_SOURCE_JNDI_NAME_BASE64'
+        value: base64(jdbcDataSourceJNDIName)
+      }
+      {
+        name: 'DS_CONNECTION_URL_BASE64'
+        value: base64(dsConnectionURL)
+      }
+      {
+        name: 'DB_USER_BASE64'
+        value: base64(dbUser)
+      }
+      {
+        name: 'DB_PASSWORD_BASE64'
+        secureValue: base64(dbPassword)
       }
     ]
     primaryScriptUri: uri(const_scriptLocation, '${const_setupJBossScript}${artifactsLocationSasToken}')
