@@ -129,6 +129,8 @@ param dbUser string = 'contosoDbUser'
 @description('Password for Database')
 param dbPassword string = newGuid()
 
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
+
 var nicName_var = '${uniqueString(resourceGroup().id)}-nic'
 var networkSecurityGroupName_var = 'jbosseap-nsg'
 var bootDiagnosticsCheck = ((storageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
@@ -144,6 +146,13 @@ var linuxConfiguration = {
     ]
   }
 }
+var name_postDeploymentDsName = format('updateNicPrivateIpStatic{0}', guidValue)
+var obj_uamiForDeploymentScript = {
+  type: 'UserAssigned'
+  userAssignedIdentities: {
+    '${uamiDeployment.outputs.uamiIdForDeploymentScript}': {}
+  }
+}
 
 /*
 * Beginning of the offer deployment
@@ -156,6 +165,12 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-e9412731-57c2-4e6a-9825-061ad30337c0-partnercenter'
   params: {}
 }
+
+module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
+  name: 'uami-deployment'
+  params: {
+    location: location
+  }
 
 module byosSingleStartPid './modules/_pids/_pid.bicep' = {
   name: 'byosSingleStartPid'
@@ -306,6 +321,21 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
     }
   }
 }
+
+module updateNicPrivateIpStatic 'modules/_deployment-scripts/_dsPostDeployment.bicep' = {
+  name: name_postDeploymentDsName
+  params: {
+    name: name_postDeploymentDsName
+    location: location
+    _artifactsLocation: artifactsLocation
+    _artifactsLocationSasToken: artifactsLocationSasToken
+    identity: obj_uamiForDeploymentScript
+    resourceGroupName: resourceGroup().name
+    nicName: nicName_var
+  }
+  dependsOn: [
+    nicName
+    uamiDeployment
 
 module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
   name: 'dbConnectionEndPid'
