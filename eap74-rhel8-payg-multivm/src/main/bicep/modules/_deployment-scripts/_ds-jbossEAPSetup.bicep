@@ -76,6 +76,9 @@ param satelliteFqdn string = newGuid()
 @description('The JDK version of the Virtual Machine')
 param jdkVersion string = 'openjdk17'
 
+@description('NIC name prefix')
+param nicName string
+
 @description('Boolean value indicating, if user wants to enable database connection.')
 param enableDB bool = false
 @allowed([
@@ -209,6 +212,8 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         value: jdkVersion
       }
       {
+        name: 'NIC_NAME'
+        value: nicName
         name: 'ENABLE_DB'
         value: string(enableDB)
       }

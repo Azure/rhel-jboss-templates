@@ -14,6 +14,12 @@ postgresqlModuleTemplateUri="${SCRIPT_LOCATION}/postgresql-module.xml.template"
 if [ "${CONFIGURATION_MODE}" != "managed-domain" ]; then
     # Configure standalone host
     for ((i = 0; i < NUMBER_OF_INSTANCE; i++)); do
+        # Configure standalone host
+        # Update the IP configuration of network interface and set its private ip allocation method to Static
+        ipConfigName=$(az network nic show -g ${RESOURCE_GROUP_NAME} -n ${NIC_NAME}${i} --query 'ipConfigurations[0].name' -o tsv)
+        echo "Set private ip allocation method to Static for host: ${VM_NAME_PREFIX}${i}"
+        az network nic ip-config update -g ${RESOURCE_GROUP_NAME} --nic-name ${NIC_NAME}${i} -n ${ipConfigName} --set privateIpAllocationMethod=Static
+        
         echo "Configure standalone host: ${VM_NAME_PREFIX}${i}"
         az vm extension set --verbose --name CustomScript \
         --resource-group ${RESOURCE_GROUP_NAME} \
@@ -38,6 +44,11 @@ else
     DOMAIN_CONTROLLER_PRIVATE_IP=$(az vm list-ip-addresses --verbose --resource-group ${RESOURCE_GROUP_NAME} --name "${ADMIN_VM_NAME}" --query [0].virtualMachine.network.privateIpAddresses[0] --output tsv)
     if [[ -z "${DOMAIN_CONTROLLER_PRIVATE_IP}" ]] ; then echo "Failed to get domain controller host private IP"; exit 1; fi
 
+    # Update the IP configuration of network interface and set its private ip allocation method to Static
+    ipConfigName=$(az network nic show -g ${RESOURCE_GROUP_NAME} -n ${NIC_NAME}0 --query 'ipConfigurations[0].name' -o tsv)
+    echo "Set private ip allocation method to Static for host: ${ADMIN_VM_NAME}"
+    az network nic ip-config update -g ${RESOURCE_GROUP_NAME} --nic-name ${NIC_NAME}0 -n ${ipConfigName} --set privateIpAllocationMethod=Static
+
     # Configure domain controller host
     echo "Configure domain controller host: ${ADMIN_VM_NAME}"
 
@@ -53,6 +64,11 @@ else
         echo "Domain controller VM extension execution completed"
 
     for ((i = 1; i < NUMBER_OF_INSTANCE; i++)); do
+        # Update the IP configuration of network interface and set its private ip allocation method to Static
+        ipConfigName=$(az network nic show -g ${RESOURCE_GROUP_NAME} -n ${NIC_NAME}${i} --query 'ipConfigurations[0].name' -o tsv)
+        echo "Set private ip allocation method to Static for host: ${VM_NAME_PREFIX}${i}"
+        az network nic ip-config update -g ${RESOURCE_GROUP_NAME} --nic-name ${NIC_NAME}${i} -n ${ipConfigName} --set privateIpAllocationMethod=Static
+
         echo "Configure domain slave host: ${VM_NAME_PREFIX}${i}"
         az vm extension set --verbose --name CustomScript \
         --resource-group ${RESOURCE_GROUP_NAME} \

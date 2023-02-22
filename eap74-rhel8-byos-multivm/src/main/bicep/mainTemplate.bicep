@@ -644,6 +644,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
     satelliteOrgName: satelliteOrgName
     satelliteFqdn: satelliteFqdn
     jdkVersion: jdkVersion
+    nicName: nicName_var
     enableDB: enableDB
     databaseType: databaseType
     jdbcDataSourceJNDIName: jdbcDataSourceJNDIName

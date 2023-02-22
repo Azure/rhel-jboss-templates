@@ -14,6 +14,11 @@ postgresqlModuleTemplateUri="${unwrapped_artifactsLocation}${PATH_TO_SCRIPT}/pos
 if [ "${CONFIGURATION_MODE}" != "managed-domain" ]; then
     # Configure standalone host
     for ((i = 0; i < NUMBER_OF_INSTANCE; i++)); do
+        # Update the IP configuration of network interface and set its private ip allocation method to Static
+        ipConfigName=$(az network nic show -g ${RESOURCE_GROUP_NAME} -n ${NIC_NAME}${i} --query 'ipConfigurations[0].name' -o tsv)
+        echo "Set private ip allocation method to Static for host: ${VM_NAME_PREFIX}${i}"
+        az network nic ip-config update -g ${RESOURCE_GROUP_NAME} --nic-name ${NIC_NAME}${i} -n ${ipConfigName} --set privateIpAllocationMethod=Static
+
         echo "Configure standalone host: ${VM_NAME_PREFIX}${i}"
         standaloneScriptUri="${unwrapped_artifactsLocation}${PATH_TO_SCRIPT}/jbosseap-setup-standalone.sh"
         az vm extension set --verbose --name CustomScript \
@@ -39,6 +44,11 @@ else
 
     enableElytronSe17DomainCliUri="${unwrapped_artifactsLocation}${PATH_TO_SCRIPT}/enable-elytron-se17-domain.cli"
 
+    # Update the IP configuration of network interface and set its private ip allocation method to Static
+    ipConfigName=$(az network nic show -g ${RESOURCE_GROUP_NAME} -n ${NIC_NAME}0 --query 'ipConfigurations[0].name' -o tsv)
+    echo "Set private ip allocation method to Static for host: ${ADMIN_VM_NAME}"
+    az network nic ip-config update -g ${RESOURCE_GROUP_NAME} --nic-name ${NIC_NAME}0 -n ${ipConfigName} --set privateIpAllocationMethod=Static
+
     # Configure domain controller host
     echo "Configure domain controller host: ${ADMIN_VM_NAME}"
     masterScriptUri="${unwrapped_artifactsLocation}${PATH_TO_SCRIPT}/jbosseap-setup-master.sh"
@@ -53,6 +63,11 @@ else
         echo "Domain controller VM extension execution completed"
 
     for ((i = 1; i < NUMBER_OF_INSTANCE; i++)); do
+        # Update the IP configuration of network interface and set its private ip allocation method to Static
+        ipConfigName=$(az network nic show -g ${RESOURCE_GROUP_NAME} -n ${NIC_NAME}${i} --query 'ipConfigurations[0].name' -o tsv)
+        echo "Set private ip allocation method to Static for host: ${VM_NAME_PREFIX}${i}"
+        az network nic ip-config update -g ${RESOURCE_GROUP_NAME} --nic-name ${NIC_NAME}${i} -n ${ipConfigName} --set privateIpAllocationMethod=Static
+
         echo "Configure domain slave host: ${VM_NAME_PREFIX}${i}"
         slaveScriptUri="${unwrapped_artifactsLocation}${PATH_TO_SCRIPT}/jbosseap-setup-slave.sh"
         az vm extension set --verbose --name CustomScript \
