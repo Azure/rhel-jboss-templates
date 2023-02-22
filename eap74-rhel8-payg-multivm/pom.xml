@@ -5,7 +5,6 @@
 
     <groupId>com.rhel.jboss.azure</groupId>
     <artifactId>eap74-rhel8-payg-multivm</artifactId>
-    <version>1.0.13</version>
     <version>1.0.14</version>
 
     <!-- mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests -->
