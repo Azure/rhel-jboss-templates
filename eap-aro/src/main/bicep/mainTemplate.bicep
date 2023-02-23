@@ -135,6 +135,13 @@ var const_cmdToGetKubeadminUsername = '${const_cmdToGetKubeadminCredentials} --q
 var const_cmdToGetKubeadminPassword = '${const_cmdToGetKubeadminCredentials} --query kubeadminPassword -o tsv'
 var const_cmdToGetApiServer = 'az aro show -g ${const_clusterRGName} -n ${name_clusterName} --query apiserverProfile.url -o tsv'
 
+/*
+* Beginning of the offer deployment
+*/
+module pids './modules/_pids/_pid.bicep' = {
+  name: 'initialization'
+}
+
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-0cc5f6a1-9633-40d9-bc00-f010ad5b365a-partnercenter'
   params: {}
@@ -289,6 +296,17 @@ resource clusterName_resource 'Microsoft.RedHatOpenShift/openShiftClusters@2022-
   ]
 }
 
+module deployApplicationStartPid './modules/_pids/_pid.bicep' = if (deployApplication) {
+  name: 'deployApplicationStartPid'
+  params: {
+    name: pids.outputs.appDeployStart
+  }
+  dependsOn: [
+    pids
+    clusterName_resource
+  ]
+}
+
 module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
   name: 'jboss-setup'
   params: {
@@ -315,6 +333,17 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
   }
   dependsOn: [
     clusterName_resource
+  ]
+}
+
+module deployApplicationEndPid './modules/_pids/_pid.bicep' = if (deployApplication) {
+  name: 'deployApplicationEndPid'
+  params: {
+    name: pids.outputs.appDeployEnd
+  }
+  dependsOn: [
+    pids
+    jbossEAPDeployment
   ]
 }
 
