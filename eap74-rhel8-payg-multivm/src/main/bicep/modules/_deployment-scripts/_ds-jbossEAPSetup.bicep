@@ -214,6 +214,8 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       {
         name: 'NIC_NAME'
         value: nicName
+      }
+      {
         name: 'ENABLE_DB'
         value: string(enableDB)
       }
