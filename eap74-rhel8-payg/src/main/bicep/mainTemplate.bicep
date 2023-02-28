@@ -166,6 +166,7 @@ module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
   params: {
     location: location
   }
+}
 
 module paygSingleStartPid './modules/_pids/_pid.bicep' = {
   name: 'paygSingleStartPid'
@@ -325,6 +326,8 @@ module updateNicPrivateIpStatic 'modules/_deployment-scripts/_dsPostDeployment.b
   dependsOn: [
     nicName
     uamiDeployment
+  ]
+}
 
 module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
   name: 'dbConnectionEndPid'
