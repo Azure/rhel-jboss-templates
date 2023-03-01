@@ -480,7 +480,7 @@
                         "type": "Microsoft.Common.InfoBox",
                         "options": {
                             "icon": "Info",
-                            "text": "When creating a new virtual network, the subnet's address prefix is calculated automatically based on the virtual network's address prefix. When using an existing virtual network, a minimum virtual network size of /28 and a minimum subnet size of /29 are required. Additionally, the subnet must have adequate available addresses for the server setup."
+                            "text": "When creating a new virtual network, the subnet's address prefix is calculated automatically based on the virtual</br>network's address prefix. When using an existing virtual network, a minimum virtual network size of /28 and a minimum</br>subnet size of /29 are required. Additionally, the subnet must have adequate available addresses for the server setup."
                         }
                     },
                     {
