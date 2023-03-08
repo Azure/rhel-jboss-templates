@@ -498,8 +498,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2022-08-01'
               settings: {
                 fileUris: [
                   uri(artifactsLocation, 'scripts/jbosseap-setup-redhat.sh${artifactsLocationSasToken}')
-                  uri(artifactsLocation, 'scripts/create-ds.sh${artifactsLocationSasToken}')
-                  uri(artifactsLocation, 'scripts/postgresql-module.xml.template${artifactsLocationSasToken}')
+                  uri(artifactsLocation, 'scripts/create-ds-postgresql.sh${artifactsLocationSasToken}')
                 ]
               }
               protectedSettings: {

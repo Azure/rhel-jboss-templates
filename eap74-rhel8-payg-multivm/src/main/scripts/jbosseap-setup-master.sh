@@ -285,7 +285,7 @@ sleep 20
 if [ "$enableDB" == "True" ]; then
     echo "Start to configure JDBC driver and data source" | log
     jdbcDataSourceName=dataSource-$dbType
-    ./create-ds.sh $EAP_HOME/wildfly "$dbType" "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true false
+    ./create-ds-${dbType}.sh $EAP_HOME/wildfly "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true false
     echo "Complete to configure JDBC driver and data source" | log
 fi
 

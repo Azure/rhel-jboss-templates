@@ -249,10 +249,10 @@ sleep 20
 if [ "$enableDB" == "True" ]; then
     echo "Start to configure JDBC driver and data source" | log
     jdbcDataSourceName=dataSource-$dbType
-    ./create-ds.sh $EAP_HOME/wildfly "$dbType" "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" false false
+    ./create-ds-${dbType}.sh $EAP_HOME/wildfly "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" false false
 
     # Test connection for the created data source
-    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --connect "/subsystem=datasources/data-source=dataSource-$dbType:test-connection-in-pool" | log; flag=${PIPESTATUS[0]}
+    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --connect "/subsystem=datasources/data-source=$jdbcDataSourceName:test-connection-in-pool" | log; flag=${PIPESTATUS[0]}
     if [ $flag != 0 ]; then 
         echo "ERROR! Test data source connection failed." >&2 log
         exit $flag

@@ -8,8 +8,7 @@ if [[ -z "${STORAGE_ACCESS_KEY}" ]] ; then echo "Failed to get storage account s
 SCRIPT_LOCATION=${ARTIFACTS_LOCATION}${PATH_TO_SCRIPT}
 
 # Script URIs for creating data source connection
-createDSScriptUri="${SCRIPT_LOCATION}/create-ds.sh"
-postgresqlModuleTemplateUri="${SCRIPT_LOCATION}/postgresql-module.xml.template"
+postgresqlDSScriptUri="${SCRIPT_LOCATION}/create-ds-postgresql.sh"
 
 if [ "${CONFIGURATION_MODE}" != "managed-domain" ]; then
     # Configure standalone host
@@ -26,7 +25,7 @@ if [ "${CONFIGURATION_MODE}" != "managed-domain" ]; then
         --vm-name ${VM_NAME_PREFIX}${i} \
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
-        --settings "{\"fileUris\": [\"${SCRIPT_LOCATION}/jbosseap-setup-standalone.sh\", \"${createDSScriptUri}\", \"${postgresqlModuleTemplateUri}\"]}" \
+        --settings "{\"fileUris\": [\"${SCRIPT_LOCATION}/jbosseap-setup-standalone.sh\", \"${postgresqlDSScriptUri}\"]}" \
         --protected-settings "{\"commandToExecute\":\"sh jbosseap-setup-standalone.sh -a ${ARTIFACTS_LOCATION} -t ${ARTIFACTS_LOCATION_SAS_TOKEN} -p ${PATH_TO_FILE} -f ${FILE_TO_DOWNLOAD} ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${JDK_VERSION} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN} ${ENABLE_DB} ${DATABASE_TYPE} ${JDBC_DATA_SOURCE_JNDI_NAME_BASE64} ${DS_CONNECTION_URL_BASE64} ${DB_USER_BASE64} ${DB_PASSWORD_BASE64}\"}"
         if [ $? != 0 ] ; then echo "Failed to configure standalone host ${VM_NAME_PREFIX}${i}"; exit 1; fi
         echo "standalone ${VM_NAME_PREFIX}${i} extension execution completed"
@@ -57,7 +56,7 @@ else
         --vm-name ${ADMIN_VM_NAME} \
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
-        --settings "{\"fileUris\": [\"${SCRIPT_LOCATION}/jbosseap-setup-master.sh\", \"${enableElytronSe17DomainCliUri}\", \"${createDSScriptUri}\", \"${postgresqlModuleTemplateUri}\"]}" \
+        --settings "{\"fileUris\": [\"${SCRIPT_LOCATION}/jbosseap-setup-master.sh\", \"${enableElytronSe17DomainCliUri}\", \"${postgresqlDSScriptUri}\"]}" \
         --protected-settings "{\"commandToExecute\":\"sh jbosseap-setup-master.sh ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${JDK_VERSION} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${privateEndpointIp} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN} ${ENABLE_DB} ${DATABASE_TYPE} ${JDBC_DATA_SOURCE_JNDI_NAME_BASE64} ${DS_CONNECTION_URL_BASE64} ${DB_USER_BASE64} ${DB_PASSWORD_BASE64}\"}"
         # error exception
         if [ $? != 0 ] ; then echo "Failed to configure domain controller host: ${ADMIN_VM_NAME}"; exit 1; fi
@@ -75,7 +74,7 @@ else
         --vm-name ${VM_NAME_PREFIX}${i} \
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
-        --settings "{\"fileUris\": [\"${SCRIPT_LOCATION}/jbosseap-setup-slave.sh\", \"${enableElytronSe17DomainCliUri}\", \"${createDSScriptUri}\", \"${postgresqlModuleTemplateUri}\"]}" \
+        --settings "{\"fileUris\": [\"${SCRIPT_LOCATION}/jbosseap-setup-slave.sh\", \"${enableElytronSe17DomainCliUri}\", \"${postgresqlDSScriptUri}\"]}" \
         --protected-settings "{\"commandToExecute\":\"sh jbosseap-setup-slave.sh ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${JDK_VERSION} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${privateEndpointIp} ${DOMAIN_CONTROLLER_PRIVATE_IP} ${NUMBER_OF_SERVER_INSTANCE} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN} ${ENABLE_DB} ${DATABASE_TYPE} ${JDBC_DATA_SOURCE_JNDI_NAME_BASE64} ${DS_CONNECTION_URL_BASE64} ${DB_USER_BASE64} ${DB_PASSWORD_BASE64}\"}"
         if [ $? != 0 ] ; then echo "Failed to configure domain slave host: ${VM_NAME_PREFIX}${i}"; exit 1; fi
         echo "Slave ${VM_NAME_PREFIX}${i} extension execution completed"
