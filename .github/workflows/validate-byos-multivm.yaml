@@ -217,6 +217,7 @@ jobs:
                   dbUser=testuser@${{ env.dbInstanceName }}
                   dbPassword=${{ env.dbPassword }}
                 fi
+                echo "enableDB=${enableDB}" >> $GITHUB_ENV
 
                 echo "generate parameter file for domain mode"
                 # Generate parameters for db template deployment
@@ -273,7 +274,14 @@ jobs:
                     --parameters @rhel-jboss-templates/eap74-rhel8-byos-multivm/src/test/parameters-test-domain.json \
                     --template-file rhel-jboss-templates/eap74-rhel8-byos-multivm/mainTemplate.json
             - name: Build javaee cafe
-              run: mvn clean install --file rhel-jboss-templates/eap74-rhel8-byos-multivm/src/test/coffee-app/pom.xml
+              run: |
+                if ${{ env.enableDB == 'true' }}; then
+                  sed -i "s/java:jboss\/datasources\/ExampleDS/jdbc\/JavaEECafeDB/g" rhel-jboss-templates/eap-coffee-app/src/main/resources/META-INF/persistence.xml
+                fi
+                mvn clean install --file rhel-jboss-templates/eap-coffee-app/pom.xml
+                if ${{ env.enableDB == 'true' }}; then
+                  sed -i "s/jdbc\/JavaEECafeDB/java:jboss\/datasources\/ExampleDS/g" rhel-jboss-templates/eap-coffee-app/src/main/resources/META-INF/persistence.xml
+                fi
             - name: Create a container and uploading cafe app
               id: upload_cafe_app
               uses: azure/CLI@v1
@@ -287,7 +295,7 @@ jobs:
                       --account-name ${{ env.domainBootStorageAccountName }} \
                       --container-name cafeapp \
                       --name javaee-cafe.war \
-                      --file rhel-jboss-templates/eap74-rhel8-byos-multivm/src/test/coffee-app/target/javaee-cafe.war
+                      --file rhel-jboss-templates/eap-coffee-app/target/javaee-cafe.war
                     # query the app url
                     appbloburl=$(az storage blob url --container-name cafeapp \
                         --name javaee-cafe.war \
