@@ -6,9 +6,10 @@ on:
       databaseType:
         description: 'Database connection'
         required: true
-        default: 'postgresql'
+        default: 'mssqlserver'
         type: choice
         options:
+        - mssqlserver
         - postgresql
         - none
       isForDemo:
@@ -153,6 +154,23 @@ jobs:
               id: azure-login
               with:
                 creds: ${{ env.azureCredentials }}
+            - name: Deploy an instance of Azure SQL Database
+              if: ${{ inputs.databaseType == 'mssqlserver' || github.event.client_payload.databaseType == 'mssqlserver' }}
+              run: |
+                az group create -n ${{ env.vmssResourceGroup}} -l ${{ env.location }}
+                az sql server create \
+                  --resource-group ${{ env.vmssResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --admin-user testuser --admin-password ${{ env.dbPassword }} \
+                  --location ${{ env.location }}
+                host=$(az sql server show \
+                  --resource-group ${{ env.vmssResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --query "fullyQualifiedDomainName" -o tsv)
+                echo "sqlserverHost=${host}" >> $GITHUB_ENV
+                # Allow Azure services to access
+                az sql server firewall-rule create \
+                  --resource-group ${{ env.vmssResourceGroup }} --server ${{ env.dbInstanceName }} \
+                  --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+                az sql db create --resource-group ${{ env.vmssResourceGroup }} --server ${{ env.dbInstanceName }} --name testdb
             - name: Deploy an instance of Azure Database for PostgreSQL
               if: ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}
               run: |
@@ -177,7 +195,13 @@ jobs:
                 dsConnectionURL=jdbc:postgresql://contoso.postgres.database:5432/testdb
                 dbUser=contosoDbUser
                 dbPassword=contosoDbPwd
-                if ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}; then
+                if ${{ inputs.databaseType == 'mssqlserver' || github.event.client_payload.databaseType == 'mssqlserver' }}; then
+                  enableDB=true
+                  databaseType=mssqlserver
+                  dsConnectionURL="jdbc:sqlserver://${{ env.sqlserverHost }}:1433;database=testdb"
+                  dbUser=testuser@${{ env.dbInstanceName }}
+                  dbPassword=${{ env.dbPassword }}
+                elif ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}; then
                   enableDB=true
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ env.postgresqlHost }}:5432/testdb"
