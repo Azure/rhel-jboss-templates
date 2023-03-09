@@ -154,6 +154,7 @@ param enableCookieBasedAffinity bool = false
 @description('Boolean value indicating, if user wants to enable database connection.')
 param enableDB bool = false
 @allowed([
+  'mssqlserver'
   'postgresql'
 ])
 @description('One of the supported database types')
@@ -488,6 +489,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@2022-08-01'
                 fileUris: [
                   uri(artifactsLocation, 'scripts/jbosseap-setup-redhat.sh${artifactsLocationSasToken}')
                   uri(artifactsLocation, 'scripts/create-ds-postgresql.sh${artifactsLocationSasToken}')
+                  uri(artifactsLocation, 'scripts/create-ds-mssqlserver.sh${artifactsLocationSasToken}')
                 ]
               }
               protectedSettings: {
