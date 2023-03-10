@@ -22,9 +22,9 @@ jdbcDriverModuleDirectory="$eapRootPath"/modules/com/microsoft/sqlserver/main
 mkdir -p "$jdbcDriverModuleDirectory"
 
 # Download JDBC driver
-version=11.2.1.jre8
-jdbcDriverName=mssql-jdbc-${version}.jar
-curl --retry 5 -Lo ${jdbcDriverModuleDirectory}/${jdbcDriverName} https://repo1.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/${version}/${jdbcDriverName}
+jdbcDriverVersion=11.2.1.jre8
+jdbcDriverName=mssql-jdbc-${jdbcDriverVersion}.jar
+curl --retry 5 -Lo ${jdbcDriverModuleDirectory}/${jdbcDriverName} https://repo1.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/${jdbcDriverVersion}/${jdbcDriverName}
 
 # Create module for JDBC driver
 jdbcDriverModule=module.xml
