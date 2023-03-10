@@ -116,6 +116,7 @@ jobs:
         needs: preflight
         runs-on: ubuntu-latest
         outputs:
+          sqlserverHost: ${{ steps.deploy-mssqlserver.outputs.sqlserverHost }}
           postgresqlHost: ${{ steps.deploy-postgresql.outputs.postgresqlHost }}
         steps:
             - uses: azure/login@v1
@@ -126,6 +127,7 @@ jobs:
               run: |
                 az group create -n ${{ env.dependencyResourceGroup}} -l ${{ env.location }}
             - name: Deploy an instance of Azure SQL Database
+              id: deploy-mssqlserver
               if: ${{ inputs.databaseType == 'mssqlserver' || github.event.client_payload.databaseType == 'mssqlserver' }}
               run: |
                 az sql server create \
