@@ -10,6 +10,7 @@ on:
         type: choice
         options:
         - mssqlserver
+        - oracle
         - postgresql
         - none
       isForDemo:
@@ -44,6 +45,7 @@ env:
     gitToken: ${{ secrets.GIT_TOKEN }}
     enableLoadBalancer: enable
     disableLoadBalancer: disable
+    scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
 
 jobs:
     preflight:
@@ -181,6 +183,25 @@ jobs:
                   --resource-group ${{ env.vmssResourceGroup }} --server ${{ env.dbInstanceName }} \
                   --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
                 az sql db create --resource-group ${{ env.vmssResourceGroup }} --server ${{ env.dbInstanceName }} --name testdb
+            - name: Deploy an Oracle database server on Azure VM
+              if: ${{ inputs.databaseType == 'oracle' || github.event.client_payload.databaseType == 'oracle' }}
+              run: |
+                az group create -n ${{ env.vmssResourceGroup }} -l ${{ env.location }}
+                az vm create \
+                  --resource-group ${{ env.vmssResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --image Oracle:oracle-database-19-3:oracle-database-19-0904:latest --size Standard_DS2_v2 \
+                  --admin-username azureuser --generate-ssh-keys \
+                  --nsg-rule NONE --enable-agent true \
+                  --vnet-name ${{ env.dbInstanceName }}VNET --enable-auto-update false \
+                  --tags SkipASMAzSecPack=true SkipNRMSCorp=true SkipNRMSDatabricks=true SkipNRMSDB=true SkipNRMSHigh=true SkipNRMSMedium=true SkipNRMSRDPSSH=true SkipNRMSSAW=true SkipNRMSMgmt=true
+                az vm disk attach --name oradata01 --new --resource-group ${{ env.vmssResourceGroup }} --vm-name ${{ env.dbInstanceName }} --size-gb 64 --sku StandardSSD_LRS
+                az vm open-port -g ${{ env.vmssResourceGroup }} -n ${{ env.dbInstanceName }} --port 1521,5502 --priority 100
+                az vm extension set --name CustomScript \
+                  --extension-instance-name install-oracle \
+                  --resource-group ${{ env.vmssResourceGroup }} --vm-name ${{ env.dbInstanceName }} \
+                  --publisher Microsoft.Azure.Extensions --version 2.0 \
+                  --settings "{\"fileUris\": [\"${{ env.scriptLocation }}install-oracle-main.sh\", \"${{ env.scriptLocation }}install-oracle.sh\"]}" \
+                  --protected-settings "{\"commandToExecute\":\"bash install-oracle-main.sh ${{ env.dbPassword }}\"}"
             - name: Deploy an instance of Azure Database for PostgreSQL
               if: ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}
               run: |
@@ -210,6 +231,13 @@ jobs:
                   databaseType=mssqlserver
                   dsConnectionURL="jdbc:sqlserver://${{ env.sqlserverHost }}:1433;database=testdb"
                   dbUser=testuser@${{ env.dbInstanceName }}
+                  dbPassword=${{ env.dbPassword }}
+                elif ${{ inputs.databaseType == 'oracle' || github.event.client_payload.databaseType == 'oracle' }}; then
+                  enableDB=true
+                  databaseType=oracle
+                  publicIp=$(az vm show -g ${{ env.vmssResourceGroup }} -n ${{ env.dbInstanceName }} -d --query publicIps -o tsv)
+                  dsConnectionURL=jdbc:oracle:thin:@${publicIp}:1521/oratest1
+                  dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
                 elif ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}; then
                   enableDB=true
