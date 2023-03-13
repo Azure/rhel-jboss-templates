@@ -287,7 +287,7 @@ sleep 20
 if [ "$enableDB" == "True" ]; then
     echo "Start to install JDBC driver module" | log
     jdbcDataSourceName=dataSource-$dbType
-    ./create-ds.sh $EAP_HOME/wildfly "$dbType" "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true true
+    ./create-ds-${dbType}.sh $EAP_HOME/wildfly "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true true
     echo "Complete to install JDBC driver module" | log
 
     # Reload servers
@@ -312,7 +312,7 @@ if [ "$enableDB" == "True" ]; then
     echo "Start to test data source connection" | log
     for ((i = 0; i < NUMBER_OF_SERVER_INSTANCE; i++)); do
         sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --connect --controller=${DOMAIN_CONTROLLER_PRIVATE_IP} --user=${JBOSS_EAP_USER} --password=${JBOSS_EAP_PASSWORD} \
-            "/host=${HOST_VM_NAME_LOWERCASES}/server=${HOST_VM_NAME_LOWERCASES}-server${i}/subsystem=datasources/data-source=dataSource-$dbType:test-connection-in-pool" | log; flag=${PIPESTATUS[0]}
+            "/host=${HOST_VM_NAME_LOWERCASES}/server=${HOST_VM_NAME_LOWERCASES}-server${i}/subsystem=datasources/data-source=$jdbcDataSourceName:test-connection-in-pool" | log; flag=${PIPESTATUS[0]}
         if [ $flag != 0 ]; then 
             echo "ERROR! Test data source connection failed." >&2 log
             exit $flag

@@ -313,8 +313,7 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
     settings: {
       fileUris: [
         uri(artifactsLocation, 'scripts/jbosseap-setup-redhat.sh${artifactsLocationSasToken}')
-        uri(artifactsLocation, 'scripts/create-ds.sh${artifactsLocationSasToken}')
-        uri(artifactsLocation, 'scripts/postgresql-module.xml.template${artifactsLocationSasToken}')
+        uri(artifactsLocation, 'scripts/create-ds-postgresql.sh${artifactsLocationSasToken}')
       ]
     }
     protectedSettings: {
