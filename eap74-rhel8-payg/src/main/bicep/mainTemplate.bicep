@@ -110,6 +110,7 @@ param satelliteFqdn string = newGuid()
 @description('Boolean value indicating, if user wants to enable database connection.')
 param enableDB bool = false
 @allowed([
+  'mssqlserver'
   'postgresql'
 ])
 @description('One of the supported database types')
@@ -303,6 +304,7 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
       fileUris: [
         uri(artifactsLocation, 'scripts/jbosseap-setup-redhat.sh${artifactsLocationSasToken}')
         uri(artifactsLocation, 'scripts/create-ds-postgresql.sh${artifactsLocationSasToken}')
+        uri(artifactsLocation, 'scripts/create-ds-mssqlserver.sh${artifactsLocationSasToken}')
       ]
     }
     protectedSettings: {

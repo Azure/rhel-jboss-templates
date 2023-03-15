@@ -85,6 +85,7 @@ param nicName string
 @description('Boolean value indicating if user wants to enable database connection.')
 param enableDB bool = false
 @allowed([
+  'mssqlserver'
   'postgresql'
 ])
 @description('One of the supported database types')
