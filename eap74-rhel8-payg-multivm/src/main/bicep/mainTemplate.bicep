@@ -165,6 +165,7 @@ param enableDB bool = false
 @allowed([
   'mssqlserver'
   'postgresql'
+  'oracle'
 ])
 @description('One of the supported database types')
 param databaseType string = 'postgresql'

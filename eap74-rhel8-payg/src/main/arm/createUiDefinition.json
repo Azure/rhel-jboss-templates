@@ -574,6 +574,10 @@
                                             "value": "mssqlserver"
                                         },
                                         {
+                                            "label": "Oracle database",
+                                            "value": "oracle"
+                                        },
+                                        {
                                             "label": "PostgreSQL",
                                             "value": "postgresql"
                                         }
