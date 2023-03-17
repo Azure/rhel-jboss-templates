@@ -11,6 +11,7 @@ on:
         options:
         - mssqlserver
         - oracle
+        - mysql
         - postgresql
         - none
       isForDemo:
@@ -120,6 +121,7 @@ jobs:
         outputs:
           sqlserverHost: ${{ steps.deploy-mssqlserver.outputs.sqlserverHost }}
           oracleHost: ${{ steps.deploy-oracle.outputs.oracleHost }}
+          mysqlHost: ${{ steps.deploy-mysql.outputs.mysqlHost }}
           postgresqlHost: ${{ steps.deploy-postgresql.outputs.postgresqlHost }}
         steps:
             - uses: azure/login@v1
@@ -168,6 +170,34 @@ jobs:
                   --protected-settings "{\"commandToExecute\":\"bash install-oracle-main.sh ${{ env.dbPassword }}\"}"
                 host=$(az vm show -g ${{ env.dependencyResourceGroup }} -n ${{ env.dbInstanceName }} -d --query publicIps -o tsv)
                 echo "oracleHost=${host}" >> "$GITHUB_OUTPUT"
+            - name: Deploy an instance of Azure Database for MySQL
+              id: deploy-mysql
+              if: ${{ inputs.databaseType == 'mysql' || github.event.client_payload.databaseType == 'mysql' }}
+              run: |
+                az group create -n ${{ env.dependencyResourceGroup }} -l ${{ env.location }}
+                az mysql server create \
+                  --resource-group ${{ env.dependencyResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --admin-user myadmin --admin-password ${{ env.dbPassword }} \
+                  --sku-name GP_Gen5_2 --location ${{ env.location }}
+                # Allow Azure services to access
+                az mysql server firewall-rule create \
+                  --resource-group ${{ env.dependencyResourceGroup }} --server ${{ env.dbInstanceName }} \
+                  --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+                # Allow current IP to access MySQL server
+                currentIp=$(curl -s https://icanhazip.com)
+                az mysql server firewall-rule create \
+                  --resource-group ${{ env.dependencyResourceGroup }} --server ${{ env.dbInstanceName }} \
+                  --name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
+                host=$(az mysql server show \
+                  --resource-group ${{ env.dependencyResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --query "fullyQualifiedDomainName" -o tsv)
+                echo "mysqlHost=${host}" >> "$GITHUB_OUTPUT"
+                mysql -h $host -u myadmin@${{ env.dbInstanceName }} -p${{ env.dbPassword }} << EOF
+                CREATE DATABASE testdb;
+                CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ env.dbPassword }}';
+                GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
+                FLUSH PRIVILEGES;
+                EOF
             - name: Deploy an instance of Azure Database for PostgreSQL
               id: deploy-postgresql
               if: ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}
@@ -254,6 +284,12 @@ jobs:
                   databaseType=oracle
                   dsConnectionURL=jdbc:oracle:thin:@${{ needs.deploy-dependent-resources.outputs.oracleHost }}:1521/oratest1
                   dbUser=testuser
+                  dbPassword=${{ env.dbPassword }}
+                elif ${{ inputs.databaseType == 'mysql' || github.event.client_payload.databaseType == 'mysql' }}; then
+                  enableDB=true
+                  databaseType=mysql
+                  dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlHost }}:3306/testdb
+                  dbUser=testuser@${{ env.dbInstanceName }}
                   dbPassword=${{ env.dbPassword }}
                 elif ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}; then
                   enableDB=true
@@ -491,6 +527,12 @@ jobs:
                   databaseType=oracle
                   dsConnectionURL=jdbc:oracle:thin:@${{ needs.deploy-dependent-resources.outputs.oracleHost }}:1521/oratest1
                   dbUser=testuser
+                  dbPassword=${{ env.dbPassword }}
+                elif ${{ inputs.databaseType == 'mysql' || github.event.client_payload.databaseType == 'mysql' }}; then
+                  enableDB=true
+                  databaseType=mysql
+                  dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlHost }}:3306/testdb
+                  dbUser=testuser@${{ env.dbInstanceName }}
                   dbPassword=${{ env.dbPassword }}
                 elif ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}; then
                   enableDB=true
