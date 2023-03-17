@@ -118,6 +118,7 @@ param enableDB bool = false
   'mssqlserver'
   'postgresql'
   'oracle'
+  'mysql'
 ])
 @description('One of the supported database types')
 param databaseType string = 'postgresql'
@@ -318,6 +319,7 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
         uri(artifactsLocation, 'scripts/create-ds-postgresql.sh${artifactsLocationSasToken}')
         uri(artifactsLocation, 'scripts/create-ds-mssqlserver.sh${artifactsLocationSasToken}')
         uri(artifactsLocation, 'scripts/create-ds-oracle.sh${artifactsLocationSasToken}')
+        uri(artifactsLocation, 'scripts/create-ds-mysql.sh${artifactsLocationSasToken}')
       ]
     }
     protectedSettings: {
