@@ -11,6 +11,7 @@ on:
         options:
         - mssqlserver
         - oracle
+        - mysql
         - postgresql
         - none
       isForDemo:
@@ -193,6 +194,33 @@ jobs:
                   --publisher Microsoft.Azure.Extensions --version 2.0 \
                   --settings "{\"fileUris\": [\"${{ env.scriptLocation }}install-oracle-main.sh\", \"${{ env.scriptLocation }}install-oracle.sh\"]}" \
                   --protected-settings "{\"commandToExecute\":\"bash install-oracle-main.sh ${{ env.dbPassword }}\"}"
+            - name: Deploy an instance of Azure Database for MySQL
+              if: ${{ inputs.databaseType == 'mysql' || github.event.client_payload.databaseType == 'mysql' }}
+              run: |
+                az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
+                az mysql server create \
+                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --admin-user myadmin --admin-password ${{ env.dbPassword }} \
+                  --sku-name GP_Gen5_2 --location ${{ env.location }}
+                # Allow Azure services to access
+                az mysql server firewall-rule create \
+                  --resource-group ${{ env.singleResourceGroup }} --server ${{ env.dbInstanceName }} \
+                  --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+                # Allow current IP to access MySQL server
+                currentIp=$(curl -s https://icanhazip.com)
+                az mysql server firewall-rule create \
+                  --resource-group ${{ env.singleResourceGroup }} --server ${{ env.dbInstanceName }} \
+                  --name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
+                host=$(az mysql server show \
+                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --query "fullyQualifiedDomainName" -o tsv)
+                echo "mysqlHost=${host}" >> $GITHUB_ENV
+                mysql -h $host -u myadmin@${{ env.dbInstanceName }} -p${{ env.dbPassword }} << EOF
+                CREATE DATABASE testdb;
+                CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ env.dbPassword }}';
+                GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
+                FLUSH PRIVILEGES;
+                EOF
             - name: Deploy an instance of Azure Database for PostgreSQL
               if: ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}
               run: |
@@ -229,6 +257,12 @@ jobs:
                   publicIp=$(az vm show -g ${{ env.singleResourceGroup }} -n ${{ env.dbInstanceName }} -d --query publicIps -o tsv)
                   dsConnectionURL=jdbc:oracle:thin:@${publicIp}:1521/oratest1
                   dbUser=testuser
+                  dbPassword=${{ env.dbPassword }}
+                elif ${{ inputs.databaseType == 'mysql' || github.event.client_payload.databaseType == 'mysql' }}; then
+                  enableDB=true
+                  databaseType=mysql
+                  dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb
+                  dbUser=testuser@${{ env.dbInstanceName }}
                   dbPassword=${{ env.dbPassword }}
                 elif ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}; then
                   enableDB=true

@@ -759,6 +759,10 @@
                                             "value": "oracle"
                                         },
                                         {
+                                            "label": "MySQL",
+                                            "value": "mysql"
+                                        },
+                                        {
                                             "label": "PostgreSQL",
                                             "value": "postgresql"
                                         }
