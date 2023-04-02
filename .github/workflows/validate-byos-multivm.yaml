@@ -367,12 +367,12 @@ jobs:
                     --template-file rhel-jboss-templates/eap74-rhel8-byos-multivm/mainTemplate.json
             - name: Build javaee cafe
               run: |
-                if ${{ env.enableDB == 'true' }}; then
-                  sed -i "s/java:jboss\/datasources\/ExampleDS/jdbc\/JavaEECafeDB/g" rhel-jboss-templates/eap-coffee-app/src/main/resources/META-INF/persistence.xml
+                if ${{ env.enableDB != 'true' }}; then
+                  sed -i "s/jdbc\/JavaEECafeDB/java:jboss\/datasources\/ExampleDS/g" rhel-jboss-templates/eap-coffee-app/src/main/resources/META-INF/persistence.xml
                 fi
                 mvn clean install --file rhel-jboss-templates/eap-coffee-app/pom.xml
-                if ${{ env.enableDB == 'true' }}; then
-                  sed -i "s/jdbc\/JavaEECafeDB/java:jboss\/datasources\/ExampleDS/g" rhel-jboss-templates/eap-coffee-app/src/main/resources/META-INF/persistence.xml
+                if ${{ env.enableDB != 'true' }}; then
+                  sed -i "s/java:jboss\/datasources\/ExampleDS/jdbc\/JavaEECafeDB/g" rhel-jboss-templates/eap-coffee-app/src/main/resources/META-INF/persistence.xml
                 fi
             - name: Create a container and uploading cafe app
               id: upload_cafe_app
