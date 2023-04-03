@@ -75,12 +75,6 @@ SATELLITE_ACTIVATION_KEY=$(echo $SATELLITE_ACTIVATION_KEY_BASE64 | base64 -d)
 SATELLITE_ORG_NAME_BASE64=${14}
 SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
 SATELLITE_VM_FQDN=${15}
-enableDB=${16}
-dbType=${17}
-jdbcDSJNDIName=${18}
-dsConnectionString=${19}
-databaseUser=${20}
-databasePassword=${21}
 
 MOUNT_POINT_PATH=/mnt/jbossshare
 HOST_VM_IP=$(hostname -I)
