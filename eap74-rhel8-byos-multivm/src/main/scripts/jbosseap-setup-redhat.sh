@@ -59,8 +59,8 @@ else
         --vm-name ${ADMIN_VM_NAME} \
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
-        --settings "{\"fileUris\": [\"${masterScriptUri}\", \"${enableElytronSe17DomainCliUri}\", \"${postgresqlDSScriptUri}\", \"${mssqlserverDSScriptUri}\", \"${oracleDSScriptUri}\", \"${mysqlDSScriptUri}\"]}" \
-        --protected-settings "{\"commandToExecute\":\"sh jbosseap-setup-master.sh ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${RHEL_POOL} ${JDK_VERSION} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${privateEndpointIp} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN} ${ENABLE_DB} ${DATABASE_TYPE} ${JDBC_DATA_SOURCE_JNDI_NAME_BASE64} ${DS_CONNECTION_URL_BASE64} ${DB_USER_BASE64} ${DB_PASSWORD_BASE64}\"}"
+        --settings "{\"fileUris\": [\"${masterScriptUri}\", \"${enableElytronSe17DomainCliUri}\"]}" \
+        --protected-settings "{\"commandToExecute\":\"sh jbosseap-setup-master.sh ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${RHSM_USER} ${RHSM_PASSWORD_BASE64} ${EAP_POOL} ${RHEL_POOL} ${JDK_VERSION} ${STORAGE_ACCOUNT_NAME} ${CONTAINER_NAME} ${STORAGE_ACCESS_KEY} ${privateEndpointIp} ${CONNECT_SATELLITE} ${SATELLITE_ACTIVATION_KEY_BASE64} ${SATELLITE_ORG_NAME_BASE64} ${SATELLITE_VM_FQDN}\"}"
         if [ $? != 0 ] ; then echo  "Failed to configure domain controller host: ${ADMIN_VM_NAME}"; exit 1;  fi
         echo "Domain controller VM extension execution completed"
 
@@ -82,6 +82,37 @@ else
         if [ $? != 0 ] ; then echo  "Failed to configure domain slave host: ${VM_NAME_PREFIX}${i}"; exit 1;  fi
         echo "Slave ${VM_NAME_PREFIX}${i} extension execution completed"
     done
+
+    if [ "$ENABLE_DB" == "True" ]; then
+        # Configure data source
+        echo "Configure data source for host: ${ADMIN_VM_NAME}"
+        masterDSScriptUri="${unwrapped_artifactsLocation}${PATH_TO_SCRIPT}/jbosseap-setup-master-ds.sh"
+        jdbcDataSourceName=dataSource-$DATABASE_TYPE
+        az vm extension set --verbose --name CustomScript \
+            --resource-group ${RESOURCE_GROUP_NAME} \
+            --vm-name ${ADMIN_VM_NAME} \
+            --publisher Microsoft.Azure.Extensions \
+            --version 2.0 \
+            --settings "{\"fileUris\": [\"${masterDSScriptUri}\", \"${postgresqlDSScriptUri}\", \"${mssqlserverDSScriptUri}\", \"${oracleDSScriptUri}\", \"${mysqlDSScriptUri}\"]}" \
+            --protected-settings "{\"commandToExecute\":\"sh jbosseap-setup-master-ds.sh ${DATABASE_TYPE} ${jdbcDataSourceName} ${JDBC_DATA_SOURCE_JNDI_NAME_BASE64} ${DS_CONNECTION_URL_BASE64} ${DB_USER_BASE64} ${DB_PASSWORD_BASE64}\"}"
+            if [ $? != 0 ] ; then echo  "Failed to configure data source for host: ${ADMIN_VM_NAME}"; exit 1;  fi
+            echo "Data source configuration VM extension execution completed"
+
+        # Test data source connection in worker nodes
+        for ((i = 1; i < NUMBER_OF_INSTANCE; i++)); do
+            echo "Test data source connection in workder node: ${VM_NAME_PREFIX}${i}"
+            slaveTestDSConnScriptUri="${unwrapped_artifactsLocation}${PATH_TO_SCRIPT}/jbosseap-test-slave-ds.sh"
+            az vm extension set --verbose --name CustomScript \
+            --resource-group ${RESOURCE_GROUP_NAME} \
+            --vm-name ${VM_NAME_PREFIX}${i} \
+            --publisher Microsoft.Azure.Extensions \
+            --version 2.0 \
+            --settings "{\"fileUris\": [\"${slaveTestDSConnScriptUri}\"]}" \
+            --protected-settings "{\"commandToExecute\":\"sh jbosseap-test-slave-ds.sh ${JBOSS_EAP_USER} ${JBOSS_EAP_PASSWORD_BASE64} ${DOMAIN_CONTROLLER_PRIVATE_IP} ${NUMBER_OF_SERVER_INSTANCE} ${jdbcDataSourceName}\"}"
+            if [ $? != 0 ] ; then echo  "Test data source connection failed for worker node: ${VM_NAME_PREFIX}${i}"; exit 1;  fi
+            echo "Worker node ${VM_NAME_PREFIX}${i} data source connection test extension execution completed"
+        done
+    fi  
 fi
 
 # Delete uami generated before

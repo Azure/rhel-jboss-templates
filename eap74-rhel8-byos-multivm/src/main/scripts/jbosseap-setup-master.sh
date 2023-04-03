@@ -280,13 +280,5 @@ if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration F
 # Seeing a race condition timing error so sleep to delay
 sleep 20
 
-# Configure JDBC driver and data source
-if [ "$enableDB" == "True" ]; then
-    echo "Start to configure JDBC driver and data source" | log
-    jdbcDataSourceName=dataSource-$dbType
-    ./create-ds-${dbType}.sh $EAP_HOME/wildfly "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true false
-    echo "Complete to configure JDBC driver and data source" | log
-fi
-
 echo "Red Hat JBoss EAP Cluster Intallation End " | log; flag=${PIPESTATUS[0]}
 /bin/date +%H:%M:%S | log
