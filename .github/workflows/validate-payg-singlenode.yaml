@@ -286,7 +286,7 @@ jobs:
                 ${rhsmPoolEAP} \
                 ${enableDB} \
                 ${databaseType} \
-                jdbc/JavaEECafeDB \
+                java:jboss/datasources/JavaEECafeDB \
                 ${dsConnectionURL} \
                 ${dbUser} \
                 ${dbPassword}"

@@ -302,7 +302,7 @@ jobs:
                 ${rhsmPoolRHEL} \
                 ${enableDB} \
                 ${databaseType} \
-                jdbc/JavaEECafeDB \
+                java:jboss/datasources/JavaEECafeDB \
                 ${dsConnectionURL} \
                 ${dbUser} \
                 ${dbPassword}"

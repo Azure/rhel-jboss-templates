@@ -323,7 +323,7 @@ jobs:
                 ${rhsmPoolEAP} \
                 ${enableDB} \
                 ${databaseType} \
-                jdbc/JavaEECafeDB \
+                java:jboss/datasources/JavaEECafeDB \
                 ${dsConnectionURL} \
                 ${dbUser} \
                 ${dbPassword}"
@@ -356,11 +356,11 @@ jobs:
             - name: Build javaee cafe
               run: |
                 if ${{ env.enableDB != 'true' }}; then
-                  sed -i "s/jdbc\/JavaEECafeDB/java:jboss\/datasources\/ExampleDS/g" rhel-jboss-templates/eap-coffee-app/src/main/resources/META-INF/persistence.xml
+                  sed -i "s/java:jboss\/datasources\/JavaEECafeDB/java:jboss\/datasources\/ExampleDS/g" rhel-jboss-templates/eap-coffee-app/src/main/resources/META-INF/persistence.xml
                 fi
                 mvn clean install --file rhel-jboss-templates/eap-coffee-app/pom.xml
                 if ${{ env.enableDB != 'true' }}; then
-                  sed -i "s/java:jboss\/datasources\/ExampleDS/jdbc\/JavaEECafeDB/g" rhel-jboss-templates/eap-coffee-app/src/main/resources/META-INF/persistence.xml
+                  sed -i "s/java:jboss\/datasources\/ExampleDS/java:jboss\/datasources\/JavaEECafeDB/g" rhel-jboss-templates/eap-coffee-app/src/main/resources/META-INF/persistence.xml
                 fi
             - name: Create a container and uploading cafe app
               id: upload_cafe_app
@@ -564,7 +564,7 @@ jobs:
                 ${rhsmPoolEAP} \
                 ${enableDB} \
                 ${databaseType} \
-                jdbc/JavaEECafeDB \
+                java:jboss/datasources/JavaEECafeDB \
                 ${dsConnectionURL} \
                 ${dbUser} \
                 ${dbPassword}"
