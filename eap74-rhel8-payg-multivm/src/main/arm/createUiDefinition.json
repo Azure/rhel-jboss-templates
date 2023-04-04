@@ -767,8 +767,8 @@
                                 "defaultValue": "",
                                 "constraints": {
                                     "required": true,
-                                    "regex": "^[a-zA-Z0-9./_-]{1,30}$",
-                                    "validationMessage": "The value must be 1-30 characters long and must only contain letters, numbers, hyphens (-), underscores (_), periods (.) and slashes (/)."
+                                    "regex": "^[a-zA-Z0-9:./_-]+$",
+                                    "validationMessage": "The value must only contain letters, numbers, colon (:), hyphens (-), underscores (_), periods (.) and slashes (/)."
                                 },
                                 "visible": true
                             },
