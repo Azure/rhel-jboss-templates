@@ -286,36 +286,6 @@ if [ "$enableDB" == "True" ]; then
     jdbcDataSourceName=dataSource-$dbType
     ./create-ds-${dbType}.sh $EAP_HOME/wildfly "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true true
     echo "Complete to install JDBC driver module" | log
-
-    # Reload servers
-    echo "Reload servers" | log
-    for ((i = 0; i < NUMBER_OF_SERVER_INSTANCE; i++)); do
-        sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --connect --controller=${DOMAIN_CONTROLLER_PRIVATE_IP} --user=${JBOSS_EAP_USER} --password=${JBOSS_EAP_PASSWORD} \
-            "/host=${HOST_VM_NAME_LOWERCASES}/server=${HOST_VM_NAME_LOWERCASES}-server${i}/:reload"
-
-        sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --connect --controller=${DOMAIN_CONTROLLER_PRIVATE_IP} --user=${JBOSS_EAP_USER} --password=${JBOSS_EAP_PASSWORD} \
-            "/host=${HOST_VM_NAME_LOWERCASES}/server=${HOST_VM_NAME_LOWERCASES}-server${i}/:read-attribute(name=server-state)"
-        while [ $? -ne 0 ]
-        do
-            echo "${HOST_VM_NAME_LOWERCASES}-server${i} is starting..." | log
-            sleep 5
-            sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --connect --controller=${DOMAIN_CONTROLLER_PRIVATE_IP} --user=${JBOSS_EAP_USER} --password=${JBOSS_EAP_PASSWORD} \
-                "/host=${HOST_VM_NAME_LOWERCASES}/server=${HOST_VM_NAME_LOWERCASES}-server${i}/:read-attribute(name=server-state)"
-        done
-    done
-    echo "All servers are running now" | log
-
-    # Test connection for the created data source
-    echo "Start to test data source connection" | log
-    for ((i = 0; i < NUMBER_OF_SERVER_INSTANCE; i++)); do
-        sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --connect --controller=${DOMAIN_CONTROLLER_PRIVATE_IP} --user=${JBOSS_EAP_USER} --password=${JBOSS_EAP_PASSWORD} \
-            "/host=${HOST_VM_NAME_LOWERCASES}/server=${HOST_VM_NAME_LOWERCASES}-server${i}/subsystem=datasources/data-source=$jdbcDataSourceName:test-connection-in-pool" | log; flag=${PIPESTATUS[0]}
-        if [ $flag != 0 ]; then 
-            echo "ERROR! Test data source connection failed." >&2 log
-            exit $flag
-        fi
-    done   
-    echo "Complete to test data source connection" | log
 fi
 
 echo "Red Hat JBoss EAP Cluster Intallation End " | log; flag=${PIPESTATUS[0]}
