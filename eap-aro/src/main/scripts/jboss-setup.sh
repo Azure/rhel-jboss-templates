@@ -414,7 +414,7 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
         exit 1
     fi
 
-    # Enable the containers to "view" the namespace
+    # Enable the privileged containers created by EAP Operator to be successfully deployed
     wait_add_scc_privileged ${PROJECT_NAME} ${logFile}
     if [[ $? -ne 0 ]]; then
         echo "Failed to add scc privileged to default service account of ${PROJECT_NAME}." >&2
