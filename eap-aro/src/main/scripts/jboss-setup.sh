@@ -255,7 +255,23 @@ wait_add_view_role() {
     done
 }
 
-
+wait_add_scc_privileged() {
+    namespaceName=$1
+    logFile=$2
+    cnt=0
+    oc adm policy add-scc-to-user privileged -z default --namespace ${namespaceName} 2>/dev/null
+    while [ $? -ne 0 ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
+            return 1
+        fi
+        cnt=$((cnt+1))
+        echo "Unable to add scc privileged to project default service account of ${namespaceName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        sleep 5
+        oc adm policy add-scc-to-user privileged -z default --namespace ${namespaceName} 2>/dev/null
+    done
+}
 
 wait_application_image_created() {
     project_name=$1
@@ -398,13 +414,19 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
         exit 1
     fi
 
+    # Enable the privileged containers created by EAP Operator to be successfully deployed
+    wait_add_scc_privileged ${PROJECT_NAME} ${logFile}
+    if [[ $? -ne 0 ]]; then
+        echo "Failed to add scc privileged to default service account of ${PROJECT_NAME}." >&2
+        exit 1
+    fi
+
     # Enable the containers to "view" the namespace
     wait_add_view_role ${PROJECT_NAME} ${logFile}
     if [[ $? -ne 0 ]]; then
         echo "Add view role to ${PROJECT_NAME}." >&2
         exit 1
     fi
-    
     
     oc project ${PROJECT_NAME}
 
@@ -505,7 +527,7 @@ fi
 # Write outputs to deployment script output path
 result=$(jq -n -c --arg consoleUrl $consoleUrl '{consoleUrl: $consoleUrl}')
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
-    result=$(echo "$result" | jq --arg appEndpoint "$appEndpoint" '{"appEndpoint": $appEndpoint} + .')
+    result=$(echo "$result" | jq --arg appEndpoint "http://$appEndpoint" '{"appEndpoint": $appEndpoint} + .')
 fi
 echo "Result is: $result" >> $logFile
 echo $result > $AZ_SCRIPTS_OUTPUT_PATH
