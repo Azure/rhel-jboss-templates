@@ -428,7 +428,6 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
         exit 1
     fi
     
-    
     oc project ${PROJECT_NAME}
 
     # Create secret YAML file
@@ -528,7 +527,7 @@ fi
 # Write outputs to deployment script output path
 result=$(jq -n -c --arg consoleUrl $consoleUrl '{consoleUrl: $consoleUrl}')
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
-    result=$(echo "$result" | jq --arg appEndpoint "$appEndpoint" '{"appEndpoint": $appEndpoint} + .')
+    result=$(echo "$result" | jq --arg appEndpoint "http://$appEndpoint" '{"appEndpoint": $appEndpoint} + .')
 fi
 echo "Result is: $result" >> $logFile
 echo $result > $AZ_SCRIPTS_OUTPUT_PATH
