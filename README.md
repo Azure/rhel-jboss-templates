@@ -4,25 +4,15 @@ This repo contains JBoss EAP Marketplace templates for use on Azure Marketplace.
 
 ## Deployment Description
 
-### Red Hat JBoss EAP on VMs
-
 There are three different types of EAP on VM offers based on their outcomes.
 
-#### JBoss EAP standalone on RHEL VM(PAYG/BYOS)
+| Type   | Offer                                         | Description                                                                                                                                                                                                 |
+|--------|-----------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| on VMs | JBoss EAP standalone on RHEL VM(PAYG/BYOS)    | [Deployment description](https://htmlpreview.github.io/?https://github.com/azure-javaee/rhel-jboss-templates/blob/main/eap74-rhel8-payg/src/main/resources/marketing-artifacts/partner-center.html)         |
+| on VMs | JBoss EAP Cluster on VM Scale Sets(PAYG/BYOS) | [Deployment description](https://htmlpreview.github.io/?https://github.com/azure-javaee/rhel-jboss-templates/blob/main/eap74-rhel8-payg-vmss/src/main/resources/marketing-artifacts/partner-center.html)    |
+| on VMs | JBoss EAP Cluster on VMs(PAYG/BYOS)           | [Deployment description](https://htmlpreview.github.io/?https://github.com/azure-javaee/rhel-jboss-templates/blob/main/eap74-rhel8-payg-multivm/src/main/resources/marketing-artifacts/partner-center.html) |
+| on ARO | JBoss EAP on ARO                              | [Deployment description](https://htmlpreview.github.io/?https://github.com/azure-javaee/rhel-jboss-templates/blob/main/eap-aro/src/main/resources/marketing-artifacts/partner-center.html)                  |
 
-[Deployment description](eap74-rhel8-payg/src/main/resources/marketing-artifacts/partner-center.html)
-
-#### JBoss EAP Cluster on VM Scale Sets(PAYG/BYOS)
-
-[Deployment description](eap74-rhel8-payg-vmss/src/main/resources/marketing-artifacts/partner-center.html)
-
-#### JBoss EAP Cluster on VMs(PAYG/BYOS)
-
-[Deployment description](eap74-rhel8-payg-multivm/src/main/resources/marketing-artifacts/partner-center.html)
-
-### Red Hat JBoss EAP on ARO
-
-[Deployment description](eap-aro/src/main/resources/marketing-artifacts/partner-center.html)
 
 ## Build zipped offers
 1. Clean up the folder offers. This step is optional.
