@@ -21,8 +21,13 @@ param adminPasswordOrSSHKey string
 @description('The size of the Virtual Machine')
 param vmSize string = 'Standard_B1ms'
 
+@allowed([
+  'openjdk8'
+  'openjdk11'
+  'openjdk17'
+])
 @description('The JDK version of the Virtual Machine')
-param jdkVersion string = 'openjdk17'
+param jdkVersion string = 'openjdk8'
 
 @description('Capture serial console outputs and screenshots of the virtual machine running on a host to help diagnose startup issues')
 @allowed([
@@ -152,6 +157,12 @@ var obj_uamiForDeploymentScript = {
   }
 }
 
+var plan = {
+  name: 'rh-jboss-eap74-rhel8'
+  publisher: 'redhat'
+  product: 'rh-jboss-eap'
+}
+
 /*
 * Beginning of the offer deployment
 */
@@ -160,7 +171,7 @@ module pids './modules/_pids/_pid.bicep' = {
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
-  name: 'pid-e9412731-57c2-4e6a-9825-061ad30337c0-partnercenter'
+  name: 'pid-b3123d97-ad01-4e0b-bb5b-085bc95d9e4f-partnercenter'
   params: {}
 }
 
@@ -256,8 +267,8 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = {
     storageProfile: {
       imageReference: {
         publisher: 'RedHat'
-        offer: 'RHEL'
-        sku: '8_6'
+        offer: ((jdkVersion == 'openjdk8') ? 'rh-jboss-eap' : 'RHEL')
+        sku: ((jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-rhel8' : '8_6')
         version: 'latest'
       }
       osDisk: {
@@ -275,6 +286,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = {
     }
     diagnosticsProfile: ((bootDiagnostics == 'on') ? json('{"bootDiagnostics": {"enabled": true,"storageUri": "${reference(resourceId(storageAccountResourceGroupName, 'Microsoft.Storage/storageAccounts/', bootStorageName_var), '2021-06-01').primaryEndpoints.blob}"}}') : json('{"bootDiagnostics": {"enabled": false}}'))
   }
+  plan: plan
   dependsOn: [
     bootStorageName
     networkSecurityGroupName
