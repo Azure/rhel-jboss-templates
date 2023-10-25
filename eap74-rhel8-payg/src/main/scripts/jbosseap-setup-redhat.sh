@@ -59,15 +59,17 @@ if [[ "${CONNECT_SATELLITE,,}" == "true" ]]; then
     echo "sudo subscription-manager register --org=${SATELLITE_ORG_NAME} --activationkey=${SATELLITE_ACTIVATION_KEY}" | log; flag=${PIPESTATUS[0]}
     sudo subscription-manager register --org="${SATELLITE_ORG_NAME}" --activationkey="${SATELLITE_ACTIVATION_KEY}" --force | log; flag=${PIPESTATUS[0]}
 else
-    echo "Initial JBoss EAP 7.4 setup" | log; flag=${PIPESTATUS[0]}
-    echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
-    subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Subscription Manager Registration Failed" >&2 log; exit $flag;  fi
+    if [[ "${JDK_VERSION,,}" != "openjdk8" ]]; then
+        echo "Initial JBoss EAP 7.4 setup" | log; flag=${PIPESTATUS[0]}
+        echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
+        subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Subscription Manager Registration Failed" >&2 log; exit $flag;  fi
 
-    echo "Subscribing the system to get access to JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
-    echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
-    subscription-manager attach --pool=${RHSM_EAPPOOL} | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
+        echo "Subscribing the system to get access to JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
+        echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
+        subscription-manager attach --pool=${RHSM_EAPPOOL} | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
+    fi
 fi
 
 ####################### Install openjdk, EAP 7.4 is shipped with JDK 1.8, we are allowing more
@@ -87,23 +89,25 @@ fi
 ####################### 
 
 # Install JBoss EAP 7.4
-echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
-subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
+if [[ "${JDK_VERSION,,}" != "openjdk8" ]]; then
+    echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
+    subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
 
-echo "Enable Microsoft repos" | log; flag=${PIPESTATUS[0]}
-echo "yum update -y --disablerepo='*' --enablerepo='*microsoft*'" | log; flag=${PIPESTATUS[0]}
-yum update -y --disablerepo='*' --enablerepo='*microsoft*' | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Enabling Microsoft repos Failed" >&2 log; exit $flag;  fi
+    echo "Enable Microsoft repos" | log; flag=${PIPESTATUS[0]}
+    echo "yum update -y --disablerepo='*' --enablerepo='*microsoft*'" | log; flag=${PIPESTATUS[0]}
+    yum update -y --disablerepo='*' --enablerepo='*microsoft*' | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Enabling Microsoft repos Failed" >&2 log; exit $flag;  fi
 
-echo "Installing JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
-echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
-yum groupinstall -y jboss-eap7 | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
+    echo "Installing JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
+    echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
+    yum groupinstall -y jboss-eap7 | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
 
-echo "Updating standalone-full-ha.xml" | log; flag=${PIPESTATUS[0]}
-echo -e "\t stack UDP to TCP"  | log; flag=${PIPESTATUS[0]}
-echo -e "\t set transaction id"     | log; flag=${PIPESTATUS[0]}
+    echo "Updating standalone-full-ha.xml" | log; flag=${PIPESTATUS[0]}
+    echo -e "\t stack UDP to TCP"  | log; flag=${PIPESTATUS[0]}
+    echo -e "\t set transaction id"     | log; flag=${PIPESTATUS[0]}
+fi
 
 ## OpenJDK 17 specific logic
 if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
