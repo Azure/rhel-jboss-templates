@@ -196,7 +196,7 @@ else
     SERVICE_PRINCIPAL=$(az ad sp create-for-rbac --name ${SERVICE_PRINCIPAL_NAME} --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION_ID}" --sdk-auth --only-show-errors | base64 -w0)
 fi
 
-SP_ID=$( az ad sp list --display-name $SERVICE_PRINCIPAL_NAME --query [0].id -o tsv)
+SP_ID=$( az ad sp list --display-name $SERVICE_PRINCIPAL_NAME --query '[0]'.id -o tsv)
 az role assignment create --assignee ${SP_ID} --role "User Access Administrator"
 AZURE_CREDENTIALS=$(echo $SERVICE_PRINCIPAL | base64 -d)
 

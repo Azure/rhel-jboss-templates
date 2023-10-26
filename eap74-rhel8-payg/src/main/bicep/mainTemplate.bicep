@@ -150,6 +150,7 @@ var linuxConfiguration = {
   }
 }
 var name_postDeploymentDsName = format('updateNicPrivateIpStatic{0}', guidValue)
+var name_vmAcceptTerms = format('vmAcceptTerms{0}', guidValue)
 var obj_uamiForDeploymentScript = {
   type: 'UserAssigned'
   userAssignedIdentities: {
@@ -158,9 +159,9 @@ var obj_uamiForDeploymentScript = {
 }
 
 var plan = {
-  name: 'rh-jboss-eap74-rhel8'
   publisher: 'redhat'
   product: 'rh-jboss-eap'
+  name: 'rh-jboss-eap74-rhel8'
 }
 
 /*
@@ -248,6 +249,21 @@ resource nicName 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   }
   dependsOn: [
     virtualNetworkName_resource
+  ]
+}
+
+module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = {
+  name: name_vmAcceptTerms
+  params: {
+    name: name_vmAcceptTerms
+    location: location
+    _artifactsLocation: artifactsLocation
+    _artifactsLocationSasToken: artifactsLocationSasToken
+    identity: obj_uamiForDeploymentScript
+    plan: plan
+  }
+  dependsOn: [
+    nicName
   ]
 }
 
