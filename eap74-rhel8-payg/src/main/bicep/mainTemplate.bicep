@@ -252,7 +252,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   ]
 }
 
-module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = {
+module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = if (jdkVersion == 'openjdk8') {
   name: name_vmAcceptTerms
   params: {
     name: name_vmAcceptTerms
@@ -302,7 +302,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = {
     }
     diagnosticsProfile: ((bootDiagnostics == 'on') ? json('{"bootDiagnostics": {"enabled": true,"storageUri": "${reference(resourceId(storageAccountResourceGroupName, 'Microsoft.Storage/storageAccounts/', bootStorageName_var), '2021-06-01').primaryEndpoints.blob}"}}') : json('{"bootDiagnostics": {"enabled": false}}'))
   }
-  plan: plan
+  plan: ((jdkVersion=='openjdk8') ?plan:null)
   dependsOn: [
     bootStorageName
     networkSecurityGroupName
