@@ -159,9 +159,15 @@ var obj_uamiForDeploymentScript = {
 }
 
 var plan = {
+<<<<<<< HEAD
   publisher: 'redhat'
   product: 'rh-jboss-eap'
   name: 'rh-jboss-eap74-rhel8'
+=======
+  name: 'rh-jboss-eap74-rhel8'
+  publisher: 'redhat'
+  product: 'rh-jboss-eap'
+>>>>>>> 706c0e6 (Updated bicep to support PYGO)
 }
 
 /*
@@ -172,7 +178,7 @@ module pids './modules/_pids/_pid.bicep' = {
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
-  name: 'pid-e9412731-57c2-4e6a-9825-061ad30337c0-partnercenter'
+  name: 'pid-b3123d97-ad01-4e0b-bb5b-085bc95d9e4f-partnercenter'
   params: {}
 }
 
