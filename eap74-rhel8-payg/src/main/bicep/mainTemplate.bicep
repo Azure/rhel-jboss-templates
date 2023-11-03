@@ -159,15 +159,9 @@ var obj_uamiForDeploymentScript = {
 }
 
 var plan = {
-<<<<<<< HEAD
-  publisher: 'redhat'
-  product: 'rh-jboss-eap'
-  name: 'rh-jboss-eap74-rhel8'
-=======
   name: 'rh-jboss-eap74-rhel8'
   publisher: 'redhat'
   product: 'rh-jboss-eap'
->>>>>>> 706c0e6 (Updated bicep to support PYGO)
 }
 
 /*
