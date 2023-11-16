@@ -5,14 +5,14 @@
 
     <groupId>com.rhel.jboss.azure</groupId>
     <artifactId>eap74-rhel8-payg-multivm</artifactId>
-    <version>1.0.20</version>
+    <version>1.0.18</version>
 
     <!-- mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests -->
     
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
         <artifactId>azure-javaee-iaas-parent</artifactId>
-        <version>1.0.18</version>
+        <version>1.0.20</version>
         <relativePath></relativePath>
     </parent>
     <packaging>jar</packaging>
