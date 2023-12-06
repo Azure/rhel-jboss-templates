@@ -36,8 +36,13 @@ param rhsmPoolEAP string = newGuid()
 @description('The size of the Virtual Machine')
 param vmSize string = 'Standard_DS2_v2'
 
+@allowed([
+  'openjdk8'
+  'openjdk11'
+  'openjdk17'
+])
 @description('The JDK version of the Virtual Machine')
-param jdkVersion string = 'openjdk17'
+param jdkVersion string = 'openjdk8'
 
 @description('Number of VMs to deploy')
 param numberOfInstances int = 2
@@ -203,10 +208,11 @@ var linuxConfiguration = {
     ]
   }
 }
+var name_vmAcceptTerms = format('vmAcceptTerms{0}', guidValue)
 var imageReference = {
   publisher: 'RedHat'
-  offer: 'RHEL'
-  sku: '8_6'
+  offer: ((jdkVersion == 'openjdk8') ? 'rh-jboss-eap' : 'RHEL')
+  sku: ((jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-rhel8' : '8_6')
   version: 'latest'
 }
 
@@ -262,6 +268,11 @@ var dnsNameforAdminVm = 'jboss-admin${guidValue}'
 var dnsNameforManagedVm = 'jboss-managed${guidValue}'
 var name_networkSecurityGroup = 'jboss-nsg'
 var name_appGatewayPublicIPAddress = 'gwip'
+var plan = {
+  publisher: 'redhat'
+  product: 'rh-jboss-eap'
+  name: 'rh-jboss-eap74-rhel8'
+}
 
 /*
 * Beginning of the offer deployment
@@ -554,6 +565,21 @@ resource nicName 'Microsoft.Network/networkInterfaces@2022-05-01' = [for i in ra
   ]
 }]
 
+module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = if (jdkVersion == 'openjdk8') {
+  name: name_vmAcceptTerms
+  params: {
+    name: name_vmAcceptTerms
+    location: location
+    _artifactsLocation: artifactsLocation
+    _artifactsLocationSasToken: artifactsLocationSasToken
+    identity: obj_uamiForDeploymentScript
+    plan: plan
+  }
+  dependsOn: [
+    nicName
+  ]
+}
+
 resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(0, numberOfInstances): {
   name: (operatingMode == name_managedDomain) ? (i == 0 ? '${vmName_var}${name_adminVmName}' : '${vmName_var}${i}') : '${vmName_var}${i}'
   location: location
@@ -588,6 +614,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i
     }
     diagnosticsProfile: ((bootDiagnostics == 'on') ? json('{"bootDiagnostics": {"enabled": true,"storageUri": "${reference(resourceId(storageAccountResourceGroupName, 'Microsoft.Storage/storageAccounts/', bootStorageName_var), '2021-06-01').primaryEndpoints.blob}"}}') : json('{"bootDiagnostics": {"enabled": false}}'))
   }
+  plan: ((jdkVersion=='openjdk8') ?plan:null)
   dependsOn: [
     nicName
     bootStorageName

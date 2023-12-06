@@ -78,7 +78,7 @@ jobs:
               with:
                 repository: Azure/azure-javaee-iaas
                 path: azure-javaee-iaas
-                ref: ${{ env.refJavaee }}
+                ref: 9850b0ba70d705479b66967a1311ecae145c6b30
             - name: Checkout arm-ttk
               uses: actions/checkout@v3
               with:
@@ -128,6 +128,11 @@ jobs:
               id: azure-login
               with:
                 creds: ${{ env.azureCredentials }}
+            - name: Accept Image Terms
+              id: accept-terms
+              run: |
+                  echo "accept terms for VM image"
+                  az vm image terms accept --urn redhat:rh-jboss-eap:rh-jboss-eap74-rhel8:latest
             - name: Create Resource Group
               run: |
                 az group create -n ${{ env.dependencyResourceGroup}} -l ${{ env.location }}
@@ -228,7 +233,7 @@ jobs:
                 echo "azCliVersion=${AZ_CLI_VERSION}" >> $GITHUB_ENV
                 echo "bicepVersion=${BICEP_VERSION}" >> $GITHUB_ENV
                 echo "refArmttk=${ARM_TTK_REFERENCE}" >> $GITHUB_ENV
-                echo "refJavaee=${AZURE_JAVAEE_IAAS_REFERENCE}" >> $GITHUB_ENV
+                echo "refJavaee=9850b0ba70d705479b66967a1311ecae145c6b30" >> $GITHUB_ENV
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v2
               with:

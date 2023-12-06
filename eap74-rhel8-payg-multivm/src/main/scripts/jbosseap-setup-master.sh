@@ -133,20 +133,22 @@ if [[ "${CONNECT_SATELLITE,,}" == "true" ]]; then
     sudo subscription-manager register --org="${SATELLITE_ORG_NAME}" --activationkey="${SATELLITE_ACTIVATION_KEY}" --force | log; flag=${PIPESTATUS[0]}
 else
     ####################### Register to subscription Manager
-    echo "Register subscription manager" | log; flag=${PIPESTATUS[0]}
-    echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
-    subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Manager Registration Failed" >&2 log; exit $flag;  fi
-    #######################
+    if [[ "${JDK_VERSION,,}" != "openjdk8" ]]; then
+        echo "Register subscription manager" | log; flag=${PIPESTATUS[0]}
+        echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
+        subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Manager Registration Failed" >&2 log; exit $flag;  fi
+        #######################
 
-    sleep 20
+        sleep 20
 
-    ####################### Attach EAP Pool
-    echo "Subscribing the system to get access to JBoss EAP repos" | log; flag=${PIPESTATUS[0]}
-    echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
-    subscription-manager attach --pool=${EAP_POOL} | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
-    #######################
+        ####################### Attach EAP Pool
+        echo "Subscribing the system to get access to JBoss EAP repos" | log; flag=${PIPESTATUS[0]}
+        echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
+        subscription-manager attach --pool=${EAP_POOL} | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
+        #######################
+    fi
 fi
 
 ####################### Install openjdk: is it needed? it should be installed with eap7.4
@@ -169,28 +171,30 @@ else
 fi
 
 ####################### Install JBoss EAP 7.4
-echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
-subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
+if [[ "${JDK_VERSION,,}" != "openjdk8" ]]; then
+    echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
+    subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
 
-echo "Enable Microsoft repos" | log; flag=${PIPESTATUS[0]}
-echo "yum update -y --disablerepo='*' --enablerepo='*microsoft*'" | log; flag=${PIPESTATUS[0]}
-yum update -y --disablerepo='*' --enablerepo='*microsoft*' | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Enabling Microsoft repos Failed" >&2 log; exit $flag;  fi
+    echo "Enable Microsoft repos" | log; flag=${PIPESTATUS[0]}
+    echo "yum update -y --disablerepo='*' --enablerepo='*microsoft*'" | log; flag=${PIPESTATUS[0]}
+    yum update -y --disablerepo='*' --enablerepo='*microsoft*' | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Enabling Microsoft repos Failed" >&2 log; exit $flag;  fi
 
-echo "Installing JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
-echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
-yum groupinstall -y jboss-eap7 | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
+    echo "Installing JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
+    echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
+    yum groupinstall -y jboss-eap7 | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
 
-echo "sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config" | log; flag=${PIPESTATUS[0]}
-sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]}
-echo "echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config" | log; flag=${PIPESTATUS[0]}
-echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]}
-####################### 
+    echo "sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config" | log; flag=${PIPESTATUS[0]}
+    sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]}
+    echo "echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config" | log; flag=${PIPESTATUS[0]}
+    echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]}
+    ####################### 
 
-echo "systemctl restart sshd" | log; flag=${PIPESTATUS[0]}
-systemctl restart sshd | log; flag=${PIPESTATUS[0]}
+    echo "systemctl restart sshd" | log; flag=${PIPESTATUS[0]}
+    systemctl restart sshd | log; flag=${PIPESTATUS[0]}
+fi
 
 ## OpenJDK 17 specific logic
 if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
