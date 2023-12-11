@@ -11,7 +11,7 @@
 
     <groupId>com.rhel.jboss.azure</groupId>
     <artifactId>eap74-rhel8-payg-multivm</artifactId>
-    <version>1.0.18</version>
+    <version>${version.eap74-rhel8-payg-multivm}</version>
 
     <packaging>jar</packaging>
     <name>${project.artifactId}</name>

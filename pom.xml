@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
         <artifactId>azure-javaee-iaas-parent</artifactId>
-        <version>1.0.20</version>
+        <version>1.0.19</version>
     </parent>
 
     <groupId>com.rhel.jboss.azure</groupId>
@@ -22,15 +22,13 @@
         <template.validation.tests.directory>${basedir}/../../arm-ttk/arm-ttk</template.validation.tests.directory>
         <template.azure-common.properties.url>file:///${basedir}/../utilities/azure-common.properties</template.azure-common.properties.url>
 
-        <!--  skip configuration  -->
-        <assembly.skipAssembly>false</assembly.skipAssembly>
-        <skip.exec.plugin>false</skip.exec.plugin>
-
-        <!--  versions  start -->
-        <version.wls-on-aks-azure-marketplace>1.0.65</version.wls-on-aks-azure-marketplace>
-        <version.arm-oraclelinux-wls>1.0.25</version.arm-oraclelinux-wls>
-        <!--  versions  end -->
-
+        <version.eap74-rhel8-byos>1.0.12</version.eap74-rhel8-byos>
+        <version.eap74-rhel8-byos-multivm>1.0.18</version.eap74-rhel8-byos-multivm>
+        <version.eap74-rhel8-byos-vmss>1.0.18</version.eap74-rhel8-byos-vmss>
+        <version.eap74-rhel8-payg>1.0.15</version.eap74-rhel8-payg>
+        <version.eap74-rhel8-payg-multivm>1.0.18</version.eap74-rhel8-payg-multivm>
+        <version.eap74-rhel8-payg-vmss>1.0.14</version.eap74-rhel8-payg-vmss>
+        <version.eap-aro>1.0.12</version.eap-aro>
     </properties>
 
     <modules>

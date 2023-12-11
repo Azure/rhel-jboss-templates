@@ -98,9 +98,8 @@ jobs:
             - name: Generate artifact file name and path
               id: artifact_file
               run: |
-                multivmVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
-                multivmArtifactName=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.artifactId}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
-                multivmArtifactName=${multivmArtifactName}-${multivmVersion}-arm-assembly
+                multivmVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.eap74-rhel8-payg-multivm}' --file rhel-jboss-templates/pom.xml --non-recursive exec:exec)
+                multivmArtifactName=eap74-rhel8-payg-multivm-${multivmVersion}-arm-assembly
                 unzip rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${multivmArtifactName}.zip -d rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${multivmArtifactName}
                 echo "multivmArtifactName=${multivmArtifactName}" >> "$GITHUB_OUTPUT"
                 echo "multivmArtifactPath=rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${multivmArtifactName}" >> "$GITHUB_OUTPUT"
@@ -242,7 +241,7 @@ jobs:
             - name: Output artifact name and version for Download action
               id: artifact_file
               run: |
-                multivmVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
+                multivmVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.eap74-rhel8-payg-multivm}' --file rhel-jboss-templates/pom.xml --non-recursive exec:exec)
                 multivmArtifactName=eap74-rhel8-payg-multivm-${multivmVersion}-arm-assembly
 
                 echo "multivmArtifactName=${multivmArtifactName}" >> "$GITHUB_OUTPUT"
@@ -485,7 +484,7 @@ jobs:
             - name: Output artifact name and version for Download action
               id: artifact_file
               run: |
-                multivmVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml)
+                multivmVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.eap74-rhel8-payg-multivm}' --file rhel-jboss-templates/pom.xml --non-recursive exec:exec)
                 multivmArtifactName=eap74-rhel8-payg-multivm-${multivmVersion}-arm-assembly
 
                 echo "multivmArtifactName=${multivmArtifactName}" >> "$GITHUB_OUTPUT"

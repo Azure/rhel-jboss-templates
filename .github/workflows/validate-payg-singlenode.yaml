@@ -93,9 +93,9 @@ jobs:
             - name: Generate artifact file name and path
               id: artifact_file
               run: |
-                singleVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-payg/pom.xml)
-                singleArtifactName=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.artifactId}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-payg/pom.xml)
-                singleArtifactName=${singleArtifactName}-${singleVersion}-arm-assembly
+                singleVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.eap74-rhel8-payg}' --file rhel-jboss-templates/pom.xml --non-recursive exec:exec)
+                singleArtifactName=eap74-rhel8-payg-${singleVersion}-arm-assembly
+                
                 unzip rhel-jboss-templates/eap74-rhel8-payg/target/${singleArtifactName}.zip -d rhel-jboss-templates/eap74-rhel8-payg/target/${singleArtifactName}
                 
                 echo "##[set-output name=singleArtifactName;]${singleArtifactName}"
@@ -124,7 +124,7 @@ jobs:
             - name: Output artifact name and version for Download action
               id: artifact_file
               run: |
-                singleVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap74-rhel8-payg/pom.xml)
+                singleVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.eap74-rhel8-payg}' --file rhel-jboss-templates/pom.xml --non-recursive exec:exec)
                 singleArtifactName=eap74-rhel8-payg-${singleVersion}-arm-assembly
 
                 echo "##[set-output name=singleArtifactName;]${singleArtifactName}"

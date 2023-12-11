@@ -99,9 +99,8 @@ jobs:
             - name: Generate artifact file name and path
               id: artifact_file
               run: |
-                multivmVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-byos-multivm/pom.xml)
-                multivmArtifactName=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.artifactId}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-byos-multivm/pom.xml)
-                multivmArtifactName=${multivmArtifactName}-${multivmVersion}-arm-assembly
+                multivmVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.eap74-rhel8-byos-multivm}' --file rhel-jboss-templates/pom.xml --non-recursive exec:exec)
+                multivmArtifactName=eap74-rhel8-byos-multivm-${multivmVersion}-arm-assembly
                 unzip rhel-jboss-templates/eap74-rhel8-byos-multivm/target/${multivmArtifactName}.zip -d rhel-jboss-templates/eap74-rhel8-byos-multivm/target/${multivmArtifactName}
                 # Move eap-session-replication.war from /bin to /scripts, a workaround for publishing private plan in Partner center, see issue: https://github.com/Azure/rhel-jboss-templates/issues/108
                 # This change is coupled with eap74-rhel8-byos-multivm/src/main/bicep/modules/_deployment-scripts/_ds-jbossEAPSetup.bicep#85
@@ -243,7 +242,7 @@ jobs:
             - name: Output artifact name and version for Download action
               id: artifact_file
               run: |
-                multivmVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap74-rhel8-byos-multivm/pom.xml)
+                multivmVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.eap74-rhel8-byos-multivm}' --file rhel-jboss-templates/pom.xml --non-recursive exec:exec)
                 multivmArtifactName=eap74-rhel8-byos-multivm-${multivmVersion}-arm-assembly
 
                 echo "multivmArtifactName=${multivmArtifactName}" >> "$GITHUB_OUTPUT"
@@ -492,7 +491,7 @@ jobs:
             - name: Output artifact name and version for Download action
               id: artifact_file
               run: |
-                multivmVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap74-rhel8-byos-multivm/pom.xml)
+                multivmVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.eap74-rhel8-byos-multivm}' --file rhel-jboss-templates/pom.xml --non-recursive exec:exec)
                 multivmArtifactName=eap74-rhel8-byos-multivm-${multivmVersion}-arm-assembly
 
                 echo "multivmArtifactName=${multivmArtifactName}" >> "$GITHUB_OUTPUT"

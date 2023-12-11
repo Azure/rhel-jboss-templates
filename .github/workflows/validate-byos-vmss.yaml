@@ -98,9 +98,9 @@ jobs:
             - name: Generate artifact file name and path
               id: artifact_file
               run: |
-                vmssVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-byos-vmss/pom.xml)
-                vmssArtifactName=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.artifactId}' --non-recursive exec:exec --file rhel-jboss-templates/eap74-rhel8-byos-vmss/pom.xml)
-                vmssArtifactName=${vmssArtifactName}-${vmssVersion}-arm-assembly
+                vmssVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.eap74-rhel8-byos-vmss}' --file rhel-jboss-templates/pom.xml --non-recursive exec:exec)
+                vmssArtifactName=eap74-rhel8-byos-vmss-${vmssVersion}-arm-assembly
+                
                 unzip rhel-jboss-templates/eap74-rhel8-byos-vmss/target/${vmssArtifactName}.zip -d rhel-jboss-templates/eap74-rhel8-byos-vmss/target/${vmssArtifactName}
                 # Move eap-session-replication.war from /bin to /scripts, a workaround for publishing private plan in Partner center, see issue: https://github.com/Azure/rhel-jboss-templates/issues/108
                 # This change is coupled with eap74-rhel8-byos-vmss/src/main/bicep/mainTemplate.bicep#165
@@ -133,7 +133,7 @@ jobs:
             - name: Output artifact name and version for Download action
               id: artifact_file
               run: |
-                vmssVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' rhel-jboss-templates/eap74-rhel8-byos-vmss/pom.xml)
+                vmssVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.eap74-rhel8-byos-vmss}' --file rhel-jboss-templates/pom.xml --non-recursive exec:exec)
                 vmssArtifactName=eap74-rhel8-byos-vmss-${vmssVersion}-arm-assembly
 
                 echo "##[set-output name=vmssArtifactName;]${vmssArtifactName}"

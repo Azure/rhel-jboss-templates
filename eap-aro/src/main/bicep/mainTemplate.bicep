@@ -152,7 +152,7 @@ resource uami_resource 'Microsoft.ManagedIdentity/userAssignedIdentities@${azure
   location: location
 }
 
-resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities22-01-31-preview' existing = {
+resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@${azure.apiVersionForIdentity}' existing = {
   name: const_identityName
 }
 

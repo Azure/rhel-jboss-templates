@@ -11,7 +11,7 @@
 
     <groupId>com.rhel.jboss.azure</groupId>
     <artifactId>eap74-rhel8-payg-vmss</artifactId>
-    <version>1.0.14</version>
+    <version>${version.eap74-rhel8-payg-vmss}</version>
     <packaging>pom</packaging>
     <name>${project.artifactId}</name>
 

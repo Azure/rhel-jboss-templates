@@ -11,7 +11,7 @@
 
     <groupId>com.rhel.jboss.azure</groupId>
     <artifactId>eap-aro</artifactId>
-    <version>1.0.12</version>
+    <version>${version.eap-aro}</version>
     <packaging>pom</packaging>
     <name>${project.artifactId}</name>
 

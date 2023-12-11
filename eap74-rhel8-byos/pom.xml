@@ -11,7 +11,7 @@
 
     <groupId>com.rhel.jboss.azure</groupId>
     <artifactId>eap74-rhel8-byos</artifactId>
-    <version>1.0.12</version>
+    <version>${version.eap74-rhel8-byos}</version>
     <packaging>pom</packaging>
     <name>${project.artifactId}</name>
 
