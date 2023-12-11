@@ -55,7 +55,7 @@ resource keyvault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   }
 }
 
-resource createAddCertificate 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource createAddCertificate 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'ds-create-add-appgw-certificate'
   location: location
   identity: identity

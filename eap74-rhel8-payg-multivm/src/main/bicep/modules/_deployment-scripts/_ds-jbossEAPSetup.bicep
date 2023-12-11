@@ -110,7 +110,7 @@ var scriptFolder = 'scripts'
 var fileFolder = 'bin'
 var fileToBeDownloaded = 'eap-session-replication.war'
 
-resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'jbosseap-setup'
   location: location
   kind: 'AzureCLI'

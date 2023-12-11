@@ -147,12 +147,12 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
-resource uami_resource 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+resource uami_resource 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31-preview' = {
   name: const_identityName
   location: location
 }
 
-resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = {
+resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31-preview' existing = {
   name: const_identityName
 }
 
