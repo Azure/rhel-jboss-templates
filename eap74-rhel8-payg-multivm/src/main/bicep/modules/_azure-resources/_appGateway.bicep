@@ -65,7 +65,7 @@ resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@${azure.apiVersion
   }
 }
 
-resource wafv2AppGateway 'Microsoft.Authorization/roleDefinitions@${azure.apiVersionForRoleDefinitions}' = {
+resource wafv2AppGateway 'Microsoft.Network/applicationGateways@${azure.apiVersionForApplicationGateways}' = {
   name: name_appGateway
   location: location
   tags: {

@@ -18,12 +18,17 @@ on:
         description: 'If set to true, resources will not be deleted'
         required: true
         default: 'false'
+      minutes_time_out:
+        description: 'Minutes Time Out'
+        required: false
+        default: '60'
 
 env:
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
     location: eastus
     domainResourceGroup: multivm-domain-${{ github.run_id }}-${{ github.run_number }}
     standaloneResourceGroup: multivm-standalone-${{ github.run_id }}-${{ github.run_number }}
+    dependencyResourceGroup: multivm-dep-${{ github.run_id }}-${{ github.run_number }}
     vmName: ${{ github.run_id }}${{ github.run_number }}vm
     asName: ${{ github.run_id }}${{ github.run_number }}as
     adminUsername: azureadmin
@@ -33,7 +38,6 @@ env:
     standaloneOperatingMode: standalone
     domainBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}domainsa
     standaloneBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}standalonesa
-    dependencyResourceGroup: multivm-dep-${{ github.run_id }}-${{ github.run_number }}
     dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
     dbPassword: ${{ secrets.DATABASE_PASSWORD }}
     jbossEAPUserName: jbossadmin
@@ -47,73 +51,28 @@ env:
     gitEmail: ${{ secrets.USER_EMAIL }}
     gitToken: ${{ secrets.GIT_TOKEN }}
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
+    offerName: "eap74-rhel8-payg-multivm"
 
 jobs:
     preflight:
         outputs:
           isForDemo: ${{ steps.setup-env-variables-based-on-dispatch-event.outputs.isForDemo }}
+          artifactName: ${{steps.build.outputs.artifactName}}
         runs-on: ubuntu-latest
         steps:
-            - name: Get versions of external dependencies
-              run: |
-                curl -Lo external-deps-versions.properties https://raw.githubusercontent.com/Azure/azure-javaee-iaas/main/external-deps-versions.properties
-                source external-deps-versions.properties
-                echo "azCliVersion=${AZ_CLI_VERSION}" >> $GITHUB_ENV
-                echo "bicepVersion=${BICEP_VERSION}" >> $GITHUB_ENV
-                echo "refArmttk=${ARM_TTK_REFERENCE}" >> $GITHUB_ENV
-                echo "refJavaee=${AZURE_JAVAEE_IAAS_REFERENCE}" >> $GITHUB_ENV
-            - name: Set up JDK 11
-              uses: actions/setup-java@v3
-              with:
-                distribution: 'temurin'
-                java-version: '11'
-            - name: Set up bicep
-              run: |
-                curl -Lo bicep https://github.com/Azure/bicep/releases/download/${{ env.bicepVersion }}/bicep-linux-x64
-                chmod +x ./bicep
-                sudo mv ./bicep /usr/local/bin/bicep
-                bicep --version
-            - name: Checkout azure-javaee-iaas
-              uses: actions/checkout@v3
-              with:
-                repository: Azure/azure-javaee-iaas
-                path: azure-javaee-iaas
-                ref: 9850b0ba70d705479b66967a1311ecae145c6b30
-            - name: Checkout arm-ttk
-              uses: actions/checkout@v3
-              with:
-                repository: Azure/arm-ttk
-                path: arm-ttk
-                ref: ${{ env.refArmttk }}
-            - name: Build azure-javaee-iaas
-              run: mvn -DskipTests clean install --file azure-javaee-iaas/pom.xml
             - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
+            - name: build
+              id: build
+              uses: ./.github/actions/build
               with:
-                repository: ${{env.gitUserName}}/rhel-jboss-templates
-                path: rhel-jboss-templates
-            - name: Build and test rhel-jboss-templates
-              run: |
-                mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests --file rhel-jboss-templates/eap74-rhel8-payg-multivm/pom.xml
-            - name: Generate artifact file name and path
-              id: artifact_file
-              run: |
-                multivmVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.eap74-rhel8-payg-multivm}' --file rhel-jboss-templates/pom.xml --non-recursive exec:exec)
-                multivmArtifactName=eap74-rhel8-payg-multivm-${multivmVersion}-arm-assembly
-                unzip rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${multivmArtifactName}.zip -d rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${multivmArtifactName}
-                echo "multivmArtifactName=${multivmArtifactName}" >> "$GITHUB_OUTPUT"
-                echo "multivmArtifactPath=rhel-jboss-templates/eap74-rhel8-payg-multivm/target/${multivmArtifactName}" >> "$GITHUB_OUTPUT"
-            - name: Archive rhel-jboss-templates eap74-rhel8-payg-multivm offer templates
-              uses: actions/upload-artifact@v3
-              if: success()
-              with:
-                name: ${{steps.artifact_file.outputs.multivmArtifactName}}
-                path: ${{steps.artifact_file.outputs.multivmArtifactPath}}
+                offerName: ${{ env.offerName }}
+                token: ${{ secrets.GITHUB_TOKEN }}
             - name: Setup environment variables
               id: setup-env-variables-based-on-dispatch-event
               run: |
                 isForDemo=${{ github.event.inputs.isForDemo }}
-                echo "isForDemo=${isForDemo}" >> "$GITHUB_OUTPUT"
+                echo "isForDemo=${isForDemo}" >> $GITHUB_OUTPUT
     deploy-dependent-resources:
         needs: preflight
         runs-on: ubuntu-latest
@@ -151,7 +110,7 @@ jobs:
                   --resource-group ${{ env.dependencyResourceGroup }} --server ${{ env.dbInstanceName }} \
                   --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
                 az sql db create --resource-group ${{ env.dependencyResourceGroup }} --server ${{ env.dbInstanceName }} --name testdb
-                echo "sqlserverHost=${host}" >> "$GITHUB_OUTPUT"
+                echo "sqlserverHost=${host}" >> $GITHUB_OUTPUT
             - name: Deploy an Oracle database server on Azure VM
               id: deploy-oracle
               if: ${{ inputs.databaseType == 'oracle' || github.event.client_payload.databaseType == 'oracle' }}
@@ -173,7 +132,7 @@ jobs:
                   --settings "{\"fileUris\": [\"${{ env.scriptLocation }}install-oracle-main.sh\", \"${{ env.scriptLocation }}install-oracle.sh\"]}" \
                   --protected-settings "{\"commandToExecute\":\"bash install-oracle-main.sh ${{ env.dbPassword }}\"}"
                 host=$(az vm show -g ${{ env.dependencyResourceGroup }} -n ${{ env.dbInstanceName }} -d --query publicIps -o tsv)
-                echo "oracleHost=${host}" >> "$GITHUB_OUTPUT"
+                echo "oracleHost=${host}" >> $GITHUB_OUTPUT
             - name: Deploy an instance of Azure Database for MySQL
               id: deploy-mysql
               if: ${{ inputs.databaseType == 'mysql' || github.event.client_payload.databaseType == 'mysql' }}
@@ -195,7 +154,7 @@ jobs:
                 host=$(az mysql server show \
                   --resource-group ${{ env.dependencyResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --query "fullyQualifiedDomainName" -o tsv)
-                echo "mysqlHost=${host}" >> "$GITHUB_OUTPUT"
+                echo "mysqlHost=${host}" >> $GITHUB_OUTPUT
                 mysql -h $host -u myadmin@${{ env.dbInstanceName }} -p${{ env.dbPassword }} << EOF
                 CREATE DATABASE testdb;
                 CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ env.dbPassword }}';
@@ -218,7 +177,7 @@ jobs:
                   --resource-group ${{ env.dependencyResourceGroup}} --server ${{ env.dbInstanceName }} \
                   --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
                 az postgres db create --resource-group ${{ env.dependencyResourceGroup}} --server ${{ env.dbInstanceName }} --name testdb
-                echo "postgresqlHost=${host}" >> "$GITHUB_OUTPUT"
+                echo "postgresqlHost=${host}" >> $GITHUB_OUTPUT
     deploy-multivm-domain:
         needs: 
           - preflight
@@ -231,24 +190,14 @@ jobs:
                 source external-deps-versions.properties
                 echo "azCliVersion=${AZ_CLI_VERSION}" >> $GITHUB_ENV
                 echo "bicepVersion=${BICEP_VERSION}" >> $GITHUB_ENV
-                echo "refArmttk=${ARM_TTK_REFERENCE}" >> $GITHUB_ENV
-                echo "refJavaee=9850b0ba70d705479b66967a1311ecae145c6b30" >> $GITHUB_ENV
             - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@v2
+              uses: actions/checkout@v4
               with:
-                repository: ${{env.gitUserName}}/rhel-jboss-templates
                 path: rhel-jboss-templates
-            - name: Output artifact name and version for Download action
-              id: artifact_file
-              run: |
-                multivmVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.eap74-rhel8-payg-multivm}' --file rhel-jboss-templates/pom.xml --non-recursive exec:exec)
-                multivmArtifactName=eap74-rhel8-payg-multivm-${multivmVersion}-arm-assembly
-
-                echo "multivmArtifactName=${multivmArtifactName}" >> "$GITHUB_OUTPUT"
             - name: Download artifact for deployment
               uses: actions/download-artifact@v1
               with:
-                name: ${{steps.artifact_file.outputs.multivmArtifactName}}
+                name: ${{needs.preflight.outputs.artifactName}}
                 path: rhel-jboss-templates-dev
             - name: Create a new branch with built artifact
               run: |
@@ -372,20 +321,31 @@ jobs:
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
-                    # create a container
-                    az storage container create --name cafeapp --public-access container --account-name ${{ env.domainBootStorageAccountName }}
-                    # upload cafe app
-                    az storage blob upload \
+                  # create a container
+                  az storage container create --name cafeapp --account-name ${{ env.domainBootStorageAccountName }}
+                  # upload cafe app
+                  az storage blob upload \
+                    --account-name ${{ env.domainBootStorageAccountName }} \
+                    --container-name cafeapp \
+                    --name javaee-cafe.war \
+                    --file rhel-jboss-templates/eap-coffee-app/target/javaee-cafe.war
+                  
+                  # query the app url
+                  sasTokenValidTime=3600
+                  expiryData=$(( `date +%s`+${sasTokenValidTime}))
+                  sasEnd=`date -d@"$expiryData" -u '+%Y-%m-%dT%H:%MZ'`
+                  sasToken=$(az storage account generate-sas \
+                      --permissions r \
                       --account-name ${{ env.domainBootStorageAccountName }} \
+                      --services b \
+                      --resource-types sco \
+                      --expiry $sasEnd  -o tsv)
+                  appbloburl=$(az storage blob url \
                       --container-name cafeapp \
                       --name javaee-cafe.war \
-                      --file rhel-jboss-templates/eap-coffee-app/target/javaee-cafe.war
-                    # query the app url
-                    appbloburl=$(az storage blob url --container-name cafeapp \
-                        --name javaee-cafe.war \
-                        --account-name ${{ env.domainBootStorageAccountName }} -o tsv)
-                    
-                    echo "appbloburl=${appbloburl}" >> "$GITHUB_OUTPUT"
+                      --account-name ${{ env.domainBootStorageAccountName }} \
+                      --sas-token ${sasToken} -o tsv) 
+                  echo "appbloburl=${appbloburl}" >> $GITHUB_OUTPUT
             - name: Query public ip of admin VM
               id: query_admin_public_ip
               uses: azure/CLI@v1
@@ -395,10 +355,10 @@ jobs:
                     # query public ip address of admin VM
                     publicip=$(az vm show --resource-group ${{ env.domainResourceGroup }} --name ${{ github.run_id }}${{ github.run_number }}vm-adminVM -d --query publicIps -o tsv)
                     
-                    echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
+                    echo "publicip=${publicip}" >> $GITHUB_OUTPUT
             - name: Deploy cafe application
               run: |
-                appbloburl=${{steps.upload_cafe_app.outputs.appbloburl}}
+                appbloburl="${{steps.upload_cafe_app.outputs.appbloburl}}"
                 echo "appbloburl: " $appbloburl
 
                 publicip=${{steps.query_admin_public_ip.outputs.publicip}}
@@ -417,7 +377,7 @@ jobs:
                     publicip=$(az network public-ip show --name gwip \
                                 --resource-group $domainResourceGroup --query dnsSettings.fqdn -o tsv)
                     
-                    echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
+                    echo "publicip=${publicip}" >> $GITHUB_OUTPUT
             - name: Verify cafe application
               run: |
                 publicip=${{steps.query_app_gateway_public_ip.outputs.publicip}}
@@ -447,51 +407,29 @@ jobs:
                     echo "Unregister ${vmName}${i}"
                     az vm run-command invoke -g ${domainResourceGroup} -n ${vmName}${i} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
                   done
-            - name: Delete Resource Group
-              id: delete-resource-group
-              if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
-              run: |
-                  echo "delete... " $domainResourceGroup
-                  az group delete --yes --no-wait --verbose --name $domainResourceGroup
-            - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@v2
-              with:
-                repository: ${{env.gitUserName}}/rhel-jboss-templates
-                path: rhel-jboss-templates
-            - name: Delete testing branch
-              run: |
-                cd rhel-jboss-templates
-                git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $domainTestBranchName        
+
     deploy-multivm-standalone:
         needs: 
           - preflight
           - deploy-dependent-resources
         runs-on: ubuntu-latest
         steps:
+            - name: Checkout rhel-jboss-templates
+              uses: actions/checkout@v4
             - name: Get versions of external dependencies
               run: |
                 curl -Lo external-deps-versions.properties https://raw.githubusercontent.com/Azure/azure-javaee-iaas/main/external-deps-versions.properties
                 source external-deps-versions.properties
                 echo "azCliVersion=${AZ_CLI_VERSION}" >> $GITHUB_ENV
                 echo "bicepVersion=${BICEP_VERSION}" >> $GITHUB_ENV
-                echo "refArmttk=${ARM_TTK_REFERENCE}" >> $GITHUB_ENV
-                echo "refJavaee=9850b0ba70d705479b66967a1311ecae145c6b30" >> $GITHUB_ENV
             - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@v2
+              uses: actions/checkout@v4
               with:
-                repository: ${{env.gitUserName}}/rhel-jboss-templates
                 path: rhel-jboss-templates
-            - name: Output artifact name and version for Download action
-              id: artifact_file
-              run: |
-                multivmVersion=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.eap74-rhel8-payg-multivm}' --file rhel-jboss-templates/pom.xml --non-recursive exec:exec)
-                multivmArtifactName=eap74-rhel8-payg-multivm-${multivmVersion}-arm-assembly
-
-                echo "multivmArtifactName=${multivmArtifactName}" >> "$GITHUB_OUTPUT"
             - name: Download artifact for test branch
               uses: actions/download-artifact@v1
               with:
-                name: ${{steps.artifact_file.outputs.multivmArtifactName}}
+                name: ${{needs.preflight.outputs.artifactName}}
                 path: rhel-jboss-templates-dev
             - name: Create a new branch with built artifact
               run: |
@@ -608,7 +546,7 @@ jobs:
                     publicip=$(az network public-ip show --name gwip \
                                 --resource-group $standaloneResourceGroup --query dnsSettings.fqdn -o tsv)
                     
-                    echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
+                    echo "publicip=${publicip}" >> $GITHUB_OUTPUT
             - name: Verify eap-session-replication application
               run: |
                 publicip=${{steps.query_app_gateway_public_ip.outputs.publicip}}
@@ -636,33 +574,47 @@ jobs:
                     echo "Unregister ${vmName}${i}"
                     az vm run-command invoke -g ${standaloneResourceGroup} -n ${vmName}${i} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
                   done
-            - name: Delete Resource Group
-              id: delete-resource-group
-              if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
-              run: |
-                  echo "delete... " $standaloneResourceGroup
-                  az group delete --yes --no-wait --verbose --name $standaloneResourceGroup
-            - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@v2
-              with:
-                repository: ${{env.gitUserName}}/rhel-jboss-templates
-                path: rhel-jboss-templates
-            - name: Delete testing branch
-              run: |
-                cd rhel-jboss-templates
-                git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $standaloneTestBranchName        
-    cleanup-dependent-resource:
+
+    resources-cleanup:
       needs:
         - preflight
+        - deploy-dependent-resources
         - deploy-multivm-domain
         - deploy-multivm-standalone
-      if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
+      if: always()
       runs-on: ubuntu-latest
       steps:
+        - name: Sleep ${{ github.event.inputs.minutes_time_out }} minutes
+          continue-on-error: true
+          run: |
+            sleep $((${{ github.event.inputs.minutes_time_out }} * 60))
         - uses: azure/login@v1
           id: azure-login
           with:
             creds: ${{ secrets.AZURE_CREDENTIALS }}
-        - name: Delete dependent resources
+        - name: Checkout rhel-jboss-templates
+          uses: actions/checkout@v4
+          with:
+            path: rhel-jboss-templates
+        - name: Delete Dependent Resource Group
+          if: always()
           run: |
-              az group delete --yes --no-wait --name ${{ env.dependencyResourceGroup }}
+            az group delete --yes --no-wait --name ${{ env.dependencyResourceGroup }}
+        - name: Delete Standalone Resource Group
+          if: always()
+          id: delete-standalone-resource-group
+          run: |
+            echo "delete... " $standaloneResourceGroup
+            az group delete --yes --no-wait --verbose --name $standaloneResourceGroup
+        - name: Delete Domain Resource Group
+          if: always()
+          id: delete-domain-resource-group
+          run: |
+            echo "delete... " $domainResourceGroup
+            az group delete --yes --no-wait --verbose --name $domainResourceGroup
+        - name: Delete Testing Branch
+          if: always()
+          run: |
+            cd rhel-jboss-templates
+            git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $standaloneTestBranchName
+            git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $domainTestBranchName

@@ -13,6 +13,11 @@ openport() {
     sudo firewall-cmd  --zone=public --add-port=$port/tcp  --permanent  | log; flag=${PIPESTATUS[0]}
 }
 
+sudo yum update -y --disablerepo='*' --enablerepo='*microsoft*' | log; flag=${PIPESTATUS[0]}
+sudo yum install firewalld -y | log; flag=${PIPESTATUS[0]}
+sudo systemctl start firewalld
+sudo systemctl enable firewalld
+
 # Mount the Azure file share on all VMs created
 function mountFileShare()
 {

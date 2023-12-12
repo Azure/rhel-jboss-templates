@@ -6,6 +6,11 @@ log() {
     done
 }
 
+sudo yum update -y --disablerepo='*' --enablerepo='*microsoft*' | log; flag=${PIPESTATUS[0]}
+sudo yum install firewalld -y | log; flag=${PIPESTATUS[0]}
+sudo systemctl start firewalld
+sudo systemctl enable firewalld
+
 openport() {
     port=$1
 

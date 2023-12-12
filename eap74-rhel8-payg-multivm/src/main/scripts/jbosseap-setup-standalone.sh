@@ -5,6 +5,11 @@ log() {
     done
 }
 
+sudo yum update -y --disablerepo='*' --enablerepo='*microsoft*' | log; flag=${PIPESTATUS[0]}
+sudo yum install firewalld -y | log; flag=${PIPESTATUS[0]}
+sudo systemctl start firewalld
+sudo systemctl enable firewalld
+
 openport() {
     port=$1
 
@@ -189,6 +194,12 @@ if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
     sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-azure-ha.xml
 fi
 
+# todo  test
+echo "Copy the standalone-azure-ha.xml from EAP_HOME/doc/wildfly/examples/configs folder to EAP_HOME/wildfly/standalone/configuration folder" | log; flag=${PIPESTATUS[0]}
+echo "cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
+sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/ | log; flag=${PIPESTATUS[0]}
+
+
 sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 'embed-server --std-out=echo  --server-config=standalone-azure-ha.xml',\
 '/subsystem=transactions:write-attribute(name=node-identifier,value="'${NODE_ID}'")',\
@@ -257,7 +268,7 @@ if [ "$enableDB" == "True" ]; then
 
     # Test connection for the created data source
     sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --connect "/subsystem=datasources/data-source=$jdbcDataSourceName:test-connection-in-pool" | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ]; then 
+    if [ $flag != 0 ]; then
         echo "ERROR! Test data source connection failed." >&2 log
         exit $flag
     fi
