@@ -28,7 +28,7 @@ param utcValue string = utcNow()
 
 var const_identityId = substring(string(identity.userAssignedIdentities), indexOf(string(identity.userAssignedIdentities), '"') + 1, lastIndexOf(string(identity.userAssignedIdentities), '"') - (indexOf(string(identity.userAssignedIdentities), '"') + 1))
 
-resource keyvault 'Microsoft.KeyVault/vaults@2023-07-01' = {
+resource keyvault 'Microsoft.KeyVault/vaults@${azure.apiVersionForKeyVault}' = {
   name: keyVaultName
   location: location
   properties: {
@@ -55,7 +55,7 @@ resource keyvault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   }
 }
 
-resource createAddCertificate 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+resource createAddCertificate 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
   name: 'ds-create-add-appgw-certificate'
   location: location
   identity: identity

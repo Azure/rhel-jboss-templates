@@ -186,7 +186,7 @@ module byosSingleStartPid './modules/_pids/_pid.bicep' = {
   ]
 }
 
-resource bootStorageName 'Microsoft.Storage/storageAccounts@2022-05-01' = if (bootDiagnosticsCheck) {
+resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = if (bootDiagnosticsCheck) {
   name: bootStorageName_var
   location: location
   sku: {
@@ -195,12 +195,12 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@2022-05-01' = if (bo
   kind: storageAccountKind
 }
 
-resource networkSecurityGroupName 'Microsoft.Network/networkSecurityGroups@2022-05-01' = {
+resource networkSecurityGroupName 'Microsoft.Network/networkSecurityGroups@${azure.apiVersionForNetworkSecurityGroups}' = {
   name: networkSecurityGroupName_var
   location: location
 }
 
-resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2022-05-01' = if (virtualNetworkNewOrExisting == 'new') {
+resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
   name: virtualNetworkName
   location: location
   properties: {
@@ -221,7 +221,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2022-05-
   }
 }
 
-resource nicName 'Microsoft.Network/networkInterfaces@2022-05-01' = {
+resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetworkInterfaces}' = {
   name: nicName_var
   location: location
   properties: {
@@ -246,7 +246,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   ]
 }
 
-resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = {
+resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionForVirtualMachines}' = {
   name: vmName
   location: location
   plan: {
@@ -304,7 +304,7 @@ module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
   ]
 }
 
-resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = {
+resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/extensions@${azure.apiVersionForVirtualMachineExtensions}' = {
   parent: vmName_resource
   name: 'jbosseap-setup-extension'
   location: location

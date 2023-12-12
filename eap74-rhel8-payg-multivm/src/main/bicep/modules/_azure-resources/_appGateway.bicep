@@ -51,7 +51,7 @@ module pidAppgwStart '../_pids/_pid.bicep' = {
   }
 }
 
-resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@2022-05-01' = {
+resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPublicIPAddresses}' = {
   name: gatewayPublicIPAddressName
   sku: {
     name: 'Standard'
@@ -65,7 +65,7 @@ resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@2022-05-01' = {
   }
 }
 
-resource wafv2AppGateway 'Microsoft.Network/applicationGateways@2022-05-01' = {
+resource wafv2AppGateway 'Microsoft.Authorization/roleDefinitions@${azure.apiVersionForRoleDefinitions}' = {
   name: name_appGateway
   location: location
   tags: {

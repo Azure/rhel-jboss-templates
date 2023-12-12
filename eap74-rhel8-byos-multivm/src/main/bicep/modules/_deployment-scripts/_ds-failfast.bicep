@@ -29,7 +29,7 @@ var const_azcliVersion = '2.15.0'
 var const_arguments_validate_parameters = '${location} ${vmSize} ${numberOfInstances} ${connectSatellite} ${satelliteFqdn}'
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 
-resource validateParameters 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+resource validateParameters 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
   name: deploymentName
   location: location
   kind: 'AzureCLI'

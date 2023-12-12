@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.microsoft.azure.iaas</groupId>
+        <artifactId>azure-javaee-iaas-parent</artifactId>
+        <version>1.0.20</version>
+    </parent>
+
+    <groupId>com.rhel.jboss.azure</groupId>
+    <artifactId>rhel-jboss-templates</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>${project.artifactId}</name>
+    <url>https://github.com/azure-javaee/rhel-jboss-templates</url>
+
+
+    <properties>
+        <template.validation.tests.directory>${basedir}/../../arm-ttk/arm-ttk</template.validation.tests.directory>
+        <template.azure-common.properties.url>file:///${basedir}/../utilities/azure-common.properties</template.azure-common.properties.url>
+
+        <!--  skip configuration  -->
+        <assembly.skipAssembly>false</assembly.skipAssembly>
+        <skip.exec.plugin>false</skip.exec.plugin>
+
+        <!--  versions  start -->
+        <version.wls-on-aks-azure-marketplace>1.0.65</version.wls-on-aks-azure-marketplace>
+        <version.arm-oraclelinux-wls>1.0.25</version.arm-oraclelinux-wls>
+        <!--  versions  end -->
+
+    </properties>
+
+    <modules>
+        <module>eap74-rhel8-byos</module>
+        <module>eap74-rhel8-byos-multivm</module>
+        <module>eap74-rhel8-byos-vmss</module>
+        <module>eap74-rhel8-payg</module>
+        <module>eap74-rhel8-payg-multivm</module>
+        <module>eap74-rhel8-payg-vmss</module>
+        <module>eap-aro</module>
+        <module>eap-coffee-app</module>
+        <module>eap-session-replication</module>
+    </modules>
+
+
+</project>

@@ -3,19 +3,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>com.rhel.jboss.azure</groupId>
+        <artifactId>rhel-jboss-templates</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
     <groupId>com.rhel.jboss.azure</groupId>
     <artifactId>eap74-rhel8-payg</artifactId>
     <version>1.0.15</version>
-    
-    <parent>
-        <groupId>com.microsoft.azure.iaas</groupId>
-        <artifactId>azure-javaee-iaas-parent</artifactId>
-        <version>1.0.20</version>
-        <relativePath></relativePath>
-    </parent>
     <packaging>pom</packaging>
     <name>${project.artifactId}</name>
-    <properties>
-        <template.validation.tests.directory>${basedir}/../../arm-ttk/arm-ttk</template.validation.tests.directory>
-    </properties>
+
 </project>
