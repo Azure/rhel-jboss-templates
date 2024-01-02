@@ -70,6 +70,7 @@ jobs:
               run: |
                 isForDemo=${{ github.event.inputs.isForDemo }}
                 echo "isForDemo=${isForDemo}" >> $GITHUB_OUTPUT
+
     deploy-dependent-resources:
         needs: preflight
         runs-on: ubuntu-latest
@@ -170,6 +171,7 @@ jobs:
                   --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
                 az postgres db create --resource-group ${{ env.dependencyResourceGroup}} --server ${{ env.dbInstanceName }} --name testdb
                 echo "postgresqlHost=${host}" >> $GITHUB_OUTPUT
+
     deploy-multivm-domain:
         needs: 
           - preflight
@@ -587,9 +589,6 @@ jobs:
       if: always()
       runs-on: ubuntu-latest
       steps:
-        - name: Sleep 30 minutes
-          run: |
-              sleep 1800
         - uses: azure/login@v1
           id: azure-login
           with:

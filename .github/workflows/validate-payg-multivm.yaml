@@ -18,10 +18,6 @@ on:
         description: 'If set to true, resources will not be deleted'
         required: true
         default: 'false'
-      minutes_time_out:
-        description: 'Minutes Time Out'
-        required: false
-        default: '60'
 
 env:
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
@@ -584,10 +580,6 @@ jobs:
       if: always()
       runs-on: ubuntu-latest
       steps:
-        - name: Sleep ${{ github.event.inputs.minutes_time_out }} minutes
-          continue-on-error: true
-          run: |
-            sleep $((${{ github.event.inputs.minutes_time_out }} * 60))
         - uses: azure/login@v1
           id: azure-login
           with:
