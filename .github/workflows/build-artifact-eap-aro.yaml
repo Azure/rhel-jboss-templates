@@ -21,3 +21,4 @@ jobs:
         with:
           offerName: ${{ env.offerName }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          buildType: "build"
