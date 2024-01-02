@@ -175,14 +175,15 @@ if [[ "${JDK_VERSION,,}" != "openjdk8" ]]; then
     echo "systemctl restart sshd" | log; flag=${PIPESTATUS[0]}
     systemctl restart sshd | log; flag=${PIPESTATUS[0]}
 
-    echo "Copy the standalone-azure-ha.xml from EAP_HOME/doc/wildfly/examples/configs folder to EAP_HOME/wildfly/standalone/configuration folder" | log; flag=${PIPESTATUS[0]}
-    echo "cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
-    sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/ | log; flag=${PIPESTATUS[0]}
-
-    echo "Updating standalone-azure-ha.xml" | log; flag=${PIPESTATUS[0]}
-    echo -e "\t stack UDP to TCP"           | log; flag=${PIPESTATUS[0]}
-    echo -e "\t set transaction id"         | log; flag=${PIPESTATUS[0]}
 fi
+
+echo "Copy the standalone-azure-ha.xml from EAP_HOME/doc/wildfly/examples/configs folder to EAP_HOME/wildfly/standalone/configuration folder" | log; flag=${PIPESTATUS[0]}
+echo "cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
+sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/ | log; flag=${PIPESTATUS[0]}
+
+echo "Updating standalone-azure-ha.xml" | log; flag=${PIPESTATUS[0]}
+echo -e "\t stack UDP to TCP"           | log; flag=${PIPESTATUS[0]}
+echo -e "\t set transaction id"         | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
 if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
