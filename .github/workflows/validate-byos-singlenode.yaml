@@ -60,6 +60,7 @@ jobs:
               with:
                 offerName: ${{ env.offerName }}
                 token: ${{ secrets.GITHUB_TOKEN }}
+                workflowType: "validate"
             - name: Setup environment variables
               id: setup-env-variables-based-on-dispatch-event
               run: |
