@@ -11,7 +11,6 @@ inputs:
   workflowType:
     description: "workflowType, 'build' or 'validate' "
     required: true
-    default: "build"
 
 outputs:
   artifactName:
@@ -61,14 +60,15 @@ runs:
     # for validate workflows, use Checkout arm-ttk
     - name: Download arm-ttk used in partner center pipeline
       shell: bash
-      if: ${{ inputs.workflowType }}=="build"
+      if: ${{ inputs.workflowType == 'build' }}
       run: |
+        echo "workflowType is "  ${{ inputs.workflowType }}  
         wget -O arm-template-toolkit.zip https://aka.ms/arm-ttk-azureapps
         unzip arm-template-toolkit.zip -d arm-ttk
 
     - name: Checkout arm-ttk
       uses: actions/checkout@v4
-      if: ${{ inputs.workflowType }}=="validate"
+      if: ${{ inputs.workflowType == 'validate' }}
       with:
         repository: Azure/arm-ttk
         path: arm-ttk
