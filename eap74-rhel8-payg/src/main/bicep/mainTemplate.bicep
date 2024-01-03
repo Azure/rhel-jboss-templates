@@ -321,7 +321,7 @@ module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
   ]
 }
 
-resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/extensions@${azure.apiVersionForVirtualMachineScaleSets}' = {
+resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/extensions@${azure.apiVersionForVirtualMachineExtensions}' = {
   parent: vmName_resource
   name: 'jbosseap-setup-extension'
   location: location
