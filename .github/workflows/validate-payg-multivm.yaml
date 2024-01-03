@@ -69,7 +69,7 @@ jobs:
               id: setup-env-variables-based-on-dispatch-event
               run: |
                 isForDemo=${{ github.event.inputs.isForDemo }}
-                echo "isForDemo=${isForDemo}" >> $GITHUB_OUTPUT
+                echo "isForDemo=${isForDemo}" >> "$GITHUB_OUTPUT"
 
     deploy-dependent-resources:
         needs: preflight
@@ -108,7 +108,7 @@ jobs:
                   --resource-group ${{ env.dependencyResourceGroup }} --server ${{ env.dbInstanceName }} \
                   --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
                 az sql db create --resource-group ${{ env.dependencyResourceGroup }} --server ${{ env.dbInstanceName }} --name testdb
-                echo "sqlserverHost=${host}" >> $GITHUB_OUTPUT
+                echo "sqlserverHost=${host}" >> "$GITHUB_OUTPUT"
             - name: Deploy an Oracle database server on Azure VM
               id: deploy-oracle
               if: ${{ inputs.databaseType == 'oracle' || github.event.client_payload.databaseType == 'oracle' }}
@@ -130,7 +130,7 @@ jobs:
                   --settings "{\"fileUris\": [\"${{ env.scriptLocation }}install-oracle-main.sh\", \"${{ env.scriptLocation }}install-oracle.sh\"]}" \
                   --protected-settings "{\"commandToExecute\":\"bash install-oracle-main.sh ${{ env.dbPassword }}\"}"
                 host=$(az vm show -g ${{ env.dependencyResourceGroup }} -n ${{ env.dbInstanceName }} -d --query publicIps -o tsv)
-                echo "oracleHost=${host}" >> $GITHUB_OUTPUT
+                echo "oracleHost=${host}" >> "$GITHUB_OUTPUT"
             - name: Deploy an instance of Azure Database for MySQL
               id: deploy-mysql
               if: ${{ inputs.databaseType == 'mysql' || github.event.client_payload.databaseType == 'mysql' }}
@@ -152,7 +152,7 @@ jobs:
                 host=$(az mysql server show \
                   --resource-group ${{ env.dependencyResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --query "fullyQualifiedDomainName" -o tsv)
-                echo "mysqlHost=${host}" >> $GITHUB_OUTPUT
+                echo "mysqlHost=${host}" >> "$GITHUB_OUTPUT"
                 mysql -h $host -u myadmin@${{ env.dbInstanceName }} -p${{ env.dbPassword }} << EOF
                 CREATE DATABASE testdb;
                 CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ env.dbPassword }}';
@@ -175,7 +175,7 @@ jobs:
                   --resource-group ${{ env.dependencyResourceGroup}} --server ${{ env.dbInstanceName }} \
                   --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
                 az postgres db create --resource-group ${{ env.dependencyResourceGroup}} --server ${{ env.dbInstanceName }} --name testdb
-                echo "postgresqlHost=${host}" >> $GITHUB_OUTPUT
+                echo "postgresqlHost=${host}" >> "$GITHUB_OUTPUT"
 
     deploy-multivm-domain:
         needs: 
@@ -187,8 +187,8 @@ jobs:
               run: |
                 curl -Lo external-deps-versions.properties https://raw.githubusercontent.com/Azure/azure-javaee-iaas/main/external-deps-versions.properties
                 source external-deps-versions.properties
-                echo "azCliVersion=${AZ_CLI_VERSION}" >> $GITHUB_ENV
-                echo "bicepVersion=${BICEP_VERSION}" >> $GITHUB_ENV
+                echo "azCliVersion=${AZ_CLI_VERSION}" >> "$GITHUB_ENV"
+                echo "bicepVersion=${BICEP_VERSION}" >> "$GITHUB_ENV"
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
               with:
@@ -201,7 +201,7 @@ jobs:
             - name: Create a new branch with built artifact
               run: |
                 current=`pwd`
-                echo "current=${current}" >> $GITHUB_ENV
+                echo "current=${current}" >> "$GITHUB_ENV"
                 cd rhel-jboss-templates
                 git config --global core.longpaths true
                 git config --global user.email $gitEmail
@@ -250,7 +250,7 @@ jobs:
                   dbUser=testuser@${{ env.dbInstanceName }}
                   dbPassword=${{ env.dbPassword }}
                 fi
-                echo "enableDB=${enableDB}" >> $GITHUB_ENV
+                echo "enableDB=${enableDB}" >> "$GITHUB_ENV"
 
                 echo "generate parameter file for domain mode"
                 # Generate parameters for db template deployment
@@ -344,7 +344,7 @@ jobs:
                       --name javaee-cafe.war \
                       --account-name ${{ env.domainBootStorageAccountName }} \
                       --sas-token ${sasToken} -o tsv) 
-                  echo "appbloburl=${appbloburl}" >> $GITHUB_OUTPUT
+                  echo "appbloburl=${appbloburl}" >> "$GITHUB_OUTPUT"
             - name: Query public ip of admin VM
               id: query_admin_public_ip
               uses: azure/CLI@v1
@@ -354,7 +354,7 @@ jobs:
                     # query public ip address of admin VM
                     publicip=$(az vm show --resource-group ${{ env.domainResourceGroup }} --name ${{ github.run_id }}${{ github.run_number }}vm-adminVM -d --query publicIps -o tsv)
                     
-                    echo "publicip=${publicip}" >> $GITHUB_OUTPUT
+                    echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Deploy cafe application
               run: |
                 appbloburl="${{steps.upload_cafe_app.outputs.appbloburl}}"
@@ -376,7 +376,7 @@ jobs:
                     publicip=$(az network public-ip show --name gwip \
                                 --resource-group $domainResourceGroup --query dnsSettings.fqdn -o tsv)
                     
-                    echo "publicip=${publicip}" >> $GITHUB_OUTPUT
+                    echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Verify cafe application
               run: |
                 publicip=${{steps.query_app_gateway_public_ip.outputs.publicip}}
@@ -419,8 +419,8 @@ jobs:
               run: |
                 curl -Lo external-deps-versions.properties https://raw.githubusercontent.com/Azure/azure-javaee-iaas/main/external-deps-versions.properties
                 source external-deps-versions.properties
-                echo "azCliVersion=${AZ_CLI_VERSION}" >> $GITHUB_ENV
-                echo "bicepVersion=${BICEP_VERSION}" >> $GITHUB_ENV
+                echo "azCliVersion=${AZ_CLI_VERSION}" >> "$GITHUB_ENV"
+                echo "bicepVersion=${BICEP_VERSION}" >> "$GITHUB_ENV"
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
               with:
@@ -433,7 +433,7 @@ jobs:
             - name: Create a new branch with built artifact
               run: |
                 current=`pwd`
-                echo "current=${current}" >> $GITHUB_ENV
+                echo "current=${current}" >> "$GITHUB_ENV"
                 cd rhel-jboss-templates
                 git config --global core.longpaths true
                 git config --global user.email $gitEmail
@@ -545,7 +545,7 @@ jobs:
                     publicip=$(az network public-ip show --name gwip \
                                 --resource-group $standaloneResourceGroup --query dnsSettings.fqdn -o tsv)
                     
-                    echo "publicip=${publicip}" >> $GITHUB_OUTPUT
+                    echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Verify eap-session-replication application
               run: |
                 publicip=${{steps.query_app_gateway_public_ip.outputs.publicip}}
