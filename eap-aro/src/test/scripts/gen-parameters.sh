@@ -18,7 +18,6 @@ cat <<EOF > ${parametersPath}
         "createCluster": {
             "value": true
         },
-        # todo add more comments here
         "pullSecret": {
             "value": "${pullSecret}"
         },
