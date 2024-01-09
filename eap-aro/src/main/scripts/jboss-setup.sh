@@ -373,18 +373,21 @@ apk update
 apk add gettext
 apk add apache2-utils
 
-# Install the OpenShift CLI
-wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz -q -P ~
-mkdir ~/openshift
-tar -zxvf ~/openshift-client-linux.tar.gz -C ~/openshift
-echo 'export PATH=$PATH:~/openshift' >> ~/.bash_profile && source ~/.bash_profile
-
-# Sign in to cluster
+# Retrieve cluster credentials and api/console URLs
 credentials=$(az aro list-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME -o json)
 kubeadminUsername=$(echo $credentials | jq -r '.kubeadminUsername')
 kubeadminPassword=$(echo $credentials | jq -r '.kubeadminPassword')
 apiServerUrl=$(az aro show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query 'apiserverProfile.url' -o tsv)
 consoleUrl=$(az aro show -g $RESOURCE_GROUP -n $CLUSTER_NAME --query 'consoleProfile.url' -o tsv)
+
+# Install the OpenShift CLI
+downloadUrl=$(echo $consoleUrl | sed -e "s/https:\/\/console/https:\/\/downloads/g")
+wget ${downloadUrl}amd64/linux/oc.tar -q -P ~
+mkdir ~/openshift
+tar xvf ~/oc.tar -C ~/openshift
+echo 'export PATH=$PATH:~/openshift' >> ~/.bash_profile && source ~/.bash_profile
+
+# Sign in to cluster
 wait_login_complete $kubeadminUsername $kubeadminPassword "$apiServerUrl" $logFile
 if [[ $? -ne 0 ]]; then
   echo "Failed to sign into the cluster with ${kubeadminUsername}." >&2
