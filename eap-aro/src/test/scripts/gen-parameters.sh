@@ -19,7 +19,7 @@ cat <<EOF > ${parametersPath}
             "value": true
         },
         "pullSecret": {
-            "value": "${pullSecret}"
+            "value": ${pullSecret}
         },
         "aadClientId": {
             "value": "${aadClientId}"

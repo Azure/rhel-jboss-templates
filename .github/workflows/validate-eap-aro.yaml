@@ -83,7 +83,7 @@ jobs:
           ${gitUserName} \
           ${aroTestBranchName} \
           ${location} \
-          ${pullSecret} \
+          "${pullSecret}" \
           ${aadClientId} \
           ${aadClientSecret} \
           ${aadObjectId} \
