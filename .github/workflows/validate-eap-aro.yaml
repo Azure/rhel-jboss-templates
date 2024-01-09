@@ -34,9 +34,7 @@ jobs:
 
   deploy-eap-aro:
     outputs:
-      aadClientId:
-        description: "aadClientId"
-        value: ${{ steps.prepare-parameter-file.outputs.aadClientId }}
+      aadClientId: ${{steps.prepare-parameter-file.outputs.aadClientId}}
     needs: preflight
     runs-on: ubuntu-latest
     steps:
