@@ -71,7 +71,7 @@ jobs:
       - name: Prepare parameter file
         id: prepare-parameter-file
         run: |
-          pullSecret='${pullSecret}'
+          pullSecret='${{ secrets.PULL_SECRET }}'
           aadClientId=$(echo $azureCredentials | jq -r '.clientId')
           aadClientSecret=$(echo $azureCredentials | jq -r '.clientSecret')
           aadObjectId=$(az ad sp show --id ${aadClientId} --query id -o tsv)
