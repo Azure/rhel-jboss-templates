@@ -72,11 +72,8 @@ jobs:
         id: prepare-parameter-file
         run: |
           
-          servicePrincipal=$(az ad sp create-for-rbac --sdk-auth)
-          aadClientId=$(echo $servicePrincipal | jq -r '.clientId')
-          echo "aadClientId=${aadClientId}" >> "$GITHUB_OUTPUT"
-          aadClientSecret=$(echo $servicePrincipal | jq -r '.clientSecret')
-          aadObjectId=$(az ad sp show --id ${clientId} --query id -o tsv)
+          aadClientId=$(echo ${{ secrets.azureCredentials }} | jq -r '.clientId')
+          aadClientSecret=$(echo ${{ secrets.azureCredentials }} | jq -r '.clientSecret')
           
           echo "generate parameter file for eap-aro"
           bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh \
@@ -86,8 +83,7 @@ jobs:
           ${location} \
           ${pullSecret} \
           ${aadClientId} \
-          ${aadClientSecret} \
-          ${aadObjectId}"
+          ${aadClientSecret}"
 
       - name: Archive parameters-test-eap-aro.json
         uses: actions/upload-artifact@v1
@@ -136,11 +132,6 @@ jobs:
         run: |
           echo "delete... " $aroResourceGroup
           az group delete --yes --no-wait --verbose --name $aroResourceGroup
-      - name: Delete AAD
-        if: always()
-        id: delete-aad
-        run: |
-          az ad app delete --id ${{needs.deploy-eap-aro.outputs.aadClientId}}
       - name: Delete Testing Branch
         if: always()
         run: |
