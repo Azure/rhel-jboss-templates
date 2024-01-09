@@ -85,10 +85,6 @@ jobs:
           ${aadClientId} \
           ${aadClientSecret}"
 
-      - name: Setup tmate session
-        if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3
-
       - name: Archive parameters-test-eap-aro.json
         uses: actions/upload-artifact@v1
         if: success()
@@ -114,6 +110,10 @@ jobs:
             --name eap-on-aro \
             --parameters @rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json \
             --template-file rhel-jboss-templates/eap-aro/mainTemplate.json
+
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
 
   resources-cleanup:
     needs:
