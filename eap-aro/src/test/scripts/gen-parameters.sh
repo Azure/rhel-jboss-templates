@@ -16,7 +16,7 @@ cat <<EOF > ${parametersPath}
             "value": "${location}"
         },
         "createCluster": {
-            "value": "true"
+            "value": true
         },
         "pullSecret": {
             "value": "${pullSecret}"
@@ -28,7 +28,7 @@ cat <<EOF > ${parametersPath}
             "value": "${aadClientSecret}"
         },
         "deployApplication": {
-            "value": "false"
+            "value": false
         }
     }
 }
