@@ -75,6 +75,7 @@ jobs:
           aadClientId=$(echo $azureCredentials | jq -r '.clientId')
           aadClientSecret=$(echo $azureCredentials | jq -r '.clientSecret')
           aadObjectId=$(az ad sp show --id ${aadClientId} --query id -o tsv)
+          # rpObjectId=$(az ad sp list --display-name "Azure Red Hat OpenShift RP" --query [0].id -o tsv)         
           rpObjectId="ebeeb6e8-af58-4204-9e58-efca7922a3cc"
           echo "generate parameter file for eap-aro"
           bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh \
