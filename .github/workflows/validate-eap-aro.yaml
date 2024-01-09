@@ -74,7 +74,8 @@ jobs:
           
           aadClientId=$(echo $azureCredentials | jq -r '.clientId')
           aadClientSecret=$(echo $azureCredentials | jq -r '.clientSecret')
-          
+          aadObjectId=$(az ad sp show --id ${aadClientId} --query id -o tsv)
+          rpObjectId=$(az ad sp list --display-name "Azure Red Hat OpenShift RP" --query [0].id -o tsv)
           echo "generate parameter file for eap-aro"
           bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh \
           <<< "rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json  \
@@ -83,7 +84,10 @@ jobs:
           ${location} \
           ${pullSecret} \
           ${aadClientId} \
-          ${aadClientSecret}"
+          ${aadClientSecret} \
+          ${aadObjectId} \
+          ${rpObjectId} 
+          "
 
       - name: Archive parameters-test-eap-aro.json
         uses: actions/upload-artifact@v1

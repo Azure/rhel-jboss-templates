@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 #read arguments from stdin
-read parametersPath gitUserName testbranchName location pullSecret aadClientId aadClientSecret
+read parametersPath gitUserName testbranchName location pullSecret aadClientId aadClientSecret aadObjectId rpObjectId
  
 cat <<EOF > ${parametersPath}
 {
@@ -26,6 +26,12 @@ cat <<EOF > ${parametersPath}
         },
         "aadClientSecret": {
             "value": "${aadClientSecret}"
+        },
+        "aadObjectId": {
+            "value": "${aadObjectId}"
+        },
+        "rpObjectId": {
+            "value": "${rpObjectId}"
         },
         "deployApplication": {
             "value": false
