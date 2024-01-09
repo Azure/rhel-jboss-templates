@@ -72,8 +72,8 @@ jobs:
         id: prepare-parameter-file
         run: |
           
-          aadClientId=$(echo ${{ secrets.azureCredentials }} | jq -r '.clientId')
-          aadClientSecret=$(echo ${{ secrets.azureCredentials }} | jq -r '.clientSecret')
+          aadClientId=$(echo ${{ env.azureCredentials }} | jq -r '.clientId')
+          aadClientSecret=$(echo ${{ env.azureCredentials }} | jq -r '.clientSecret')
           
           echo "generate parameter file for eap-aro"
           bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh \
