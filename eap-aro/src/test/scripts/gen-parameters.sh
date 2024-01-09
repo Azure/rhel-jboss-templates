@@ -18,8 +18,9 @@ cat <<EOF > ${parametersPath}
         "createCluster": {
             "value": true
         },
+        # todo add more comments here
         "pullSecret": {
-            "value": ${pullSecret}
+            "value": "${pullSecret}"
         },
         "aadClientId": {
             "value": "${aadClientId}"

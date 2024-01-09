@@ -71,10 +71,11 @@ jobs:
       - name: Prepare parameter file
         id: prepare-parameter-file
         run: |
-          
+          pullSecret="${pullSecret}"
           aadClientId=$(echo $azureCredentials | jq -r '.clientId')
           aadClientSecret=$(echo $azureCredentials | jq -r '.clientSecret')
           aadObjectId=$(az ad sp show --id ${aadClientId} --query id -o tsv)
+          # todo add more comments here
           # rpObjectId=$(az ad sp list --display-name "Azure Red Hat OpenShift RP" --query [0].id -o tsv)         
           rpObjectId="ebeeb6e8-af58-4204-9e58-efca7922a3cc"
           echo "generate parameter file for eap-aro"
@@ -83,7 +84,7 @@ jobs:
           ${gitUserName} \
           ${aroTestBranchName} \
           ${location} \
-          "${pullSecret}" \
+          ${pullSecret} \
           ${aadClientId} \
           ${aadClientSecret} \
           ${aadObjectId} \
