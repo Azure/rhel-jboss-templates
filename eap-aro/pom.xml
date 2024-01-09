@@ -5,8 +5,8 @@
 
     <groupId>com.rhel.jboss.azure</groupId>
     <artifactId>eap-aro</artifactId>
-    <version>1.0.12</version>
-    
+    <version>1.0.13</version>
+
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
         <artifactId>azure-javaee-iaas-parent</artifactId>
