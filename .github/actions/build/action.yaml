@@ -77,7 +77,8 @@ runs:
       if: ${{ inputs.workflowType == 'validate' }}
       shell: bash
       run: |
-        cp -r arm-ttk/arm-ttk ../arm-ttk/arm-ttk
+        mkdir -p ../arm-ttk/arm-ttk
+        cp -r arm-ttk/arm-ttk/. ../arm-ttk/arm-ttk
 
     - name: Build ${{ inputs.offerName }}
       shell: bash
