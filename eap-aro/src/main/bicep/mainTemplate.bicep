@@ -147,12 +147,12 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
-resource uami_resource 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+resource uami_resource 'Microsoft.ManagedIdentity/userAssignedIdentities@${azure.apiVersionForIdentity}' = {
   name: const_identityName
   location: location
 }
 
-resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
+resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@${azure.apiVersionForIdentity}' existing = {
   name: const_identityName
 }
 
@@ -171,7 +171,7 @@ module deploymentScriptUAMICotibutorRoleAssignment 'modules/_rolesAssignment/_ro
   }
 }
 
-resource clusterVnetName_resource 'Microsoft.Network/virtualNetworks@2022-05-01' = if(createCluster) {
+resource clusterVnetName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if(createCluster) {
   name: clusterVnetName
   location: location
   tags: tags
@@ -209,16 +209,16 @@ resource clusterVnetName_resource 'Microsoft.Network/virtualNetworks@2022-05-01'
   }
 }
 
-resource vnetRef 'Microsoft.Network/virtualNetworks@2022-05-01' existing = {
+resource vnetRef 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' existing = {
   name: clusterVnetName
 }
 
 // Get role resource id in subscription
-resource roleResourceDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+resource roleResourceDefinition 'Microsoft.Authorization/roleDefinitions@${azure.apiVersionForRoleDefinitions}' existing = {
   name: const_contribRole
 }
 
-resource assignRoleAppSp 'Microsoft.Authorization/roleAssignments@2022-04-01' = if(createCluster) {
+resource assignRoleAppSp 'Microsoft.Authorization/roleAssignments@${azure.apiVersionForRoleAssignment}' = if(createCluster) {
   name: guid(resourceGroup().id, deployment().name, vnetRef.id, 'assignRoleAppSp')
   scope: vnetRef
   properties: {
@@ -232,7 +232,7 @@ resource assignRoleAppSp 'Microsoft.Authorization/roleAssignments@2022-04-01' = 
   ]
 }
 
-resource assignRoleRpSp 'Microsoft.Authorization/roleAssignments@2022-04-01' = if(createCluster) {
+resource assignRoleRpSp 'Microsoft.Authorization/roleAssignments@${azure.apiVersionForRoleAssignment}' = if(createCluster) {
   name: guid(resourceGroup().id, deployment().name, vnetRef.id, 'assignRoleRpSp')
   scope: vnetRef
   properties: {
@@ -246,7 +246,7 @@ resource assignRoleRpSp 'Microsoft.Authorization/roleAssignments@2022-04-01' = i
   ]
 }
 
-resource clusterName_resource 'Microsoft.RedHatOpenShift/openShiftClusters@2022-04-01' = if(createCluster) {
+resource clusterName_resource 'Microsoft.RedHatOpenShift/openShiftClusters@${azure.apiVersionForOpenShiftClusters}' = if(createCluster) {
   name: clusterName
   location: location
   tags: tags

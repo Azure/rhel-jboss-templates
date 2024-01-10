@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.microsoft.azure.iaas</groupId>
+        <artifactId>azure-javaee-iaas-parent</artifactId>
+        <version>1.0.20</version>
+    </parent>
+
+    <groupId>com.rhel.jboss.azure</groupId>
+    <artifactId>rhel-jboss-templates</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>${project.artifactId}</name>
+    <url>https://github.com/azure-javaee/rhel-jboss-templates</url>
+
+    <repositories>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/azure-javaee/azure-javaee-iaas</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/azure-javaee/azure-javaee-iaas</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <properties>
+        <!-- This property is used to resolve the arm-ttk to where it is actually checked out locally.-->
+        <rootmoduledir>${basedir}</rootmoduledir>
+        <template.validation.tests.directory>${rootmoduledir}/../arm-ttk/arm-ttk</template.validation.tests.directory>
+        <!-- This property is used in the project azure-javaee-iaas,
+             check https://github.com/azure-javaee/azure-javaee-iaas/blob/b7b966b502212c40f23fd391a088da6a9b20bdc3/arm-parent/pom.xml#L361  -->
+        <template.azure-common.properties.url>file:///${rootmoduledir}/utilities/azure-common.properties</template.azure-common.properties.url>
+
+        <version.eap74-rhel8-byos>1.0.13</version.eap74-rhel8-byos>
+        <version.eap74-rhel8-byos-multivm>1.0.21</version.eap74-rhel8-byos-multivm>
+        <version.eap74-rhel8-byos-vmss>1.0.19</version.eap74-rhel8-byos-vmss>
+        <version.eap74-rhel8-payg>1.0.16</version.eap74-rhel8-payg>
+        <version.eap74-rhel8-payg-multivm>1.0.20</version.eap74-rhel8-payg-multivm>
+        <version.eap74-rhel8-payg-vmss>1.0.15</version.eap74-rhel8-payg-vmss>
+        <version.eap-aro>1.0.14</version.eap-aro>
+    </properties>
+
+    <modules>
+        <module>eap74-rhel8-byos</module>
+        <module>eap74-rhel8-byos-multivm</module>
+        <module>eap74-rhel8-byos-vmss</module>
+        <module>eap74-rhel8-payg</module>
+        <module>eap74-rhel8-payg-multivm</module>
+        <module>eap74-rhel8-payg-vmss</module>
+        <module>eap-aro</module>
+        <module>eap-coffee-app</module>
+        <module>eap-session-replication</module>
+    </modules>
+
+
+</project>

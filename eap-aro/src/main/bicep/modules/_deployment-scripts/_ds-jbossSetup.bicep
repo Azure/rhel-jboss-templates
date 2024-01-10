@@ -52,7 +52,7 @@ var const_rhContainerRegistryPullSecretYaml = 'red-hat-container-registry-pull-s
 var const_appDeploymentYaml = 'app-deployment.yaml.template'
 var const_azcliVersion = '2.15.0'
 
-resource jbossSetup 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
   name: 'jboss-setup'
   location: location
   kind: 'AzureCLI'

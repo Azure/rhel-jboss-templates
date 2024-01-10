@@ -332,13 +332,13 @@ module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep
 }
 
 // Get existing VNET.
-resource existingVnet 'Microsoft.Network/virtualNetworks@2022-05-01' existing = if (virtualNetworkNewOrExisting != 'new') {
+resource existingVnet 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' existing = if (virtualNetworkNewOrExisting != 'new') {
   name: virtualNetworkName
   scope: resourceGroup(virtualNetworkResourceGroupName)
 }
 
 // Get existing subnet.
-resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-05-01' existing = if (virtualNetworkNewOrExisting != 'new') {
+resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVersionForVirtualNetworks}' existing = if (virtualNetworkNewOrExisting != 'new') {
   name: subnetForAppGateway
   parent: existingVnet
 }
@@ -365,7 +365,7 @@ module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
   ]
 }
 
-resource bootStorageName 'Microsoft.Storage/storageAccounts@2022-05-01' = if (bootDiagnosticsCheck) {
+resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = if (bootDiagnosticsCheck) {
   name: bootStorageName_var
   location: location
   sku: {
@@ -380,7 +380,7 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@2022-05-01' = if (bo
   ]
 }
 
-resource eapStorageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
+resource eapStorageAccount 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = {
   name: eapStorageAccountName
   location: location
   kind: 'StorageV2'
@@ -413,7 +413,7 @@ resource eapStorageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   ]
 }
 
-resource eapStorageAccountNameContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-05-01' = {
+resource eapStorageAccountNameContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@${azure.apiVersionForStorageBlobService}' = {
   name: '${eapStorageAccountName}/default/${containerName}'
   properties: {
     publicAccess: 'None'
@@ -424,7 +424,7 @@ resource eapStorageAccountNameContainer 'Microsoft.Storage/storageAccounts/blobS
   ]
 }
 
-resource fileService 'Microsoft.Storage/storageAccounts/fileServices/shares@2022-05-01' = if (operatingMode == name_managedDomain) {
+resource fileService 'Microsoft.Storage/storageAccounts/fileServices/shares@${azure.apiVersionForStorageFileService}' = if (operatingMode == name_managedDomain) {
   name: '${eapStorageAccount.name}/default/${name_fileshare}'
   properties: {
     accessTier: 'TransactionOptimized'
@@ -436,7 +436,7 @@ resource fileService 'Microsoft.Storage/storageAccounts/fileServices/shares@2022
   ]
 }
 
-resource symbolicname 'Microsoft.Network/privateEndpoints@2022-01-01' = if (operatingMode == name_managedDomain) {
+resource symbolicname 'Microsoft.Network/privateEndpoints@${azure.apiVersionForPrivateEndpoint}' = if (operatingMode == name_managedDomain) {
   name: privateSaEndpointName_var
   location: location
   properties: {
@@ -461,7 +461,7 @@ resource symbolicname 'Microsoft.Network/privateEndpoints@2022-01-01' = if (oper
 }
 
 // Create new network security group.
-resource nsg 'Microsoft.Network/networkSecurityGroups@2022-05-01' = if (enableAppGWIngress && virtualNetworkNewOrExisting == 'new') {
+resource nsg 'Microsoft.Network/networkSecurityGroups@${azure.apiVersionForNetworkSecurityGroups}' = if (enableAppGWIngress && virtualNetworkNewOrExisting == 'new') {
   name: name_networkSecurityGroup
   location: location
   properties: {
@@ -500,7 +500,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2022-05-01' = if (enableAp
   }
 }
 
-resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2022-05-01' = if (virtualNetworkNewOrExisting == 'new') {
+resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
   name: virtualNetworkName
   location: location
   tags: {
@@ -514,7 +514,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@2022-05-
   }
 }
 
-resource publicIp 'Microsoft.Network/publicIPAddresses@2022-05-01' = [for i in range(0, numberOfInstances): if (enableAppGWIngress) {
+resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPublicIPAddresses}' = [for i in range(0, numberOfInstances): if (enableAppGWIngress) {
   name: (operatingMode == name_managedDomain) ? ((i == 0) ? '${vmName_var}${name_adminVmName}${name_publicIPAddress}' : '${vmName_var}${i}${name_publicIPAddress}') :'${vmName_var}${i}${name_publicIPAddress}'
   sku: {
     name: 'Standard'
@@ -528,7 +528,7 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2022-05-01' = [for i in r
   }
 }]
 
-resource nicName 'Microsoft.Network/networkInterfaces@2022-05-01' = [for i in range(0, numberOfInstances): {
+resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetworkInterfaces}' = [for i in range(0, numberOfInstances): {
   name: '${nicName_var}${i}'
   location: location
   tags: {
@@ -566,7 +566,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@2022-05-01' = [for i in ra
   ]
 }]
 
-resource vmName_resource 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(0, numberOfInstances): {
+resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionForVirtualMachines}' = [for i in range(0, numberOfInstances): {
   name: (operatingMode == name_managedDomain) ? (i == 0 ? '${vmName_var}${name_adminVmName}' : '${vmName_var}${i}') : '${vmName_var}${i}'
   location: location
   plan: plan
@@ -672,7 +672,7 @@ module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
   ]
 }
 
-resource asName_resource 'Microsoft.Compute/availabilitySets@2022-08-01' = {
+resource asName_resource 'Microsoft.Compute/availabilitySets@${azure.apiVersionForAvailabilitySets}' = {
   name: asName_var
   location: location
   sku: {

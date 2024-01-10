@@ -10,7 +10,7 @@ param utcValue string = utcNow()
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
 var urn = '${plan.publisher}:${plan.product}:${plan.name}'
 
-resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
   name: name
   location: location
   kind: 'AzureCLI'
