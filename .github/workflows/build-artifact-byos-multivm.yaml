@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout rhel-jboss-templates
         uses: actions/checkout@v4
+        with:
+          path: rhel-jboss-templates
 
       - name: build
         id: build
