@@ -64,7 +64,7 @@ runs:
       run: |
         echo "workflowType is "  ${{ inputs.workflowType }}  
         wget -O arm-template-toolkit.zip https://aka.ms/arm-ttk-azureapps
-        unzip arm-template-toolkit.zip -d arm-ttk
+        unzip arm-template-toolkit.zip -d ../arm-ttk
 
     - name: Checkout arm-ttk
       uses: actions/checkout@v4
@@ -72,6 +72,12 @@ runs:
       with:
         repository: Azure/arm-ttk
         path: arm-ttk/arm-ttk
+
+    - name: Move arm-ttk
+      if: ${{ inputs.workflowType == 'validate' }}
+      shell: bash
+      run: |
+        cp -r arm-ttk/arm-ttk ../arm-ttk/arm-ttk
 
     - name: Build ${{ inputs.offerName }}
       shell: bash
