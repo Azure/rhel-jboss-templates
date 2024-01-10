@@ -15,4 +15,7 @@
     <packaging>pom</packaging>
     <name>${project.artifactId}</name>
 
+    <properties>
+        <template.azure-common.properties.url>file:///${basedir}/../utilities/azure-common.properties</template.azure-common.properties.url>
+    </properties>
 </project>
