@@ -16,4 +16,8 @@
     <name>${project.artifactId}</name>
     <!-- mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests -->
 
+    <properties>
+        <template.azure-common.properties.url>file:///${basedir}/../utilities/azure-common.properties</template.azure-common.properties.url>
+    </properties>
+
 </project>
