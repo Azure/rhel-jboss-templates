@@ -14,10 +14,12 @@ jobs:
     steps:
       - name: Checkout rhel-jboss-templates
         uses: actions/checkout@v4
+        with:
+          path: rhel-jboss-templates
 
       - name: build
         id: build
-        uses: ./.github/actions/build
+        uses: ./rhel-jboss-templates/.github/actions/build
         with:
           offerName: ${{ env.offerName }}
           token: ${{ secrets.GITHUB_TOKEN }}

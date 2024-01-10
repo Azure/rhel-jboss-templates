@@ -71,7 +71,7 @@ runs:
       if: ${{ inputs.workflowType == 'validate' }}
       with:
         repository: Azure/arm-ttk
-        path: ../arm-ttk/arm-ttk
+        path: arm-ttk/arm-ttk
 
     - name: Build ${{ inputs.offerName }}
       shell: bash
