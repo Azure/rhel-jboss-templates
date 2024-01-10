@@ -19,7 +19,7 @@ jobs:
 
       - name: build
         id: build
-        uses: ./.github/actions/build
+        uses: ./rhel-jboss-templates/.github/actions/build
         with:
           offerName: ${{ env.offerName }}
           token: ${{ secrets.GITHUB_TOKEN }}
