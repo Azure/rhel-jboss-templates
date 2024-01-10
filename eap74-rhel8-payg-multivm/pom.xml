@@ -17,7 +17,7 @@
     <!-- mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests -->
 
     <properties>
-        <template.azure-common.properties.url>file:///${basedir}/../utilities/azure-common.properties</template.azure-common.properties.url>
+        <rootmoduledir>${basedir}/..</rootmoduledir>
     </properties>
 
 </project>
