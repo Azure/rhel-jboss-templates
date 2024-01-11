@@ -85,10 +85,6 @@ runs:
       run: |
         mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests --file ${{ inputs.offerName }}/pom.xml
 
-    - name: Setup tmate session
-      if: ${{ failure() }}
-      uses: mxschmitt/action-tmate@v3
-
     - name: Generate artifact file name and path
       id: artifact_file
       shell: bash
