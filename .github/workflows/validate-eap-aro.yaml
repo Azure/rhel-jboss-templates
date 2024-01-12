@@ -6,14 +6,16 @@ on:
 
 env:
   azCliVersion: 2.30.0
-  azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
   location: eastus
   aroResourceGroup: aro-${{ github.run_id }}-${{ github.run_number }}
-  gitUserName: ${{ secrets.USER_NAME }}
   aroTestBranchName: aro-cicd-${{ github.run_id }}-${{ github.run_number }}
+
+  azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
+  gitUserName: ${{ secrets.USER_NAME }}
   gitEmail: ${{ secrets.USER_EMAIL }}
   gitToken: ${{ secrets.GIT_TOKEN }}
   pullSecret: ${{ secrets.PULL_SECRET }}
+
   offerName: "eap-aro"
 
 jobs:
@@ -71,16 +73,14 @@ jobs:
       - name: Prepare parameter file
         id: prepare-parameter-file
         run: |
-          pullSecret="${{ secrets.PULL_SECRET }}"
           aadClientId=$(echo $azureCredentials | jq -r '.clientId')
           aadClientSecret=$(echo $azureCredentials | jq -r '.clientSecret')
           aadObjectId=$(az ad sp show --id ${aadClientId} --query id -o tsv)
           # todo add more comments here
-          # rpObjectId=$(az ad sp list --display-name "Azure Red Hat OpenShift RP" --query [0].id -o tsv)         
-          rpObjectId="ebeeb6e8-af58-4204-9e58-efca7922a3cc"
+          rpObjectId=$(az ad sp list --display-name "Azure Red Hat OpenShift RP" --query "[0].id" -o tsv)         
+          # rpObjectId="ebeeb6e8-af58-4204-9e58-efca7922a3cc"
           echo "generate parameter file for eap-aro"
-          bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh \
-          <<< "rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json  \
+          params="rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json  \
           ${gitUserName} \
           ${aroTestBranchName} \
           ${location} \
@@ -90,6 +90,7 @@ jobs:
           ${aadObjectId} \
           ${rpObjectId} 
           "
+          echo "$params" |bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh 
 
       - name: Archive parameters-test-eap-aro.json
         uses: actions/upload-artifact@v1
@@ -97,6 +98,7 @@ jobs:
         with:
           name: parameters-test-eap-aro
           path: rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json
+
       - name: Create Resource Group
         uses: azure/CLI@v1
         with:
@@ -104,6 +106,7 @@ jobs:
           inlineScript: |
             echo "create resource group" ${{ env.aroResourceGroup }}
             az group create --verbose --name ${{ env.aroResourceGroup }} --location ${{ env.location }}
+
       - name: Deploy JBoss EAP on ARO
         id: deploy-eap-aro
         uses: azure/CLI@v1
