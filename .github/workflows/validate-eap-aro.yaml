@@ -75,7 +75,7 @@ jobs:
         run: |
           servicePrincipal=$(az ad sp create-for-rbac --sdk-auth)
           aadClientId=$(echo $servicePrincipal | jq -r '.clientId')
-          echo "aadClientId=${aadClientId}" >> $GITHUB_ENV
+          echo "aadClientId=${aadClientId}" >> $GITHUB_OUTPUT
           clientSecret=$(echo $servicePrincipal | jq -r '.clientSecret')
           aadClientSecret=$(az ad sp show --id ${clientId} --query id -o tsv)
           rpObjectId=$(az ad sp list --display-name "Azure Red Hat OpenShift RP" --query "[0].id" -o tsv)
@@ -154,7 +154,7 @@ jobs:
         if: always()
         id: delete-app
         run: |
-          az ad app delete --id ${aadClientId}
+          az ad app delete --id ${{ needs.deploy-eap-aro.outputs.aadClientId}}
       - name: Delete Resource Group
         if: always()
         id: delete-resource-group
