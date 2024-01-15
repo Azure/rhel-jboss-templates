@@ -73,12 +73,13 @@ jobs:
       - name: Prepare parameter file
         id: prepare-parameter-file
         run: |
-          aadClientId=$(echo $azureCredentials | jq -r '.clientId')
-          aadClientSecret=$(echo $azureCredentials | jq -r '.clientSecret')
-          aadObjectId=$(az ad sp show --id ${aadClientId} --query id -o tsv)
-          # todo add more comments here
-          rpObjectId=$(az ad sp list --display-name "Azure Red Hat OpenShift RP" --query "[0].id" -o tsv)         
-          # rpObjectId="ebeeb6e8-af58-4204-9e58-efca7922a3cc"
+          servicePrincipal=$(az ad sp create-for-rbac --sdk-auth)
+          aadClientId=$(echo $servicePrincipal | jq -r '.clientId')
+          echo "aadClientId=${aadClientId}" >> $GITHUB_ENV
+          clientSecret=$(echo $servicePrincipal | jq -r '.clientSecret')
+          aadClientSecret=$(az ad sp show --id ${clientId} --query id -o tsv)
+          rpObjectId=$(az ad sp list --display-name "Azure Red Hat OpenShift RP" --query "[0].id" -o tsv)
+          
           echo "generate parameter file for eap-aro"
           params="rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json  \
           ${gitUserName} \
@@ -149,6 +150,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: rhel-jboss-templates
+      - name: Delete App
+        if: always()
+        id: delete-app
+        run: |
+          az ad app delete --id ${aadClientId}
       - name: Delete Resource Group
         if: always()
         id: delete-resource-group
