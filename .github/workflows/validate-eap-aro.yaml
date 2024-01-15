@@ -123,8 +123,7 @@ jobs:
 
       - name: Verify the deployment
         run: |
-          clusterName=aro-cluster
-          appEndpoint=$(az resource show -n aroscript${clusterName:7} -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "properties.outputs.appEndpoint" -o tsv)
+          appEndpoint=$(az resource show -n jboss-setup -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "properties.outputs.appEndpoint" -o tsv)
           echo "appEndpoint: ${appEndpoint}"
           if [[ -n "$appEndpoint" ]]; then
             echo "Invalid value of appEndpoint: ${appEndpoint}"
