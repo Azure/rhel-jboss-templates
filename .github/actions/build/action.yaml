@@ -64,19 +64,30 @@ runs:
       run: |
         echo "workflowType is "  ${{ inputs.workflowType }}  
         wget -O arm-template-toolkit.zip https://aka.ms/arm-ttk-azureapps
-        unzip arm-template-toolkit.zip -d arm-ttk
+        unzip arm-template-toolkit.zip -d ../arm-ttk
 
     - name: Checkout arm-ttk
       uses: actions/checkout@v4
       if: ${{ inputs.workflowType == 'validate' }}
       with:
         repository: Azure/arm-ttk
-        path: arm-ttk
+        path: arm-ttk/arm-ttk
+
+    - name: Move arm-ttk
+      if: ${{ inputs.workflowType == 'validate' }}
+      shell: bash
+      run: |
+        mkdir -p ../arm-ttk
+        cp -r arm-ttk/arm-ttk/. ../arm-ttk
 
     - name: Build ${{ inputs.offerName }}
       shell: bash
       run: |
         mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests --file ${{ inputs.offerName }}/pom.xml
+
+    - name: Setup tmate session
+      if: ${{ failure() }}
+      uses: mxschmitt/action-tmate@v3
 
     - name: Generate artifact file name and path
       id: artifact_file

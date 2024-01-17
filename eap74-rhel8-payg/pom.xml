@@ -16,7 +16,7 @@
     <name>${project.artifactId}</name>
 
     <properties>
-        <template.azure-common.properties.url>file:///${basedir}/../utilities/azure-common.properties</template.azure-common.properties.url>
+        <rootmoduledir>${basedir}/..</rootmoduledir>
     </properties>
 
 </project>
