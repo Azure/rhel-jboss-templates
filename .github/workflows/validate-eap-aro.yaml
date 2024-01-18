@@ -71,11 +71,9 @@ jobs:
         id: azure-login
         with:
           creds: ${{ env.azureCredentials }}
-
       - name: Prepare parameter file
         id: prepare-parameter-file
         run: |
-#         servicePrincipal=$(az ad sp create-for-rbac --sdk-auth)
           servicePrincipal=azureCredentials
           aadClientId=$(echo $servicePrincipal | jq -r '.clientId')
           echo "aadClientId=${aadClientId}" >> $GITHUB_OUTPUT
@@ -152,11 +150,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: rhel-jboss-templates
-#      - name: Delete App
-#        if: always()
-#        id: delete-app
-#        run: |
-#          az ad app delete --id ${{ needs.deploy-eap-aro.outputs.aadClientId}}
       - name: Delete Resource Group
         if: always()
         id: delete-resource-group
