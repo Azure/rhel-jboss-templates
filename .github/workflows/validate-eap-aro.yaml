@@ -74,7 +74,7 @@ jobs:
       - name: Prepare parameter file
         id: prepare-parameter-file
         run: |
-          servicePrincipal=$(azureCredentials)
+          servicePrincipal=${azureCredentials}
           aadClientId=$(echo $servicePrincipal | jq -r '.clientId')
           echo "aadClientId=${aadClientId}" >> $GITHUB_OUTPUT
           aadClientSecret=$(echo $servicePrincipal | jq -r '.clientSecret')
