@@ -79,7 +79,8 @@ jobs:
           echo "aadClientId=${aadClientId}" >> $GITHUB_OUTPUT
           aadClientSecret=$(echo $servicePrincipal | jq -r '.clientSecret')
           aadObjectId=$(az ad sp show --id ${aadClientId} --query id -o tsv)
-          rpObjectId=$(az ad sp list --display-name "Azure Red Hat OpenShift RP" --query "[0].id" -o tsv)
+          # rpObjectId=$(az ad sp list --display-name "Azure Red Hat OpenShift RP" --query "[0].id" -o tsv)
+          rpObjectId="464dba49-4a47-4add-a378-82d01272a003"
           
           echo "generate parameter file for eap-aro"
           params="rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json  \
