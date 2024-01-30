@@ -4,7 +4,12 @@ log() {
         printf '%s %s\n' "$(date "+%Y-%m-%d %H:%M:%S")" "$line" >> /var/log/jbosseap.install.log
     done
 }
-
+# firewalld installation and configuration
+if [[ "${JDK_VERSION,,}" != "openjdk8" ]]; then
+    sudo yum install firewalld -y
+    sudo systemctl start firewalld
+    sudo systemctl enable firewalld
+fi
 openport() {
     port=$1
 
@@ -103,19 +108,21 @@ if [[ "${CONNECT_SATELLITE,,}" == "true" ]]; then
     echo "sudo subscription-manager register --org=${SATELLITE_ORG_NAME} --activationkey=${SATELLITE_ACTIVATION_KEY}" | log; flag=${PIPESTATUS[0]}
     sudo subscription-manager register --org="${SATELLITE_ORG_NAME}" --activationkey="${SATELLITE_ACTIVATION_KEY}" --force | log; flag=${PIPESTATUS[0]}
 else
-    echo "Initial JBoss EAP setup" | log; flag=${PIPESTATUS[0]}
-    ####################### Register to subscription Manager
-    echo "Register subscription manager" | log; flag=${PIPESTATUS[0]}
-    echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
-    subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Manager Registration Failed" >&2 log; exit $flag;  fi
-    #######################
-    ####################### Attach EAP Pool
-    echo "Subscribing the system to get access to JBoss EAP repos" | log; flag=${PIPESTATUS[0]}
-    echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
-    subscription-manager attach --pool=${RHSM_POOL} | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
-    #######################
+    if [[ "${JDK_VERSION,,}" != "openjdk8" ]]; then
+        echo "Initial JBoss EAP setup" | log; flag=${PIPESTATUS[0]}
+        ####################### Register to subscription Manager
+        echo "Register subscription manager" | log; flag=${PIPESTATUS[0]}
+        echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
+        subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Manager Registration Failed" >&2 log; exit $flag;  fi
+        #######################
+        ####################### Attach EAP Pool
+        echo "Subscribing the system to get access to JBoss EAP repos" | log; flag=${PIPESTATUS[0]}
+        echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
+        subscription-manager attach --pool=${RHSM_POOL} | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
+        #######################
+    fi
 fi
 
 ####################### Install openjdk: is it needed? it should be installed with eap7.4
@@ -142,29 +149,30 @@ fi
 
 
 ####################### Install JBoss EAP 7.4
-echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
-subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
+if [[ "${JDK_VERSION,,}" != "openjdk8" ]]; then
+    echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
+    subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
 
-echo "Enable Microsoft repos" | log; flag=${PIPESTATUS[0]}
-echo "yum update -y --disablerepo='*' --enablerepo='*microsoft*'" | log; flag=${PIPESTATUS[0]}
-yum update -y --disablerepo='*' --enablerepo='*microsoft*' | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Enabling Microsoft repos Failed" >&2 log; exit $flag;  fi
+    echo "Enable Microsoft repos" | log; flag=${PIPESTATUS[0]}
+    echo "yum update -y --disablerepo='*' --enablerepo='*microsoft*'" | log; flag=${PIPESTATUS[0]}
+    yum update -y --disablerepo='*' --enablerepo='*microsoft*' | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Enabling Microsoft repos Failed" >&2 log; exit $flag;  fi
 
-echo "Installing JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
-echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
-yum groupinstall -y jboss-eap7 | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
+    echo "Installing JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
+    echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
+    yum groupinstall -y jboss-eap7 | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
 
-echo "sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config" | log; flag=${PIPESTATUS[0]}
-sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]}
-echo "echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config" | log; flag=${PIPESTATUS[0]}
-echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]}
-####################### 
+    echo "sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config" | log; flag=${PIPESTATUS[0]}
+    sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]}
+    echo "echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config" | log; flag=${PIPESTATUS[0]}
+    echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]}
+    ####################### 
 
-echo "systemctl restart sshd" | log; flag=${PIPESTATUS[0]}
-systemctl restart sshd | log; flag=${PIPESTATUS[0]}
-
+    echo "systemctl restart sshd" | log; flag=${PIPESTATUS[0]}
+    systemctl restart sshd | log; flag=${PIPESTATUS[0]}
+fi
 echo "Copy the standalone-azure-ha.xml from EAP_HOME/doc/wildfly/examples/configs folder to EAP_HOME/wildfly/standalone/configuration folder" | log; flag=${PIPESTATUS[0]}
 echo "cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
 sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/ | log; flag=${PIPESTATUS[0]}
