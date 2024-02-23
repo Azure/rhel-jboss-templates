@@ -4,12 +4,14 @@ log() {
         printf '%s %s\n' "$(date "+%Y-%m-%d %H:%M:%S")" "$line" >> /var/log/jbosseap.install.log
     done
 }
+
 # firewalld installation and configuration
-if [[ "${JDK_VERSION,,}" != "openjdk8" ]]; then
+if ! rpm -qa | grep firewalld 2>&1 > /dev/null ; then
     sudo yum install firewalld -y
     sudo systemctl start firewalld
     sudo systemctl enable firewalld
 fi
+
 openport() {
     port=$1
 
