@@ -103,8 +103,13 @@ param instanceCount int = 2
 @description('The size of the Virtual Machine scale set')
 param vmSize string = 'Standard_DS2_v2'
 
+@allowed([
+  'openjdk8'
+  'openjdk11'
+  'openjdk17'
+])
 @description('The JDK version of the Virtual Machine')
-param jdkVersion string = 'openjdk17'
+param jdkVersion string = 'openjdk8'
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated')
 param artifactsLocation string = deployment().properties.templateLink.uri
@@ -189,10 +194,11 @@ var linuxConfiguration = {
     ]
   }
 }
+var name_vmAcceptTerms = format('vmAcceptTerms{0}', guidValue)
 var imageReference = {
   publisher: 'RedHat'
-  offer: 'RHEL'
-  sku: '8_6'
+  offer: ((jdkVersion == 'openjdk8') ? 'rh-jboss-eap' : 'RHEL')
+  sku: ((jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-rhel8' : '8_6')
   version: 'latest'
 }
 var scriptFolder = 'bin'
@@ -245,13 +251,18 @@ var property_subnet_without_app_gateway = [
 var name_publicIPAddress = '-pubIp'
 var name_networkSecurityGroup = 'jboss-nsg'
 var name_appGatewayPublicIPAddress = 'gwip'
+var plan = {
+  publisher: 'redhat'
+  product: 'rh-jboss-eap'
+  name: 'rh-jboss-eap74-rhel8'
+}
 
 module pids './modules/_pids/_pid.bicep' = {
   name: 'initialization'
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
-  name: 'pid-b57c8aee-4919-4cbb-8399-f966d39d4064-partnercenter'
+  name: 'pid-b3123d97-ad01-4e0b-bb5b-085bc95d9e4f-partnercenter'
   params: {}
 }
 
@@ -392,6 +403,21 @@ resource eapStorageAccountName_default_containerName 'Microsoft.Storage/storageA
   ]
 }
 
+module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = if (jdkVersion == 'openjdk8') {
+  name: name_vmAcceptTerms
+  params: {
+    name: name_vmAcceptTerms
+    location: location
+    _artifactsLocation: artifactsLocation
+    _artifactsLocationSasToken: artifactsLocationSasToken
+    identity: obj_uamiForDeploymentScript
+    plan: plan
+  }
+  dependsOn: [
+    nsg
+  ]
+}
+
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
   name: virtualNetworkName
   location: location
@@ -505,6 +531,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
       }
     }
   }
+  plan: ((jdkVersion=='openjdk8') ?plan:null)
   dependsOn: [
     bootStorageName
     virtualNetworkName_resource
