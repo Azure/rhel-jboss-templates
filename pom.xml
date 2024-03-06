@@ -44,8 +44,8 @@
         <version.eap74-rhel8-byos>1.0.13</version.eap74-rhel8-byos>
         <version.eap74-rhel8-byos-multivm>1.0.21</version.eap74-rhel8-byos-multivm>
         <version.eap74-rhel8-byos-vmss>1.0.19</version.eap74-rhel8-byos-vmss>
-        <version.eap74-rhel8-payg>1.0.16</version.eap74-rhel8-payg>
-        <version.eap74-rhel8-payg-multivm>1.0.20</version.eap74-rhel8-payg-multivm>
+        <version.eap74-rhel8-payg>1.0.23</version.eap74-rhel8-payg>
+        <version.eap74-rhel8-payg-multivm>1.0.23</version.eap74-rhel8-payg-multivm>
         <version.eap74-rhel8-payg-vmss>1.0.22</version.eap74-rhel8-payg-vmss>
         <version.eap-aro>1.0.14</version.eap-aro>
     </properties>
