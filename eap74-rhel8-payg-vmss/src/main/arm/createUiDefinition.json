@@ -27,7 +27,7 @@
                 "name": "jdkVersion",
                 "type": "Microsoft.Common.DropDown",
                 "label": "JDK version",
-                "defaultValue": "OpenJDK 17",
+                "defaultValue": "OpenJDK 8",
                 "toolTip": "Choose JDK version.",
                 "constraints": {
                     "allowedValues": [
@@ -446,7 +446,7 @@
                     {
                         "name": "rhsmUserName",
                         "type": "Microsoft.Common.TextBox",
-                        "visible": "[not(steps('jbossEAPSettings').connectSatellite)]",
+                        "visible": "[not(equals(basics('jdkVersion'), 'openjdk8'))]",
                         "label": "RHSM username",
                         "constraints": {
                             "required": true,
@@ -458,7 +458,7 @@
                     {
                         "name": "rhsmPassword",
                         "type": "Microsoft.Common.PasswordBox",
-                        "visible": "[not(steps('jbossEAPSettings').connectSatellite)]",
+                        "visible": "[not(equals(basics('jdkVersion'), 'openjdk8'))]",
                         "label": {
                             "password": "RHSM password",
                             "confirmPassword": "Confirm password"
@@ -474,7 +474,7 @@
                     {
                         "name": "rhsmPoolEAP",
                         "type": "Microsoft.Common.TextBox",
-                        "visible": "[not(steps('jbossEAPSettings').connectSatellite)]",
+                        "visible": "[not(equals(basics('jdkVersion'), 'openjdk8'))]",
                         "label": "RHSM Pool ID with EAP entitlement",
                         "toolTip": "Red Hat Subscription Manager Pool ID (Should have EAP entitlement)",
                         "constraints": {

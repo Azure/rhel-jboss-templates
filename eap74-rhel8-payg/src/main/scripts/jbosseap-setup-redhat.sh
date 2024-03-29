@@ -5,6 +5,13 @@ log() {
     done
 }
 
+# firewalld installation and configuration
+if ! rpm -qa | grep firewalld 2>&1 > /dev/null ; then
+    sudo yum install firewalld -y
+    sudo systemctl start firewalld
+    sudo systemctl enable firewalld
+fi
+
 openport() {
     port=$1
 
