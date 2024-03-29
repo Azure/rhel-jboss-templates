@@ -23,7 +23,7 @@ env:
     azCliVersion: 2.30.0
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
     location: eastus
-    singleResourceGroup: single-${{ github.run_id }}-${{ github.run_number }}
+    singleResourceGroup: single-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
     vmName: ${{ github.run_id }}${{ github.run_number }}vm
     adminUsername: azureadmin
     password: ${{ secrets.VM_PASSWORD }}

@@ -22,9 +22,9 @@ on:
 env:
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
     location: eastus
-    domainResourceGroup: multivm-domain-${{ github.run_id }}-${{ github.run_number }}
-    standaloneResourceGroup: multivm-standalone-${{ github.run_id }}-${{ github.run_number }}
-    dependencyResourceGroup: multivm-dep-${{ github.run_id }}-${{ github.run_number }}
+    domainResourceGroup: multivm-domain-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
+    standaloneResourceGroup: multivm-standalone-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
+    dependencyResourceGroup: multivm-dep-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
     vmName: ${{ github.run_id }}${{ github.run_number }}vm
     asName: ${{ github.run_id }}${{ github.run_number }}as
     adminUsername: azureadmin
@@ -33,7 +33,7 @@ env:
     domainOperatingMode: managed-domain
     standaloneOperatingMode: standalone
     domainBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}domainsa
-    standaloneBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}standalonesa
+    standaloneBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}standsa
     dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
     dbPassword: ${{ secrets.DATABASE_PASSWORD }}
     jbossEAPUserName: jbossadmin

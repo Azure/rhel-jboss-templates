@@ -23,7 +23,7 @@ env:
     azCliVersion: 2.30.0
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
     location: eastus
-    vmssResourceGroup: vmss-${{ github.run_id }}-${{ github.run_number }}
+    vmssResourceGroup: vmss-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
     vmName: ${{ github.run_id }}${{ github.run_number }}vm
     vmssName: jbossvmss
     asName: ${{ github.run_id }}${{ github.run_number }}as
