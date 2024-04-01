@@ -7,7 +7,7 @@ on:
 env:
   azCliVersion: 2.30.0
   location: eastus
-  aroResourceGroup: aro-${{ github.run_id }}-${{ github.run_number }}
+  aroResourceGroup: aro-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
   aroTestBranchName: aro-cicd-${{ github.run_id }}-${{ github.run_number }}
 
   azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
