@@ -268,36 +268,18 @@ jobs:
                     --name single \
                     --parameters @rhel-jboss-templates/eap74-rhel8-payg/src/test/parameters-test-single.json \
                     --template-file rhel-jboss-templates/eap74-rhel8-payg/mainTemplate.json
-            - name: Setup public IP
-              id: setup_public_lb
+            - name: Get public IP
+              id: get_public_ip
               uses: azure/CLI@v1
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
-                    # Create NSG rule to allow inbound traffic to port 9990
-                    az network nsg rule create -g ${{ env.singleResourceGroup }} --nsg-name ${{ env.nsgName }} -n rule_9990 --priority 100 \
-                      --source-address-prefixes '*' --source-port-ranges '*' \
-                      --destination-address-prefixes '*' --destination-port-ranges 9990 8080 --access Allow \
-                      --protocol '*' --description "allow 9990,8080"
-                    # Create public IP
-                    az network public-ip create --name ${{ env.testPubIpName }} --resource-group ${{ env.singleResourceGroup }}
-                    # Query VM NIC name
-                    nicId=$(az vm nic list --vm-name $vmName --resource-group $singleResourceGroup --query [0].id -o tsv)
-                    nicName=$(az vm nic show --vm-name $vmName --resource-group $singleResourceGroup --nic $nicId --query name -o tsv)
-                    # Query VM NIC ipconfig name
-                    configName=$(az network nic ip-config list --nic-name $nicName --resource-group $singleResourceGroup --query [0].name -o tsv)
-                    # Update configuration, associate the public IP to the VM
-                    az network nic ip-config update \
-                      --name $configName \
-                      --nic-name $nicName \
-                      --resource-group ${{ env.singleResourceGroup }} \
-                      --public-ip-address ${{ env.testPubIpName }}
                     # Query public IP for later use
-                    publicip=$(az network public-ip show --name ${{ env.testPubIpName }} --resource-group $singleResourceGroup --query ipAddress -o tsv)
+                    publicip=$(az network public-ip show --name 'vmip' --resource-group $singleResourceGroup --query ipAddress -o tsv)
                     echo "##[set-output name=publicip;]${publicip}"
             - name: Verify console is accessible
               run: |
-                publicip=${{steps.setup_public_lb.outputs.publicip}}
+                publicip=${{steps.get_public_ip.outputs.publicip}}
                 echo "publicip: " $publicip
                 CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
 

@@ -315,7 +315,6 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
         }
       ]
     }
-
     diagnosticsProfile: ((bootDiagnostics == 'on') ? json('{"bootDiagnostics": {"enabled": true,"storageUri": "${reference(resourceId(storageAccountResourceGroupName, 'Microsoft.Storage/storageAccounts/', bootStorageName_var), '2021-06-01').primaryEndpoints.blob}"}}') : json('{"bootDiagnostics": {"enabled": false}}'))
   }
   dependsOn: [
