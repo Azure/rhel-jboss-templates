@@ -140,6 +140,7 @@ param dbPassword string = newGuid()
 
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
+var ipconfigName = 'ipconfig1'
 var nicName_var = '${uniqueString(resourceGroup().id)}-nic'
 var networkSecurityGroupName_var = 'jbosseap-nsg'
 var bootDiagnosticsCheck = ((storageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
@@ -258,7 +259,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
     }
     ipConfigurations: [
       {
-        name: 'ipconfig1'
+        name: ipconfigName
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
