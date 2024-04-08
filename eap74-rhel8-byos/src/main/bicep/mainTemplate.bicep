@@ -311,26 +311,35 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
           id: nicName.id
         }
       ]
-    }
-    ipConfigurations: [
-      {
-        name: 'ipconfig1'
-        properties: {
-          privateIPAllocationMethod: 'Dynamic'
-          subnet: {
-            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
-          }
-          publicIPAddressConfiguration: {
-                name: 'vmPublicIpConfig'
+      networkInterfaceConfigurations: [
+        {
+          name: nicName
+          properties: {
+            primary: true
+            ipConfigurations: [
+              {
+                name: 'ipconfig1'
                 properties: {
-                  publicIPAddress: {
-                    id: resourceId('Microsoft.Network/publicIPAddresses', vmPublicIPAddressName)
+                  privateIPAllocationMethod: 'Dynamic'
+                  subnet: {
+                    id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
+                  }
+                  publicIPAddressConfiguration: {
+                    name: 'vmPublicIpConfig'
+                    properties: {
+                      publicIPAddress: {
+                        id: resourceId('Microsoft.Network/publicIPAddresses', vmPublicIPAddressName)
+                      }
+                    }
                   }
                 }
+              }
+            ]
           }
         }
-      }
-    ]
+      ]
+    }
+
     diagnosticsProfile: ((bootDiagnostics == 'on') ? json('{"bootDiagnostics": {"enabled": true,"storageUri": "${reference(resourceId(storageAccountResourceGroupName, 'Microsoft.Storage/storageAccounts/', bootStorageName_var), '2021-06-01').primaryEndpoints.blob}"}}') : json('{"bootDiagnostics": {"enabled": false}}'))
   }
   dependsOn: [
