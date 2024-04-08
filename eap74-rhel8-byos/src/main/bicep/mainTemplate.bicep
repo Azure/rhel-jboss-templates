@@ -264,13 +264,16 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
           subnet: {
             id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName, subnetName)
           }
+          publicIPAddress: {
+            id: resourceId('Microsoft.Network/publicIPAddresses', vmPublicIPAddressName)
+          }
         }
       }
     ]
   }
   dependsOn: [
     virtualNetworkName_resource
-
+    vmPublicIP
   ]
 }
 
@@ -309,29 +312,6 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
       networkInterfaces: [
         {
           id: nicName.id
-        }
-      ]
-      networkInterfaceConfigurations: [
-        {
-          name: nicName_var
-          properties: {
-            primary: true
-            ipConfigurations: [
-              {
-                name: 'ipconfig1'
-                properties: {
-                  publicIPAddressConfiguration: {
-                    name: 'vmPublicIpConfig'
-                    properties: {
-                      publicIPAddress: {
-                        id: resourceId('Microsoft.Network/publicIPAddresses', vmPublicIPAddressName)
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
         }
       ]
     }
