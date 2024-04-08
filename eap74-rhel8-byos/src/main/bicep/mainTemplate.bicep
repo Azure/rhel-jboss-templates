@@ -313,7 +313,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
       ]
       networkInterfaceConfigurations: [
         {
-          name: nicName
+          name: nicName_var
           properties: {
             primary: true
             ipConfigurations: [
