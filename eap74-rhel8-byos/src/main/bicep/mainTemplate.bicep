@@ -320,10 +320,6 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
               {
                 name: 'ipconfig1'
                 properties: {
-                  privateIPAllocationMethod: 'Dynamic'
-                  subnet: {
-                    id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
-                  }
                   publicIPAddressConfiguration: {
                     name: 'vmPublicIpConfig'
                     properties: {
