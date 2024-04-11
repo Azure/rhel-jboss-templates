@@ -8,7 +8,7 @@ param vmName string = 'jbosseapVm'
 param adminUsername string = 'jbossuser'
 
 @description('Public IP Name for the VM')
-param vmPublicIPAddressName string = 'vmip'
+param vmPublicIPAddressName string = 'jbosseapVm-ip'
 
 @description('DNS prefix for VM')
 param dnsNameforVM string = 'jbossvm${take(uniqueString(utcNow()), 6)}'
