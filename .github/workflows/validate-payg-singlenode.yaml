@@ -14,10 +14,11 @@ on:
         - mysql
         - postgresql
         - none
-      isForDemo:
-        description: 'If set to true, resources will not be deleted'
+      deleteAzureResources:
+        description: 'Delete Azure resources at the end'
         required: true
-        default: 'false'
+        type: boolean
+        default: true
 
 env:
     azCliVersion: 2.30.0
@@ -47,7 +48,6 @@ env:
 jobs:
     preflight:
         outputs:
-          isForDemo: ${{ steps.setup-env-variables-based-on-dispatch-event.outputs.isForDemo }}
           artifactName: ${{steps.build.outputs.artifactName}}
         runs-on: ubuntu-latest
         steps:
@@ -60,12 +60,6 @@ jobs:
                 offerName: ${{ env.offerName }}
                 token: ${{ secrets.GITHUB_TOKEN }}
                 workflowType: "validate"
-            - name: Setup environment variables
-              id: setup-env-variables-based-on-dispatch-event
-              run: |
-                isForDemo=${{ github.event.inputs.isForDemo }}
-                echo "##[set-output name=isForDemo;]${isForDemo}"
-                echo "isForDemo=${isForDemo}" >> "$GITHUB_ENV"
     deploy-single:
         needs: preflight
         runs-on: ubuntu-latest
@@ -295,7 +289,7 @@ jobs:
                 fi
                 exit 0
             - name: Unregister VM
-              if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
+              if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) }}
               uses: azure/CLI@v1
               with:
                 azcliversion: ${{ env.azCliVersion }}
@@ -318,7 +312,7 @@ jobs:
           with:
             path: rhel-jboss-templates
         - name: Delete Resource Group
-          if: always()
+          if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) }}
           id: delete-resource-group
           run: |
             echo "delete... " $singleResourceGroup
