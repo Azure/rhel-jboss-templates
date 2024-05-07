@@ -7,6 +7,12 @@ param vmName string= 'jbosseapVm'
 @description('Linux VM user account name')
 param adminUsername string = 'jbossuser'
 
+@description('Public IP Name for the VM')
+param vmPublicIPAddressName string = 'jbosseapVm-ip'
+
+@description('DNS prefix for VM')
+param dnsNameforVM string = 'jbossvm${take(uniqueString(utcNow()), 6)}'
+
 @description('Type of authentication to use on the Virtual Machine')
 @allowed([
   'password'
@@ -198,6 +204,28 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionFo
 resource networkSecurityGroupName 'Microsoft.Network/networkSecurityGroups@${azure.apiVersionForNetworkSecurityGroups}' = {
   name: networkSecurityGroupName_var
   location: location
+  properties: {
+      securityRules: [
+        {
+          properties: {
+            protocol: 'Tcp'
+            sourcePortRange: '*'
+            sourceAddressPrefix: 'Internet'
+            destinationAddressPrefix: '*'
+            access: 'Allow'
+            priority: 510
+            direction: 'Inbound'
+            destinationPortRanges: [
+              '80'
+              '443'
+              '9990'
+              '8080'
+            ]
+          }
+          name: 'ALLOW_HTTP_ACCESS'
+        }
+      ]
+    }
 }
 
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
@@ -236,13 +264,16 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
           subnet: {
             id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName, subnetName)
           }
+          publicIPAddress: {
+            id: resourceId('Microsoft.Network/publicIPAddresses', vmPublicIPAddressName)
+          }
         }
       }
     ]
   }
   dependsOn: [
     virtualNetworkName_resource
-
+    vmPublicIP
   ]
 }
 
@@ -289,8 +320,22 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
   dependsOn: [
     bootStorageName
     networkSecurityGroupName
-
+    vmPublicIP
   ]
+}
+
+resource vmPublicIP 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPublicIPAddresses}' = {
+  name: vmPublicIPAddressName
+  sku: {
+    name: 'Standard'
+  }
+  location: location
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    dnsSettings: {
+      domainNameLabel: dnsNameforVM
+    }
+  }
 }
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
