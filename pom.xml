@@ -41,12 +41,12 @@
              check https://github.com/azure-javaee/azure-javaee-iaas/blob/b7b966b502212c40f23fd391a088da6a9b20bdc3/arm-parent/pom.xml#L361  -->
         <template.azure-common.properties.url>file:///${rootmoduledir}/utilities/azure-common.properties</template.azure-common.properties.url>
 
-        <version.eap74-rhel8-byos>1.0.14</version.eap74-rhel8-byos>
-        <version.eap74-rhel8-byos-multivm>1.0.22</version.eap74-rhel8-byos-multivm>
-        <version.eap74-rhel8-byos-vmss>1.0.20</version.eap74-rhel8-byos-vmss>
-        <version.eap74-rhel8-payg>1.0.24</version.eap74-rhel8-payg>
-        <version.eap74-rhel8-payg-multivm>1.0.24</version.eap74-rhel8-payg-multivm>
-        <version.eap74-rhel8-payg-vmss>1.0.23</version.eap74-rhel8-payg-vmss>
+        <version.eap74-rhel8-byos>1.0.15</version.eap74-rhel8-byos>
+        <version.eap74-rhel8-byos-multivm>1.0.23</version.eap74-rhel8-byos-multivm>
+        <version.eap74-rhel8-byos-vmss>1.0.21</version.eap74-rhel8-byos-vmss>
+        <version.eap74-rhel8-payg>1.0.25</version.eap74-rhel8-payg>
+        <version.eap74-rhel8-payg-multivm>1.0.25</version.eap74-rhel8-payg-multivm>
+        <version.eap74-rhel8-payg-vmss>1.0.24</version.eap74-rhel8-payg-vmss>
         <version.eap-aro>1.0.14</version.eap-aro>
     </properties>
 
