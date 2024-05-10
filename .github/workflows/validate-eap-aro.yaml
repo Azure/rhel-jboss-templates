@@ -10,7 +10,7 @@ env:
   aroResourceGroup: aro-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
   aroTestBranchName: aro-cicd-${{ github.run_id }}-${{ github.run_number }}
 
-  azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
+  azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
   gitUserName: ${{ secrets.USER_NAME }}
   gitEmail: ${{ secrets.USER_EMAIL }}
   gitToken: ${{ secrets.GIT_TOKEN }}
