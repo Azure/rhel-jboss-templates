@@ -14,10 +14,11 @@ on:
         - mysql
         - postgresql
         - none
-      isForDemo:
-        description: 'If set to true, resources will not be deleted'
+      deleteAzureResources:
+        description: 'Delete Azure resources at the end'
         required: true
-        default: 'false'
+        type: boolean
+        default: true
 
 env:
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
@@ -52,7 +53,6 @@ env:
 jobs:
     preflight:
         outputs:
-          isForDemo: ${{ steps.setup-env-variables-based-on-dispatch-event.outputs.isForDemo }}
           artifactName: ${{steps.build.outputs.artifactName}}
         runs-on: ubuntu-latest
         steps:
@@ -65,11 +65,6 @@ jobs:
                 offerName: ${{ env.offerName }}
                 token: ${{ secrets.GITHUB_TOKEN }}
                 workflowType: "validate"
-            - name: Setup environment variables
-              id: setup-env-variables-based-on-dispatch-event
-              run: |
-                isForDemo=${{ github.event.inputs.isForDemo }}
-                echo "isForDemo=${isForDemo}" >> "$GITHUB_OUTPUT"
 
     deploy-dependent-resources:
         needs: preflight
@@ -395,7 +390,7 @@ jobs:
                 fi
                 exit 0
             - name: Unregister before deleting resources
-              if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
+              if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) }}
               uses: azure/CLI@v1
               with:
                 azcliversion: ${{ env.azCliVersion }}
@@ -564,7 +559,7 @@ jobs:
                 fi
                 exit 0
             - name: Unregister before deleting resources
-              if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
+              if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) }}
               uses: azure/CLI@v1
               with:
                 azcliversion: ${{ env.azCliVersion }}
@@ -592,17 +587,17 @@ jobs:
           with:
             path: rhel-jboss-templates
         - name: Delete Dependent Resource Group
-          if: always()
+          if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) }}
           run: |
             az group delete --yes --no-wait --name ${{ env.dependencyResourceGroup }}
         - name: Delete Standalone Resource Group
-          if: always()
+          if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) }}
           id: delete-standalone-resource-group
           run: |
             echo "delete... " $standaloneResourceGroup
             az group delete --yes --no-wait --verbose --name $standaloneResourceGroup
         - name: Delete Domain Resource Group
-          if: always()
+          if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) }}
           id: delete-domain-resource-group
           run: |
             echo "delete... " $domainResourceGroup

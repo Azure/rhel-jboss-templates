@@ -80,14 +80,14 @@ param apiServerVisibility string = 'Public'
 ])
 param ingressVisibility string = 'Public'
 
-@description('The application ID of an Azure Active Directory client application')
+@description('The application ID of an Microsoft Entra ID client application')
 param aadClientId string = ''
 
-@description('The secret of an Azure Active Directory client application')
+@description('The secret of an Microsoft Entra ID client application')
 @secure()
 param aadClientSecret string = ''
 
-@description('The service principal Object ID of an Azure Active Directory client application')
+@description('The service principal Object ID of an Microsoft Entra ID client application')
 param aadObjectId string = ''
 
 @description('The service principal Object ID of the Azure Red Hat OpenShift Resource Provider')
