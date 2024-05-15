@@ -20,7 +20,7 @@ on:
         default: 'false'
 
 env:
-    azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
+    azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
     location: eastus
     domainResourceGroup: multivm-domain-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
     standaloneResourceGroup: multivm-standalone-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
@@ -593,7 +593,7 @@ jobs:
         - uses: azure/login@v1
           id: azure-login
           with:
-            creds: ${{ secrets.AZURE_CREDENTIALS }}
+            creds: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
         - name: Checkout rhel-jboss-templates
           uses: actions/checkout@v4
           with:
