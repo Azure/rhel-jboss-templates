@@ -123,7 +123,7 @@
                                 "type": "Microsoft.Common.InfoBox",
                                 "options": {
                                     "icon": "Info",
-                                    "text": "An Microsoft Entra ID service principal is required for cluster creation. For more information on creating a service <br>principal, consult the <a href='https://aka.ms/aro/sp-docs' target='_blank'>Azure Red Hat OpenShift product documentation</a>.<br><br>For your convenience, you can create the service principal using the following Azure CLI command with a local install or <br>an Azure Cloud Shell. Copy the value of the <b>clientId</b> and <b>clientSecret</b> output from the following command into the <br>corresponding fields below.  <b>az ad sp create-for-rbac --sdk-auth</b>."
+                                    "text": "A Microsoft Entra ID service principal is required for cluster creation. For more information on creating a service <br>principal, consult the <a href='https://aka.ms/aro/sp-docs' target='_blank'>Azure Red Hat OpenShift product documentation</a>.<br><br>For your convenience, you can create the service principal using the following Azure CLI command with a local install or <br>an Azure Cloud Shell. Copy the value of the <b>clientId</b> and <b>clientSecret</b> output from the following command into the <br>corresponding fields below.  <b>az ad sp create-for-rbac --sdk-auth</b>."
                                 }
                             },
                             {
