@@ -46,7 +46,6 @@ env:
     domainTestBranchName: domain-cicd-${{ github.run_id }}-${{ github.run_number }}
     standaloneTestBranchName: standalone-cicd-${{ github.run_id }}-${{ github.run_number }}
     gitEmail: ${{ secrets.USER_EMAIL }}
-    gitToken: ${{ secrets.GIT_TOKEN }}
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
     offerName: "eap74-rhel8-payg-multivm"
 

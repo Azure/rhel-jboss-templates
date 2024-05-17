@@ -39,7 +39,6 @@ env:
     gitUserName: ${{ secrets.USER_NAME }}
     singleTestBranchName: single-cicd-${{ github.run_id }}-${{ github.run_number }}
     gitEmail: ${{ secrets.USER_EMAIL }}
-    gitToken: ${{ secrets.GIT_TOKEN }}
     testPubIpName: testPubIp
     nsgName: jbosseap-nsg
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/

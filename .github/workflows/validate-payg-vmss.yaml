@@ -43,7 +43,6 @@ env:
     gitUserName: ${{ secrets.USER_NAME }}
     vmssTestBranchName: vmss-cicd-${{ github.run_id }}-${{ github.run_number }}
     gitEmail: ${{ secrets.USER_EMAIL }}
-    gitToken: ${{ secrets.GIT_TOKEN }}
     enableLoadBalancer: enable
     disableLoadBalancer: disable
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
