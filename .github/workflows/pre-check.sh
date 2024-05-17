@@ -31,4 +31,4 @@ echo "3/3...You are logged in to GitHub CLI (gh)."
 echo "Checking progress completed..."
 
 ## Set environment variables
-export param_file="credentials-params.json"
+export param_file="credentials-params.yaml"

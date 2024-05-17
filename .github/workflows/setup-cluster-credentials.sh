@@ -21,28 +21,28 @@ check_parameters() {
     local has_empty_value=0
 
     while IFS= read -r line; do
-        name=$(echo "$line" | jq -r '.name')
-        value=$(echo "$line" | jq -r '.value')
+        name=$(echo "$line" | yq -r '.name')
+        value=$(echo "$line" | yq -r '.value')
 
-        if [ -z "$value" ]; then
-            print_error "The parameter '$name' has an empty value. Please provide a valid value."
+       if [ -z "$value" ] || [ "$value" == "null" ]; then
+            print_error "The parameter '$name' has an empty/null value. Please provide a valid value."
             has_empty_value=1
             break
         else
             echo "Name: $name, Value: $value"
         fi
-    done < <(jq -c '.[]' "$param_file")
+    done < <(yq -c '.[]' "$param_file")
 
     echo "return $has_empty_value"
     return $has_empty_value
 }
 
-# Function to set values from JSON
+# Function to set values from YAML
 set_values() {
     echo "Setting values..."
-    jq -c '.[]' "$param_file" | while read -r line; do
-        name=$(echo "$line" | jq -r '.name')
-        value=$(echo "$line" | jq -r '.value')
+    yq -c '.[]' "$param_file" | while read -r line; do
+        name=$(echo "$line" | yq -r '.name')
+        value=$(echo "$line" | yq -r '.value')
         gh secret set "$name" -b"${value}"
     done
 }

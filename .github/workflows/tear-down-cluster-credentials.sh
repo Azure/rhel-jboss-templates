@@ -5,12 +5,13 @@ source pre-check.sh
 echo "tear-down-cluster-credentials.sh - Start"
 
 # remove param the json
-jq -c '.[]' $param_file | while read line; do
-    name=$(echo $line | jq -r  '.name')
-    echo "gh secret remove $name ............"
+yq -c '.[]' "$param_file" | while read -r line; do
+    name=$(echo "$line" | yq -r '.name')
+    value=$(echo "$line" | yq -r '.value')
     gh secret remove $name
 done
 
 echo "tear-down-cluster-credentials.sh - Finish"
+
 
 
