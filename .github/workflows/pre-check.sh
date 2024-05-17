@@ -7,7 +7,7 @@ NC='\033[0m' # No Color
 ## Check if the required tools are installed and logged in
 echo -e "${GREEN}To run this script, you need to have the following tools installed:${NC}"
 echo -e "${GREEN}1. yq${NC}"
-echo -e "${GREEN}2. Github cli (gh)${NC}"
+echo -e "${GREEN}2. Github CLI (gh)${NC}"
 echo -e "${GREEN}3. Azure CLI (az)${NC}"
 echo -e "${GREEN}And you need to be logged in to GitHub CLI (gh), and Azure CLI (az).${NC}"
 
