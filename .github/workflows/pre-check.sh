@@ -58,4 +58,4 @@ echo "5/5...You are logged in to Azure CLI (az)."
 echo "Checking progress completed..."
 
 ## Set environment variables
-export param_file="credentials-params.yaml"
+export param_file="../resource/credentials-params.yaml"
