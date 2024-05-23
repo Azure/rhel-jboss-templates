@@ -294,8 +294,8 @@
                                 "toolTip": "The Git source code repository URL.",
                                 "constraints": {
                                     "required": true,
-                                    "regex": "https?:\/\/github\\.com\/[a-zA-Z0-9_\\-]*\/[a-zA-Z0-9_\\-]*",
-                                    "validationMessage": "The value must be a valid container image path. For example, https://github.com/jboss-developer/jboss-eap-quickstarts"
+                                    "regex": "https?:\\/\\/[a-zA-Z0-9._\\-]+(\\/[a-zA-Z0-9_\\-]+)+",
+                                    "validationMessage": "The value must be a valid code repository URL. For example, https://github.com/jboss-developer/jboss-eap-quickstarts"
                                 },
                                 "visible": "[equals(steps('Application').appSrcInfo.appOption, '1')]"
                             },
