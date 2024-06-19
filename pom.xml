@@ -47,7 +47,7 @@
         <version.eap74-rhel8-payg>1.0.25</version.eap74-rhel8-payg>
         <version.eap74-rhel8-payg-multivm>1.0.26</version.eap74-rhel8-payg-multivm>
         <version.eap74-rhel8-payg-vmss>1.0.25</version.eap74-rhel8-payg-vmss>
-        <version.eap-aro>1.0.16</version.eap-aro>
+        <version.eap-aro>1.0.17</version.eap-aro>
     </properties>
 
     <modules>
