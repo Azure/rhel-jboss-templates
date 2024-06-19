@@ -1,263 +1,64 @@
 #!/usr/bin/env bash
-################################################
-# This script is invoked by a human who:
-# - has done az login.
-# - can create repository secrets in the github repo from which this file was cloned.
-# - has the gh client >= 2.0.0 installed.
-#
-# This script initializes the repo from which this file is was cloned
-# with the necessary secrets to run the workflows.
-#
-# Script design taken from https://github.com/microsoft/NubesGen.
-#
-################################################
-
-################################################
-# Set environment variables - the main variables you might want to configure.
-#
-# Three letters to disambiguate names.
-DISAMBIG_PREFIX=
-# The location of the resource group. For example `eastus`. Leave blank to use your default location.
-LOCATION=
-RHSM_PASSWORD=
-RHSM_USERNAME=
-RHSM_POOL=
-RHSM_POOL_FOR_RHEL=
-OWNER_REPONAME=
-VM_PASSWORD=
-JBOSS_EAP_USER_PASSWORD=
-SLEEP_VALUE=30s
-# User name for preceding GitHub account.
-USER_NAME=
-# User Email of GitHub acount to access GitHub repository.
-USER_EMAIL=
-# Personal token for preceding GitHub account.
-GIT_TOKEN=
-# Password for database user 'testuser'
-DATABASE_PASSWORD=
-
-# End set environment variables
-################################################
-
 
 set -Eeuo pipefail
-trap cleanup SIGINT SIGTERM ERR EXIT
 
-isOsMac="false"
-if [[ $OSTYPE == 'darwin'* ]]; then
-    isOsMac="true"
-fi
+source pre-check.sh
 
-cleanup() {
-  trap - SIGINT SIGTERM ERR EXIT
-  # script cleanup here
+# ANSI color codes
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+echo "setup-cluster-credentials.sh - Start"
+
+# Function to print error messages in red
+print_error() {
+    local message=$1
+    echo -e "${RED}Error: ${message}${NC}"
 }
 
-setup_colors() {
-  if [[ -t 2 ]] && [[ -z "${NO_COLOR-}" ]] && [[ "${TERM-}" != "dumb" ]]; then
-    NOFORMAT='\033[0m' RED='\033[0;31m' GREEN='\033[0;32m' ORANGE='\033[0;33m' BLUE='\033[0;34m' PURPLE='\033[0;35m' CYAN='\033[0;36m' YELLOW='\033[1;33m'
-  else
-    NOFORMAT='' RED='' GREEN='' ORANGE='' BLUE='' PURPLE='' CYAN='' YELLOW=''
-  fi
+check_parameters() {
+    echo "Checking parameters..."
+    local has_empty_value=0
+
+    while IFS= read -r line; do
+        name=$(echo "$line" | yq -r '.name')
+        value=$(echo "$line" | yq -r '.value')
+
+       if [ -z "$value" ] || [ "$value" == "null" ]; then
+            print_error "The parameter '$name' has an empty/null value. Please provide a valid value."
+            has_empty_value=1
+            break
+        else
+            echo "Name: $name, Value: $value"
+        fi
+    done < <(yq -c '.[]' "$param_file")
+
+    echo "return $has_empty_value"
+    return $has_empty_value
 }
 
-msg() {
-  echo >&2 -e "${1-}"
+# Function to set values from YAML
+set_values() {
+    echo "Setting values..."
+    yq -c '.[]' "$param_file" | while read -r line; do
+        name=$(echo "$line" | yq -r '.name')
+        value=$(echo "$line" | yq -r '.value')
+        gh secret set "$name" -b"${value}"
+    done
 }
 
-setup_colors
-
-read -r -p "Enter a disambiguation prefix (try initials with a sequence number, such as ejb01): " DISAMBIG_PREFIX
-
-if [ "$DISAMBIG_PREFIX" == '' ] ; then
-    msg "${RED}You must enter a disambiguation prefix."
-    exit 1;
-fi
-
-# get RHSM_USERNAME if not set at the beginning of this file
-if [ "$RHSM_USERNAME" == '' ] ; then
-    read -r -p "Enter RHSM userid: " RHSM_USERNAME
-fi
-
-# get RHSM_PASSWORD if not set at the beginning of this file
-if [ "$RHSM_PASSWORD" == '' ] ; then
-    read -r -p "Enter password for preceding RHSM userid: " RHSM_PASSWORD
-fi
-
-# get RHSM_POOL if not set at the beginning of this file
-if [ "$RHSM_POOL" == '' ] ; then
-    read -r -p "Enter RHSM pool secret: " RHSM_POOL
-fi
-
-# get RHSM_POOL_FOR_RHEL if not set at the beginning of this file
-if [ "$RHSM_POOL_FOR_RHEL" == '' ] ; then
-    read -r -p "Enter RHSM pool secret for RHEL: " RHSM_POOL_FOR_RHEL
-fi
-
-# get JBOSS_EAP_USER_PASSWORD if not set at the beginning of this file
-if [ "$JBOSS_EAP_USER_PASSWORD" == '' ] ; then
-    read -r -p "Enter password for jbossadmin user: " JBOSS_EAP_USER_PASSWORD
-fi
-
-# get VM_PASSWORD if not set at the beginning of this file
-if [ "$VM_PASSWORD" == '' ] ; then
-    read -r -p "Enter password for vm azureadmin user: " VM_PASSWORD
-fi
-
-# get DATABASE_PASSWORD if not set at the beginning of this file
-if [ "$DATABASE_PASSWORD" == '' ] ; then
-    read -r -p "Enter password for database user 'testuser': " DATABASE_PASSWORD
-fi
-
-# get USER_EMAIL if not set at the beginning of this file
-if [ "$USER_EMAIL" == '' ] ; then
-    read -r -p "Enter user Email of GitHub acount to access GitHub repository: " USER_EMAIL
-fi
-
-# get USER_NAME if not set at the beginning of this file
-if [ "$USER_NAME" == '' ] ; then
-    read -r -p "Enter user name of GitHub account: " USER_NAME
-fi
-
-# get GIT_TOKEN if not set at the beginning of this file
-if [ "$GIT_TOKEN" == '' ] ; then
-    read -r -p "Enter personal token of GitHub account: " GIT_TOKEN
-fi
-
-# get OWNER_REPONAME if not set at the beginning of this file
-if [ "$OWNER_REPONAME" == '' ] ; then
-    read -r -p "Enter owner/reponame (blank for upsteam of current fork): " OWNER_REPONAME
-fi
-
-if [ -z "${OWNER_REPONAME}" ] ; then
-    GH_FLAGS=""
-else
-    GH_FLAGS="--repo ${OWNER_REPONAME}"
-fi
-
-# Comment out adding date suffix to make it works with tear down script
-# DISAMBIG_PREFIX=${DISAMBIG_PREFIX}`date +%m%d`
-SERVICE_PRINCIPAL_NAME=${DISAMBIG_PREFIX}sp
-
-# get default location if not set at the beginning of this file
-if [ "$LOCATION" == '' ] ; then
-    {
-      az config get defaults.location --only-show-errors > /dev/null 2>&1
-      LOCATION_DEFAULTS_SETUP=$?
-    } || {
-      LOCATION_DEFAULTS_SETUP=0
-    }
-    # if no default location is set, fallback to "eastus"
-    if [ "$LOCATION_DEFAULTS_SETUP" -eq 1 ]; then
-      LOCATION=eastus
+# Main script execution
+main() {
+    if check_parameters; then
+        echo "All parameters are valid."
+        set_values
     else
-      LOCATION=$(az config get defaults.location --only-show-errors | jq -r .value)
+        echo "Parameter check failed. Exiting."
+        exit 1
     fi
-fi
 
-# Check AZ CLI status
-msg "${GREEN}(1/4) Checking Azure CLI status...${NOFORMAT}"
-{
-  az > /dev/null
-} || {
-  msg "${RED}Azure CLI is not installed."
-  msg "${GREEN}Go to https://aka.ms/nubesgen-install-az-cli to install Azure CLI."
-  exit 1;
-}
-{
-  az account show > /dev/null
-} || {
-  msg "${RED}You are not authenticated with Azure CLI."
-  msg "${GREEN}Run \"az login\" to authenticate."
-  exit 1;
+    echo "setup-cluster-credentials.sh - Finish"
 }
 
-msg "${YELLOW}Azure CLI is installed and configured!"
-
-# Check GitHub CLI status
-msg "${GREEN}(2/4) Checking GitHub CLI status...${NOFORMAT}"
-USE_GITHUB_CLI=false
-{
-  gh auth status && USE_GITHUB_CLI=true && msg "${YELLOW}GitHub CLI is installed and configured!"
-} || {
-  msg "${YELLOW}Cannot use the GitHub CLI. ${GREEN}No worries! ${YELLOW}We'll set up the GitHub secrets manually."
-  USE_GITHUB_CLI=false
-}
-
-# Execute commands
-msg "${GREEN}(3/4) Create service principal and Azure credentials ${SERVICE_PRINCIPAL_NAME}"
-SUBSCRIPTION_ID=$(az account show --query id --output tsv --only-show-errors)
-
-### AZ ACTION CREATE
-
-if [[ "${isOsMac}" == "true" ]]; then
-    SERVICE_PRINCIPAL=$(az ad sp create-for-rbac --name ${SERVICE_PRINCIPAL_NAME} --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION_ID}" --sdk-auth --only-show-errors | base64)
-else
-    SERVICE_PRINCIPAL=$(az ad sp create-for-rbac --name ${SERVICE_PRINCIPAL_NAME} --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION_ID}" --sdk-auth --only-show-errors | base64 -w0)
-fi
-
-SP_ID=$( az ad sp list --display-name $SERVICE_PRINCIPAL_NAME --query '[0]'.id -o tsv)
-az role assignment create --assignee ${SP_ID} --role "User Access Administrator"
-AZURE_CREDENTIALS=$(echo $SERVICE_PRINCIPAL | base64 -d)
-
-msg "${GREEN}(4/4) Create secrets in GitHub"
-if $USE_GITHUB_CLI; then
-  {
-    msg "${GREEN}Using the GitHub CLI to set secrets.${NOFORMAT}"
-    gh ${GH_FLAGS} secret set AZURE_CREDENTIALS -b"${AZURE_CREDENTIALS}"
-    msg "${YELLOW}\"AZURE_CREDENTIALS\""
-    msg "${GREEN}${AZURE_CREDENTIALS}"
-    gh ${GH_FLAGS} secret set VM_PASSWORD -b"${VM_PASSWORD}"
-    gh ${GH_FLAGS} secret set JBOSS_EAP_USER_PASSWORD -b"${JBOSS_EAP_USER_PASSWORD}"
-    gh ${GH_FLAGS} secret set RHSM_USERNAME -b"${RHSM_USERNAME}"
-    gh ${GH_FLAGS} secret set RHSM_PASSWORD -b"${RHSM_PASSWORD}"
-    gh ${GH_FLAGS} secret set RHSM_POOL -b"${RHSM_POOL}"
-    gh ${GH_FLAGS} secret set RHSM_POOL_FOR_RHEL -b"${RHSM_POOL_FOR_RHEL}"
-    gh ${GH_FLAGS} secret set DATABASE_PASSWORD -b"${DATABASE_PASSWORD}" 
-    gh ${GH_FLAGS} secret set USER_EMAIL -b"${USER_EMAIL}"
-    gh ${GH_FLAGS} secret set USER_NAME -b"${USER_NAME}"
-    gh ${GH_FLAGS} secret set GIT_TOKEN -b"${GIT_TOKEN}"
-    gh ${GH_FLAGS} secret set SERVICE_PRINCIPAL -b"${SERVICE_PRINCIPAL}"
-    msg "${YELLOW}\"SERVICE_PRINCIPAL\""
-    msg "${GREEN}${SERVICE_PRINCIPAL}"
-    msg "${YELLOW}\"DISAMBIG_PREFIX\""
-    msg "${GREEN}${DISAMBIG_PREFIX}"
-  } || {
-    USE_GITHUB_CLI=false
-  }
-fi
-if [ $USE_GITHUB_CLI == false ]; then
-  msg "${NOFORMAT}======================MANUAL SETUP======================================"
-  msg "${GREEN}Using your Web browser to set up secrets..."
-  msg "${NOFORMAT}Go to the GitHub repository you want to configure."
-  msg "${NOFORMAT}In the \"settings\", go to the \"secrets\" tab and the following secrets:"
-  msg "(in ${YELLOW}yellow the secret name and${NOFORMAT} in ${GREEN}green the secret value)"
-  msg "${YELLOW}\"AZURE_CREDENTIALS\""
-  msg "${GREEN}${AZURE_CREDENTIALS}"
-  msg "${YELLOW}\"JBOSS_EAP_USER_PASSWORD\""
-  msg "${GREEN}${JBOSS_EAP_USER_PASSWORD}"
-  msg "${YELLOW}\"VM_PASSWORD\""
-  msg "${GREEN}${VM_PASSWORD}"
-  msg "${YELLOW}\"RHSM_PASSWORD\""
-  msg "${GREEN}${RHSM_PASSWORD}"
-  msg "${YELLOW}\"RHSM_USERNAME\""
-  msg "${GREEN}${RHSM_USERNAME}"
-  msg "${YELLOW}\"SERVICE_PRINCIPAL\""
-  msg "${GREEN}${SERVICE_PRINCIPAL}"
-  msg "${YELLOW}\"RHSM_POOL\""
-  msg "${GREEN}${RHSM_POOL}"
-  msg "${YELLOW}\"RHSM_POOL_FOR_RHEL\""
-  msg "${GREEN}${RHSM_POOL_FOR_RHEL}"
-  msg "${YELLOW}\"DATABASE_PASSWORD\""
-  msg "${GREEN}${DATABASE_PASSWORD}"
-  msg "${YELLOW}\"DISAMBIG_PREFIX\""
-  msg "${GREEN}${DISAMBIG_PREFIX}"
-  msg "${YELLOW}\"USER_EMAIL\""
-  msg "${GREEN}${USER_EMAIL}"
-  msg "${YELLOW}\"USER_NAME\""
-  msg "${GREEN}${USER_NAME}"
-  msg "${YELLOW}\"GIT_TOKEN\""
-  msg "${GREEN}${GIT_TOKEN}"
-  msg "${NOFORMAT}========================================================================"
-fi
-msg "${GREEN}Secrets configured"
+# Run the main function
+main
