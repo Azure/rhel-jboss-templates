@@ -19,7 +19,14 @@ if ! command -v yq &> /dev/null; then
     echo "yq is not installed. Please install it to proceed."
     exit 1
 fi
-echo "1/5...jq is installed."
+echo "1/6...yq is installed."
+
+if ! command -v jq &> /dev/null; then
+    echo "Check required tools and environment failed."
+    echo "jq is not installed. Please install it to proceed."
+    exit 1
+fi
+echo "2/6...jq is installed."
 
 # Check gh installed
 if ! command -v gh &> /dev/null; then
@@ -27,16 +34,16 @@ if ! command -v gh &> /dev/null; then
     echo "GitHub CLI (gh) is not installed. Please install it to proceed."
     exit 1
 fi
-echo "2/5...GitHub CLI (gh) is installed."
+echo "3/6...GitHub CLI (gh) is installed."
 
 
 # Check if the GitHub CLI (gh) is logged in
 if ! gh auth status &> /dev/null; then
     echo "Check required tools and environment failed."
-    echo "You are not logged in to GitHub CLI (gh). Please log in to proceed."
+    echo "You are not logged in to GitHub CLI (gh). Please log in with `gh auth login` to proceed."
     exit 1
 fi
-echo "3/5...You are logged in to GitHub CLI (gh)."
+echo "4/6...You are logged in to GitHub CLI (gh)."
 
 # check if az is installed
 if ! command -v az &> /dev/null; then
@@ -44,16 +51,16 @@ if ! command -v az &> /dev/null; then
     echo "Azure CLI (az) is not installed. Please install it to proceed."
     exit 1
 fi
-echo "4/5...Azure CLI (az) is installed."
+echo "5/6...Azure CLI (az) is installed."
 
 
 # check if az is logged in
 if ! az account show &> /dev/null; then
     echo "Check required tools and environment failed."
-    echo "You are not logged in to Azure CLI (az). Please log in to proceed."
+    echo "You are not logged in to Azure CLI (az). Please log in with command `az login` to proceed."
     exit 1
 fi
-echo "5/5...You are logged in to Azure CLI (az)."
+echo "6/6...You are logged in to Azure CLI (az)."
 
 echo "Checking progress completed..."
 
