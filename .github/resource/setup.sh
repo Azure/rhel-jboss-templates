@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
-
 set -Eeuo pipefail
-
-source pre-check.sh
 
 # ANSI color codes
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo "setup-cluster-credentials.sh - Start"
+echo "setup-credentials.sh - Start"
 
 # Function to print error messages in red
 print_error() {
@@ -57,7 +54,7 @@ main() {
         exit 1
     fi
 
-    echo "setup-cluster-credentials.sh - Finish"
+    echo "setup-credentials.sh - Finish"
 }
 
 # Run the main function
