@@ -30,4 +30,3 @@ source ../resource/pre-check.sh
 export param_file="../resource/credentials-params.yaml"
 
 source ../resource/setup.sh
-
