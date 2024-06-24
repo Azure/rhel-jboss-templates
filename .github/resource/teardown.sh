@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+source pre-check.sh
+
+echo "tear-down-cluster-credentials.sh - Start"
+
+# remove param the json
+yq eval -o=json '.[]' "$param_file" | jq -c '.' | while read -r line; do
+    name=$(echo "$line" | jq -r '.name')
+    value=$(echo "$line" | jq -r '.value')
+    gh secret remove "$name"
+done
+
+echo "tear-down-cluster-credentials.sh - Finish"
+
+
+

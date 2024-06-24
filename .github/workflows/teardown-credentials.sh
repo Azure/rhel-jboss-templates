@@ -14,7 +14,7 @@
 # 3. Run the script with the following command:
 #    ```
 #    cd .github/workflows
-#    bash tear-down-cluster-credentials.sh
+#    bash teardown-credentials.sh
 #    ```
 # 4. The script will remove the required secrets in the repository.
 # 5. Check the repository secrets to verify that the secrets are removed.
@@ -22,18 +22,10 @@
 
 set -Eeuo pipefail
 
-source pre-check.sh
+source ../resource/pre-check.sh
+## Set environment variables
+export param_file="../resource/credentials-params.yaml"
 
-echo "tear-down-cluster-credentials.sh - Start"
-
-# remove param the json
-yq eval -o=json '.[]' "$param_file" | jq -c '.' | while read -r line; do
-    name=$(echo "$line" | jq -r '.name')
-    value=$(echo "$line" | jq -r '.value')
-    gh secret remove "$name"
-done
-
-echo "tear-down-cluster-credentials.sh - Finish"
-
+source ../resource/teardown.sh
 
 
