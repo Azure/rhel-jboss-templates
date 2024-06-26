@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 #read arguments from stdin
-read parametersPath gitUserName testbranchName location vmName adminUsername password virtualNetworkResourceGroupName storageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword rhsmUserName rhsmPassword rhsmPoolEAP enableDB databaseType jdbcDataSourceJNDIName dsConnectionURL dbUser dbPassword
+read parametersPath gitUserName testbranchName location vmName adminUsername password virtualNetworkResourceGroupName storageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword enableDB databaseType jdbcDataSourceJNDIName dsConnectionURL dbUser dbPassword
  
 cat <<EOF > ${parametersPath}
 {
@@ -70,15 +70,6 @@ cat <<EOF > ${parametersPath}
         },
         "jbossEAPPassword": {
             "value": "${jbossEAPPassword}"
-        },
-        "rhsmUserName": {
-            "value": "${rhsmUserName}"
-        },
-        "rhsmPassword": {
-            "value": "${rhsmPassword}"
-        },
-        "rhsmPoolEAP": {
-            "value": "${rhsmPoolEAP}"
         },
         "enableDB": {
             "value": ${enableDB}
