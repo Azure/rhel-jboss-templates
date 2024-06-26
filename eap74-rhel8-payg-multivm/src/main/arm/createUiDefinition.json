@@ -36,7 +36,7 @@
                 "name": "jdkVersion",
                 "type": "Microsoft.Common.DropDown",
                 "label": "JDK version",
-                "defaultValue": "OpenJDK 8",
+                "defaultValue": "OpenJDK 17",
                 "toolTip": "Choose JDK version.",
                 "constraints": {
                     "allowedValues": [
@@ -487,46 +487,6 @@
                             "regex": "^.{1,}$",
                             "validationMessage": "Cannot be empty."
                         }
-                    },
-                    {
-                        "name": "rhsmUserName",
-                        "type": "Microsoft.Common.TextBox",
-                        "visible": "[not(equals(basics('jdkVersion'), 'openjdk8'))]",
-                        "label": "RHSM username",
-                        "constraints": {
-                            "required": true,
-                            "regex": "^[a-zA-Z0-9+_.-]{1,30}(@[a-zA-Z0-9.-]+){0,1}$",
-                            "validationMessage": "Please enter a valid Red Hat Subscription Manager user id"
-                        },
-                        "toolTip": "Provide User name for Red Hat subscription Manager"
-                    },
-                    {
-                        "name": "rhsmPassword",
-                        "type": "Microsoft.Common.PasswordBox",
-                        "visible": "[not(equals(basics('jdkVersion'), 'openjdk8'))]",
-                        "label": {
-                            "password": "RHSM password",
-                            "confirmPassword": "Confirm password"
-                        },
-                        "toolTip": "Provide Password for  Red Hat subscription Manager",
-                        "options": {
-                            "hideConfirmation": false
-                        },
-                        "constraints": {
-                            "required": true
-                        }
-                    },
-                    {
-                        "name": "rhsmPoolEAP",
-                        "type": "Microsoft.Common.TextBox",
-                        "visible": "[not(equals(basics('jdkVersion'), 'openjdk8'))]",
-                        "label": "RHSM Pool ID with EAP entitlement",
-                        "toolTip": "Red Hat Subscription Manager Pool ID (Should have EAP entitlement)",
-                        "constraints": {
-                            "required": true,
-                            "regex": "^[a-f0-9A-F]{32,32}$",
-                            "validationMessage": "The RHSM Pool ID must be 32 characters long and should contain only alphabets between a to f and numbers."
-                        }
                     }
                 ]
             },
@@ -886,9 +846,6 @@
             "operatingMode": "[steps('jbossEAPSettings').operatingMode]",
             "jbossEAPUserName": "[steps('jbossEAPSettings').jbossEAPUserName]",
             "jbossEAPPassword": "[steps('jbossEAPSettings').jbossEAPPassword]",
-            "rhsmUserName": "[steps('jbossEAPSettings').rhsmUserName]",
-            "rhsmPassword": "[steps('jbossEAPSettings').rhsmPassword]",
-            "rhsmPoolEAP": "[steps('jbossEAPSettings').rhsmPoolEAP]",
             "connectSatellite": "[steps('jbossEAPSettings').connectSatellite]",
             "satelliteActivationKey": "[steps('jbossEAPSettings').satelliteActivationKey]",
             "satelliteOrgName": "[steps('jbossEAPSettings').satelliteOrgName]",

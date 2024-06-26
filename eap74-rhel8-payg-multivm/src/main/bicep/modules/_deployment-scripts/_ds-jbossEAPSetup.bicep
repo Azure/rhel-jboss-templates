@@ -19,16 +19,6 @@ param jbossEAPUserName string
 @secure()
 param jbossEAPPassword string
 
-@description('User name for Red Hat subscription Manager')
-param rhsmUserName string = newGuid()
-
-@description('Password for Red Hat subscription Manager')
-@secure()
-param rhsmPassword string = newGuid()
-
-@description('Red Hat Subscription Manager Pool ID (Should have EAP entitlement)')
-param rhsmPoolEAP string = newGuid()
-
 @description('Storage account name created in main')
 param eapStorageAccountName string = ''
 
@@ -145,18 +135,6 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersion
       {
         name: 'JBOSS_EAP_PASSWORD_BASE64'
         secureValue: base64(jbossEAPPassword)
-      }
-      {
-        name: 'RHSM_USER'
-        value: rhsmUserName
-      }
-      {
-        name: 'RHSM_PASSWORD_BASE64'
-        secureValue: base64(rhsmPassword)
-      }
-      {
-        name: 'EAP_POOL'
-        secureValue: rhsmPoolEAP
       }
       {
         name: 'STORAGE_ACCOUNT_NAME'
