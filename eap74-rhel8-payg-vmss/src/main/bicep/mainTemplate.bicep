@@ -24,16 +24,6 @@ param jbossEAPUserName string
 @secure()
 param jbossEAPPassword string
 
-@description('User name for Red Hat subscription Manager')
-param rhsmUserName string = newGuid()
-
-@description('Password for Red Hat subscription Manager')
-@secure()
-param rhsmPassword string = newGuid()
-
-@description('Red Hat Subscription Manager Pool ID (Should have EAP entitlement)')
-param rhsmPoolEAP string = newGuid()
-
 @allowed([
   'on'
   'off'
@@ -109,7 +99,7 @@ param vmSize string = 'Standard_DS2_v2'
   'openjdk17'
 ])
 @description('The JDK version of the Virtual Machine')
-param jdkVersion string = 'openjdk8'
+param jdkVersion string = 'openjdk17'
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated')
 param artifactsLocation string = deployment().properties.templateLink.uri
@@ -197,8 +187,8 @@ var linuxConfiguration = {
 var name_vmAcceptTerms = format('vmAcceptTerms{0}', guidValue)
 var imageReference = {
   publisher: 'RedHat'
-  offer: ((jdkVersion == 'openjdk8') ? 'rh-jboss-eap' : 'RHEL')
-  sku: ((jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-rhel8' : '8_6')
+  offer: 'rh-jboss-eap'
+  sku: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
   version: 'latest'
 }
 var scriptFolder = 'bin'
@@ -254,7 +244,7 @@ var name_appGatewayPublicIPAddress = 'gwip'
 var plan = {
   publisher: 'redhat'
   product: 'rh-jboss-eap'
-  name: 'rh-jboss-eap74-rhel8'
+  name: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
 }
 
 module pids './modules/_pids/_pid.bicep' = {
@@ -403,7 +393,7 @@ resource eapStorageAccountName_default_containerName 'Microsoft.Storage/storageA
   ]
 }
 
-module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = if (jdkVersion == 'openjdk8') {
+module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = {
   name: name_vmAcceptTerms
   params: {
     name: name_vmAcceptTerms
@@ -523,7 +513,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
                 ]
               }
               protectedSettings: {
-                commandToExecute: 'sh jbosseap-setup-redhat.sh ${scriptArgs} \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${eapStorageAccountName_var}\' \'${containerName}\' \'${base64(listKeys(eapStorageAccountName.id, '2021-06-01').keys[0].value)}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\''
+                commandToExecute: 'sh jbosseap-setup-redhat.sh ${scriptArgs} \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${eapStorageAccountName_var}\' \'${containerName}\' \'${base64(listKeys(eapStorageAccountName.id, '2021-06-01').keys[0].value)}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\''
               }
             }
           }
@@ -531,7 +521,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
       }
     }
   }
-  plan: ((jdkVersion=='openjdk8') ?plan:null)
+  plan: plan
   dependsOn: [
     bootStorageName
     virtualNetworkName_resource
