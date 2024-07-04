@@ -68,6 +68,19 @@ echo "Install openjdk, curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
 echo "sudo yum install curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
 sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}
 
+## Set the right JDK version on the instance
+if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
+    echo "sudo alternatives --set java java-17-openjdk.x86_64" | log; flag=${PIPESTATUS[0]}
+    sudo alternatives --set java java-17-openjdk.x86_64| log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "openjdk11" ]]; then
+    echo "sudo alternatives --set java java-11-openjdk.x86_64" | log; flag=${PIPESTATUS[0]}
+    sudo alternatives --set java java-11-openjdk.x86_64 | log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "openjdk8" ]]; then
+    echo "sudo alternatives --set java java-1.8.0-openjdk.x86_64" | log; flag=${PIPESTATUS[0]}
+    sudo alternatives --set java java-1.8.0-openjdk.x86_64 | log; flag=${PIPESTATUS[0]}
+fi
+####################### 
+
 ## OpenJDK 17 specific logic
 if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
     sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-full-ha.xml
