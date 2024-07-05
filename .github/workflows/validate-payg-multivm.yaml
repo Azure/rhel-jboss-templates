@@ -1,4 +1,4 @@
-name: Validate payg-multivm offer with ${{ inputs.jdkVersion }} and database ${{ inputs.databaseType }}
+name: Validate payg-multivm offer
 
 on:
   workflow_dispatch:
@@ -57,6 +57,7 @@ env:
 
 jobs:
     preflight:
+        name: Validate with ${{ inputs.jdkVersion }} and ${{ inputs.databaseType }}
         outputs:
           artifactName: ${{steps.build.outputs.artifactName}}
         runs-on: ubuntu-latest

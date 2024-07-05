@@ -1,4 +1,4 @@
-name: Validate payg-vmss offer with ${{ inputs.jdkVersion }} and database ${{ inputs.databaseType }}
+name: Validate payg-vmss offer
 
 on:
   workflow_dispatch:
@@ -56,6 +56,7 @@ env:
 
 jobs:
     preflight:
+        name: Validate with ${{ inputs.jdkVersion }} and ${{ inputs.databaseType }}
         outputs:
           artifactName: ${{steps.build.outputs.artifactName}}
         runs-on: ubuntu-latest
