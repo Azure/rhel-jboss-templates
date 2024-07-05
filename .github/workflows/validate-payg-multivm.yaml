@@ -271,7 +271,7 @@ jobs:
                 java:jboss/datasources/JavaEECafeDB \
                 ${dsConnectionURL} \
                 ${dbUser} \
-                ${dbPassword} \ 
+                ${dbPassword} \
                 ${{ inputs.jdkVersion }} "
 
             - name: Archive parameters-test-domain.json
