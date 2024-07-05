@@ -502,7 +502,8 @@ jobs:
                 java:jboss/datasources/JavaEECafeDB \
                 ${dsConnectionURL} \
                 ${dbUser} \
-                ${dbPassword}"
+                ${dbPassword} \
+                ${{ inputs.jdkVersion }} "
 
             - name: Archive parameters-test-standalone.json
               uses: actions/upload-artifact@v1
