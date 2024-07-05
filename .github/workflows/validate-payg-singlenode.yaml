@@ -14,6 +14,15 @@ on:
         - mysql
         - postgresql
         - none
+      jdkVersion:
+        description: 'jdkVersion'
+        required: true
+        default: 'openjdk17'
+        type: choice
+        options:
+          - openjdk8
+          - openjdk11
+          - openjdk17
       deleteAzureResources:
         description: 'Delete Azure resources at the end'
         required: true
@@ -89,11 +98,6 @@ jobs:
               id: azure-login
               with:
                 creds: ${{ env.azureCredentials }}
-            - name: Accept Image Terms
-              id: accept-terms
-              run: |
-                  echo "accept terms for VM image"
-                  az vm image terms accept --urn redhat:rh-jboss-eap:rh-jboss-eap74-jdk17-rhel8:latest
             - name: Deploy an instance of Azure SQL Database
               if: ${{ inputs.databaseType == 'mssqlserver' || github.event.client_payload.databaseType == 'mssqlserver' }}
               run: |
@@ -227,7 +231,8 @@ jobs:
                 java:jboss/datasources/JavaEECafeDB \
                 ${dsConnectionURL} \
                 ${dbUser} \
-                ${dbPassword}"
+                ${dbPassword} \
+                ${{ inputs.jdkVersion }} "
 
             - name: Archive parameters-test-single.json
               uses: actions/upload-artifact@v1
