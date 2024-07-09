@@ -39,9 +39,6 @@ env:
     dbPassword: ${{ secrets.DATABASE_PASSWORD }}
     jbossEAPUserName: jbossadmin
     jbossEAPPassword: ${{ secrets.JBOSS_EAP_USER_PASSWORD }}
-    rhsmUserName: ${{ secrets.RHSM_USERNAME }}
-    rhsmPassword: ${{ secrets.RHSM_PASSWORD }}
-    rhsmPoolEAP: ${{ secrets.RHSM_POOL }}
     gitUserName: ${{ secrets.USER_NAME }}
     domainTestBranchName: domain-cicd-${{ github.run_id }}-${{ github.run_number }}
     standaloneTestBranchName: standalone-cicd-${{ github.run_id }}-${{ github.run_number }}
@@ -82,7 +79,7 @@ jobs:
               id: accept-terms
               run: |
                   echo "accept terms for VM image"
-                  az vm image terms accept --urn redhat:rh-jboss-eap:rh-jboss-eap74-rhel8:latest
+                  az vm image terms accept --urn redhat:rh-jboss-eap:rh-jboss-eap74-jdk17-rhel8:latest
             - name: Create Resource Group
               run: |
                 az group create -n ${{ env.dependencyResourceGroup}} -l ${{ env.location }}
@@ -264,9 +261,6 @@ jobs:
                 ${domainResourceGroup} \
                 ${jbossEAPUserName} \
                 ${jbossEAPPassword} \
-                ${rhsmUserName} \
-                ${rhsmPassword} \
-                ${rhsmPoolEAP} \
                 ${enableDB} \
                 ${databaseType} \
                 java:jboss/datasources/JavaEECafeDB \

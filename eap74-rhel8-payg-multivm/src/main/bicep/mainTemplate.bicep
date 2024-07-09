@@ -23,16 +23,6 @@ param jbossEAPUserName string
 @secure()
 param jbossEAPPassword string
 
-@description('User name for Red Hat subscription Manager')
-param rhsmUserName string = newGuid()
-
-@description('Password for Red Hat subscription Manager')
-@secure()
-param rhsmPassword string = newGuid()
-
-@description('Red Hat Subscription Manager Pool ID (Should have EAP entitlement)')
-param rhsmPoolEAP string = newGuid()
-
 @description('The size of the Virtual Machine')
 param vmSize string = 'Standard_DS2_v2'
 
@@ -42,7 +32,7 @@ param vmSize string = 'Standard_DS2_v2'
   'openjdk17'
 ])
 @description('The JDK version of the Virtual Machine')
-param jdkVersion string = 'openjdk8'
+param jdkVersion string = 'openjdk17'
 
 @description('Number of VMs to deploy')
 param numberOfInstances int = 2
@@ -211,8 +201,8 @@ var linuxConfiguration = {
 var name_vmAcceptTerms = format('vmAcceptTerms{0}', guidValue)
 var imageReference = {
   publisher: 'RedHat'
-  offer: ((jdkVersion == 'openjdk8') ? 'rh-jboss-eap' : 'RHEL')
-  sku: ((jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-rhel8' : '8_6')
+  offer: 'rh-jboss-eap'
+  sku: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
   version: 'latest'
 }
 
@@ -271,7 +261,7 @@ var name_appGatewayPublicIPAddress = 'gwip'
 var plan = {
   publisher: 'redhat'
   product: 'rh-jboss-eap'
-  name: 'rh-jboss-eap74-rhel8'
+  name: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
 }
 
 /*
@@ -565,7 +555,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
   ]
 }]
 
-module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = if (jdkVersion == 'openjdk8') {
+module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = {
   name: name_vmAcceptTerms
   params: {
     name: name_vmAcceptTerms
@@ -614,7 +604,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
     }
     diagnosticsProfile: ((bootDiagnostics == 'on') ? json('{"bootDiagnostics": {"enabled": true,"storageUri": "${reference(resourceId(storageAccountResourceGroupName, 'Microsoft.Storage/storageAccounts/', bootStorageName_var), '2021-06-01').primaryEndpoints.blob}"}}') : json('{"bootDiagnostics": {"enabled": false}}'))
   }
-  plan: ((jdkVersion=='openjdk8') ?plan:null)
+  plan: plan
   dependsOn: [
     nicName
     bootStorageName
@@ -644,9 +634,6 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
     identity: obj_uamiForDeploymentScript
     jbossEAPUserName: jbossEAPUserName
     jbossEAPPassword: jbossEAPPassword
-    rhsmUserName: rhsmUserName
-    rhsmPassword: rhsmPassword
-    rhsmPoolEAP: rhsmPoolEAP
     eapStorageAccountName: eapStorageAccountName
     containerName: containerName
     numberOfInstances: numberOfInstances

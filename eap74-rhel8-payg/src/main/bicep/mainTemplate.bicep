@@ -33,7 +33,7 @@ param vmSize string = 'Standard_B1ms'
   'openjdk17'
 ])
 @description('The JDK version of the Virtual Machine')
-param jdkVersion string = 'openjdk8'
+param jdkVersion string = 'openjdk17'
 
 @description('Capture serial console outputs and screenshots of the virtual machine running on a host to help diagnose startup issues')
 @allowed([
@@ -86,18 +86,6 @@ param jbossEAPUserName string
 @description('Password for JBoss EAP Manager')
 @secure()
 param jbossEAPPassword string
-
-@description('User name for Red Hat subscription Manager')
-param rhsmUserName string = newGuid()
-
-@description('Password for Red Hat subscription Manager')
-@secure()
-param rhsmPassword string = newGuid()
-
-@description('Red Hat Subscription Manager Pool ID (Should have EAP entitlement)')
-@minLength(32)
-@maxLength(32)
-param rhsmPoolEAP string = take(newGuid(), 32)
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated')
 param artifactsLocation string = deployment().properties.templateLink.uri
@@ -167,7 +155,7 @@ var obj_uamiForDeploymentScript = {
 var plan = {
   publisher: 'redhat'
   product: 'rh-jboss-eap'
-  name: 'rh-jboss-eap74-rhel8'
+  name: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
 }
 
 /*
@@ -283,7 +271,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
   ]
 }
 
-module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = if (jdkVersion == 'openjdk8') {
+module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' =  {
   name: name_vmAcceptTerms
   params: {
     name: name_vmAcceptTerms
@@ -314,8 +302,8 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
     storageProfile: {
       imageReference: {
         publisher: 'RedHat'
-        offer: ((jdkVersion == 'openjdk8') ? 'rh-jboss-eap' : 'RHEL')
-        sku: ((jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-rhel8' : '8_6')
+        offer: 'rh-jboss-eap'
+        sku: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
         version: 'latest'
       }
       osDisk: {
@@ -333,7 +321,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
     }
     diagnosticsProfile: ((bootDiagnostics == 'on') ? json('{"bootDiagnostics": {"enabled": true,"storageUri": "${reference(resourceId(storageAccountResourceGroupName, 'Microsoft.Storage/storageAccounts/', bootStorageName_var), '2021-06-01').primaryEndpoints.blob}"}}') : json('{"bootDiagnostics": {"enabled": false}}'))
   }
-  plan: ((jdkVersion=='openjdk8') ?plan:null)
+  plan: plan
   dependsOn: [
     bootStorageName
     networkSecurityGroupName
@@ -385,7 +373,7 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
       ]
     }
     protectedSettings: {
-      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\''
+      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\''
     }
   }
 }

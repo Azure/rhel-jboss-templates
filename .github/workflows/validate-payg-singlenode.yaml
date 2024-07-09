@@ -33,9 +33,6 @@ env:
     singleStorageAccountName: ${{ github.run_id }}${{ github.run_number }}singlesa
     jbossEAPUserName: jbossadmin
     jbossEAPPassword: ${{ secrets.JBOSS_EAP_USER_PASSWORD }}
-    rhsmUserName: ${{ secrets.RHSM_USERNAME }}
-    rhsmPassword: ${{ secrets.RHSM_PASSWORD }}
-    rhsmPoolEAP: ${{ secrets.RHSM_POOL }}
     gitUserName: ${{ secrets.USER_NAME }}
     singleTestBranchName: single-cicd-${{ github.run_id }}-${{ github.run_number }}
     gitEmail: ${{ secrets.USER_EMAIL }}
@@ -96,7 +93,7 @@ jobs:
               id: accept-terms
               run: |
                   echo "accept terms for VM image"
-                  az vm image terms accept --urn redhat:rh-jboss-eap:rh-jboss-eap74-rhel8:latest
+                  az vm image terms accept --urn redhat:rh-jboss-eap:rh-jboss-eap74-jdk17-rhel8:latest
             - name: Deploy an instance of Azure SQL Database
               if: ${{ inputs.databaseType == 'mssqlserver' || github.event.client_payload.databaseType == 'mssqlserver' }}
               run: |
@@ -225,9 +222,6 @@ jobs:
                 ${singleResourceGroup} \
                 ${jbossEAPUserName} \
                 ${jbossEAPPassword} \
-                ${rhsmUserName} \
-                ${rhsmPassword} \
-                ${rhsmPoolEAP} \
                 ${enableDB} \
                 ${databaseType} \
                 java:jboss/datasources/JavaEECafeDB \
