@@ -550,5 +550,10 @@ module paygVmssEndPid './modules/_pids/_pid.bicep' = {
   ]
 }
 
+module baseImageSelected './modules/_pids/_empty.bicep' = {
+  name: (jdkVersion == 'openjdk8') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk8-rhel8}' : (jdkVersion == 'openjdk11') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk11-rhel8}' : (jdkVersion == 'openjdk17') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk17-rhel8}' :  'eap74-rhel8-payg.null'
+  params: {}
+}
+
 output appHttpURL string = enableAppGWIngress ? uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication/') : ''
 output appHttpsURL string = enableAppGWIngress ? uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication/') : ''
