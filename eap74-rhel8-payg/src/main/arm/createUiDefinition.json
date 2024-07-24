@@ -20,8 +20,22 @@
                     "Standard_F4S_v2",
                     "Standard_F8S_v2" 
                 ],
+                "constraints": {
+                    "excludedSizes": [
+                        ${azure.armBased.vmSize.list}
+                    ]
+                },
                 "osPlatform": "Linux",
                 "count": "1"
+            },
+            {
+                "name": "invalidVMSizeInfo",
+                "type": "Microsoft.Common.InfoBox",
+                "visible": "[contains(steps('ClusterConfig').vmSizeSelect,'p')]",
+                "options": {
+                    "icon": "Error",
+                    "text": "The VM size you selected includes the feature letter 'p', indicating it uses ARM CPUs. ARM platform is not supported. Please select a different VM size. For more information, refer to the <a href='https://learn.microsoft.com/azure/virtual-machines/vm-naming-conventions' target='_blank'>Azure virtual machine sizes naming conventions</a>."
+                }
             },
             {
                 "name": "jdkVersion",
