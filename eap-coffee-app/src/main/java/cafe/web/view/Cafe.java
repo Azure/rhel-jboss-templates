@@ -13,7 +13,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotEmpty;
+import javax.servlet.http.HttpSession;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -34,7 +34,6 @@ public class Cafe implements Serializable {
 	private transient Client client;
 
 	@NotNull
-	@NotEmpty
 	protected String name;
 	@NotNull
 	protected Double price;
@@ -97,4 +96,12 @@ public class Cafe implements Serializable {
 		this.client.target(baseUri).path(coffeeId).request().delete();
 		FacesContext.getCurrentInstance().getExternalContext().redirect("");
 	}
+
+	public String getSessionId() {
+		HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext()
+				.getRequest();
+
+		return (String) request.getSession().getId();
+     }
+
 }
