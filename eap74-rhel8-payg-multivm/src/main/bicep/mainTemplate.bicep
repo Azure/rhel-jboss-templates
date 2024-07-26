@@ -503,6 +503,11 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.
   }
 }
 
+module baseImageSelected './modules/_pids/_empty.bicep' = {
+  name: (jdkVersion == 'openjdk8') ? '${azure.guid.eap74-rhel8-payg-multivm.rh-jboss-eap74-jdk8-rhel8}' : (jdkVersion == 'openjdk11') ? '${azure.guid.eap74-rhel8-payg-multivm.rh-jboss-eap74-jdk11-rhel8}' : (jdkVersion == 'openjdk17') ? '${azure.guid.eap74-rhel8-payg-multivm.rh-jboss-eap74-jdk17-rhel8}' :  'eap74-rhel8-payg.null'
+  params: {}
+}
+
 resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPublicIPAddresses}' = [for i in range(0, numberOfInstances): if (enableAppGWIngress) {
   name: (operatingMode == name_managedDomain) ? ((i == 0) ? '${vmName_var}${name_adminVmName}${name_publicIPAddress}' : '${vmName_var}${i}${name_publicIPAddress}') :'${vmName_var}${i}${name_publicIPAddress}'
   sku: {

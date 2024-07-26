@@ -329,6 +329,11 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
   ]
 }
 
+module baseImageSelected './modules/_pids/_empty.bicep' = {
+  name: (jdkVersion == 'openjdk8') ? '${azure.guid.eap74-rhel8-payg.rh-jboss-eap74-jdk8-rhel8}' : (jdkVersion == 'openjdk11') ? '${azure.guid.eap74-rhel8-payg.rh-jboss-eap74-jdk11-rhel8}' : (jdkVersion == 'openjdk17') ? '${azure.guid.eap74-rhel8-payg.rh-jboss-eap74-jdk17-rhel8}' :  'eap74-rhel8-payg.null'
+  params: {}
+}
+
 resource vmPublicIP 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPublicIPAddresses}' = {
   name: vmPublicIPAddressName
   sku: {
