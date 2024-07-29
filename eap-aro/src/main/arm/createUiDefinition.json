@@ -104,6 +104,49 @@
                         "type": "Microsoft.Common.Section",
                         "label": "Provide information to create a new cluster",
                         "elements": [
+                          {
+                            "name": "aroVmSizeInfo",
+                            "type": "Microsoft.Common.InfoBox",
+                            "options": {
+                              "icon": "Info",
+                              "text": "Azure Red Hat OpenShift requires a minimum of 40 cores to create and run an OpenShift cluster. The default VM sizes satisfy the requirement. For more information on customizing the VM size, consult the <a href='https://azure.microsoft.com/pricing/details/openshift/' target='_blank'>Azure Red Hat OpenShift pricing</a>."
+                            }
+                          },
+                          {
+                            "name": "masterVmSizeSelect",
+                            "type": "Microsoft.Compute.SizeSelector",
+                            "label": "Master VM size",
+                            "toolTip": "The size of the virtual machines for the master nodes in the cluster.",
+                            "recommendedSizes": [
+                              "Standard_D8s_v3"
+                            ],
+                            "osPlatform": "Linux",
+                            "count": 3
+                          },
+                          {
+                            "name": "workerVmSizeSelect",
+                            "type": "Microsoft.Compute.SizeSelector",
+                            "label": "Worker VM size",
+                            "toolTip": "The size of the virtual machines for the worker nodes in the cluster.",
+                            "recommendedSizes": [
+                              "Standard_D4s_v3"
+                            ],
+                            "osPlatform": "Linux",
+                            "count": "[int(steps('Cluster').createClusterInfo.workerCount)]"
+                          },
+                          {
+                            "name": "workerCount",
+                            "type": "Microsoft.Common.Slider",
+                            "min": 3,
+                            "max": 60,
+                            "label": "Worker node count",
+                            "defaultValue": 3,
+                            "showStepMarkers": false,
+                            "toolTip": "Set the worker node count for the cluster.",
+                            "constraints": {
+                              "required": true
+                            }
+                          },
                             {
                                 "name": "pullSecret",
                                 "type": "Microsoft.Common.PasswordBox",
@@ -465,6 +508,9 @@
         "outputs": {
             "location": "[location()]",
             "createCluster": "[bool(steps('Cluster').createCluster)]",
+            "vmSize": "[steps('Cluster').createClusterInfo.masterVmSizeSelect]",
+            "workerVmSize": "[steps('Cluster').createClusterInfo.workerVmSizeSelect]",
+            "workerCount": "[int(steps('Cluster').createClusterInfo.minWorkerCount)]",
             "pullSecret": "[steps('Cluster').createClusterInfo.pullSecret]",
             "aadClientId": "[steps('Cluster').createClusterInfo.aadClientId]",
             "aadClientSecret": "[steps('Cluster').createClusterInfo.aadClientSecret]",

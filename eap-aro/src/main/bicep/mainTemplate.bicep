@@ -28,10 +28,10 @@ param workerSubnetCidr string = '10.100.70.0/23'
 param masterSubnetCidr string = '10.100.76.0/24'
 
 @description('Master Node VM Type')
-param vmSize string = 'Standard_D8s_v3'
+param vmSize string = ''
 
 @description('Worker Node VM Type')
-param workerVmSize string = 'Standard_D4s_v3'
+param workerVmSize string = ''
 
 @description('Worker Node Disk Size in GB')
 @minValue(128)
@@ -39,8 +39,6 @@ param workerVmSize string = 'Standard_D4s_v3'
 param workerVmDiskSize int = 128
 
 @description('Number of Worker Nodes')
-@minValue(3)
-@maxValue(5)
 param workerCount int = 3
 
 @description('Cidr for Pods')
