@@ -50,7 +50,7 @@ var const_setupJBossScript = 'jboss-setup.sh'
 var const_eapOperatorSubscriptionYaml = 'eap-operator-sub.yaml'
 var const_rhContainerRegistryPullSecretYaml = 'red-hat-container-registry-pull-secret.yaml.template'
 var const_appDeploymentYaml = 'app-deployment.yaml.template'
-var const_azcliVersion = '2.15.0'
+var const_azcliVersion = '2.53.0'
 
 resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
   name: 'jboss-setup'
