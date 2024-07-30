@@ -305,6 +305,18 @@ module deployApplicationStartPid './modules/_pids/_pid.bicep' = if (deployApplic
   ]
 }
 
+module jbossPreflightDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' = {
+  name: 'jboss-preflight'
+  params: {
+    artifactsLocation: artifactsLocation
+    artifactsLocationSasToken: artifactsLocationSasToken
+    location: location
+    createCluster: createCluster
+    createCluster: createCluster
+    aadClientId: aadClientId
+  }
+}
+
 module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
   name: 'jboss-setup'
   params: {
