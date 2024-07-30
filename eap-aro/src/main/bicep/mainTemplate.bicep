@@ -305,22 +305,6 @@ module deployApplicationStartPid './modules/_pids/_pid.bicep' = if (deployApplic
   ]
 }
 
-module jbossSleepDeployment 'modules/_deployment-scripts/_ds-sleep.bicep' = {
-  name: 'jboss-sleep'
-  params: {
-    artifactsLocation: artifactsLocation
-    artifactsLocationSasToken: artifactsLocationSasToken
-    location: location
-    identity: {
-      type: 'UserAssigned'
-      userAssignedIdentities: {
-        '${resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', const_identityName)}': {}
-      }
-    }
-    createCluster: createCluster
-  }
-}
-
 module jbossPreflightDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' = {
   name: 'jboss-preflight'
   params: {
@@ -335,11 +319,7 @@ module jbossPreflightDeployment 'modules/_deployment-scripts/_ds-preflight.bicep
     }
     createCluster: createCluster
     aadClientId: aadClientId
-    aadObjectId: aadObjectId
   }
-  dependsOn: [
-      jbossSleepDeployment
-    ]
 }
 
 module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
