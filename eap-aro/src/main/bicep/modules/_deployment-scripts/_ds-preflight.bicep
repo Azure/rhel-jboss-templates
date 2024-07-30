@@ -30,16 +30,16 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
     azCliVersion: const_azcliVersion
     environmentVariables: [
       {
-          "name": 'CREATE_CLUSTER',
-          "value": createCluster
+          name: 'CREATE_CLUSTER',
+          value: createCluster
       }
       {
-          "name": 'AAD_CLIENT_ID',
-          "value": aadClientId
+          name: 'AAD_CLIENT_ID',
+          value: aadClientId
       }
       {
-          "name": 'AAD_OBJECT_ID',
-          "value": aadObjectId
+          name: 'AAD_OBJECT_ID',
+          value: aadObjectId
       }
     ]
     primaryScriptUri: uri(const_scriptLocation, '${const_preflightScript}${artifactsLocationSasToken}')
