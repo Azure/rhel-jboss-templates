@@ -30,15 +30,15 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
     azCliVersion: const_azcliVersion
     environmentVariables: [
       {
-          name: 'CREATE_CLUSTER',
+          name: 'CREATE_CLUSTER'
           value: createCluster
       }
       {
-          name: 'AAD_CLIENT_ID',
+          name: 'AAD_CLIENT_ID'
           value: aadClientId
       }
       {
-          name: 'AAD_OBJECT_ID',
+          name: 'AAD_OBJECT_ID'
           value: aadObjectId
       }
     ]
