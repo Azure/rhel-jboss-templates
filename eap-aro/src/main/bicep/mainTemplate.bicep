@@ -311,7 +311,12 @@ module jbossPreflightDeployment 'modules/_deployment-scripts/_ds-preflight.bicep
     artifactsLocation: artifactsLocation
     artifactsLocationSasToken: artifactsLocationSasToken
     location: location
-    createCluster: createCluster
+    identity: {
+      type: 'UserAssigned'
+      userAssignedIdentities: {
+        '${resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', const_identityName)}': {}
+      }
+    }
     createCluster: createCluster
     aadClientId: aadClientId
   }

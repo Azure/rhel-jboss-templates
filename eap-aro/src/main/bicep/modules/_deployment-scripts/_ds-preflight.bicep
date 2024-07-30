@@ -17,6 +17,9 @@ param aadClientId string = ''
 @description('The service principal Object ID of an Microsoft Entra ID client application')
 param aadObjectId string = ''
 
+@description('An user assigned managed identity. Make sure the identity has permission to create/update/delete/list Azure resources.')
+param identity object = {}
+
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_preflightScript = 'preflight.sh'
 var const_azcliVersion = '2.53.0'
