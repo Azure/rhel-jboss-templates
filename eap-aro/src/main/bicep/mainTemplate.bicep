@@ -320,6 +320,7 @@ module jbossPreflightDeployment 'modules/_deployment-scripts/_ds-preflight.bicep
     }
     createCluster: createCluster
     aadClientId: aadClientId
+    aadObjectId: aadObjectId
   }
 }
 
