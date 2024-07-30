@@ -90,7 +90,10 @@ jobs:
           ${aadClientId} \
           ${aadClientSecret} \
           ${aadObjectId} \
-          ${rpObjectId} 
+          ${rpObjectId} \
+          "Standard_D8s_v3" \
+          "Standard_D4s_v3" \
+          3
           "
           echo $params |bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh 
 
