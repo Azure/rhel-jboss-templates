@@ -2,14 +2,28 @@
 
 set -Euo pipefail
 
-if [[ "${CREATE_CLUSTER,,}" == "true" ]]; then
-  # Fail fast the deployment if object Id of the service principal is empty
+# Wait 60s for service principal available after creation
+# See https://github.com/WASdev/azure.liberty.aro/issues/59 & https://github.com/WASdev/azure.liberty.aro/issues/79
+sleep 60
+
+MAX_RETRIES=10
+RETRY_COUNT=0
+
+while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
   if [[ -z "$AAD_OBJECT_ID" ]]; then
-    echo "The object Id of the service principal you just created is not successfully retrieved, please retry another deployment using its client id ${AAD_CLIENT_ID}." >&2
-    exit 1
+    sleep 10
+    AAD_OBJECT_ID=$(az ad sp show --id ${AAD_CLIENT_ID} --query id -o tsv)
   fi
 
-  # Wait 60s for service principal available after creation
-  # See https://github.com/WASdev/azure.liberty.aro/issues/59 & https://github.com/WASdev/azure.liberty.aro/issues/79
-  sleep 60
-fi
+  if [[ -n "$AAD_OBJECT_ID" ]]; then
+    echo "Successfully retrieved AAD_OBJECT_ID: $AAD_OBJECT_ID"
+    exit 0
+  fi
+
+  ((RETRY_COUNT++))
+done
+
+result=$(jq -n -c \
+    --arg AAD_OBJECT_ID "$AAD_OBJECT_ID" \
+    '{AAD_OBJECT_ID: $AAD_OBJECT_ID}')
+echo $result > $AZ_SCRIPTS_OUTPUT_PATH

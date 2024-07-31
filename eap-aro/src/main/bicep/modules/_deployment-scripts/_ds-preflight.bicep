@@ -50,3 +50,5 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
     retentionInterval: 'P1D'
   }
 }
+
+output AAD_OBJECT_ID string = json(deploymentScript.properties.outputs.AAD_OBJECT_ID)
