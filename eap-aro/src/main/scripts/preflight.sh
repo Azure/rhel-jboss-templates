@@ -17,7 +17,7 @@ while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
 
   if [[ -n "$AAD_OBJECT_ID" ]]; then
     echo "Successfully retrieved AAD_OBJECT_ID: $AAD_OBJECT_ID"
-    exit 0
+    break
   fi
 
   ((RETRY_COUNT++))
