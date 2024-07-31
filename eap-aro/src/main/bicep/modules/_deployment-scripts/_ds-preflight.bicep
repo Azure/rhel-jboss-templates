@@ -24,7 +24,7 @@ var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_preflightScript = 'preflight.sh'
 var const_azcliVersion = '2.53.0'
 
-resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
   name: 'jboss-preflight'
   location: location
   kind: 'AzureCLI'
