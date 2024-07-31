@@ -26,6 +26,6 @@ done
 result=$(jq -n -c \
     --arg AAD_OBJECT_ID "$AAD_OBJECT_ID" \
     '{AAD_OBJECT_ID: $AAD_OBJECT_ID}')
-echo_stdout "Result JSON: $result"
+echo "Result JSON: $result"
 echo $result > $AZ_SCRIPTS_OUTPUT_PATH
 
