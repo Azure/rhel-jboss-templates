@@ -323,6 +323,9 @@ module jbossPreflightDeployment 'modules/_deployment-scripts/_ds-preflight.bicep
     aadClientId: aadClientId
     aadObjectId: aadObjectId
   }
+  dependsOn: [
+      deploymentScriptUAMICotibutorRoleAssignment
+    ]
 }
 
 module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
