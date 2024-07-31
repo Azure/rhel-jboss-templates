@@ -365,6 +365,15 @@
                                 }
                             },
                             {
+                                "name": "invalidObjectId",
+                                "type": "Microsoft.Common.InfoBox",
+                                "visible": "[empty(steps('UserSPGraphRequest').value)]",
+                                "options": {
+                                    "icon": "Error",
+                                    "text": "Please wait."
+                                }
+                            },
+                            {
                                 "name": "RPObjectIDGraphRequest",
                                 "type": "Microsoft.Solutions.GraphApiControl",
                                 "toolTip": "Obtain the objectId of the Azure Red Hat OpenShift RP service principal",
@@ -667,7 +676,7 @@
             "createCluster": "[bool(steps('Cluster').createCluster)]",
             "vmSize": "[steps('Cluster').createClusterInfo.masterVmSizeSelect]",
             "workerVmSize": "[steps('Cluster').createClusterInfo.workerVmSizeSelect]",
-            "workerCount": "[int(steps('Cluster').createClusterInfo.minWorkerCount)]",
+            "workerCount": "[int(steps('Cluster').createClusterInfo.workerCount)]",
             "pullSecret": "[steps('Cluster').createClusterInfo.pullSecret]",
             "aadClientId": "[steps('Cluster').createClusterInfo.aadClientId]",
             "aadClientSecret": "[steps('Cluster').createClusterInfo.aadClientSecret]",
