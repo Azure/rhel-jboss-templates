@@ -220,7 +220,7 @@ resource assignRoleAppSp 'Microsoft.Authorization/roleAssignments@${azure.apiVer
   name: guid(resourceGroup().id, deployment().name, vnetRef.id, 'assignRoleAppSp')
   scope: vnetRef
   properties: {
-    principalId: jbossPreflightDeployment.outputs.aksAgentAvailabilityZones
+    principalId: jbossPreflightDeployment.outputs.AAD_OBJECT_ID
     roleDefinitionId: roleResourceDefinition.id
   }
   dependsOn: [
