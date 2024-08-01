@@ -333,8 +333,16 @@
                                 "toolTip": "The client ID of an existing service principal",
                                 "constraints": {
                                     "required": true,
-                                    "regex": "^[0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12}$",
-                                    "validationMessage": "The application (client) ID must be a valid global unique identifier (GUID). Example: 00000000-0000-0000-0000-000000000000"
+                                    "validations": [
+                                        {
+                                            "regex": "^[0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12}$",
+                                            "validationMessage": "The application (client) ID must be a valid global unique identifier (GUID). Example: 00000000-0000-0000-0000-000000000000"
+                                        },
+                                        {
+                                            "isValid":  "[not(equals(length(steps('Cluster').createClusterInfo.UserSPGraphRequest.value), 0))]",
+                                            "message": "Please wait for a while if you have just created the service principal, then try again. Alternatively, check if the service principal client ID is valid."
+                                        }
+                                    ]
                                 }
                             },
                             {
@@ -362,15 +370,6 @@
                                     "transforms": {
                                         "objectID": "value|[*].id"
                                     }
-                                }
-                            },
-                            {
-                                "name": "invalidObjectId",
-                                "type": "Microsoft.Common.InfoBox",
-                                "visible": "[equals(length(steps('Cluster').createClusterInfo.UserSPGraphRequest.transformed.objectID), 0)]",
-                                "options": {
-                                    "icon": "Error",
-                                    "text": "Please wait 60~90 seconds and try it again."
                                 }
                             },
                             {
