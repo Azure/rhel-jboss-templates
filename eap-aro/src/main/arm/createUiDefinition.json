@@ -340,7 +340,7 @@
                                         },
                                         {
                                             "isValid":  "[not(equals(length(steps('Cluster').createClusterInfo.UserSPGraphRequest.value), 0))]",
-                                            "message": "Please wait for a while if you have just created the service principal, then try again. Alternatively, check if the service principal client ID is valid."
+                                            "message": "Please wait for a while if you have just created the service principal, then try again. Alternatively, check if the service principal client id is a valid one in current tenant."
                                         }
                                     ]
                                 }
