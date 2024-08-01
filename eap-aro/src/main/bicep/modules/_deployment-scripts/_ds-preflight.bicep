@@ -51,4 +51,3 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
   }
 }
 
-output AAD_OBJECT_ID string = deploymentScript.properties.outputs.AAD_OBJECT_ID
