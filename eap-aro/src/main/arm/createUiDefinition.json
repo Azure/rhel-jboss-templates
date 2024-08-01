@@ -339,7 +339,7 @@
                                             "message": "The application (client) ID must be a valid global unique identifier (GUID). Example: 00000000-0000-0000-0000-000000000000"
                                         },
                                         {
-                                            "isValid":  "[not(equals(length(steps('Cluster').createClusterInfo.UserSPGraphRequest.value), 0))]",
+                                            "isValid":  "[not(empty(steps('Cluster').createClusterInfo.UserSPGraphRequest.transformed.objectID))]",
                                             "message": "Please wait for a while if you have just created the service principal, then input the client ID again. Alternatively, check if the service principal client id is a valid one in current tenant."
                                         }
                                     ]
