@@ -367,7 +367,7 @@
                             {
                                 "name": "invalidObjectId",
                                 "type": "Microsoft.Common.InfoBox",
-                                "visible": "[empty([first(steps('Cluster').createClusterInfo.UserSPGraphRequest.transformed.objectID)])]",
+                                "visible": "[equals(length(steps('Cluster').createClusterInfo.UserSPGraphRequest.transformed.objectID), 0)]",
                                 "options": {
                                     "icon": "Error",
                                     "text": "Please wait 60~90 seconds and try it again."
