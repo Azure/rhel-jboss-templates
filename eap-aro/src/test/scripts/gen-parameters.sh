@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 #read arguments from stdin
-read parametersPath gitUserName testbranchName location pullSecret aadClientId aadClientSecret aadObjectId rpObjectId
+read parametersPath gitUserName testbranchName location pullSecret aadClientId aadClientSecret aadObjectId rpObjectId vmSize workerVmSize workerCount
 pullSecret=${pullSecret//\"/\\\"}
 
 cat <<EOF > ${parametersPath}
@@ -36,6 +36,15 @@ cat <<EOF > ${parametersPath}
         },
         "deployApplication": {
             "value": false
+        },
+        "vmSize": {
+            "value": "${vmSize}"
+        },
+        "workerVmSize": {
+            "value": "${workerVmSize}"
+        },
+        "workerCount": {
+            "value": ${workerCount}
         }
     }
 }
