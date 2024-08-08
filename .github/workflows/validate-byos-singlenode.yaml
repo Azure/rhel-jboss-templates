@@ -14,11 +14,16 @@ on:
         - mysql
         - postgresql
         - none
-      deleteAzureResources:
-        description: 'Delete Azure resources at the end'
+      timeWaitBeforeDelete:
+        description: 'Choose the wait time before deleting resources: 30m (30 minutes), 2h (2 hours), 6h (6 hours), 0 (immediately)'
         required: true
-        type: boolean
-        default: true
+        type: choice
+        default: 0
+        options:
+          - 30m
+          - 2h
+          - 6h
+          - 0
 
 env:
     azCliVersion: 2.30.0
@@ -287,13 +292,6 @@ jobs:
                   echo "console is accessible"
                 fi
                 exit 0
-            - name: Unregister VM
-              if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) }}
-              uses: azure/CLI@v1
-              with:
-                azcliversion: ${{ env.azCliVersion }}
-                inlineScript: |
-                  az vm run-command invoke -g ${singleResourceGroup} -n ${vmName} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
 
     resources-cleanup:
       needs:
@@ -310,8 +308,19 @@ jobs:
           uses: actions/checkout@v4
           with:
             path: rhel-jboss-templates
+        - name: Pause ${{ github.event.inputs.timeWaitBeforeDelete }} before deleting resources
+          run: |
+            echo "Sleeping for ${{ github.event.inputs.timeWaitBeforeDelete }}"
+            sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
+        - name: Unregister VM
+          if: ${{ github.event_name == 'workflow_dispatch' }}
+          uses: azure/CLI@v1
+          with:
+            azcliversion: ${{ env.azCliVersion }}
+            inlineScript: |
+              az vm run-command invoke -g ${singleResourceGroup} -n ${vmName} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
         - name: Delete Resource Group
-          if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) }}
+          if: ${{ github.event_name == 'workflow_dispatch' }}
           id: delete-resource-group
           run: |
             echo "delete... " $singleResourceGroup

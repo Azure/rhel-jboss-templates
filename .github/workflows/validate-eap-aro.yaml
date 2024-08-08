@@ -163,7 +163,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: rhel-jboss-templates
-      - name: Time to pause before deleting resources
+      - name: Pause ${{ github.event.inputs.timeWaitBeforeDelete }} before deleting resources
         run: |
           echo "Sleeping for ${{ github.event.inputs.timeWaitBeforeDelete }}"
           sleep ${{ github.event.inputs.timeWaitBeforeDelete }}

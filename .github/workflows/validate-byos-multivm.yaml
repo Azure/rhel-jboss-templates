@@ -14,10 +14,16 @@ on:
         - mysql
         - postgresql
         - none
-      isForDemo:
-        description: 'If set to true, resources will not be deleted'
+      timeWaitBeforeDelete:
+        description: 'Choose the wait time before deleting resources: 30m (30 minutes), 2h (2 hours), 6h (6 hours), 0 (immediately)'
         required: true
-        default: 'false'
+        type: choice
+        default: 0
+        options:
+          - 30m
+          - 2h
+          - 6h
+          - 0
 
 env:
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
@@ -52,7 +58,6 @@ env:
 jobs:
     preflight:
         outputs:
-          isForDemo: ${{ steps.setup-env-variables-based-on-dispatch-event.outputs.isForDemo }}
           artifactName: ${{steps.build.outputs.artifactName}}
         runs-on: ubuntu-latest
         steps:
@@ -65,11 +70,6 @@ jobs:
                 offerName: ${{ env.offerName }}
                 token: ${{ secrets.GITHUB_TOKEN }}
                 workflowType: "validate"
-            - name: Setup environment variables
-              id: setup-env-variables-based-on-dispatch-event
-              run: |
-                isForDemo=${{ github.event.inputs.isForDemo }}
-                echo "isForDemo=${isForDemo}" >> "$GITHUB_OUTPUT"
 
     deploy-dependent-resources:
         needs: preflight
@@ -396,18 +396,7 @@ jobs:
                   echo "Cafe is accessible"
                 fi
                 exit 0
-            - name: Unregister before deleting resources
-              if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
-              uses: azure/CLI@v1
-              with:
-                azcliversion: ${{ env.azCliVersion }}
-                inlineScript: |
-                  echo "Unregister admin VM"
-                  az vm run-command invoke -g ${domainResourceGroup} -n ${vmName}-adminVM --command-id RunShellScript --scripts "sudo subscription-manager unregister"
-                  for ((i = 1; i < numberOfInstances; i++)); do
-                    echo "Unregister ${vmName}${i}"
-                    az vm run-command invoke -g ${domainResourceGroup} -n ${vmName}${i} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
-                  done
+            
 
     deploy-multivm-standalone:
         needs: 
@@ -569,16 +558,6 @@ jobs:
                   echo "eap-session-replication is accessible"
                 fi
                 exit 0
-            - name: Unregister before deleting resources
-              if: ${{ needs.preflight.outputs.isForDemo == 'false' }}
-              uses: azure/CLI@v1
-              with:
-                azcliversion: ${{ env.azCliVersion }}
-                inlineScript: |
-                  for ((i = 0; i < numberOfInstances; i++)); do
-                    echo "Unregister ${vmName}${i}"
-                    az vm run-command invoke -g ${standaloneResourceGroup} -n ${vmName}${i} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
-                  done
 
     resources-cleanup:
       needs:
@@ -597,18 +576,44 @@ jobs:
           uses: actions/checkout@v4
           with:
             path: rhel-jboss-templates
+        - name: Pause ${{ github.event.inputs.timeWaitBeforeDelete }} before deleting resources
+          run: |
+            echo "Sleeping for ${{ github.event.inputs.timeWaitBeforeDelete }}"
+            sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
+        - name: Unregister before deleting resources
+          if: ${{ github.event_name == 'workflow_dispatch' }}
+          uses: azure/CLI@v1
+          with:
+            azcliversion: ${{ env.azCliVersion }}
+            inlineScript: |
+              echo "Unregister admin VM"
+              az vm run-command invoke -g ${domainResourceGroup} -n ${vmName}-adminVM --command-id RunShellScript --scripts "sudo subscription-manager unregister"
+              for ((i = 1; i < numberOfInstances; i++)); do
+                echo "Unregister ${vmName}${i}"
+                az vm run-command invoke -g ${domainResourceGroup} -n ${vmName}${i} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
+              done
+        - name: Unregister before deleting resources
+          if: ${{ github.event_name == 'workflow_dispatch' }}
+          uses: azure/CLI@v1
+          with:
+            azcliversion: ${{ env.azCliVersion }}
+            inlineScript: |
+              for ((i = 0; i < numberOfInstances; i++)); do
+                echo "Unregister ${vmName}${i}"
+                az vm run-command invoke -g ${standaloneResourceGroup} -n ${vmName}${i} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
+              done
         - name: Delete Dependent Resource Group
-          if: always()
+          if: ${{ github.event_name == 'workflow_dispatch' }}
           run: |
             az group delete --yes --no-wait --name ${{ env.dependencyResourceGroup }}
         - name: Delete Standalone Resource Group
-          if: always()
+          if: ${{ github.event_name == 'workflow_dispatch' }}
           id: delete-standalone-resource-group
           run: |
             echo "delete... " $standaloneResourceGroup
             az group delete --yes --no-wait --verbose --name $standaloneResourceGroup
         - name: Delete Domain Resource Group
-          if: always()
+          if: ${{ github.event_name == 'workflow_dispatch' }}
           id: delete-domain-resource-group
           run: |
             echo "delete... " $domainResourceGroup
