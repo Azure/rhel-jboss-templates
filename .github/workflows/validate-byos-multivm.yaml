@@ -593,9 +593,9 @@ jobs:
               done
         - name: Unregister before deleting resources
           if: ${{ github.event_name == 'workflow_dispatch' }}
+          continue-on-error: true
           uses: azure/CLI@v1
           with:
-            azcliversion: ${{ env.azCliVersion }}
             inlineScript: |
               for ((i = 0; i < numberOfInstances; i++)); do
                 echo "Unregister ${vmName}${i}"

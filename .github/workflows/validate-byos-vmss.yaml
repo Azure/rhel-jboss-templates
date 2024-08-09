@@ -323,9 +323,9 @@ jobs:
             sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
         - name: Unregister before deleting resources
           if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) }}
+          continue-on-error: true
           uses: azure/CLI@v1
           with:
-            azcliversion: ${{ env.azCliVersion }}
             inlineScript: |
               for ((i = 0; i < numberOfInstances; i++)); do
                 echo "Unregister VMSS instance ${i}"

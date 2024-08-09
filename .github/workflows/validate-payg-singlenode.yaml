@@ -315,9 +315,9 @@ jobs:
             sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
         - name: Unregister VM
           if: ${{ github.event_name == 'workflow_dispatch'}}
+          continue-on-error: true
           uses: azure/CLI@v1
           with:
-            azcliversion: ${{ env.azCliVersion }}
             inlineScript: |
               az vm run-command invoke -g ${singleResourceGroup} -n ${vmName} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
         - name: Delete Resource Group

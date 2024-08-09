@@ -320,6 +320,7 @@ jobs:
             sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
         - name: Unregister VMSS instances before deleting resources
           if: ${{ github.event_name == 'workflow_dispatch' }}
+          continue-on-error: true
           uses: azure/CLI@v1
           with:
             inlineScript: |
