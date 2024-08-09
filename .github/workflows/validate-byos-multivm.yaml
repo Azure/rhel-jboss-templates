@@ -584,7 +584,6 @@ jobs:
           if: ${{ github.event_name == 'workflow_dispatch' }}
           uses: azure/CLI@v1
           with:
-            azcliversion: ${{ env.azCliVersion }}
             inlineScript: |
               echo "Unregister admin VM"
               az vm run-command invoke -g ${domainResourceGroup} -n ${vmName}-adminVM --command-id RunShellScript --scripts "sudo subscription-manager unregister"

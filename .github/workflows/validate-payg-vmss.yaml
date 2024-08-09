@@ -322,7 +322,6 @@ jobs:
           if: ${{ github.event_name == 'workflow_dispatch' }}
           uses: azure/CLI@v1
           with:
-            azcliversion: ${{ env.azCliVersion }}
             inlineScript: |
               for ((i = 0; i < numberOfInstances; i++)); do
                 echo "Unregister VMSS instance ${i}"
