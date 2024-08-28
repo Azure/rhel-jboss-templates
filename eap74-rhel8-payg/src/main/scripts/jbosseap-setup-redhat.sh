@@ -12,6 +12,9 @@ if ! rpm -qa | grep firewalld 2>&1 > /dev/null ; then
     sudo systemctl enable firewalld
 fi
 
+## Update JBoss EAP to use latest patch.
+sudo yum update -y | log; flag=${PIPESTATUS[0]}
+
 openport() {
     port=$1
 
@@ -72,7 +75,7 @@ sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}
 if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
     echo "sudo alternatives --set java java-17-openjdk.x86_64" | log; flag=${PIPESTATUS[0]}
     sudo alternatives --set java java-17-openjdk.x86_64| log; flag=${PIPESTATUS[0]}
-elif [[ "${JDK_VERSION,,}" == "openjdk11" ]]; then
+elif t[[ "${JDK_VERSION,,}" == "openjdk11" ]]; then
     echo "sudo alternatives --set java java-11-openjdk.x86_64" | log; flag=${PIPESTATUS[0]}
     sudo alternatives --set java java-11-openjdk.x86_64 | log; flag=${PIPESTATUS[0]}
 elif [[ "${JDK_VERSION,,}" == "openjdk8" ]]; then
