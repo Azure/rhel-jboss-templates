@@ -701,8 +701,8 @@ output appGatewayEnabled bool = enableAppGWIngress
 output appHttpURL string = enableAppGWIngress ? (operatingMode == name_managedDomain ? format('http://{0}/', appgwDeployment.outputs.appGatewayURL) : uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication')) : ''
 output appHttpsURL string = enableAppGWIngress ? (operatingMode == name_managedDomain ? format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL) : uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication')) : ''
 
-output adminConsole string = operatingMode == name_managedDomain 
-  ? uri(format('http://{0}:9990', reference(resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${name_adminVmName}${name_publicIPAddress}')).dnsSettings.fqdn), '')
-  : string(array(range(0, numberOfInstances)).map(i => uri(format('http://{0}:9990', reference(resourceId('Microsoft.Network/networkInterfaces', '${nicName_var}${i}')).ipConfigurations[0].properties.privateIPAddress), '')))
+output adminConsole array = operatingMode == name_managedDomain 
+  ? [uri(format('http://{0}:9990', reference(resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${name_adminVmName}${name_publicIPAddress}')).dnsSettings.fqdn), '')]
+  : array(range(0, numberOfInstances)).map(i => uri(format('http://{0}:9990', reference(resourceId('Microsoft.Network/networkInterfaces', '${nicName_var}${i}')).ipConfigurations[0].properties.privateIPAddress), ''))
 
 output adminUsername string = jbossEAPUserName
