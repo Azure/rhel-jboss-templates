@@ -557,3 +557,7 @@ module baseImageSelected './modules/_pids/_empty.bicep' = {
 
 output appHttpURL string = enableAppGWIngress ? uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication/') : ''
 output appHttpsURL string = enableAppGWIngress ? uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication/') : ''
+
+output adminConsoles array = [for i in range(0, instanceCount): {
+  adminConsole: 'http://${vmssInstanceName_var}-${i}.${location}.cloudapp.azure.com:9990'
+}]
