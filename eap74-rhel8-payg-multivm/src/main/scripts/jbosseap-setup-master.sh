@@ -6,6 +6,17 @@ log() {
     done
 }
 
+## Update JBoss EAP to use latest patch.
+sudo yum update -y | log; flag=${PIPESTATUS[0]}
+
+# firewalld installation and configuration
+if ! rpm -qa | grep firewalld 2>&1 > /dev/null ; then
+    sudo yum update -y --disablerepo='*' --enablerepo='*microsoft*' | log; flag=${PIPESTATUS[0]}
+    sudo yum install firewalld -y | log; flag=${PIPESTATUS[0]}
+    sudo systemctl start firewalld
+    sudo systemctl enable firewalld
+fi
+
 openport() {
     port=$1
 
