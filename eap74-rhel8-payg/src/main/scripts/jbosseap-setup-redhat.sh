@@ -75,7 +75,7 @@ sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}
 if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
     echo "sudo alternatives --set java java-17-openjdk.x86_64" | log; flag=${PIPESTATUS[0]}
     sudo alternatives --set java java-17-openjdk.x86_64| log; flag=${PIPESTATUS[0]}
-elif t[[ "${JDK_VERSION,,}" == "openjdk11" ]]; then
+elif [[ "${JDK_VERSION,,}" == "openjdk11" ]]; then
     echo "sudo alternatives --set java java-11-openjdk.x86_64" | log; flag=${PIPESTATUS[0]}
     sudo alternatives --set java java-11-openjdk.x86_64 | log; flag=${PIPESTATUS[0]}
 elif [[ "${JDK_VERSION,,}" == "openjdk8" ]]; then
