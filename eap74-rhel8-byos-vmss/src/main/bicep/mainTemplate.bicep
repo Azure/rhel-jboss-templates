@@ -544,5 +544,7 @@ module byosVmssEndPid './modules/_pids/_pid.bicep' = {
   ]
 }
 
+output gatewayEnabled bool = enableAppGWIngress
 output appHttpURL string = enableAppGWIngress ? uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication/') : ''
 output appHttpsURL string = enableAppGWIngress ? uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication/') : ''
+output adminUsername string = jbossEAPUserName
