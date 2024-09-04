@@ -558,7 +558,4 @@ module baseImageSelected './modules/_pids/_empty.bicep' = {
 output gatewayEnabled bool = enableAppGWIngress
 output appHttpURL string = enableAppGWIngress ? uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication/') : ''
 output appHttpsURL string = enableAppGWIngress ? uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication/') : ''
-output adminConsoles array = [for i in range(0, instanceCount): {
-  adminConsole: 'http://${reference(resourceId('Microsoft.Compute/virtualMachineScaleSets/virtualMachines', vmssInstanceName_var, string(i)), '${azure.apiVersionForVirtualMachineScaleSets}', 'Full').properties.networkProfileConfiguration.networkInterfaceConfigurations[0].properties.ipConfigurations[0].publicIPAddressConfiguration.publicIPAddresses[0]}:9990'
-}]
 output adminUsername string = jbossEAPUserName
