@@ -696,12 +696,13 @@ module byosMultivmEndPid './modules/_pids/_pid.bicep' = {
     dbConnectionEndPid
   ]
 }
+
+output appGatewayEnabled bool = enableAppGWIngress
+output mode string = operatingMode == name_managedDomain ? 'Domain Mode' : 'Standalone Mode'
 output appGatewayEnabled bool = enableAppGWIngress
 output appHttpURL string = enableAppGWIngress ? (operatingMode == name_managedDomain ? format('http://{0}/', appgwDeployment.outputs.appGatewayURL) : uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication')) : ''
 output appHttpsURL string = enableAppGWIngress ? (operatingMode == name_managedDomain ? format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL) : uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication')) : ''
-
 output adminConsole array = operatingMode == name_managedDomain 
   ? [uri(format('http://{0}:9990', reference(resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${name_adminVmName}${name_publicIPAddress}')).dnsSettings.fqdn), '')]
   : [for i in range(0, numberOfInstances): uri(format('http://{0}:9990', reference(resourceId('Microsoft.Network/networkInterfaces', '${nicName_var}${i}')).ipConfigurations[0].properties.privateIPAddress), '')]
-
 output adminUsername string = jbossEAPUserName

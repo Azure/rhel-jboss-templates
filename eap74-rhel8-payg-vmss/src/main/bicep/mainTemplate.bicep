@@ -555,7 +555,7 @@ module baseImageSelected './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
-output gatewayEnabled bool = enableAppGWIngress
+output appGatewayEnabled bool = enableAppGWIngress
 output appHttpURL string = enableAppGWIngress ? uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication/') : ''
 output appHttpsURL string = enableAppGWIngress ? uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication/') : ''
 output adminUsername string = jbossEAPUserName
