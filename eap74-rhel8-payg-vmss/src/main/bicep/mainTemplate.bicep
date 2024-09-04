@@ -560,6 +560,6 @@ output appHttpURL string = enableAppGWIngress ? uri(format('http://{0}/', appgwD
 output appHttpsURL string = enableAppGWIngress ? uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication/') : ''
 output adminConsoles array = [for i in range(0, vmssInstanceName.sku.capacity): {
   instanceId: '${i + 1}'
-  adminConsole: '${reference(vmssInstanceName.id, azure.apiVersionForVirtualMachineScaleSets).virtualMachineProfile.networkProfile.networkInterfaceConfigurations[0].ipConfigurations[0].publicIPAddressConfiguration.publicIPAddresses[i].ipAddress}:9000'
+  adminConsole: '${reference(vmssInstanceName.id, ${azure.apiVersionForVirtualMachineScaleSets}).virtualMachineProfile.networkProfile.networkInterfaceConfigurations[0].ipConfigurations[0].publicIPAddressConfiguration.publicIPAddresses[i].ipAddress}:9000'
 }]
 output adminUsername string = jbossEAPUserName
