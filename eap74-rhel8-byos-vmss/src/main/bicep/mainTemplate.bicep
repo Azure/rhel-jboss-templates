@@ -613,7 +613,7 @@ resource getAdminConsolesScripts 'Microsoft.Resources/deploymentScripts@${azure.
     '''
   }
   dependsOn: [
-    vmss
+    vmssInstanceName
     roleAssignment
   ]
 }
