@@ -545,14 +545,28 @@ module byosVmssEndPid './modules/_pids/_pid.bicep' = {
   ]
 }
 
-resource getAdminConsoles 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
+resource deploymentScriptIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: 'deploymentScriptIdentity'
+  location: location
+}
+
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(resourceGroup().id, deploymentScriptIdentity.id, 'Reader')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7') // Reader role
+    principalId: deploymentScriptIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource getAdminConsolesScripts 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
   name: 'fetchPublicIPs'
   location: location
   kind: 'AzureCLI'
   identity: {
       type: 'UserAssigned'
       userAssignedIdentities: {
-        '${uamiDeployment.outputs.uamiIdForDeploymentScript}': {}
+      '${deploymentScriptIdentity.id}': {}
       }
   }
   properties: {
@@ -608,4 +622,4 @@ output appGatewayEnabled bool = enableAppGWIngress
 output appHttpURL string = enableAppGWIngress ? uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication/') : ''
 output appHttpsURL string = enableAppGWIngress ? uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication/') : ''
 output adminUsername string = jbossEAPUserName
-output adminConsoles string = getAdminConsoles.properties.outputs.urls
+output adminConsoles string = getAdminConsolesScripts.properties.outputs.urls
