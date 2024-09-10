@@ -549,7 +549,12 @@ resource getAdminConsoles 'Microsoft.Resources/deploymentScripts@${azure.apiVers
   name: 'fetchPublicIPs'
   location: location
   kind: 'AzureCLI'
-  identity: obj_uamiForDeploymentScript
+  identity: {
+      type: 'UserAssigned'
+      userAssignedIdentities: {
+        '${uamiDeployment.outputs.uamiIdForDeploymentScript}': {}
+      }
+  }
   properties: {
     azCliVersion: const_azcliVersion
     timeout: 'PT10M'
@@ -598,8 +603,6 @@ resource getAdminConsoles 'Microsoft.Resources/deploymentScripts@${azure.apiVers
     roleAssignment
   ]
 }
-
-
 
 output appGatewayEnabled bool = enableAppGWIngress
 output appHttpURL string = enableAppGWIngress ? uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication/') : ''
