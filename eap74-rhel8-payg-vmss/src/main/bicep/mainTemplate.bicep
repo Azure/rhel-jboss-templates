@@ -607,7 +607,7 @@ resource getAdminConsolesScripts 'Microsoft.Resources/deploymentScripts@${azure.
 
         if [ -n "$public_ips" ]; then
           echo "Public IPs found: $public_ips"
-          formatted_urls=$(echo $public_ips | tr ' ' '\n' | sed 's|^|http://|; s|$|:9990/*console*/index|' | paste -sd ';')
+          formatted_urls=$(echo $public_ips | tr ' ' '\n' | sed 's|^|http://|; s|$|:9990/console/index|' | paste -sd ';')
           echo "{\"urls\":\"$formatted_urls\"}" > $AZ_SCRIPTS_OUTPUT_PATH
           exit 0
         else
