@@ -324,7 +324,7 @@
                             "text": "To get free help with Azure migration from the development team, fill out this survey.",
                             "link": {
                                 "label": "Take survey",
-                                "uri": "https://red.ht/javaee-on-azure-survey"
+                                "uri": "https://aka.ms/jboss-on-azure-survey"
                             }
                         }
                     }

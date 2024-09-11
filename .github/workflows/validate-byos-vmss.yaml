@@ -248,7 +248,7 @@ jobs:
                 ${dbPassword}"
 
             - name: Archive parameters-test-vmss.json
-              uses: actions/upload-artifact@v1
+              uses: actions/upload-artifact@v4
               if: success()
               with:
                 name: parameters-test-vmss

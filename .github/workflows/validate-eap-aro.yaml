@@ -108,7 +108,7 @@ jobs:
           echo $params |bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh 
 
       - name: Archive parameters-test-eap-aro.json
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         if: success()
         with:
           name: parameters-test-eap-aro
