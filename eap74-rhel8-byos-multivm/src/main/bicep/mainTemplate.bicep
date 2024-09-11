@@ -701,7 +701,7 @@ output appGatewayEnabled bool = enableAppGWIngress
 output mode string = operatingMode == name_managedDomain ? 'Domain Mode' : 'Standalone Mode'
 output appHttpURL string = enableAppGWIngress ? uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication/') : ''
 output appHttpsURL string = enableAppGWIngress ? uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication/') : ''
-output adminConsole array = 
+output adminConsoles array = 
   (operatingMode == name_managedDomain) 
     ? (enableAppGWIngress
         ? [
