@@ -566,7 +566,7 @@ resource getAdminConsolesScripts 'Microsoft.Resources/deploymentScripts@${azure.
   identity: {
       type: 'UserAssigned'
       userAssignedIdentities: {
-      '${deploymentScriptIdentity.id}': {}
+        '${deploymentScriptIdentity.id}': {}
       }
   }
   properties: {
@@ -576,7 +576,7 @@ resource getAdminConsolesScripts 'Microsoft.Resources/deploymentScripts@${azure.
     environmentVariables: [
       {
         name: 'VMSS_NAME'
-        value: vmssInstanceName
+        value: var_vmssInstanceName
       }
       {
         name: 'RESOURCE_GROUP'
@@ -596,8 +596,8 @@ resource getAdminConsolesScripts 'Microsoft.Resources/deploymentScripts@${azure.
 
         if [ -n "$public_ips" ]; then
           echo "Public IPs found: $public_ips"
-          formatted_urls=$(echo $public_ips | tr ' ' '\n' | sed 's|^|http://|; s|$|:9990/console/index|' | paste -sd ';')
-          echo "{\"urls\":\"$formatted_urls\"}" > $AZ_SCRIPTS_OUTPUT_PATH
+          formatted_urls=$(echo $public_ips | tr ' ' '\n' | sed 's|^|http://|; s|$|:9990/console/index.html|' | jq -R . | jq -s '{"adminconsoles": .}')
+          echo $formatted_urls > $AZ_SCRIPTS_OUTPUT_PATH
           exit 0
         else
           echo "No public IPs found. Waiting 30 seconds before next attempt..."
@@ -608,7 +608,7 @@ resource getAdminConsolesScripts 'Microsoft.Resources/deploymentScripts@${azure.
       done
 
       echo "No public IPs found after $max_attempts attempts. Exiting."
-      echo "{\"urls\":\"No public IPs found after $max_attempts attempts\"}" > $AZ_SCRIPTS_OUTPUT_PATH
+      echo '{"adminconsoles": ["No public IPs found after '"$max_attempts"' attempts"]}' > $AZ_SCRIPTS_OUTPUT_PATH
       exit 1
     '''
   }
@@ -622,4 +622,4 @@ output appGatewayEnabled bool = enableAppGWIngress
 output appHttpURL string = enableAppGWIngress ? uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication/') : ''
 output appHttpsURL string = enableAppGWIngress ? uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication/') : ''
 output adminUsername string = jbossEAPUserName
-output adminConsoles string = getAdminConsolesScripts.properties.outputs.urls
+output adminConsoles array = getAdminConsolesScripts.properties.outputs.adminconsoles
