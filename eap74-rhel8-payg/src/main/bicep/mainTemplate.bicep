@@ -420,3 +420,8 @@ module paygSingleEndPid './modules/_pids/_pid.bicep' = {
     dbConnectionEndPid
   ]
 }
+
+output appHttpURL string = uri(format('http://{0}:8080/', vmPublicIP.properties.dnsSettings.fqdn),'')
+output appHttpsURL string = uri(format('https://{0}:8080/', vmPublicIP.properties.dnsSettings.fqdn),'')
+output adminConsole string = uri(format('http://{0}:9990/', vmPublicIP.properties.dnsSettings.fqdn),'')
+output adminUsername string = jbossEAPUserName

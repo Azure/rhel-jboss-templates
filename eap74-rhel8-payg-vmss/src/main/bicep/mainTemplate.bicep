@@ -169,7 +169,7 @@ param dbPassword string = newGuid()
 var containerName = 'eapblobcontainer'
 var eapStorageAccountName_var = 'jbosstrg${uniqueString(resourceGroup().id)}'
 var eapstorageReplication = 'Standard_LRS'
-var vmssInstanceName_var = 'jbosseap-server${vmssName}'
+var var_vmssInstanceName   = 'jbosseap-server${vmssName}'
 var nicName = 'jbosseap-server-nic'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
 var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
@@ -246,6 +246,7 @@ var plan = {
   product: 'rh-jboss-eap'
   name: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
 }
+var const_azcliVersion = '2.53.0'
 
 module pids './modules/_pids/_pid.bicep' = {
   name: 'initialization'
@@ -436,7 +437,7 @@ module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
 }
 
 resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.apiVersionForVirtualMachineScaleSets}' = {
-  name: vmssInstanceName_var
+  name: var_vmssInstanceName
   location: location
   sku: {
     name: vmSize
@@ -460,7 +461,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
         imageReference: imageReference
       }
       osProfile: {
-        computerNamePrefix: vmssInstanceName_var
+        computerNamePrefix: var_vmssInstanceName
         adminUsername: adminUsername
         adminPassword: adminPasswordOrSSHKey
         linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
@@ -484,7 +485,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
                       }
                     ] : null
                     publicIPAddressConfiguration: {
-                      name: '${vmssInstanceName_var}${name_publicIPAddress}'
+                      name: '${var_vmssInstanceName  }${name_publicIPAddress}'
                     }
                   }
                 }
@@ -555,5 +556,81 @@ module baseImageSelected './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
+resource deploymentScriptIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@${azure.apiVersionForIdentity}' = {
+  name: 'deploymentScriptIdentity'
+  location: location
+}
+
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@${azure.apiVersionForRoleAssignment}' = {
+  name: guid(resourceGroup().id, deploymentScriptIdentity.id, 'Reader')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7') // Reader role
+    principalId: deploymentScriptIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource getAdminConsolesScripts 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
+  name: 'fetchPublicIPs'
+  location: location
+  kind: 'AzureCLI'
+  identity: {
+      type: 'UserAssigned'
+      userAssignedIdentities: {
+        '${deploymentScriptIdentity.id}': {}
+      }
+  }
+  properties: {
+    azCliVersion: const_azcliVersion
+    timeout: 'PT10M'
+    retentionInterval: 'PT1H'
+    environmentVariables: [
+      {
+        name: 'VMSS_NAME'
+        value: var_vmssInstanceName
+      }
+      {
+        name: 'RESOURCE_GROUP'
+        value: resourceGroup().name
+      }
+    ]
+    scriptContent: '''
+      #!/bin/bash
+      set -e
+
+      max_attempts=10
+      attempt=1
+
+      while [ $attempt -le $max_attempts ]; do
+        echo "Attempt $attempt to fetch public IPs..."
+        public_ips=$(az vmss list-instance-public-ips --name $VMSS_NAME --resource-group $RESOURCE_GROUP --query "[].ipAddress" -o tsv)
+
+        if [ -n "$public_ips" ]; then
+          echo "Public IPs found: $public_ips"
+          formatted_urls=$(echo $public_ips | tr ' ' '\n' | sed 's|^|http://|; s|$|:9990/console/index.html|' | jq -R . | jq -s '{"adminconsoles": .}')
+          echo $formatted_urls > $AZ_SCRIPTS_OUTPUT_PATH
+          exit 0
+        else
+          echo "No public IPs found. Waiting 30 seconds before next attempt..."
+          sleep 30
+        fi
+
+        attempt=$((attempt + 1))
+      done
+
+      echo "No public IPs found after $max_attempts attempts. Exiting."
+      echo '{"adminconsoles": ["No public IPs found after '"$max_attempts"' attempts"]}' > $AZ_SCRIPTS_OUTPUT_PATH
+      exit 1
+    '''
+  }
+  dependsOn: [
+    vmssInstanceName
+    roleAssignment
+  ]
+}
+
+output appGatewayEnabled bool = enableAppGWIngress
 output appHttpURL string = enableAppGWIngress ? uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication/') : ''
 output appHttpsURL string = enableAppGWIngress ? uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication/') : ''
+output adminUsername string = jbossEAPUserName
+output adminConsoles array = getAdminConsolesScripts.properties.outputs.adminconsoles

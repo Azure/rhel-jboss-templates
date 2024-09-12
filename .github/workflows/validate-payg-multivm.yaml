@@ -195,7 +195,7 @@ jobs:
               with:
                 path: rhel-jboss-templates
             - name: Download artifact for deployment
-              uses: actions/download-artifact@v1
+              uses: actions/download-artifact@v4
               with:
                 name: ${{needs.preflight.outputs.artifactName}}
                 path: rhel-jboss-templates-dev
@@ -280,7 +280,7 @@ jobs:
                 ${{ inputs.jdkVersion }} "
 
             - name: Archive parameters-test-domain.json
-              uses: actions/upload-artifact@v1
+              uses: actions/upload-artifact@v4
               if: success()
               with:
                 name: parameters-test-domain
@@ -413,7 +413,7 @@ jobs:
               with:
                 path: rhel-jboss-templates
             - name: Download artifact for test branch
-              uses: actions/download-artifact@v1
+              uses: actions/download-artifact@v4
               with:
                 name: ${{needs.preflight.outputs.artifactName}}
                 path: rhel-jboss-templates-dev
@@ -499,7 +499,7 @@ jobs:
                 ${{ inputs.jdkVersion }} "
 
             - name: Archive parameters-test-standalone.json
-              uses: actions/upload-artifact@v1
+              uses: actions/upload-artifact@v4
               if: success()
               with:
                 name: parameters-test-standalone
