@@ -35,16 +35,33 @@ databaseUser=${16}
 databasePassword=${17}
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
-export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"
-export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"
-export EAP_LAUNCH_CONFIG="/opt/rh/eap7/root/usr/share/wildfly/bin/standalone.conf"
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
 
-echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> ~/.bash_profile
-echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"' >> ~/.bash_profile
-source ~/.bash_profile
-touch /etc/profile.d/eap_env.sh
-echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> /etc/profile.d/eap_env.sh
-echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"' >> /etc/profile.d/eap_env.sh
+    export EAP_HOME="/opt/rh/eap8/root/usr/share/wildfly"
+    export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap8/wildfly/eap8-standalone.conf"
+    export EAP_LAUNCH_CONFIG="/opt/rh/eap8/root/usr/share/wildfly/bin/standalone.conf"
+
+    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share/wildfly"' >> ~/.bash_profile
+    echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap8/wildfly/eap8-standalone.conf"' >> ~/.bash_profile
+    source ~/.bash_profile
+    touch /etc/profile.d/eap_env.sh
+    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share/wildfly"' >> /etc/profile.d/eap_env.sh
+    echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap8-standalone.conf"' >> /etc/profile.d/eap_env.sh
+
+else
+
+    export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"
+    export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"
+    export EAP_LAUNCH_CONFIG="/opt/rh/eap7/root/usr/share/wildfly/bin/standalone.conf"
+
+    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> ~/.bash_profile
+    echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"' >> ~/.bash_profile
+    source ~/.bash_profile
+    touch /etc/profile.d/eap_env.sh
+    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> /etc/profile.d/eap_env.sh
+    echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"' >> /etc/profile.d/eap_env.sh
+
+fi
 
 # Satellite server configuration
 if [[ "${CONNECT_SATELLITE,,}" == "true" ]]; then
@@ -60,12 +77,12 @@ if [[ "${CONNECT_SATELLITE,,}" == "true" ]]; then
     echo "sudo subscription-manager register --org=${SATELLITE_ORG_NAME} --activationkey=${SATELLITE_ACTIVATION_KEY}" | log; flag=${PIPESTATUS[0]}
     sudo subscription-manager register --org="${SATELLITE_ORG_NAME}" --activationkey="${SATELLITE_ACTIVATION_KEY}" --force | log; flag=${PIPESTATUS[0]}
 else
-    echo "Initial JBoss EAP 7.4 setup" | log; flag=${PIPESTATUS[0]}
+    echo "Initial JBoss EAP setup" | log; flag=${PIPESTATUS[0]}
     echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
     subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force  | log; flag=${PIPESTATUS[0]}
     if [ $flag != 0 ] ; then echo "ERROR! Red Hat Subscription Manager Registration Failed" >&2 log; exit $flag;  fi
 
-    echo "Subscribing the system to get access to JBoss EAP 7.4 repos ($RHSM_EAPPOOL)" | log; flag=${PIPESTATUS[0]}
+    echo "Subscribing the system to get access to JBoss EAP repos ($RHSM_EAPPOOL)" | log; flag=${PIPESTATUS[0]}
     echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
     subscription-manager attach --pool=${RHSM_EAPPOOL} | log; flag=${PIPESTATUS[0]}
     if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
@@ -79,39 +96,66 @@ else
     fi
 fi
 
-####################### Install openjdk, EAP 7.4 is shipped with JDK 1.8, we are allowing more
-echo "Install openjdk, curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
+####################### Install required dependencies
+echo "Install curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
 echo "sudo yum install curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
 sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}
-## Install specific JDK version
-if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
-    echo "sudo yum install java-17-openjdk -y" | log; flag=${PIPESTATUS[0]}
-    sudo yum install java-17-openjdk -y | log; flag=${PIPESTATUS[0]}
-elif [[ "${JDK_VERSION,,}" == "openjdk11" ]]; then
-    echo "sudo yum install java-11-openjdk -y" | log; flag=${PIPESTATUS[0]}
-    sudo yum install java-11-openjdk -y | log; flag=${PIPESTATUS[0]}
-elif [[ "${JDK_VERSION,,}" == "openjdk8" ]]; then
-    echo "openjdk8 is shipped with EAP 7.4, proceed" | log; flag=${PIPESTATUS[0]}
-fi
+
 ####################### 
 
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+# Install JBoss EAP 8
+    echo "subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
+    subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
+
+    if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
+
+        echo "Installing JBoss EAP 8 JDK 17" | log; flag=${PIPESTATUS[0]}
+        echo "yum groupinstall -y jboss-eap8" | log; flag=${PIPESTATUS[0]}
+        yum groupinstall -y jboss-eap8       | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
+    
+    elif [[ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+        echo "Installing JBoss EAP 8 JDK 11" | log; flag=${PIPESTATUS[0]}
+        echo "yum groupinstall -y jboss-eap8-jdk11" | log; flag=${PIPESTATUS[0]}
+        yum groupinstall -y jboss-eap8-jdk11       | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
+    fi
+
+else
 # Install JBoss EAP 7.4
-echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
-subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
+    echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
+    subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
 
-echo "Installing JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
-echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
-yum groupinstall -y jboss-eap7        | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
+    if [[ "${JDK_VERSION,,}" == "eap7-openjdk17" ]]; then
+        echo "Installing JBoss EAP 7.4 JDK 17" | log; flag=${PIPESTATUS[0]}
+        echo "yum groupinstall -y jboss-eap7-jdk17" | log; flag=${PIPESTATUS[0]}
+        yum groupinstall -y jboss-eap7-jdk17       | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
+    
+    elif [[ "${JDK_VERSION,,}" == "eap7-openjdk11" ]]; then
+        echo "Installing JBoss EAP 7.4 JDK 11" | log; flag=${PIPESTATUS[0]}
+        echo "yum groupinstall -y jboss-eap7-jdk11" | log; flag=${PIPESTATUS[0]}
+        yum groupinstall -y jboss-eap7-jdk11       | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
+    
+     elif [[ "${JDK_VERSION,,}" == "eap7-openjdk8" ]]; then
+        echo "Installing JBoss EAP 7.4 JDK 8" | log; flag=${PIPESTATUS[0]}
+        echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
+        yum groupinstall -y jboss-eap7       | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
+    fi
 
+fi
 
 echo "Updating standalone-full-ha.xml" | log; flag=${PIPESTATUS[0]}
 echo -e "\t stack UDP to TCP"       | log; flag=${PIPESTATUS[0]}
 echo -e "\t set transaction id"     | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
-if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap7-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
     sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-full-ha.xml
 fi
 
@@ -141,25 +185,43 @@ echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.container=$CONTAINER
 
 ####################### Start the JBoss server and setup eap service
 
-echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
-echo "systemctl enable eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
-systemctl enable eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+    echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
+    echo "systemctl enable eap8-standalone.service" | log; flag=${PIPESTATUS[0]}
+    systemctl enable eap8-standalone.service        | log; flag=${PIPESTATUS[0]}
 
+    ###################### Editing eap8-standalone.services
+    echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
+    sed -i 's/After=syslog.target network.target/After=syslog.target network.target NetworkManager-wait-online.service/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+    echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
+    sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+    echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
+    systemctl daemon-reload | log; flag=${PIPESTATUS[0]}
+
+    echo "systemctl restart eap8-standalone.service"| log; flag=${PIPESTATUS[0]}
+    systemctl restart eap8-standalone.service       | log; flag=${PIPESTATUS[0]}
+    echo "systemctl status eap8-standalone.service" | log; flag=${PIPESTATUS[0]}
+    systemctl status eap8-standalone.service        | log; flag=${PIPESTATUS[0]}
+
+else
+    echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
+    echo "systemctl enable eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
+    systemctl enable eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
+
+    ###################### Editing eap7-standalone.services
+    echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
+    sed -i 's/After=syslog.target network.target/After=syslog.target network.target NetworkManager-wait-online.service/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
+    echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
+    sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
+    echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
+    systemctl daemon-reload | log; flag=${PIPESTATUS[0]}
+
+    echo "systemctl restart eap7-standalone.service"| log; flag=${PIPESTATUS[0]}
+    systemctl restart eap7-standalone.service       | log; flag=${PIPESTATUS[0]}
+    echo "systemctl status eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
+    systemctl status eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
+fi
 ####################### 
-
-###################### Editing eap7-standalone.services
-echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
-sed -i 's/After=syslog.target network.target/After=syslog.target network.target NetworkManager-wait-online.service/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
-echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
-sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
-echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
-systemctl daemon-reload | log; flag=${PIPESTATUS[0]}
-
-echo "systemctl restart eap7-standalone.service"| log; flag=${PIPESTATUS[0]}
-systemctl restart eap7-standalone.service       | log; flag=${PIPESTATUS[0]}
-echo "systemctl status eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
-systemctl status eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
-######################
 
 ####################### Open Red Hat software firewall for port 8080 and 9990:
 openport 8080
