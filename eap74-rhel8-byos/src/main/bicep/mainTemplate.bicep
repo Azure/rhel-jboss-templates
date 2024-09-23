@@ -28,7 +28,7 @@ param adminPasswordOrSSHKey string
 param vmSize string = 'Standard_DS2_v2'
 
 @description('The JDK version of the Virtual Machine')
-param jdkVersion string = 'openjdk17'
+param jdkVersion string = 'eap8-openjdk17'
 
 @description('Capture serial console outputs and screenshots of the virtual machine running on a host to help diagnose startup issues')
 @allowed([
@@ -281,7 +281,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
   name: vmName
   location: location
   plan: {
-    name: 'rhel-lvm86-gen2'
+    name: ((jdkVersion == 'eap8-openjdk17') || (jdkVersion == 'eap8-openjdk11'))? 'rhel-lvm94-gen2': 'rhel-lvm86-gen2'
     publisher: 'redhat'
     product: 'rhel-byos'
   }
@@ -299,7 +299,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
       imageReference: {
         publisher: 'redhat'
         offer: 'rhel-byos'
-        sku: 'rhel-lvm86-gen2'
+        sku: ((jdkVersion == 'eap8-openjdk17') || (jdkVersion == 'eap8-openjdk11'))? 'rhel-lvm94-gen2': 'rhel-lvm86-gen2'
         version: 'latest'
       }
       osDisk: {
