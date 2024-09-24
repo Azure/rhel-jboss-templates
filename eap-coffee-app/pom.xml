@@ -15,7 +15,6 @@
 
   <properties>
     <failOnMissingWebXml>false</failOnMissingWebXml>
-    <javaee.api.version>8.0</javaee.api.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -26,7 +25,7 @@
     <dependency>
       <groupId>jakarta.platform</groupId>
       <artifactId>jakarta.jakartaee-api</artifactId>
-      <version>8.0.0</version>
+      <version>9.1.0</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
