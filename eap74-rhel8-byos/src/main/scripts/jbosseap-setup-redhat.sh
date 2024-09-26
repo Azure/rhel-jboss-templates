@@ -35,7 +35,7 @@ databaseUser=${16}
 databasePassword=${17}
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
-if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
 
     export EAP_HOME="/opt/rh/eap8/root/usr/share/wildfly"
     export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap8/wildfly/eap8-standalone.conf"
@@ -103,7 +103,7 @@ sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}
 
 ####################### 
 
-if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
 # Install JBoss EAP 8
     echo "subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
     subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
@@ -155,7 +155,7 @@ echo -e "\t stack UDP to TCP"       | log; flag=${PIPESTATUS[0]}
 echo -e "\t set transaction id"     | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
-if [[ "${JDK_VERSION,,}" == "eap7-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap7-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
     sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-full-ha.xml
 fi
 
@@ -185,7 +185,7 @@ echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.container=$CONTAINER
 
 ####################### Start the JBoss server and setup eap service
 
-if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
     echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
     echo "systemctl enable eap8-standalone.service" | log; flag=${PIPESTATUS[0]}
     systemctl enable eap8-standalone.service        | log; flag=${PIPESTATUS[0]}
