@@ -1,4 +1,5 @@
 name: Validate payg offer
+run-name: Validate payg offer with ${{ inputs.jdkVersion }} and ${{ inputs.databaseType }}
 
 on:
   workflow_dispatch:
