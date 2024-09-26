@@ -35,7 +35,7 @@ databaseUser=${16}
 databasePassword=${17}
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
-if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
 
     export EAP_HOME="/opt/rh/eap8/root/usr/share/wildfly"
     export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap8/wildfly/eap8-standalone.conf"
