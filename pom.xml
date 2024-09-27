@@ -41,7 +41,7 @@
              check https://github.com/azure-javaee/azure-javaee-iaas/blob/b7b966b502212c40f23fd391a088da6a9b20bdc3/arm-parent/pom.xml#L361  -->
         <template.azure-common.properties.url>file:///${rootmoduledir}/utilities/azure-common.properties</template.azure-common.properties.url>
 
-        <version.eap74-rhel8-byos>1.0.19</version.eap74-rhel8-byos>
+        <version.eap-rhel-byos>1.0.20</version.eap-rhel-byos>
         <version.eap74-rhel8-byos-multivm>1.0.27</version.eap74-rhel8-byos-multivm>
         <version.eap74-rhel8-byos-vmss>1.0.25</version.eap74-rhel8-byos-vmss>
         <version.eap74-rhel8-payg>1.0.31</version.eap74-rhel8-payg>
@@ -51,7 +51,7 @@
     </properties>
 
     <modules>
-        <module>eap74-rhel8-byos</module>
+        <module>eap-rhel-byos</module>
         <module>eap74-rhel8-byos-multivm</module>
         <module>eap74-rhel8-byos-vmss</module>
         <module>eap74-rhel8-payg</module>
