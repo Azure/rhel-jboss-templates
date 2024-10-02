@@ -10,7 +10,7 @@ cat <<EOF > ${parametersPath}
     "contentVersion": "1.0.0.0",
     "parameters": {
         "artifactsLocation": {
-            "value": "https://raw.githubusercontent.com/${gitUserName}/rhel-jboss-templates/${testbranchName}/eap74-rhel8-byos/"
+            "value": "https://raw.githubusercontent.com/${gitUserName}/rhel-jboss-templates/${testbranchName}/eap-rhel-byos/"
         },
         "location": {
             "value": "${location}"
@@ -68,8 +68,8 @@ cat <<EOF > ${parametersPath}
         "jbossEAPUserName": {
             "value": "${jbossEAPUserName}"
         },
-        "jbossEAPPassword": {
-            "value": "${jbossEAPPassword}"
+        "gracefulShutdownTimeout": {
+            "value": "${gracefulShutdownTimeout}"
         },
         "rhsmUserName": {
             "value": "${rhsmUserName}"
