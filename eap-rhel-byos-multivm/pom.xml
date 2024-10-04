@@ -10,8 +10,8 @@
     </parent>
 
     <groupId>com.rhel.jboss.azure</groupId>
-    <artifactId>eap74-rhel8-byos-vmss</artifactId>
-    <version>${version.eap74-rhel8-byos-vmss}</version>
+    <artifactId>eap-rhel-byos-multivm</artifactId>
+    <version>${version.eap-rhel-byos-multivm}</version>
     <packaging>pom</packaging>
     <name>${project.artifactId}</name>
 
