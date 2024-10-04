@@ -23,6 +23,9 @@ param jbossEAPUserName string
 @secure()
 param jbossEAPPassword string
 
+@description('Please enter a Graceful Shutdown Timeout in seconds')
+param gracefulShutdownTimeout string
+
 @description('User name for Red Hat subscription Manager')
 param rhsmUserName string = newGuid()
 
@@ -40,7 +43,7 @@ param rhsmPoolRHEL string = newGuid()
 param vmSize string = 'Standard_DS2_v2'
 
 @description('The JDK version of the Virtual Machine')
-param jdkVersion string = 'openjdk17'
+param jdkVersion string = 'eap8-openjdk17'
 
 @description('Number of VMs to deploy')
 param numberOfInstances int = 2
@@ -209,11 +212,11 @@ var linuxConfiguration = {
 var imageReference = {
   publisher: 'redhat'
   offer: 'rhel-byos'
-  sku: 'rhel-lvm86-gen2'
+  sku: ((jdkVersion == 'eap8-openjdk17') || (jdkVersion == 'eap8-openjdk11'))? 'rhel-lvm94-gen2': 'rhel-lvm86-gen2'
   version: 'latest'
 }
 var plan = {
-  name: 'rhel-lvm86-gen2'
+  name: ((jdkVersion == 'eap8-openjdk17') || (jdkVersion == 'eap8-openjdk11'))? 'rhel-lvm94-gen2': 'rhel-lvm86-gen2'
   publisher: 'redhat'
   product: 'rhel-byos'
 }
@@ -630,6 +633,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
     identity: obj_uamiForDeploymentScript
     jbossEAPUserName: jbossEAPUserName
     jbossEAPPassword: jbossEAPPassword
+    gracefulShutdownTimeout: gracefulShutdownTimeout
     rhsmUserName: rhsmUserName
     rhsmPassword: rhsmPassword
     rhsmPoolEAP: rhsmPoolEAP
