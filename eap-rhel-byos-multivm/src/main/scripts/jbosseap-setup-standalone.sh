@@ -66,6 +66,8 @@ jdbcDSJNDIName=${25}
 dsConnectionString=${26}
 databaseUser=${27}
 databasePassword=${28}
+gracefulShutdownTimeout=${29}
+
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 HOST_VM_NAME=$(hostname)
 HOST_VM_NAME_LOWERCASES=$(echo "${HOST_VM_NAME,,}")

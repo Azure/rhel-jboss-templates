@@ -19,6 +19,9 @@ param jbossEAPUserName string
 @secure()
 param jbossEAPPassword string
 
+@description('Please enter a Graceful Shutdown Timeout in seconds')
+param gracefulShutdownTimeout string
+
 @description('User name for Red Hat subscription Manager')
 param rhsmUserName string = newGuid()
 
@@ -150,6 +153,10 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersion
       {
         name: 'JBOSS_EAP_PASSWORD_BASE64'
         secureValue: base64(jbossEAPPassword)
+      }
+      {
+        name: 'gracefulShutdownTimeout'
+        secureValue: base64(gracefulShutdownTimeout)
       }
       {
         name: 'RHSM_USER'
