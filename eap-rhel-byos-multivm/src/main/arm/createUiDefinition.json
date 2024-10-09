@@ -1,0 +1,963 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+    "handler": "Microsoft.Azure.CreateUIDef",
+    "version": "0.1.2-preview",
+    "parameters": {
+        "basics": [
+            {
+                "name": "infoForBeforeDeployment",
+                "type": "Microsoft.Common.InfoBox",
+                "visible": true,
+                "options": {
+                    "icon": "Info",
+                    "text": "The Azure identity deploying this offer must have one of the following two sets of Azure role-based access control roles:<br> <li><a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#contributor'>Contributor</a> <b>and</b> <a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#user-access-administrator'>User Access Administrator</a> of the current subscription.</li><li><a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#owner'>Owner</a> of the current subscription.</li>"
+                }
+            },
+            {
+                "name": "vmSize",
+                "type": "Microsoft.Compute.SizeSelector",
+                "label": "Virtual machine size",
+                "toolTip": "The size of virtual machine to provision",
+                "recommendedSizes": [
+                    "Standard_DS2_v2",
+                    "Standard_DS3_v2",
+                    "Standard_DS4_v2",
+                    "Standard_E2S_v3",
+                    "Standard_E4S_v3",
+                    "Standard_E8S_v3",
+                    "Standard_F2S_v2",
+                    "Standard_F4S_v2",
+                    "Standard_F8S_v2" 
+                ],
+                "constraints": {
+                    "excludedSizes": [
+                        ${azure.armBased.vmSize.list}
+                    ]
+                },
+                "osPlatform": "Linux",
+                "count": "1"
+            },
+            {
+                "name": "invalidVMSizeInfo",
+                "type": "Microsoft.Common.InfoBox",
+                "visible": "[contains(basics('vmSize').vmSizeSelect,'p')]",
+                "options": {
+                    "icon": "Error",
+                    "text": "The VM size you selected includes the feature letter 'p', indicating it uses ARM CPUs. ARM platform is not supported. Please select a different VM size. For more information, refer to the <a href='https://learn.microsoft.com/azure/virtual-machines/vm-naming-conventions' target='_blank'>Azure virtual machine sizes naming conventions</a>."
+                }
+            },
+            {
+                "name": "jdkVersion",
+                "type": "Microsoft.Common.DropDown",
+                "label": "EAP and JDK version",
+                "defaultValue": "EAP 8 with JDK 17",
+                "toolTip": "Choose JDK version.",
+                "constraints": {
+                    "allowedValues": [
+                        { "label": "EAP 8 with JDK 17",     "value": "eap8-openjdk17" },
+                        { "label": "EAP 8 with JDK 11",     "value": "eap8-openjdk11" },
+                        { "label": "EAP 7.4 with JDK 17",   "value": "eap74-openjdk17" },
+                        { "label": "EAP 7.4 with JDK 11",   "value": "eap74-openjdk11" },
+                        { "label": "EAP 7.4 with JDK 8",    "value": "eap74-openjdk8" }
+                    ],
+                    "required": true
+                },
+                "visible": true
+            },
+            {
+                "name": "adminUsername",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Username",
+                "defaultValue": "jbossuser",
+                "toolTip": "Linux VM user account name",
+                "constraints": {
+                    "required": true,
+                    "regex": "^[a-zA-Z]+[a-zA-Z0-9_-]{1,64}$",
+                    "validationMessage": "The value must be between 1 and 64 characters long."
+                }
+            },
+            {
+                "name": "authenticationType",
+                "type": "Microsoft.Compute.CredentialsCombo",
+                "label": {
+                    "authenticationType": "Authentication type",
+                    "password": "Password",
+                    "confirmPassword": "Confirm password",
+                    "sshPublicKey": "SSH public key"
+                },
+                "toolTip": {
+                    "authenticationType": "Authentication Type for the Virtual Machine",
+                    "password": "Password for the Virtual Machine",
+                    "sshPublicKey": "SSH Public Key for the Virtual Machine"
+                },
+                "constraints": {
+                    "required": true
+                },
+                "options": {
+                    "hideConfirmation": false
+                },
+                "osPlatform": "Linux"
+            },
+            {
+                "name": "numberOfInstances",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Number of virtual machines to create",
+                "defaultValue": "2",
+                "toolTip": "Use only allowed characters",
+                "placeholder": "2",
+                "constraints": {
+                    "required": true,
+                    "validations": [
+                        {
+                            "regex": "^100$|^[2-9]$|^[1-9][0-9]{1,1}$",
+                            "message": "Only numbers from 2 to 100 are allowed."
+                        }
+                    ]
+                },
+                "visible": true
+            },
+            {
+                "name": "basicsOptional",
+                "type": "Microsoft.Common.Section",
+                "label": "Optional Basic Configuration",
+                "elements": [
+                    {
+                        "name": "basicsOptionalAcceptDefaults",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Accept defaults for optional configuration?",
+                        "defaultValue": "Yes",
+                        "toolTip": "Select 'No' to edit optional basic configuration.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": "false"
+                                },
+                                {
+                                    "label": "No",
+                                    "value": "true"
+                                }
+                            ],
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "vmName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Virtual Machine name",
+                        "defaultValue": "jbossvm",
+                        "toolTip": "The name of the Virtual Machine",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[a-z0-9A-Z-]{3,79}$",
+                            "validationMessage": "The VM Name must be between 3 and 79 characters long and contain letters, numbers and hyphens only."
+                        },
+                        "visible": "[bool(basics('basicsOptional').basicsOptionalAcceptDefaults)]"
+                    },
+                    {
+                        "name": "asName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Availability set name",
+                        "defaultValue": "jbossas",
+                        "toolTip": "The name of the availability set",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[a-z0-9A-Z-]{3,79}$",
+                            "validationMessage": "The Availability set Name must be between 3 and 79 characters long and contain letters, numbers and hyphens only."
+                        },
+                        "visible": "[bool(basics('basicsOptional').basicsOptionalAcceptDefaults)]"
+                    },
+                    {
+                        "name": "bootDiagnostics",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Boot diagnostics",
+                        "defaultValue": "off",
+                        "toolTip": "Capture serial console outputs and screenshots of the virtual machine running on a host to help diagnose startup issues",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "on",
+                                    "value": "on"
+                                },
+                                {
+                                    "label": "off",
+                                    "value": "off"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[bool(basics('basicsOptional').basicsOptionalAcceptDefaults)]"
+                    },
+                    {
+                        "name": "storageNewOrExisting",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Storage Account",
+                        "defaultValue": "New",
+                        "toolTip": "Select new or existing Storage account",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Existing",
+                                    "value": "Existing"
+                                },
+                                {
+                                    "label": "New",
+                                    "value": "New"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').bootDiagnostics, 'on'))]"
+                    },
+                    {
+                        "name": "armApiControl",
+                        "type": "Microsoft.Solutions.ArmApiControl",
+                        "toolTip": "Select existing storage account",
+                        "request": {
+                            "method": "GET",
+                            "path": "[concat(subscription().id, '/providers/Microsoft.Storage/storageAccounts?api-version=2021-04-01')]"
+                        },
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'Existing'))]"
+                    },
+                    {
+                        "name": "existingStorageAccount",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Available storage accounts",
+                        "toolTip": "Select a storage account from the existing list",
+                        "constraints": {
+                            "allowedValues": "[filter(map(basics('armApiControl').value, (item) => parse(concat('{\"label\":\"', concat(item.name,' (',item.kind,')'), '\",\"value\":\"', item.name, '\",\"kind\":\"', item.kind, '\",\"location\":\"', item.location, '\",\"tier\":\"', item.sku.tier, '\"}'))), (item) => and(and(not(contains(toLower(item.kind),'blob')),equals(location(),item.location)),equals('Standard',item.tier)))]",
+                            "required": true
+                        },
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'Existing'))]"
+                    },
+                    {
+                        "name": "nameApi",
+                        "type": "Microsoft.Solutions.ArmApiControl",
+                        "toolTip": "Check new storage account name availability",
+                        "request": {
+                            "method": "POST",
+                            "path": "[concat(subscription().id,'/providers/Microsoft.Storage/checkNameAvailability?api-version=2019-06-01')]",
+                            "body": {
+                                "name": "[basics('basicsOptional').storageAccountName]",
+                                "toolTip": "get storage account name provided earlier",
+                                "type": "Microsoft.Storage/storageAccounts"
+                            }
+                        },
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'New'))]"
+                    },
+                    {
+                        "name": "storageAccountName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Storage Account Name",
+                        "defaultValue": "[concat('jbosssa', substring(guid(), 0, 6))]",
+                        "toolTip": "Name of the storage account",
+                        "constraints": {
+                            "validations": [
+                                {
+                                    "regex": "^[a-z0-9]{3,24}$",
+                                    "message": "Storage account name should be between 3 and 24 characters and only contain lowercase letters and numbers"
+                                },
+                                {
+                                    "isValid": "[not(equals(basics('basicsOptional').nameApi, false))]",
+                                    "message": "[concat('The storage account name \"',basics('basicsOptional').storageAccountName, '\" is unavailable or already taken')]"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'New'))]"
+                    },
+                    {
+                        "name": "storageAccountKind",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Storage Account Kind",
+                        "defaultValue": "Storage",
+                        "toolTip": "General purpose storage accounts provide storage for blobs, files, tables, and queues in a unified account. Choose an access tier that matches your storage needs.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Storage",
+                                    "value": "Storage"
+                                },
+                                {
+                                    "label": "StorageV2",
+                                    "value": "StorageV2"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'New'))]"
+                    },
+                    {
+                        "name": "storageAccountType",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Storage Account Type",
+                        "toolTip": "The data in your Azure storage account is always replicated to ensure durability and high availability. Choose a replication strategy that matches your durability requirements. Some settings can't be changed after the storage account is created.",
+                        "defaultValue": "Standard_LRS",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Standard_LRS",
+                                    "value": "Standard_LRS"
+                                },
+                                {
+                                    "label": "Standard_GRS",
+                                    "value": "Standard_GRS"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'New'))]"
+                    }
+                ],
+                "visible": true
+            },
+            {
+                "name": "howToReportIssues",
+                "type": "Microsoft.Common.Section",
+                "label": "Report issues, get help, and share feedback",
+                "elements": [
+                    {
+                        "name": "help",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "See the documentation for this offer.",
+                            "link": {
+                                "label": "Offer documentation",
+                                "uri": "https://red.ht/eap-vm-docs"
+                            }
+                        }
+                    },
+                    {
+                        "name": "howToReportIssueText",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "If you encounter problems during the deployment of Red Hat JBoss EAP, report them here.",
+                            "link": {
+                                "label": "Issue tracker",
+                                "uri": "https://red.ht/eap-vm-issues?version=${project.version}"
+                            }
+                        }
+                    },
+                    {
+                        "name": "howToJoinSlack",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "If you want to interact directly with the Red Hat community, join the public community forum.",
+                            "link": {
+                                "label": "Join Community",
+                                "uri": "https://red.ht/eap-vms-community"
+                            }
+                        }
+                    },
+                    {
+                        "name": "survey",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "To get free help with Azure migration from the development team, fill out this survey.",
+                            "link": {
+                                "label": "Take survey",
+                                "uri": "https://aka.ms/jboss-on-azure-survey"
+                            }
+                        }
+                    }
+                ],
+                "visible": true
+            }
+        ],
+        "steps": [
+            {
+                "name": "jbossEAPSettings",
+                "label": "JBoss EAP Settings",
+                "subLabel": {
+                    "preValidation": "Provide the JBoss EAP admin Console settings",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "JBoss EAP Settings",
+                "elements": [
+                    {
+                        "name": "operatingMode",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Use managed domain or standalone hosts to form a cluster",
+                        "defaultValue": "Managed domain",
+                        "toolTip": "Choose to use managed domain or standalone hosts to form a cluster.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Managed domain",
+                                    "value": "managed-domain"
+                                },
+                                {
+                                    "label": "Standalone",
+                                    "value": "standalone"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "jbossEAPUserName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "JBoss EAP Admin username",
+                        "defaultValue": "jbossadmin",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[a-z0-9A-Z]{1,30}$",
+                            "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
+                        },
+                        "toolTip": "Provide User name for JBoss EAP Manager"
+                    },
+                    {
+                        "name": "jbossEAPPassword",
+                        "type": "Microsoft.Common.PasswordBox",
+                        "label": {
+                            "password": "JBoss EAP password",
+                            "confirmPassword": "Confirm password"
+                        },
+                        "toolTip": "Provide Password for JBoss EAP Manager",
+                        "options": {
+                            "hideConfirmation": false
+                        },
+                        "constraints": {
+                            "required": true
+                        },
+                        "visible": true
+                    },
+                    {
+                        "name": "setgracefulShutdownTimeout",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Do you want to configure Graceful Shutdown Timeout?",
+                        "defaultValue": "No",
+                        "toolTip": "Select 'Yes' to provide Graceful Shutdown Timeout and indicate the maximum number of seconds to wait for requests to complete before the server shuts down.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": true
+                                },
+                                {
+                                    "label": "No",
+                                    "value": false
+                                }
+                            ],
+                            "required": false
+                        }
+                    },
+                    {
+                        "name": "gracefulShutdownTimeout",
+                        "type": "Microsoft.Common.TextBox",
+                        "visible": "[steps('jbossEAPSettings').setgracefulShutdownTimeout]",
+                        
+                        "label": "Graceful Shutdown Timeout",
+                        "constraints": {
+                            "required": false,
+                            "regex": "^[a-zA-Z0-9+_.-]{1,30}(@[a-zA-Z0-9.-]+){0,1}$",
+                            "validationMessage": "Please enter a Graceful Shutdown Timeout in seconds"
+                        },
+                        "toolTip": "Please enter a Graceful Shutdown Timeout in seconds"
+                    },
+                    {
+                        "name": "connectToSatelliteServer",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "Selecting 'Yes' here will cause the template to register JBoss EAP hosts to an existing Red Hat Satellite Server. Further configuration may be necessary after deployment.",
+                            "link": {
+                                "label": "Learn more",
+                                "uri": "https://access.redhat.com/products/red-hat-satellite"
+                            }
+                        }
+                    },
+                    {
+                        "name": "connectSatellite",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Connect to an existing Red Hat Satellite Server?",
+                        "defaultValue": "No",
+                        "toolTip": "Select 'Yes' to register JBoss EAP hosts created in preview step to an existing Red Hat.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": true
+                                },
+                                {
+                                    "label": "No",
+                                    "value": false
+                                }
+                            ],
+                            "required": false
+                        }
+                    },
+                    {
+                        "name": "satelliteActivationKey",
+                        "type": "Microsoft.Common.TextBox",
+                        "visible": "[steps('jbossEAPSettings').connectSatellite]",
+                        "label": "The template will need the activation key to register the JBoss EAP host to the Red Hat Satellite server.",
+                        "toolTip": "Activation key",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^.{1,}$",
+                            "validationMessage": "Cannot be empty."
+                        }
+                    },
+                    {
+                        "name": "satelliteOrgName",
+                        "type": "Microsoft.Common.TextBox",
+                        "visible": "[steps('jbossEAPSettings').connectSatellite]",
+                        "label": "The template will need the Organization name to register the JBoss EAP host to the Red Hat Satellite server.",
+                        "toolTip": "Organization name",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^.{1,}$",
+                            "validationMessage": "Cannot be empty."
+                        }
+                    },
+                    {
+                        "name": "satelliteFqdn",
+                        "type": "Microsoft.Common.TextBox",
+                        "visible": "[steps('jbossEAPSettings').connectSatellite]",
+                        "label": "The template will need the Fully Qualified Domain Name of Satellite Server virtual machine.",
+                        "toolTip": "Fully Qualified Domain Name of Satellite Sever VM",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^.{1,}$",
+                            "validationMessage": "Cannot be empty."
+                        }
+                    },
+                    {
+                        "name": "rhsmUserName",
+                        "type": "Microsoft.Common.TextBox",
+                        "visible": "[not(steps('jbossEAPSettings').connectSatellite)]",
+                        "label": "RHSM username",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[a-zA-Z0-9+_.-]{1,30}(@[a-zA-Z0-9.-]+){0,1}$",
+                            "validationMessage": "Please enter a valid Red Hat Subscription Manager user id"
+                        },
+                        "toolTip": "Provide User name for Red Hat subscription Manager"
+                    },
+                    {
+                        "name": "rhsmPassword",
+                        "type": "Microsoft.Common.PasswordBox",
+                        "visible": "[not(steps('jbossEAPSettings').connectSatellite)]",
+                        "label": {
+                            "password": "RHSM password",
+                            "confirmPassword": "Confirm password"
+                        },
+                        "toolTip": "Provide Password for  Red Hat subscription Manager",
+                        "options": {
+                            "hideConfirmation": false
+                        },
+                        "constraints": {
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "rhsmPoolEAP",
+                        "type": "Microsoft.Common.TextBox",
+                        "visible": "[not(steps('jbossEAPSettings').connectSatellite)]",
+                        "label": "RHSM Pool ID with EAP entitlement",
+                        "toolTip": "Red Hat Subscription Manager Pool ID (Should have EAP entitlement)",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[a-f0-9A-F]{32,32}$",
+                            "validationMessage": "The RHSM Pool ID must be 32 characters long and should contain only alphabets between a to f and numbers."
+                        }
+                    },
+                    {
+                        "name": "rhsmPoolRHEL",
+                        "type": "Microsoft.Common.TextBox",
+                        "visible": "[not(steps('jbossEAPSettings').connectSatellite)]",
+                        "label": "RHSM Pool ID with RHEL entitlement",
+                        "toolTip": "Red Hat Subscription Manager Pool ID (Should have RHEL entitlement)",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[a-f0-9A-F]{32,32}$",
+                            "validationMessage": "The RHSM Pool ID must be 32 characters long and should contain only alphabets between a to f and numbers."
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "AppGatewayConfig",
+                "label": "Azure Application Gateway",
+                "subLabel": {
+                    "preValidation": "Configure the Azure Application Gateway resources and settings",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Azure Application Gateway Settings",
+                "elements": [
+                    {
+                        "name": "connectToAGText",
+                        "type": "Microsoft.Common.TextBlock",
+                        "options": {
+                            "text": "Selecting 'Yes' here will cause the template to provision an Azure Application Gateway (WAF_v2 or later SKU), a public IP, and a backend pool consisting of the worker nodes in the cluster.  Further configuration may be necessary after deployment.",
+                            "link": {
+                                "label": "Learn more",
+                                "uri": "https://learn.microsoft.com/en-us/azure/application-gateway/overview"
+                            }
+                        }
+                    },
+                    {
+                        "name": "enableAppGateway",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Connect to Azure Application Gateway?",
+                        "defaultValue": "No",
+                        "toolTip": "Select 'Yes' to create an Azure Application Gateway as the load balancer for the cluster.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": true
+                                },
+                                {
+                                    "label": "No",
+                                    "value": false
+                                }
+                            ],
+                            "required": false
+                        }
+                    },
+                    {
+                        "name": "infoGenerateCertIndentity",
+                        "type": "Microsoft.Common.InfoBox",
+                        "visible": "[steps('AppGatewayConfig').enableAppGateway]",
+                        "options": {
+                            "icon": "Info",
+                            "text": "This option will create a self-signed TLS/SSL certificate for gateway TLS/SSL termination. The Azure identity deploying</br>this feature must have one of the following two sets of Azure role-based access control roles:<br> <li><a href='https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#contributor'>Contributor</a> <b>and</b> <a href='https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#user-access-administrator'>User Access Administrator</a> of the current subscription.</li><li><a href='https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#owner'>Owner</a> of the current subscription.</li>"
+                        }
+                    },
+                    {
+                        "name": "enableCookieBasedAffinity",
+                        "type": "Microsoft.Common.CheckBox",
+                        "label": "Enable cookie based affinity",
+                        "toolTip": "If checked, enable cookie based affinity",
+                        "visible": "[steps('AppGatewayConfig').enableAppGateway]"
+                    }
+                ]
+            },
+            {
+                "name": "NetworkingConfig",
+                "label": "Networking",
+                "subLabel": {
+                    "preValidation": "Configure the virtual machine's networking settings",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Networking",
+                "elements": [
+                    {
+                        "name": "vnetInfo",
+                        "type": "Microsoft.Common.InfoBox",
+                        "options": {
+                            "icon": "Info",
+                            "text": "When creating a new virtual network, the subnet's address prefix is calculated automatically based on the virtual</br>network's address prefix. When using an existing virtual network, a minimum virtual network size of /28 and a minimum</br>subnet size of /29 are required. Additionally, the subnet must have adequate available addresses for the server setup."
+                        }
+                    },
+                    {
+                        "name": "virtualNetworkWithoutAppGateway",
+                        "type": "Microsoft.Network.VirtualNetworkCombo",
+                        "visible": "[not(steps('AppGatewayConfig').enableAppGateway)]",
+                        "label": {
+                            "virtualNetwork": "Virtual network",
+                            "subnets": "Subnets"
+                        },
+                        "toolTip": {
+                            "virtualNetwork": "Name of the virtual network",
+                            "subnets": "Subnets for the virtual network"
+                        },
+                        "defaultValue": {
+                            "name": "[concat('jboss-vnet', substring(guid(), 0, 6))]",
+                            "addressPrefixSize": "/28"
+                        },
+                        "constraints": {
+                            "minAddressPrefixSize": "/28"
+                        },
+                        "subnets": {
+                            "jbossSubnet": {
+                                "label": "Subnet for cluster",
+                                "defaultValue": {
+                                    "name": "jboss-subnet",
+                                    "addressPrefixSize": "/28"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/29",
+                                    "minAddressCount": "[add(int(basics('numberOfInstances')), 1)]",
+                                    "requireContiguousAddresses": false
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "virtualNetworkWithAppGateway",
+                        "type": "Microsoft.Network.VirtualNetworkCombo",
+                        "visible": "[steps('AppGatewayConfig').enableAppGateway]",
+                        "label": {
+                            "virtualNetwork": "Virtual network",
+                            "subnets": "Subnets"
+                        },
+                        "toolTip": {
+                            "virtualNetwork": "Name of the virtual network",
+                            "subnets": "Subnets for the virtual network"
+                        },
+                        "defaultValue": {
+                            "name": "[concat('jboss-vnet', substring(guid(), 0, 6))]",
+                            "addressPrefixSize": "/23"
+                        },
+                        "constraints": {
+                            "minAddressPrefixSize": "/23"
+                        },
+                        "subnets": {
+                            "gatewaySubnet": {
+                                "label": "Subnet for Application Gateway",
+                                "defaultValue": {
+                                    "name": "jboss-appgateway-subnet",
+                                    "addressPrefixSize": "/24"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/24",
+                                    "minAddressCount": 250,
+                                    "requireContiguousAddresses": false
+                                }
+                            },
+                            "jbossSubnet": {
+                                "label": "Subnet for cluster",
+                                "defaultValue": {
+                                    "name": "jboss-subnet",
+                                    "addressPrefixSize": "/28"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/29",
+                                    "minAddressCount": "[add(int(basics('numberOfInstances')), 1)]",
+                                    "requireContiguousAddresses": false
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "section_database",
+                "type": "Microsoft.Common.Section",
+                "label": "Database",
+                "subLabel": {
+                    "preValidation": "Configure integrations to database",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Database",
+                "elements": [
+                    {
+                        "name": "aboutDatabase",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "Select 'Yes' and specify connection settings to configure JBoss EAP to connect to a pre-existing database. The database must be network accessible to the VNET and subnets that are configured in Networking."
+                        }
+                    },
+                    {
+                        "name": "enableDB",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Connect to database?",
+                        "defaultValue": "No",
+                        "toolTip": "Select 'Yes' to configure the connection to a database. The default is 'No'.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": "true"
+                                },
+                                {
+                                    "label": "No",
+                                    "value": "false"
+                                }
+                            ],
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "databaseConnectionInfo",
+                        "type": "Microsoft.Common.Section",
+                        "label": "Connection settings",
+                        "elements": [
+                            {
+                                "name": "databaseType",
+                                "type": "Microsoft.Common.DropDown",
+                                "label": "Choose database type",
+                                "toolTip": "Choose database type",
+                                "defaultValue": "Microsoft SQL Server",
+                                "constraints": {
+                                    "allowedValues": [
+                                        {
+                                            "label": "Microsoft SQL Server",
+                                            "value": "mssqlserver"
+                                        },
+                                        {
+                                            "label": "Oracle database",
+                                            "value": "oracle"
+                                        },
+                                        {
+                                            "label": "MySQL",
+                                            "value": "mysql"
+                                        },
+                                        {
+                                            "label": "PostgreSQL",
+                                            "value": "postgresql"
+                                        }
+                                    ],
+                                    "required": true
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "jdbcDataSourceJNDIName",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "JNDI name",
+                                "toolTip": "The JNDI name for the database JDBC connection",
+                                "defaultValue": "",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^[a-zA-Z0-9:./_-]+$",
+                                    "validationMessage": "The value must only contain letters, numbers, colon (:), hyphens (-), underscores (_), periods (.) and slashes (/)."
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "sqlserverDsConnectionURL",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Data source connection string (jdbc:sqlserver://&lt;host&gt;:&lt;port&gt;;database=&lt;database&gt;)",
+                                "toolTip": "The JDBC connection string for the database",
+                                "defaultValue": "",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^jdbc:sqlserver:\/\/([^\/]+):([0-9]+);database=([\\w-]+)",
+                                    "validationMessage": "A valid JDBC URL for the chosen database type must be provided"
+                                },
+                                "visible": "[equals(steps('section_database').databaseConnectionInfo.databaseType, 'mssqlserver')]"
+                            },
+                            {
+                                "name": "oracleDsConnectionURL",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Data source connection string (jdbc:oracle:thin:@&lt;host&gt;:&lt;port&gt;/&lt;database&gt;)",
+                                "toolTip": "The JDBC connection string for the database",
+                                "defaultValue": "",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^jdbc:oracle:thin:@([^\/]+):([0-9]+)\/([\\w-]+)",
+                                    "validationMessage": "A valid JDBC URL for the chosen database type must be provided"
+                                },
+                                "visible": "[equals(steps('section_database').databaseConnectionInfo.databaseType, 'oracle')]"
+                            },
+                            {
+                                "name": "mysqlDsConnectionURL",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Data source connection string (jdbc:mysql://&lt;host&gt;:&lt;port&gt;/&lt;database&gt;)",
+                                "toolTip": "The JDBC connection string for the database",
+                                "defaultValue": "",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^jdbc:mysql:\/\/([^\/]+):([0-9]+)\/([\\w-]+)",
+                                    "validationMessage": "A valid JDBC URL for the chosen database type must be provided"
+                                },
+                                "visible": "[equals(steps('section_database').databaseConnectionInfo.databaseType, 'mysql')]"
+                            },
+                            {
+                                "name": "postgresDsConnectionURL",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Data source connection string (jdbc:postgresql://&lt;host&gt;:&lt;port&gt;/&lt;database&gt;)",
+                                "toolTip": "The JDBC connection string for the database",
+                                "defaultValue": "",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^jdbc:postgresql:\/\/([^\/]+):([0-9]+)\/([\\w-]+)",
+                                    "validationMessage": "A valid JDBC URL for the chosen database type must be provided"
+                                },
+                                "visible": "[equals(steps('section_database').databaseConnectionInfo.databaseType, 'postgresql')]"
+                            },
+                            {
+                                "name": "dbUser",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Database username",
+                                "toolTip": "Database username",
+                                "defaultValue": "",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^(?=.{1,128}$)[a-zA-Z](?!.*--)(?!.*@@)(?!.*-@)(?!.*@-)[a-zA-Z0-9-@]*[a-zA-Z0-9]$",
+                                    "validationMessage": "The value must be 1-128 characters long and must only contain letters, numbers, hyphen (-) and the at sign, no hyphen allowed at the beginning and the end of the database username."
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "dbPassword",
+                                "type": "Microsoft.Common.PasswordBox",
+                                "label": {
+                                    "password": "Database password",
+                                    "confirmPassword": "Confirm password"
+                                },
+                                "toolTip": "Database password",
+                                "constraints": {
+                                    "required": true
+                                },
+                                "options": {
+                                    "hideConfirmation": false
+                                },
+                                "visible": true
+                            }
+                        ],
+                        "visible": "[bool(steps('section_database').enableDB)]"
+                    }
+                ]
+            }
+        ],
+        "outputs": {
+            "location": "[location()]",
+            "vmName": "[basics('basicsOptional').vmName]",
+            "asName": "[basics('basicsOptional').asName]",
+            "adminUsername": "[basics('adminUsername')]",
+            "authenticationType": "[basics('authenticationType').authenticationType]",
+            "adminPasswordOrSSHKey": "[coalesce(basics('authenticationType').password, basics('authenticationType').sshPublicKey)]",
+            "vmSize": "[basics('vmSize')]",
+            "jdkVersion": "[basics('jdkVersion')]",
+            "numberOfInstances": "[int(basics('numberOfInstances'))]",
+            "virtualNetworkName": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.name, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.name)]",
+            "addressPrefixes": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.addressPrefixes, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.addressPrefixes)]",
+            "subnetName": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.jbossSubnet.name, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.subnets.jbossSubnet.name)]",
+            "subnetPrefix": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.jbossSubnet.addressPrefix, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.subnets.jbossSubnet.addressPrefix)]",
+            "subnetForAppGateway": "[steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.gatewaySubnet.name]",
+            "subnetPrefixForAppGateway": "[steps('NetworkingConfig').virtualNetworkWithAppGateway.subnets.gatewaySubnet.addressPrefix]",
+            "virtualNetworkResourceGroupName": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.resourceGroup, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.resourceGroup)]",
+
+            "bootDiagnostics": "[basics('basicsOptional').bootDiagnostics]",
+            "bootStorageNewOrExisting": "[basics('basicsOptional').storageNewOrExisting]",
+            "existingStorageAccount": "[coalesce(basics('basicsOptional').existingStorageAccount,'')]",
+            "bootStorageAccountName": "[basics('basicsOptional').storageAccountName]",
+            "storageAccountKind": "[basics('basicsOptional').storageAccountKind]",
+            "bootStorageReplication": "[basics('basicsOptional').storageAccountType]",
+            "storageAccountResourceGroupName": "[if(and(equals(basics('basicsOptional').bootDiagnostics, 'on'),not(empty(basics('basicsOptional').existingStorageAccount))), first(skip(split(coalesce(first(filter(basics('basicsOptional').armApiControl.value, (item) => equals(basics('basicsOptional').existingStorageAccount,item.name))),parse('{\"id\":\"/////\"}')).id, '/'),4)), resourceGroup().name)]",
+            "operatingMode": "[steps('jbossEAPSettings').operatingMode]",
+            "jbossEAPUserName": "[steps('jbossEAPSettings').jbossEAPUserName]",
+            "jbossEAPPassword": "[steps('jbossEAPSettings').jbossEAPPassword]",
+            "gracefulShutdownTimeout": "[steps('jbossEAPSettings').gracefulShutdownTimeout]",
+            "rhsmUserName": "[steps('jbossEAPSettings').rhsmUserName]",
+            "rhsmPassword": "[steps('jbossEAPSettings').rhsmPassword]",
+            "rhsmPoolEAP": "[steps('jbossEAPSettings').rhsmPoolEAP]",
+            "rhsmPoolRHEL": "[steps('jbossEAPSettings').rhsmPoolRHEL]",
+            "connectSatellite": "[steps('jbossEAPSettings').connectSatellite]",
+            "satelliteActivationKey": "[steps('jbossEAPSettings').satelliteActivationKey]",
+            "satelliteOrgName": "[steps('jbossEAPSettings').satelliteOrgName]",
+            "satelliteFqdn": "[steps('jbossEAPSettings').satelliteFqdn]",
+            "enableAppGWIngress": "[steps('AppGatewayConfig').enableAppGateway]",
+            "enableCookieBasedAffinity": "[bool(steps('AppGatewayConfig').enableCookieBasedAffinity)]",
+            "virtualNetworkNewOrExisting": "[if(steps('AppGatewayConfig').enableAppGateway, steps('NetworkingConfig').virtualNetworkWithAppGateway.newOrExisting, steps('NetworkingConfig').virtualNetworkWithoutAppGateway.newOrExisting)]",
+
+            "enableDB": "[bool(steps('section_database').enableDB)]",
+            "databaseType": "[steps('section_database').databaseConnectionInfo.databaseType]",
+            "jdbcDataSourceJNDIName": "[steps('section_database').databaseConnectionInfo.jdbcDataSourceJNDIName]",
+            "dsConnectionURL": "[if(equals(steps('section_database').databaseConnectionInfo.databaseType, 'oracle'), steps('section_database').databaseConnectionInfo.oracleDsConnectionURL, if(equals(steps('section_database').databaseConnectionInfo.databaseType, 'mysql'), steps('section_database').databaseConnectionInfo.mysqlDsConnectionURL, if(equals(steps('section_database').databaseConnectionInfo.databaseType, 'postgresql'), steps('section_database').databaseConnectionInfo.postgresDsConnectionURL, steps('section_database').databaseConnectionInfo.sqlserverDsConnectionURL)))]",
+            "dbUser": "[steps('section_database').databaseConnectionInfo.dbUser]",
+            "dbPassword": "[steps('section_database').databaseConnectionInfo.dbPassword]"
+        }
+    }
+}
