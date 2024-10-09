@@ -97,7 +97,6 @@ CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BASE_DIR="$(readlink -f ${CURR_DIR})"
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | log; flag=${PIPESTATUS[0]}
-echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.4-on-RHEL8.4" | log; flag=${PIPESTATUS[0]}
 echo "Storage Account Name: " ${STORAGE_ACCOUNT_NAME} | log; flag=${PIPESTATUS[0]}
 echo "Storage Container Name: " ${CONTAINER_NAME} | log; flag=${PIPESTATUS[0]}
 echo "RHSM_USER: " ${RHSM_USER} | log; flag=${PIPESTATUS[0]}
@@ -165,40 +164,55 @@ else
     #######################
 fi
 
-####################### Install openjdk: is it needed? it should be installed with eap7.4
-echo "Install openjdk, curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
+####################### Install curl, wget, git, unzip, vim
+echo "Install curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
 echo "sudo yum install curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
 sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.8.4-openjdk
 ####################### 
 
-####################### Install openjdk, EAP 7.4 is shipped with JDK 1.8, we are allowing more
-echo "Install curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
-echo "sudo yum install curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
-sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}
-
-## Install specific JDK version
-if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
-    echo "sudo yum install java-17-openjdk -y" | log; flag=${PIPESTATUS[0]}
-    sudo yum install java-17-openjdk -y | log; flag=${PIPESTATUS[0]}
-elif [[ "${JDK_VERSION,,}" == "openjdk11" ]]; then
-    echo "sudo yum install java-11-openjdk -y" | log; flag=${PIPESTATUS[0]}
-    sudo yum install java-11-openjdk -y | log; flag=${PIPESTATUS[0]}
-elif [[ "${JDK_VERSION,,}" == "openjdk8" ]]; then
-    echo "openjdk8 is shipped with EAP 7.4, proceed" | log; flag=${PIPESTATUS[0]}
+####################### Setitng up the satelitte channels for EAP instalation
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+# Install JBoss EAP 8
+    echo "subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
+    subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
+    if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
+        echo "Installing JBoss EAP 8 JDK 17" | log; flag=${PIPESTATUS[0]}
+        echo "yum groupinstall -y jboss-eap8" | log; flag=${PIPESTATUS[0]}
+        yum groupinstall -y jboss-eap8       | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
+    
+    elif [[ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+        echo "Installing JBoss EAP 8 JDK 11" | log; flag=${PIPESTATUS[0]}
+        echo "yum groupinstall -y jboss-eap8-jdk11" | log; flag=${PIPESTATUS[0]}
+        yum groupinstall -y jboss-eap8-jdk11       | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
+    fi
 else
-    echo "${JDK_VERSION} is not supported"
+# Install JBoss EAP 7.4
+    echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
+    subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
+    if [[ "${JDK_VERSION,,}" == "eap7-openjdk17" ]]; then
+        echo "Installing JBoss EAP 7.4 JDK 17" | log; flag=${PIPESTATUS[0]}
+        echo "yum groupinstall -y jboss-eap7-jdk17" | log; flag=${PIPESTATUS[0]}
+        yum groupinstall -y jboss-eap7-jdk17       | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
+    
+    elif [[ "${JDK_VERSION,,}" == "eap7-openjdk11" ]]; then
+        echo "Installing JBoss EAP 7.4 JDK 11" | log; flag=${PIPESTATUS[0]}
+        echo "yum groupinstall -y jboss-eap7-jdk11" | log; flag=${PIPESTATUS[0]}
+        yum groupinstall -y jboss-eap7-jdk11       | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
+    
+     elif [[ "${JDK_VERSION,,}" == "eap7-openjdk8" ]]; then
+        echo "Installing JBoss EAP 7.4 JDK 8" | log; flag=${PIPESTATUS[0]}
+        echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
+        yum groupinstall -y jboss-eap7       | log; flag=${PIPESTATUS[0]}
+        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
+    fi
+
 fi
-####################### 
-
-####################### Install JBoss EAP 7.4
-echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms" | log; flag=${PIPESTATUS[0]}
-subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
-
-echo "Installing JBoss EAP 7.4 repos" | log; flag=${PIPESTATUS[0]}
-echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
-yum groupinstall -y jboss-eap7 | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
 
 echo "sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config" | log; flag=${PIPESTATUS[0]}
 sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]}
@@ -210,7 +224,7 @@ echo "systemctl restart sshd" | log; flag=${PIPESTATUS[0]}
 systemctl restart sshd | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
-if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap7-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
     cp ${BASE_DIR}/enable-elytron-se17-domain.cli $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
     chmod 644 $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
     sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
@@ -253,33 +267,78 @@ echo "Setting configurations in $EAP_RPM_CONF_DOMAIN"
 echo -e "\t-> WILDFLY_HOST_CONFIG=host-slave.xml" | log; flag=${PIPESTATUS[0]}
 echo 'WILDFLY_HOST_CONFIG=host-slave.xml' >> $EAP_RPM_CONF_DOMAIN | log; flag=${PIPESTATUS[0]}
 
-####################### Start the JBoss server and setup eap service
-echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
-echo "systemctl enable eap7-domain.service" | log; flag=${PIPESTATUS[0]}
-systemctl enable eap7-domain.service        | log; flag=${PIPESTATUS[0]}
-####################### 
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+    ####################### Start the JBoss server and setup eap service
+    echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
+    echo "systemctl enable eap8-domain.service" | log; flag=${PIPESTATUS[0]}
+    systemctl enable eap8-domain.service        | log; flag=${PIPESTATUS[0]}
+    ####################### 
 
-###################### Editing eap7-domain.services
-echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
-sed -i 's/After=syslog.target network.target/After=syslog.target network.target NetworkManager-wait-online.service/' /usr/lib/systemd/system/eap7-domain.service | log; flag=${PIPESTATUS[0]}
-echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
-sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap7-domain.service | log; flag=${PIPESTATUS[0]}
-echo "Removing - User=jboss Group=jboss" | log; flag=${PIPESTATUS[0]}
-# sed -i '/User/d' /usr/lib/systemd/system/eap7-domain.service | log; flag=${PIPESTATUS[0]}
-# sed -i '/Group/d' /usr/lib/systemd/system/eap7-domain.service | log; flag=${PIPESTATUS[0]}
-echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
-systemctl daemon-reload | log; flag=${PIPESTATUS[0]}
+    ###################### Editing eap8-domain.services
+    echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
+    sed -i 's/After=syslog.target network.target/After=syslog.target network.target NetworkManager-wait-online.service/' /usr/lib/systemd/system/eap8-domain.service | log; flag=${PIPESTATUS[0]}
+    echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
+    sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap8-domain.service | log; flag=${PIPESTATUS[0]}
+    # Calculating EAP gracefulShutdownTimeout and passing it the service.
+    if  "${gracefulShutdownTimeout,,}" == "-1"; then
+        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec=infinity/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+    else
+        timeoutStopSec = $gracefulShutdownTimeout+20
+        if  "${timeoutStopSec}">90; then
+        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec='${timeoutStopSec}'/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+    fi
+    systemd-analyze verify --recursive-errors=no /usr/lib/systemd/system/eap8-standalone.service
+    echo "Removing - User=jboss Group=jboss" | log; flag=${PIPESTATUS[0]}
+    echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
+    systemctl daemon-reload | log; flag=${PIPESTATUS[0]}
 
-echo "systemctl restart eap7-domain.service"| log; flag=${PIPESTATUS[0]}
-systemctl restart eap7-domain.service       | log; flag=${PIPESTATUS[0]}
-echo "systemctl status eap7-domain.service" | log; flag=${PIPESTATUS[0]}
-systemctl status eap7-domain.service        | log; flag=${PIPESTATUS[0]}
-######################
+    echo "systemctl restart eap8-domain.service"| log; flag=${PIPESTATUS[0]}
+    systemctl restart eap8-domain.service       | log; flag=${PIPESTATUS[0]}
+    echo "systemctl status eap8-domain.service" | log; flag=${PIPESTATUS[0]}
+    systemctl status eap8-domain.service        | log; flag=${PIPESTATUS[0]}
+    ######################
 
-echo "Configuring JBoss EAP management user..." | log; flag=${PIPESTATUS[0]}
-echo "$EAP_HOME/wildfly/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
-$EAP_HOME/wildfly/bin/add-user.sh  -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; exit $flag;  fi
+    echo "Configuring JBoss EAP management user..." | log; flag=${PIPESTATUS[0]}
+    echo "$EAP_HOME/wildfly/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
+    $EAP_HOME/wildfly/bin/add-user.sh  -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; exit $flag;  fi
+
+else
+    ####################### Start the JBoss server and setup eap service
+    echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
+    echo "systemctl enable eap7-domain.service" | log; flag=${PIPESTATUS[0]}
+    systemctl enable eap7-domain.service        | log; flag=${PIPESTATUS[0]}
+    ####################### 
+
+    ###################### Editing eap7-domain.services
+    echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
+    sed -i 's/After=syslog.target network.target/After=syslog.target network.target NetworkManager-wait-online.service/' /usr/lib/systemd/system/eap7-domain.service | log; flag=${PIPESTATUS[0]}
+    echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
+    sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap7-domain.service | log; flag=${PIPESTATUS[0]}
+    # Calculating EAP gracefulShutdownTimeout and passing it the service.
+    if  "${gracefulShutdownTimeout,,}" == "-1"; then
+        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec=infinity/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+    else
+        timeoutStopSec = $gracefulShutdownTimeout+20
+        if  "${timeoutStopSec}">90; then
+        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec='${timeoutStopSec}'/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+    fi
+    systemd-analyze verify --recursive-errors=no /usr/lib/systemd/system/eap8-standalone.service
+    echo "Removing - User=jboss Group=jboss" | log; flag=${PIPESTATUS[0]}
+    echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
+    systemctl daemon-reload | log; flag=${PIPESTATUS[0]}
+
+    echo "systemctl restart eap7-domain.service"| log; flag=${PIPESTATUS[0]}
+    systemctl restart eap7-domain.service       | log; flag=${PIPESTATUS[0]}
+    echo "systemctl status eap7-domain.service" | log; flag=${PIPESTATUS[0]}
+    systemctl status eap7-domain.service        | log; flag=${PIPESTATUS[0]}
+    ######################
+
+    echo "Configuring JBoss EAP management user..." | log; flag=${PIPESTATUS[0]}
+    echo "$EAP_HOME/wildfly/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
+    $EAP_HOME/wildfly/bin/add-user.sh  -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
+    if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; exit $flag;  fi
+fi
 
 # Seeing a race condition timing error so sleep to delay
 sleep 20
