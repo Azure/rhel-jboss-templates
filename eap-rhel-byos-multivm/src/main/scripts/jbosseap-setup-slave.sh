@@ -171,7 +171,7 @@ sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.
 ####################### 
 
 ####################### Setitng up the satelitte channels for EAP instalation
-if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
 # Install JBoss EAP 8
     echo "subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
     subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
@@ -224,7 +224,7 @@ echo "systemctl restart sshd" | log; flag=${PIPESTATUS[0]}
 systemctl restart sshd | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
-if [[ "${JDK_VERSION,,}" == "eap7-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap7-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
     cp ${BASE_DIR}/enable-elytron-se17-domain.cli $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
     chmod 644 $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
     sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
@@ -267,7 +267,7 @@ echo "Setting configurations in $EAP_RPM_CONF_DOMAIN"
 echo -e "\t-> WILDFLY_HOST_CONFIG=host-slave.xml" | log; flag=${PIPESTATUS[0]}
 echo 'WILDFLY_HOST_CONFIG=host-slave.xml' >> $EAP_RPM_CONF_DOMAIN | log; flag=${PIPESTATUS[0]}
 
-if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
     ####################### Start the JBoss server and setup eap service
     echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
     echo "systemctl enable eap8-domain.service" | log; flag=${PIPESTATUS[0]}
