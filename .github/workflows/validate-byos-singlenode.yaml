@@ -1,5 +1,5 @@
 name: Validate byos offer
-run-name: Validate byos offer with db:${{ inputs.jdkVersion }} and jdk:${{ inputs.databaseType }}
+run-name: Validate byos offer with with `jdk`:${{ inputs.jdkVersion }} and `db`:${{ inputs.databaseType }}
 
 on:
   workflow_dispatch:
