@@ -68,8 +68,8 @@ cat <<EOF > ${parametersPath}
         "jbossEAPUserName": {
             "value": "${jbossEAPUserName}"
         },
-        "gracefulShutdownTimeout": {
-            "value": "${gracefulShutdownTimeout}"
+        "jbossEAPPassword": {
+            "value": "${jbossEAPPassword}"
         },
         "rhsmUserName": {
             "value": "${rhsmUserName}"
