@@ -272,6 +272,11 @@ jobs:
                 inlineScript: |
                     echo "create resource group" ${{ env.singleResourceGroup }}
                     az group create --verbose --name ${{ env.singleResourceGroup }} --location ${{ env.location }}
+            - name: Setup tmate session
+              uses: mxschmitt/action-tmate@v3
+              timeout-minutes: 20
+              with:
+                detached: true
             - name: Deploy JBoss EAP single
               id: deploy-single
               uses: azure/CLI@v1
@@ -284,8 +289,6 @@ jobs:
                     --name single \
                     --parameters @rhel-jboss-templates/eap-rhel-byos/src/test/parameters-test-single.json \
                     --template-file rhel-jboss-templates/eap-rhel-byos/mainTemplate.json
-            - name: Setup tmate session
-              uses: mxschmitt/action-tmate@v3
             - name: Get public IP
               id: get_public_ip
               uses: azure/CLI@v1
