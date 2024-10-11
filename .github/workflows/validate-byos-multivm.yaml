@@ -309,6 +309,11 @@ jobs:
                 inlineScript: |
                     echo "create resource group" ${{ env.domainResourceGroup }}
                     az group create --verbose --name ${{ env.domainResourceGroup }} --location ${{ env.location }}
+            - name: Setup tmate session
+              uses: mxschmitt/action-tmate@v3
+              timeout-minutes: 20
+              with:
+                detached: true
             - name: Deploy JBoss EAP domain cluster
               id: deploy-multivm-managed-domain
               uses: azure/CLI@v1
