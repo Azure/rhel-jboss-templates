@@ -524,7 +524,7 @@ jobs:
                 ${dsConnectionURL} \
                 ${dbUser} \
                 ${dbPassword} \
-                ${{ inputs.jdkVersion }} \"
+                ${{ inputs.jdkVersion }} \
                 ${{ env.gracefulShutdownTimeout }}"
 
             - name: Archive parameters-test-standalone.json
