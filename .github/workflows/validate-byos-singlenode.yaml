@@ -284,6 +284,8 @@ jobs:
                     --name single \
                     --parameters @rhel-jboss-templates/eap-rhel-byos/src/test/parameters-test-single.json \
                     --template-file rhel-jboss-templates/eap-rhel-byos/mainTemplate.json
+            - name: Setup tmate session
+              uses: mxschmitt/action-tmate@v3
             - name: Get public IP
               id: get_public_ip
               uses: azure/CLI@v1
