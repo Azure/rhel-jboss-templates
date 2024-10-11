@@ -23,9 +23,9 @@ on:
         options:
           - eap8-openjdk17
           - eap8-openjdk11
-          - eap7-openjdk17
-          - eap7-openjdk11
-          - eap7-openjdk8
+          - eap74-openjdk17
+          - eap74-openjdk11
+          - eap74-openjdk8
       timeWaitBeforeDelete:
         description: 'Choose the wait time before deleting resources: 30m (30 minutes), 2h (2 hours), 6h (6 hours), 0 (immediately)'
         required: true

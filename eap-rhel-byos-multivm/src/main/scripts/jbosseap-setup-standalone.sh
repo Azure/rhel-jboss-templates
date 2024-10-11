@@ -183,19 +183,19 @@ else
     echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
     subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
     if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
-    if [[ "${JDK_VERSION,,}" == "eap7-openjdk17" ]]; then
+    if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" ]]; then
         echo "Installing JBoss EAP 7.4 JDK 17" | log; flag=${PIPESTATUS[0]}
         echo "yum groupinstall -y jboss-eap7-jdk17" | log; flag=${PIPESTATUS[0]}
         yum groupinstall -y jboss-eap7-jdk17       | log; flag=${PIPESTATUS[0]}
         if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
     
-    elif [[ "${JDK_VERSION,,}" == "eap7-openjdk11" ]]; then
+    elif [[ "${JDK_VERSION,,}" == "eap74-openjdk11" ]]; then
         echo "Installing JBoss EAP 7.4 JDK 11" | log; flag=${PIPESTATUS[0]}
         echo "yum groupinstall -y jboss-eap7-jdk11" | log; flag=${PIPESTATUS[0]}
         yum groupinstall -y jboss-eap7-jdk11       | log; flag=${PIPESTATUS[0]}
         if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
     
-     elif [[ "${JDK_VERSION,,}" == "eap7-openjdk8" ]]; then
+     elif [[ "${JDK_VERSION,,}" == "eap74-openjdk8" ]]; then
         echo "Installing JBoss EAP 7.4 JDK 8" | log; flag=${PIPESTATUS[0]}
         echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
         yum groupinstall -y jboss-eap7       | log; flag=${PIPESTATUS[0]}
