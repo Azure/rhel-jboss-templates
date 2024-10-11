@@ -280,12 +280,13 @@ if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-open
     echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
     sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap8-domain.service | log; flag=${PIPESTATUS[0]}
     # Calculating EAP gracefulShutdownTimeout and passing it the service.
-    if  "${gracefulShutdownTimeout,,}" == "-1"; then
+    if  [[ "${gracefulShutdownTimeout,,}" == "-1" ]]; then
         sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec=infinity/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
     else
-        timeoutStopSec = $gracefulShutdownTimeout+20
+        timeoutStopSec=$gracefulShutdownTimeout+20
         if  "${timeoutStopSec}">90; then
         sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec='${timeoutStopSec}'/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+        fi
     fi
     systemd-analyze verify --recursive-errors=no /usr/lib/systemd/system/eap8-standalone.service
     echo "Removing - User=jboss Group=jboss" | log; flag=${PIPESTATUS[0]}
@@ -316,12 +317,13 @@ else
     echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
     sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap7-domain.service | log; flag=${PIPESTATUS[0]}
     # Calculating EAP gracefulShutdownTimeout and passing it the service.
-    if  "${gracefulShutdownTimeout,,}" == "-1"; then
+    if [[ "${gracefulShutdownTimeout,,}" == "-1" ]]; then
         sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec=infinity/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
     else
-        timeoutStopSec = $gracefulShutdownTimeout+20
+        timeoutStopSec=$gracefulShutdownTimeout+20
         if  "${timeoutStopSec}">90; then
         sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec='${timeoutStopSec}'/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+        fi
     fi
     systemd-analyze verify --recursive-errors=no /usr/lib/systemd/system/eap8-standalone.service
     echo "Removing - User=jboss Group=jboss" | log; flag=${PIPESTATUS[0]}
