@@ -227,7 +227,11 @@ systemctl restart sshd | log; flag=${PIPESTATUS[0]}
 if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
     cp ${BASE_DIR}/enable-elytron-se17-domain.cli $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
     chmod 644 $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
-    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
+    if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" ]]; then
+        sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli --commands="set HOST_CONFIG_PRIMARY=host-master.xml; set HOST_CONFIG_SECONDARY=host-slave.xml"
+    else
+        sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli --commands="set HOST_CONFIG_PRIMARY=host-primary.xml; set HOST_CONFIG_SECONDARY=host-secondary.xml"
+    fi
 fi
 
 echo "Updating domain.xml" | log; flag=${PIPESTATUS[0]}
