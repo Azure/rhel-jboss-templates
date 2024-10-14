@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  offerName: "eap74-rhel8-byos-multivm"
+  offerName: "eap-rhel-byos-multivm"
 
 jobs:
   preflight:

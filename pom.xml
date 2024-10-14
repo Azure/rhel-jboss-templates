@@ -42,8 +42,8 @@
         <template.azure-common.properties.url>file:///${rootmoduledir}/utilities/azure-common.properties</template.azure-common.properties.url>
 
         <version.eap-rhel-byos>1.0.20</version.eap-rhel-byos>
-        <version.eap74-rhel8-byos-multivm>1.0.27</version.eap74-rhel8-byos-multivm>
-        <version.eap74-rhel8-byos-vmss>1.0.25</version.eap74-rhel8-byos-vmss>
+        <version.eap-rhel-byos-multivm>1.0.27</version.eap-rhel-byos-multivm>
+        <version.eap-rhel-byos-vmss>1.0.25</version.eap-rhel-byos-vmss>
         <version.eap74-rhel8-payg>1.0.31</version.eap74-rhel8-payg>
         <version.eap74-rhel8-payg-multivm>1.0.32</version.eap74-rhel8-payg-multivm>
         <version.eap74-rhel8-payg-vmss>1.0.33</version.eap74-rhel8-payg-vmss>
@@ -52,8 +52,8 @@
 
     <modules>
         <module>eap-rhel-byos</module>
-        <module>eap74-rhel8-byos-multivm</module>
-        <module>eap74-rhel8-byos-vmss</module>
+        <module>eap-rhel-byos-multivm</module>
+        <module>eap-rhel-byos-vmss</module>
         <module>eap74-rhel8-payg</module>
         <module>eap74-rhel8-payg-multivm</module>
         <module>eap74-rhel8-payg-vmss</module>
