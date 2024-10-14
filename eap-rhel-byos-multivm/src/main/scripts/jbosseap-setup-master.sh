@@ -245,6 +245,10 @@ echo -e "\t public:inet-address"        | log; flag=${PIPESTATUS[0]}
 echo -e "\t set transaction id"         | log; flag=${PIPESTATUS[0]}
 
 if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+    echo "EAP_HOME is" $EAP_HOME | log; flag=${PIPESTATUS[0]}
+    echo "setting up domain.xml for EAP 8" | log; flag=${PIPESTATUS[0]}
+    echo HOST_VM_IP=$HOST_VM_IP | log; flag=${PIPESTATUS[0]}
+
     sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
     'embed-host-controller --std-out=echo --domain-config=domain.xml --host-config=host-primary.xml',\
     ':write-attribute(name=name,value=domain1)',\
@@ -270,6 +274,10 @@ if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-open
     "/host=primary/interface=management:write-attribute(name=inet-address, value=${HOST_VM_IP})",\
     "/host=primary/interface=public:add(inet-address=${HOST_VM_IP})" | log; flag=${PIPESTATUS[0]}
 else
+    echo "EAP_HOME is" $EAP_HOME | log; flag=${PIPESTATUS[0]}
+    echo "setting up domain.xml for EAP 7" | log; flag=${PIPESTATUS[0]}
+    echo HOST_VM_IP=$HOST_VM_IP | log; flag=${PIPESTATUS[0]}
+
     sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
     'embed-host-controller --std-out=echo --domain-config=domain.xml --host-config=host-master.xml',\
     ':write-attribute(name=name,value=domain1)',\
