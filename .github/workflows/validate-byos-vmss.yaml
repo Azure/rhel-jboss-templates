@@ -65,7 +65,7 @@ env:
     disableLoadBalancer: disable
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
     offerName: "eap-rhel-byos-vmss"
-    gracefulShutdownTimeout: "0"
+    gracefulShutdownTimeout: "-1"
 
 jobs:
     preflight:

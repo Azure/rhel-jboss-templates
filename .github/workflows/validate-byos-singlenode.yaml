@@ -61,7 +61,7 @@ env:
     nsgName: jbosseap-nsg
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
     offerName: "eap-rhel-byos"
-    gracefulShutdownTimeout: "0"
+    gracefulShutdownTimeout: "-1"
 
 jobs:
     preflight:

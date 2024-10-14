@@ -66,7 +66,7 @@ env:
     gitEmail: ${{ secrets.USER_EMAIL }}
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
     offerName: "eap-rhel-byos-multivm"
-    gracefulShutdownTimeout: "0"
+    gracefulShutdownTimeout: "-1"
 
 jobs:
     preflight:
