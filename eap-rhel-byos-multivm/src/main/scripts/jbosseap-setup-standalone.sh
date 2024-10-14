@@ -290,9 +290,9 @@ if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-open
 else
     ####################### Start the JBoss server and setup eap service
     echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
-    echo "systemctl enable eap8-standalone.service" | log; flag=${PIPESTATUS[0]}
-    systemctl enable eap8-standalone.service        | log; flag=${PIPESTATUS[0]}
-    ####################### 
+    echo "systemctl enable eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
+    systemctl enable eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
+    #######################
 
     ###################### Editing eap7-standalone.services
     echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
@@ -301,14 +301,14 @@ else
     sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
     # Calculating EAP gracefulShutdownTimeout and passing it the service.
     if  [[ "${gracefulShutdownTimeout,,}" == "-1"  ]]; then
-        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec=infinity/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec=infinity/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
     else
         timeoutStopSec=$gracefulShutdownTimeout+20
         if  "${timeoutStopSec}">90; then
-        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec='${timeoutStopSec}'/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec='${timeoutStopSec}'/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
         fi
     fi
-    systemd-analyze verify --recursive-errors=no /usr/lib/systemd/system/eap8-standalone.service
+    systemd-analyze verify --recursive-errors=no /usr/lib/systemd/system/eap7-standalone.service
     echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
     systemctl daemon-reload | log; flag=${PIPESTATUS[0]}
 
