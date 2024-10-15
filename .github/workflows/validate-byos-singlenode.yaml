@@ -272,11 +272,6 @@ jobs:
                 inlineScript: |
                     echo "create resource group" ${{ env.singleResourceGroup }}
                     az group create --verbose --name ${{ env.singleResourceGroup }} --location ${{ env.location }}
-            - name: Setup tmate session
-              uses: mxschmitt/action-tmate@v3
-              timeout-minutes: 20
-              with:
-                detached: true
             - name: Deploy JBoss EAP single
               id: deploy-single
               uses: azure/CLI@v1

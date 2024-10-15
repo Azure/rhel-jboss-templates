@@ -276,11 +276,6 @@ jobs:
                 inlineScript: |
                     echo "create resource group" ${{ env.vmssResourceGroup }}
                     az group create --verbose --name ${{ env.vmssResourceGroup }} --location ${{ env.location }}
-            - name: Setup tmate session
-              uses: mxschmitt/action-tmate@v3
-              timeout-minutes: 20
-              with:
-                detached: true
             - name: Deploy JBoss EAP VMSS
               id: deploy-vmss
               uses: azure/CLI@v1
