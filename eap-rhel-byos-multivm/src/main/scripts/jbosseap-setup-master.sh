@@ -250,58 +250,58 @@ if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-open
     echo HOST_VM_IP=$HOST_VM_IP | log; flag=${PIPESTATUS[0]}
 
     sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
-    'embed-host-controller --std-out=echo --domain-config=domain.xml --host-config=host-primary.xml',\
-    ':write-attribute(name=name,value=domain1)',\
-    '/profile=ha/subsystem=jgroups/stack=tcp:remove',\
-    '/profile=ha/subsystem=jgroups/stack=tcp:add()',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/transport=TCP:add(socket-binding=jgroups-tcp,properties={ip_mcast=false})',\
-    "/profile=ha/subsystem=jgroups/stack=tcp/protocol=azure.AZURE_PING:add(properties={storage_account_name=\"${STORAGE_ACCOUNT_NAME}\", storage_access_key=\"${STORAGE_ACCESS_KEY}\", container=\"${CONTAINER_NAME}\"})",\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=MERGE3:add',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=FD_SOCK:add(socket-binding=jgroups-tcp-fd)',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=FD_ALL:add',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=VERIFY_SUSPECT:add',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.NAKACK2:add(properties={use_mcast_xmit=false,use_mcast_xmit_req=false})',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=UNICAST3:add',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.STABLE:add',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.GMS:add',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=MFC:add',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=FRAG3:add',\
-    '/profile=ha/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
-    '/server-group=main-server-group:write-attribute(name="profile", value="ha")',\
-    '/server-group=main-server-group:write-attribute(name="socket-binding-group", value="ha-sockets")',\
-    "/host=primary/subsystem=elytron/http-authentication-factory=management-http-authentication:write-attribute(name=mechanism-configurations,value=[{mechanism-name=DIGEST,mechanism-realm-configurations=[{realm-name=ManagementRealm}]}])",\
-    "/host=primary/interface=unsecure:add(inet-address=${HOST_VM_IP})",\
-    "/host=primary/interface=management:write-attribute(name=inet-address, value=${HOST_VM_IP})",\
-    "/host=primary/interface=public:add(inet-address=${HOST_VM_IP})" | log; flag=${PIPESTATUS[0]}
+'embed-host-controller --std-out=echo --domain-config=domain.xml --host-config=host-primary.xml',\
+':write-attribute(name=name,value=domain1)',\
+'/profile=ha/subsystem=jgroups/stack=tcp:remove',\
+'/profile=ha/subsystem=jgroups/stack=tcp:add()',\
+'/profile=ha/subsystem=jgroups/stack=tcp/transport=TCP:add(socket-binding=jgroups-tcp,properties={ip_mcast=false})',\
+"/profile=ha/subsystem=jgroups/stack=tcp/protocol=azure.AZURE_PING:add(properties={storage_account_name=\"${STORAGE_ACCOUNT_NAME}\", storage_access_key=\"${STORAGE_ACCESS_KEY}\", container=\"${CONTAINER_NAME}\"})",\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=MERGE3:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=FD_SOCK:add(socket-binding=jgroups-tcp-fd)',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=FD_ALL:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=VERIFY_SUSPECT:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.NAKACK2:add(properties={use_mcast_xmit=false,use_mcast_xmit_req=false})',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=UNICAST3:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.STABLE:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.GMS:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=MFC:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=FRAG3:add',\
+'/profile=ha/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
+'/server-group=main-server-group:write-attribute(name="profile", value="ha")',\
+'/server-group=main-server-group:write-attribute(name="socket-binding-group", value="ha-sockets")',\
+"/host=primary/subsystem=elytron/http-authentication-factory=management-http-authentication:write-attribute(name=mechanism-configurations,value=[{mechanism-name=DIGEST,mechanism-realm-configurations=[{realm-name=ManagementRealm}]}])",\
+"/host=primary/interface=unsecure:add(inet-address=${HOST_VM_IP})",\
+"/host=primary/interface=management:write-attribute(name=inet-address, value=${HOST_VM_IP})",\
+"/host=primary/interface=public:add(inet-address=${HOST_VM_IP})" | log; flag=${PIPESTATUS[0]}
 else
     echo "EAP_HOME is" $EAP_HOME | log; flag=${PIPESTATUS[0]}
     echo "setting up domain.xml for EAP 7" | log; flag=${PIPESTATUS[0]}
     echo HOST_VM_IP=$HOST_VM_IP | log; flag=${PIPESTATUS[0]}
 
     sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
-    'embed-host-controller --std-out=echo --domain-config=domain.xml --host-config=host-master.xml',\
-    ':write-attribute(name=name,value=domain1)',\
-    '/profile=ha/subsystem=jgroups/stack=tcp:remove',\
-    '/profile=ha/subsystem=jgroups/stack=tcp:add()',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/transport=TCP:add(socket-binding=jgroups-tcp,properties={ip_mcast=false})',\
-    "/profile=ha/subsystem=jgroups/stack=tcp/protocol=azure.AZURE_PING:add(properties={storage_account_name=\"${STORAGE_ACCOUNT_NAME}\", storage_access_key=\"${STORAGE_ACCESS_KEY}\", container=\"${CONTAINER_NAME}\"})",\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=MERGE3:add',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=FD_SOCK:add(socket-binding=jgroups-tcp-fd)',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=FD_ALL:add',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=VERIFY_SUSPECT:add',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.NAKACK2:add(properties={use_mcast_xmit=false,use_mcast_xmit_req=false})',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=UNICAST3:add',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.STABLE:add',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.GMS:add',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=MFC:add',\
-    '/profile=ha/subsystem=jgroups/stack=tcp/protocol=FRAG3:add',\
-    '/profile=ha/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
-    '/server-group=main-server-group:write-attribute(name="profile", value="ha")',\
-    '/server-group=main-server-group:write-attribute(name="socket-binding-group", value="ha-sockets")',\
-    "/host=master/subsystem=elytron/http-authentication-factory=management-http-authentication:write-attribute(name=mechanism-configurations,value=[{mechanism-name=DIGEST,mechanism-realm-configurations=[{realm-name=ManagementRealm}]}])",\
-    "/host=master/interface=unsecure:add(inet-address=${HOST_VM_IP})",\
-    "/host=master/interface=management:write-attribute(name=inet-address, value=${HOST_VM_IP})",\
-    "/host=master/interface=public:add(inet-address=${HOST_VM_IP})" | log; flag=${PIPESTATUS[0]}
+'embed-host-controller --std-out=echo --domain-config=domain.xml --host-config=host-master.xml',\
+':write-attribute(name=name,value=domain1)',\
+'/profile=ha/subsystem=jgroups/stack=tcp:remove',\
+'/profile=ha/subsystem=jgroups/stack=tcp:add()',\
+'/profile=ha/subsystem=jgroups/stack=tcp/transport=TCP:add(socket-binding=jgroups-tcp,properties={ip_mcast=false})',\
+"/profile=ha/subsystem=jgroups/stack=tcp/protocol=azure.AZURE_PING:add(properties={storage_account_name=\"${STORAGE_ACCOUNT_NAME}\", storage_access_key=\"${STORAGE_ACCESS_KEY}\", container=\"${CONTAINER_NAME}\"})",\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=MERGE3:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=FD_SOCK:add(socket-binding=jgroups-tcp-fd)',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=FD_ALL:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=VERIFY_SUSPECT:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.NAKACK2:add(properties={use_mcast_xmit=false,use_mcast_xmit_req=false})',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=UNICAST3:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.STABLE:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.GMS:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=MFC:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=FRAG3:add',\
+'/profile=ha/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
+'/server-group=main-server-group:write-attribute(name="profile", value="ha")',\
+'/server-group=main-server-group:write-attribute(name="socket-binding-group", value="ha-sockets")',\
+"/host=master/subsystem=elytron/http-authentication-factory=management-http-authentication:write-attribute(name=mechanism-configurations,value=[{mechanism-name=DIGEST,mechanism-realm-configurations=[{realm-name=ManagementRealm}]}])",\
+"/host=master/interface=unsecure:add(inet-address=${HOST_VM_IP})",\
+"/host=master/interface=management:write-attribute(name=inet-address, value=${HOST_VM_IP})",\
+"/host=master/interface=public:add(inet-address=${HOST_VM_IP})" | log; flag=${PIPESTATUS[0]}
 fi
 
 ####################### Save domain.xml to file share services for slave hosts.
