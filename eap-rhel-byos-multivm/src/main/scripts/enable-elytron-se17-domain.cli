@@ -380,9 +380,9 @@ stop-embedded-host-controller
 #
 # host-master.xml/host-primary.xml
 
-echo INFO: Modifying ${HOST_CONFIG_PRIMARY}
+echo INFO: Modifying ${host_config_primary}
 
-embed-host-controller --host-config=${HOST_CONFIG_PRIMARY}
+embed-host-controller --host-config=${host_config_primary:host-master.xml}
 
 set host=`/:read-children-names(child-type=host)`
 
@@ -415,9 +415,9 @@ stop-embedded-host-controller
 #
 # host-slave.xml/host-secondary.xml
 
-echo INFO: Modifying ${HOST_CONFIG_SECONDARY}
+echo INFO: Modifying ${host_config_secondary}
 
-embed-host-controller --host-config=${HOST_CONFIG_SECONDARY}
+embed-host-controller --host-config=${host_config_secondary:host-slave.xml}
 
 set host=`/:read-children-names(child-type=host)`
 
