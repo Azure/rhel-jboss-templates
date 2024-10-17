@@ -38,7 +38,7 @@ function mountFileShare()
   if [ $flag != 0 ] ; then echo "Failed to mount //${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH" >&2 log; exit $flag;  fi
 }
 
-# Copy domain.xml file from master host vm to share point
+# Copy domain.xml file from master/primary host vm to share point
 function copyDomainXmlFileToShare()
 {
   sudo -u jboss cp $EAP_HOME/wildfly/domain/configuration/domain.xml ${MOUNT_POINT_PATH}/.
@@ -48,22 +48,6 @@ function copyDomainXmlFileToShare()
 
 echo "Red Hat JBoss EAP Cluster Intallation Start " | log; flag=${PIPESTATUS[0]}
 /bin/date +%H:%M:%S | log; flag=${PIPESTATUS[0]}
-
-if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
-    export EAP_LAUNCH_CONFIG="/opt/rh/eap8/root/usr/share/wildfly/bin/domain.conf"
-    echo 'export EAP_RPM_CONF_DOMAIN="/etc/opt/rh/eap8/wildfly/eap8-domain.conf"' >> ~/.bash_profile
-    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share"' >> ~/.bash_profile
-    source ~/.bash_profile
-    touch /etc/profile.d/eap_env.sh
-    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share"' >> /etc/profile.d/eap_env.sh
-else
-    export EAP_LAUNCH_CONFIG="/opt/rh/eap7/root/usr/share/wildfly/bin/domain.conf"
-    echo 'export EAP_RPM_CONF_DOMAIN="/etc/opt/rh/eap7/wildfly/eap7-domain.conf"' >> ~/.bash_profile
-    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> ~/.bash_profile
-    source ~/.bash_profile
-    touch /etc/profile.d/eap_env.sh
-    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> /etc/profile.d/eap_env.sh
-fi
 
 JBOSS_EAP_USER=${1}
 JBOSS_EAP_PASSWORD_BASE64=${2}
@@ -97,6 +81,23 @@ echo "Storage Container Name: " ${CONTAINER_NAME} | log; flag=${PIPESTATUS[0]}
 echo "RHSM_USER: " ${RHSM_USER} | log; flag=${PIPESTATUS[0]}
 
 echo "Folder where script is executing ${pwd}" | log; flag=${PIPESTATUS[0]}
+
+##################### Configure EAP_LAUNCH_CONFIG and EAP_HOME
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+    export EAP_LAUNCH_CONFIG="/opt/rh/eap8/root/usr/share/wildfly/bin/domain.conf"
+    echo 'export EAP_RPM_CONF_DOMAIN="/etc/opt/rh/eap8/wildfly/eap8-domain.conf"' >> ~/.bash_profile
+    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share"' >> ~/.bash_profile
+    source ~/.bash_profile
+    touch /etc/profile.d/eap_env.sh
+    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share"' >> /etc/profile.d/eap_env.sh
+else
+    export EAP_LAUNCH_CONFIG="/opt/rh/eap7/root/usr/share/wildfly/bin/domain.conf"
+    echo 'export EAP_RPM_CONF_DOMAIN="/etc/opt/rh/eap7/wildfly/eap7-domain.conf"' >> ~/.bash_profile
+    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> ~/.bash_profile
+    source ~/.bash_profile
+    touch /etc/profile.d/eap_env.sh
+    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> /etc/profile.d/eap_env.sh
+fi
 
 ####################### Configuring firewall for ports
 echo "Configure firewall for ports 8080, 9990, 45700, 7600" | log; flag=${PIPESTATUS[0]}
@@ -170,7 +171,7 @@ sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.
 ####################### 
 
 ####################### Setitng up the satelitte channels for EAP instalation
-if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17"  ||  "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
 # Install JBoss EAP 8
     echo "subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
     subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
@@ -192,19 +193,19 @@ else
     echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
     subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
     if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
-    if [[ "${JDK_VERSION,,}" == "eap7-openjdk17" ]]; then
+    if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" ]]; then
         echo "Installing JBoss EAP 7.4 JDK 17" | log; flag=${PIPESTATUS[0]}
         echo "yum groupinstall -y jboss-eap7-jdk17" | log; flag=${PIPESTATUS[0]}
         yum groupinstall -y jboss-eap7-jdk17       | log; flag=${PIPESTATUS[0]}
         if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
     
-    elif [[ "${JDK_VERSION,,}" == "eap7-openjdk11" ]]; then
+    elif [[ "${JDK_VERSION,,}" == "eap74-openjdk11" ]]; then
         echo "Installing JBoss EAP 7.4 JDK 11" | log; flag=${PIPESTATUS[0]}
         echo "yum groupinstall -y jboss-eap7-jdk11" | log; flag=${PIPESTATUS[0]}
         yum groupinstall -y jboss-eap7-jdk11       | log; flag=${PIPESTATUS[0]}
         if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
     
-     elif [[ "${JDK_VERSION,,}" == "eap7-openjdk8" ]]; then
+     elif [[ "${JDK_VERSION,,}" == "eap74-openjdk8" ]]; then
         echo "Installing JBoss EAP 7.4 JDK 8" | log; flag=${PIPESTATUS[0]}
         echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
         yum groupinstall -y jboss-eap7       | log; flag=${PIPESTATUS[0]}
@@ -223,10 +224,14 @@ echo "systemctl restart sshd" | log; flag=${PIPESTATUS[0]}
 systemctl restart sshd | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
-if [[ "${JDK_VERSION,,}" == "eap7-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
     cp ${BASE_DIR}/enable-elytron-se17-domain.cli $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
     chmod 644 $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
-    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
+    if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" ]]; then
+        sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli -Dhost_config_primary=host-master.xml -Dhost_config_secondary=host-slave.xml
+    else
+        sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli -Dhost_config_primary=host-primary.xml -Dhost_config_secondary=host-secondary.xml
+    fi
 fi
 
 echo "Updating domain.xml" | log; flag=${PIPESTATUS[0]}
@@ -239,7 +244,41 @@ echo -e "\t management:inet-address"    | log; flag=${PIPESTATUS[0]}
 echo -e "\t public:inet-address"        | log; flag=${PIPESTATUS[0]}
 echo -e "\t set transaction id"         | log; flag=${PIPESTATUS[0]}
 
-sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+    echo "EAP_HOME is" $EAP_HOME | log; flag=${PIPESTATUS[0]}
+    echo "setting up domain.xml for EAP 8" | log; flag=${PIPESTATUS[0]}
+    echo HOST_VM_IP=$HOST_VM_IP | log; flag=${PIPESTATUS[0]}
+
+    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
+'embed-host-controller --std-out=echo --domain-config=domain.xml --host-config=host-primary.xml',\
+':write-attribute(name=name,value=domain1)',\
+'/profile=ha/subsystem=jgroups/stack=tcp:remove',\
+'/profile=ha/subsystem=jgroups/stack=tcp:add()',\
+'/profile=ha/subsystem=jgroups/stack=tcp/transport=TCP:add(socket-binding=jgroups-tcp,properties={ip_mcast=false})',\
+"/profile=ha/subsystem=jgroups/stack=tcp/protocol=azure.AZURE_PING:add(properties={storage_account_name=\"${STORAGE_ACCOUNT_NAME}\", storage_access_key=\"${STORAGE_ACCESS_KEY}\", container=\"${CONTAINER_NAME}\"})",\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=MERGE3:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=FD_SOCK:add(socket-binding=jgroups-tcp-fd)',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=FD_ALL:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=VERIFY_SUSPECT:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.NAKACK2:add(properties={use_mcast_xmit=false,use_mcast_xmit_req=false})',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=UNICAST3:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.STABLE:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=pbcast.GMS:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=MFC:add',\
+'/profile=ha/subsystem=jgroups/stack=tcp/protocol=FRAG3:add',\
+'/profile=ha/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
+'/server-group=main-server-group:write-attribute(name="profile", value="ha")',\
+'/server-group=main-server-group:write-attribute(name="socket-binding-group", value="ha-sockets")',\
+"/host=primary/subsystem=elytron/http-authentication-factory=management-http-authentication:write-attribute(name=mechanism-configurations,value=[{mechanism-name=DIGEST,mechanism-realm-configurations=[{realm-name=ManagementRealm}]}])",\
+"/host=primary/interface=unsecure:add(inet-address=${HOST_VM_IP})",\
+"/host=primary/interface=management:write-attribute(name=inet-address, value=${HOST_VM_IP})",\
+"/host=primary/interface=public:add(inet-address=${HOST_VM_IP})" | log; flag=${PIPESTATUS[0]}
+else
+    echo "EAP_HOME is" $EAP_HOME | log; flag=${PIPESTATUS[0]}
+    echo "setting up domain.xml for EAP 7" | log; flag=${PIPESTATUS[0]}
+    echo HOST_VM_IP=$HOST_VM_IP | log; flag=${PIPESTATUS[0]}
+
+    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 'embed-host-controller --std-out=echo --domain-config=domain.xml --host-config=host-master.xml',\
 ':write-attribute(name=name,value=domain1)',\
 '/profile=ha/subsystem=jgroups/stack=tcp:remove',\
@@ -263,6 +302,7 @@ sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
 "/host=master/interface=unsecure:add(inet-address=${HOST_VM_IP})",\
 "/host=master/interface=management:write-attribute(name=inet-address, value=${HOST_VM_IP})",\
 "/host=master/interface=public:add(inet-address=${HOST_VM_IP})" | log; flag=${PIPESTATUS[0]}
+fi
 
 ####################### Save domain.xml to file share services for slave hosts.
 yum install update -y
@@ -272,10 +312,11 @@ copyDomainXmlFileToShare
 
 ####################### Configure the JBoss server and setup eap service
 echo "Setting configurations in $EAP_RPM_CONF_DOMAIN"
-echo -e "\t-> WILDFLY_HOST_CONFIG=host-master.xml" | log; flag=${PIPESTATUS[0]}
-echo 'WILDFLY_HOST_CONFIG=host-master.xml' >> $EAP_RPM_CONF_DOMAIN | log; flag=${PIPESTATUS[0]}
 
-if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+    echo -e "\t-> WILDFLY_HOST_CONFIG=host-primary.xml" | log; flag=${PIPESTATUS[0]}
+    echo 'WILDFLY_HOST_CONFIG=host-primary.xml' >> $EAP_RPM_CONF_DOMAIN | log; flag=${PIPESTATUS[0]}
+
     ####################### Start the JBoss server and setup eap service
     echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
     echo "systemctl enable eap8-domain.service" | log; flag=${PIPESTATUS[0]}
@@ -288,12 +329,13 @@ if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-
     echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
     sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap8-domain.service | log; flag=${PIPESTATUS[0]}
     # Calculating EAP gracefulShutdownTimeout and passing it the service.
-    if  "${gracefulShutdownTimeout,,}" == "-1"; then
+    if  [[ "${gracefulShutdownTimeout,,}" == "-1"  ]]; then
         sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec=infinity/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
     else
-        timeoutStopSec = $gracefulShutdownTimeout+20
+        timeoutStopSec=$gracefulShutdownTimeout+20
         if  "${timeoutStopSec}">90; then
         sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec='${timeoutStopSec}'/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+        fi
     fi
     systemd-analyze verify --recursive-errors=no /usr/lib/systemd/system/eap8-standalone.service
     echo "Removing - User=jboss Group=jboss" | log; flag=${PIPESTATUS[0]}
@@ -312,6 +354,9 @@ if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-
     if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; exit $flag;  fi
 
 else
+    echo -e "\t-> WILDFLY_HOST_CONFIG=host-master.xml" | log; flag=${PIPESTATUS[0]}
+    echo 'WILDFLY_HOST_CONFIG=host-master.xml' >> $EAP_RPM_CONF_DOMAIN | log; flag=${PIPESTATUS[0]}
+
     ####################### Start the JBoss server and setup eap service
     echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
     echo "systemctl enable eap7-domain.service" | log; flag=${PIPESTATUS[0]}
@@ -324,14 +369,15 @@ else
     echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
     sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap7-domain.service | log; flag=${PIPESTATUS[0]}
     # Calculating EAP gracefulShutdownTimeout and passing it the service.
-    if  "${gracefulShutdownTimeout,,}" == "-1"; then
-        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec=infinity/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+    if  [[ "${gracefulShutdownTimeout,,}" == "-1"  ]]; then
+        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec=infinity/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
     else
-        timeoutStopSec = $gracefulShutdownTimeout+20
+        timeoutStopSec=$gracefulShutdownTimeout+20
         if  "${timeoutStopSec}">90; then
-        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec='${timeoutStopSec}'/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec='${timeoutStopSec}'/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
+        fi
     fi
-    systemd-analyze verify --recursive-errors=no /usr/lib/systemd/system/eap8-standalone.service
+    systemd-analyze verify --recursive-errors=no /usr/lib/systemd/system/eap7-standalone.service
     echo "Removing - User=jboss Group=jboss" | log; flag=${PIPESTATUS[0]}
     echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
     systemctl daemon-reload | log; flag=${PIPESTATUS[0]}

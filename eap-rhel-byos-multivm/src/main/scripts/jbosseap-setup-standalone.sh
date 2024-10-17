@@ -16,24 +16,6 @@ openport() {
 echo "Red Hat JBoss EAP Cluster Intallation Start " | log; flag=${PIPESTATUS[0]}
 /bin/date +%H:%M:%S | log; flag=${PIPESTATUS[0]}
 
-if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
-
-    export EAP_LAUNCH_CONFIG="/opt/rh/eap8/root/usr/share/wildfly/bin/standalone.conf"
-    echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap8/wildfly/eap8-standalone.conf"' >> ~/.bash_profile
-    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share"' >> ~/.bash_profile
-    source ~/.bash_profile
-    touch /etc/profile.d/eap_env.sh
-    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share"' >> /etc/profile.d/eap_env.sh
-
-else
-    export EAP_LAUNCH_CONFIG="/opt/rh/eap7/root/usr/share/wildfly/bin/standalone.conf"
-    echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"' >> ~/.bash_profile
-    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> ~/.bash_profile
-    source ~/.bash_profile
-    touch /etc/profile.d/eap_env.sh
-    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> /etc/profile.d/eap_env.sh
-fi
-
 while getopts "a:t:p:f:" opt; do
     case $opt in
         a)
@@ -89,6 +71,25 @@ echo "Storage Container Name: " ${CONTAINER_NAME} | log; flag=${PIPESTATUS[0]}
 echo "RHSM_USER: " ${RHSM_USER} | log; flag=${PIPESTATUS[0]}
 
 echo "Folder where script is executing ${pwd}" | log; flag=${PIPESTATUS[0]}
+
+##################### Configure EAP_LAUNCH_CONFIG and EAP_HOME
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+
+    export EAP_LAUNCH_CONFIG="/opt/rh/eap8/root/usr/share/wildfly/bin/standalone.conf"
+    echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap8/wildfly/eap8-standalone.conf"' >> ~/.bash_profile
+    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share"' >> ~/.bash_profile
+    source ~/.bash_profile
+    touch /etc/profile.d/eap_env.sh
+    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share"' >> /etc/profile.d/eap_env.sh
+
+else
+    export EAP_LAUNCH_CONFIG="/opt/rh/eap7/root/usr/share/wildfly/bin/standalone.conf"
+    echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"' >> ~/.bash_profile
+    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> ~/.bash_profile
+    source ~/.bash_profile
+    touch /etc/profile.d/eap_env.sh
+    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> /etc/profile.d/eap_env.sh
+fi
 
 ####################### Configuring firewall for ports
 echo "Configure firewall for ports 8080, 9990, 45700, 7600" | log; flag=${PIPESTATUS[0]}
@@ -161,7 +162,7 @@ sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.
 ####################### 
 
 ####################### Setitng up the satelitte channels for EAP instalation
-if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
 # Install JBoss EAP 8
     echo "subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
     subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
@@ -183,19 +184,19 @@ else
     echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
     subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
     if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
-    if [[ "${JDK_VERSION,,}" == "eap7-openjdk17" ]]; then
+    if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" ]]; then
         echo "Installing JBoss EAP 7.4 JDK 17" | log; flag=${PIPESTATUS[0]}
         echo "yum groupinstall -y jboss-eap7-jdk17" | log; flag=${PIPESTATUS[0]}
         yum groupinstall -y jboss-eap7-jdk17       | log; flag=${PIPESTATUS[0]}
         if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
     
-    elif [[ "${JDK_VERSION,,}" == "eap7-openjdk11" ]]; then
+    elif [[ "${JDK_VERSION,,}" == "eap74-openjdk11" ]]; then
         echo "Installing JBoss EAP 7.4 JDK 11" | log; flag=${PIPESTATUS[0]}
         echo "yum groupinstall -y jboss-eap7-jdk11" | log; flag=${PIPESTATUS[0]}
         yum groupinstall -y jboss-eap7-jdk11       | log; flag=${PIPESTATUS[0]}
         if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
     
-     elif [[ "${JDK_VERSION,,}" == "eap7-openjdk8" ]]; then
+     elif [[ "${JDK_VERSION,,}" == "eap74-openjdk8" ]]; then
         echo "Installing JBoss EAP 7.4 JDK 8" | log; flag=${PIPESTATUS[0]}
         echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
         yum groupinstall -y jboss-eap7       | log; flag=${PIPESTATUS[0]}
@@ -225,7 +226,7 @@ echo -e "\t public:inet-address"        | log; flag=${PIPESTATUS[0]}
 echo -e "\t set transaction id"         | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
-if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
     sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-azure-ha.xml
 fi
 
@@ -255,7 +256,7 @@ echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_account_name
 echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 
-if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
     ####################### Start the JBoss server and setup eap service
     echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
     echo "systemctl enable eap8-standalone.service" | log; flag=${PIPESTATUS[0]}
@@ -268,12 +269,13 @@ if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-
     echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
     sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
     # Calculating EAP gracefulShutdownTimeout and passing it the service.
-    if  "${gracefulShutdownTimeout,,}" == "-1"; then
+    if  [[ "${gracefulShutdownTimeout,,}" == "-1" ]]; then
         sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec=infinity/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
     else
-        timeoutStopSec = $gracefulShutdownTimeout+20
+        timeoutStopSec=$gracefulShutdownTimeout+20
         if  "${timeoutStopSec}">90; then
         sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec='${timeoutStopSec}'/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+        fi
     fi
     systemd-analyze verify --recursive-errors=no /usr/lib/systemd/system/eap8-standalone.service
     echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
@@ -288,9 +290,9 @@ if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap8-
 else
     ####################### Start the JBoss server and setup eap service
     echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
-    echo "systemctl enable eap8-standalone.service" | log; flag=${PIPESTATUS[0]}
-    systemctl enable eap8-standalone.service        | log; flag=${PIPESTATUS[0]}
-    ####################### 
+    echo "systemctl enable eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
+    systemctl enable eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
+    #######################
 
     ###################### Editing eap7-standalone.services
     echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
@@ -298,14 +300,15 @@ else
     echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
     sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
     # Calculating EAP gracefulShutdownTimeout and passing it the service.
-    if  "${gracefulShutdownTimeout,,}" == "-1"; then
-        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec=infinity/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+    if  [[ "${gracefulShutdownTimeout,,}" == "-1"  ]]; then
+        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec=infinity/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
     else
-        timeoutStopSec = $gracefulShutdownTimeout+20
+        timeoutStopSec=$gracefulShutdownTimeout+20
         if  "${timeoutStopSec}">90; then
-        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec='${timeoutStopSec}'/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec='${timeoutStopSec}'/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
+        fi
     fi
-    systemd-analyze verify --recursive-errors=no /usr/lib/systemd/system/eap8-standalone.service
+    systemd-analyze verify --recursive-errors=no /usr/lib/systemd/system/eap7-standalone.service
     echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
     systemctl daemon-reload | log; flag=${PIPESTATUS[0]}
 

@@ -1,5 +1,5 @@
 name: Validate byos-multivm offer
-run-name: Validate byos-multivm offer with db:${{ inputs.jdkVersion }} and jdk:${{ inputs.databaseType }}
+run-name: Validate byos-multivm offer with `jdk`:${{ inputs.jdkVersion }} and `db`:${{ inputs.databaseType }}
 
 on:
   workflow_dispatch:
@@ -66,6 +66,7 @@ env:
     gitEmail: ${{ secrets.USER_EMAIL }}
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
     offerName: "eap-rhel-byos-multivm"
+    gracefulShutdownTimeout: "-1"
 
 jobs:
     preflight:
@@ -292,7 +293,8 @@ jobs:
                 ${dsConnectionURL} \
                 ${dbUser} \
                 ${dbPassword} \
-                ${{ inputs.jdkVersion }} "
+                ${{ inputs.jdkVersion }} \
+                ${{ env.gracefulShutdownTimeout }}"
 
             - name: Archive parameters-test-domain.json
               uses: actions/upload-artifact@v4
@@ -321,13 +323,16 @@ jobs:
                     --template-file rhel-jboss-templates/eap-rhel-byos-multivm/mainTemplate.json
             - name: Build javaee cafe
               run: |
-                if ${{ env.enableDB != 'true' }}; then
-                  sed -i "s/java:jboss\/datasources\/JavaEECafeDB/java:jboss\/datasources\/ExampleDS/g" rhel-jboss-templates/eap-coffee-app/src/main/resources/META-INF/persistence.xml
+                if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk17" || "${{ inputs.jdkVersion }}" == "eap8-openjdk11" ]]; then
+                  git clone https://github.com/Azure/rhel-jboss-templates.git --branch 20240924 --single-branch rhel-jboss-templates-to-build
+                else
+                  git clone https://github.com/Azure/rhel-jboss-templates.git --branch 20240904 --single-branch rhel-jboss-templates-to-build
                 fi
-                mvn clean install --file rhel-jboss-templates/eap-coffee-app/pom.xml
                 if ${{ env.enableDB != 'true' }}; then
-                  sed -i "s/java:jboss\/datasources\/ExampleDS/java:jboss\/datasources\/JavaEECafeDB/g" rhel-jboss-templates/eap-coffee-app/src/main/resources/META-INF/persistence.xml
+                  sed -i "s/java:jboss\/datasources\/JavaEECafeDB/java:jboss\/datasources\/ExampleDS/g" rhel-jboss-templates-to-build/eap-coffee-app/src/main/resources/META-INF/persistence.xml
                 fi
+                mvn clean install --file rhel-jboss-templates-to-build/eap-coffee-app/pom.xml
+
             - name: Create a container and uploading cafe app
               id: upload_cafe_app
               uses: azure/CLI@v1
@@ -341,7 +346,7 @@ jobs:
                     --account-name ${{ env.domainBootStorageAccountName }} \
                     --container-name cafeapp \
                     --name javaee-cafe.war \
-                    --file rhel-jboss-templates/eap-coffee-app/target/javaee-cafe.war
+                    --file rhel-jboss-templates-to-build/eap-coffee-app/target/javaee-cafe.war
                   
                   # query the app url
                   sasTokenValidTime=3600
@@ -517,7 +522,8 @@ jobs:
                 ${dsConnectionURL} \
                 ${dbUser} \
                 ${dbPassword} \
-                ${{ inputs.jdkVersion }} "
+                ${{ inputs.jdkVersion }} \
+                ${{ env.gracefulShutdownTimeout }}"
 
             - name: Archive parameters-test-standalone.json
               uses: actions/upload-artifact@v4
@@ -594,8 +600,9 @@ jobs:
           run: |
             echo "Sleeping for ${{ github.event.inputs.timeWaitBeforeDelete }}"
             sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
-        - name: Unregister before deleting resources
+        - name: Unregister domain mode VMs before deleting resources
           if: ${{ github.event_name == 'workflow_dispatch' }}
+          continue-on-error: true
           uses: azure/CLI@v1
           with:
             inlineScript: |
@@ -605,7 +612,7 @@ jobs:
                 echo "Unregister ${vmName}${i}"
                 az vm run-command invoke -g ${domainResourceGroup} -n ${vmName}${i} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
               done
-        - name: Unregister before deleting resources
+        - name: Unregister standalone mode VMs before deleting resources
           if: ${{ github.event_name == 'workflow_dispatch' }}
           continue-on-error: true
           uses: azure/CLI@v1

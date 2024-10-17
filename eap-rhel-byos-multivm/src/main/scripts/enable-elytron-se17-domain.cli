@@ -378,11 +378,11 @@ end-if
 stop-embedded-host-controller
 
 #
-# host-master.xml
+# host-master.xml/host-primary.xml
 
-echo INFO: Modifying host-master.xml
+echo INFO: Modifying ${host_config_primary}
 
-embed-host-controller --host-config=host-master.xml
+embed-host-controller --host-config=${host_config_primary:host-master.xml}
 
 set host=`/:read-children-names(child-type=host)`
 
@@ -413,11 +413,11 @@ end-if
 stop-embedded-host-controller
 
 #
-# host-slave.xml
+# host-slave.xml/host-secondary.xml
 
-echo INFO: Modifying host-slave.xml
+echo INFO: Modifying ${host_config_secondary}
 
-embed-host-controller --host-config=host-slave.xml
+embed-host-controller --host-config=${host_config_secondary:host-slave.xml}
 
 set host=`/:read-children-names(child-type=host)`
 

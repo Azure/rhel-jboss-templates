@@ -1,5 +1,5 @@
 name: Validate payg-vmss offer
-run-name: Validate payg-vmss offer with db:${{ inputs.jdkVersion }} and jdk:${{ inputs.databaseType }}
+run-name: Validate payg-vmss offer with `jdk`:${{ inputs.jdkVersion }} and `db`:${{ inputs.databaseType }}
 
 on:
   workflow_dispatch:
