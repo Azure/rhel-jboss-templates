@@ -1,5 +1,5 @@
 name: Validate byos-vmss offer
-run-name: Validate byos-vmss offer with db:${{ inputs.jdkVersion }} and jdk:${{ inputs.databaseType }}
+run-name: Validate byos-vmss offer with with `jdk`:${{ inputs.jdkVersion }} and `db`:${{ inputs.databaseType }}
 
 on:
   workflow_dispatch:
@@ -65,6 +65,7 @@ env:
     disableLoadBalancer: disable
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
     offerName: "eap-rhel-byos-vmss"
+    gracefulShutdownTimeout: "-1"
 
 jobs:
     preflight:
@@ -258,7 +259,8 @@ jobs:
                 ${dsConnectionURL} \
                 ${dbUser} \
                 ${dbPassword} \
-                ${{ inputs.jdkVersion }} "
+                ${{ inputs.jdkVersion }} \
+                ${{ env.gracefulShutdownTimeout }}"
 
             - name: Archive parameters-test-vmss.json
               uses: actions/upload-artifact@v4
