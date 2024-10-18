@@ -160,7 +160,8 @@ jobs:
                 az mysql flexible-server create \
                   --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --admin-user myadmin --admin-password ${{ env.dbPassword }} \
-                  --sku-name Standard_B1ms --location ${{ env.location }}
+                  --sku-name Standard_B1ms --location ${{ env.location }} \
+                  --yes
                 # Allow Azure services to access
                 az mysql flexible-server firewall-rule create \
                   --resource-group ${{ env.singleResourceGroup }} --server ${{ env.dbInstanceName }} \
