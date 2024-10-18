@@ -160,20 +160,20 @@ jobs:
               if: ${{ inputs.databaseType == 'mysql' || github.event.client_payload.databaseType == 'mysql' }}
               run: |
                 az group create -n ${{ env.vmssResourceGroup }} -l ${{ env.location }}
-                az mysql server create \
+                az mysql flexible-server create \
                   --resource-group ${{ env.vmssResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --admin-user myadmin --admin-password ${{ env.dbPassword }} \
                   --sku-name GP_Gen5_2 --location ${{ env.location }}
                 # Allow Azure services to access
-                az mysql server firewall-rule create \
+                az mysql flexible-server firewall-rule create \
                   --resource-group ${{ env.vmssResourceGroup }} --server ${{ env.dbInstanceName }} \
                   --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
                 # Allow current IP to access MySQL server
                 currentIp=$(curl -s https://icanhazip.com)
-                az mysql server firewall-rule create \
+                az mysql flexible-server firewall-rule create \
                   --resource-group ${{ env.vmssResourceGroup }} --server ${{ env.dbInstanceName }} \
                   --name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
-                host=$(az mysql server show \
+                host=$(az mysql flexible-server show \
                   --resource-group ${{ env.vmssResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --query "fullyQualifiedDomainName" -o tsv)
                 echo "mysqlHost=${host}" >> "$GITHUB_ENV"
