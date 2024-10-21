@@ -185,8 +185,6 @@ jobs:
                 GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
                 FLUSH PRIVILEGES;
                 EOF
-            - name: Setup tmate session
-              uses: mxschmitt/action-tmate@v3
             - name: Deploy an instance of Azure Database for PostgreSQL
               if: ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}
               run: |
