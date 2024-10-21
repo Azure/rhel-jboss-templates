@@ -222,7 +222,7 @@ jobs:
                   enableDB=true
                   databaseType=mysql
                   dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb
-                  dbUser=testuser@${{ env.dbInstanceName }}
+                  dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
                 elif ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}; then
                   enableDB=true
