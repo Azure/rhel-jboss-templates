@@ -175,7 +175,7 @@ jobs:
                   --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --query "fullyQualifiedDomainName" -o tsv)
                 echo "mysqlHost=${host}" >> "$GITHUB_ENV"
-                mysql -h $host -u myadmin@${{ env.dbInstanceName }} -p${{ env.dbPassword }} << EOF
+                mysql -h $host -u myadmin -p${{ env.dbPassword }} << EOF
                 CREATE DATABASE testdb;
                 CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ env.dbPassword }}';
                 GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
