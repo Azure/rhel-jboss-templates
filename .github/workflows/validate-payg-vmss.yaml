@@ -12,7 +12,7 @@ on:
         options:
         - mssqlserver
         - oracle
-        - mysql
+        - mysql-flexible(Disable-SSL)
         - postgresql
         - none
       jdkVersion:
@@ -146,27 +146,32 @@ jobs:
                   --settings "{\"fileUris\": [\"${{ env.scriptLocation }}install-oracle-main.sh\", \"${{ env.scriptLocation }}install-oracle.sh\"]}" \
                   --protected-settings "{\"commandToExecute\":\"bash install-oracle-main.sh ${{ env.dbPassword }}\"}"
             - name: Deploy an instance of Azure Database for MySQL
-              if: ${{ inputs.databaseType == 'mysql' || github.event.client_payload.databaseType == 'mysql' }}
+              if: ${{ inputs.databaseType == 'mysql-flexible(Disable-SSL)' || github.event.client_payload.databaseType == 'mysql-flexible(Disable-SSL)' }}
               run: |
-                az group create -n ${{ env.vmssResourceGroup }} -l ${{ env.location }}
-                az mysql server create \
-                  --resource-group ${{ env.vmssResourceGroup }} --name ${{ env.dbInstanceName }} \
+                az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
+                az mysql flexible-server create \
+                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --admin-user myadmin --admin-password ${{ env.dbPassword }} \
-                  --sku-name GP_Gen5_2 --location ${{ env.location }}
+                  --sku-name Standard_B1ms --location ${{ env.location }} \
+                  --yes
                 # Allow Azure services to access
-                az mysql server firewall-rule create \
-                  --resource-group ${{ env.vmssResourceGroup }} --server ${{ env.dbInstanceName }} \
-                  --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+                az mysql flexible-server firewall-rule create \
+                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --rule-name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
                 # Allow current IP to access MySQL server
                 currentIp=$(curl -s https://icanhazip.com)
-                az mysql server firewall-rule create \
-                  --resource-group ${{ env.vmssResourceGroup }} --server ${{ env.dbInstanceName }} \
-                  --name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
-                host=$(az mysql server show \
-                  --resource-group ${{ env.vmssResourceGroup }} --name ${{ env.dbInstanceName }} \
+                az mysql flexible-server firewall-rule create \
+                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --rule-name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
+                host=$(az mysql flexible-server show \
+                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --query "fullyQualifiedDomainName" -o tsv)
                 echo "mysqlHost=${host}" >> "$GITHUB_ENV"
-                mysql -h $host -u myadmin@${{ env.dbInstanceName }} -p${{ env.dbPassword }} << EOF
+                az mysql flexible-server parameter set --resource-group ${{ env.singleResourceGroup }} \
+                    --server-name ${{ env.dbInstanceName }} \
+                    --name require_secure_transport \
+                    --value OFF          
+                mysql -h $host -u myadmin -p${{ env.dbPassword }} << EOF
                 CREATE DATABASE testdb;
                 CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ env.dbPassword }}';
                 GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
@@ -209,11 +214,11 @@ jobs:
                   dsConnectionURL=jdbc:oracle:thin:@${publicIp}:1521/oratest1
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'mysql' || github.event.client_payload.databaseType == 'mysql' }}; then
+                elif ${{ inputs.databaseType == 'mysql-flexible(Disable-SSL)' || github.event.client_payload.databaseType == 'mysql-flexible(Disable-SSL)' }}; then
                   enableDB=true
                   databaseType=mysql
-                  dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb
-                  dbUser=testuser@${{ env.dbInstanceName }}
+                  dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?useSSL=false
+                  dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
                 elif ${{ inputs.databaseType == 'postgresql' || github.event.client_payload.databaseType == 'postgresql' }}; then
                   enableDB=true
