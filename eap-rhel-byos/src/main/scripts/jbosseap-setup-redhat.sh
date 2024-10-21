@@ -151,14 +151,14 @@ else
 
 fi
 
-  echo "Updating standalone-full-ha.xml" | log; flag=${PIPESTATUS[0]}
+echo "Updating standalone-full-ha.xml" | log; flag=${PIPESTATUS[0]}
 echo -e "\t stack UDP to TCP"       | log; flag=${PIPESTATUS[0]}
 echo -e "\t set transaction id"     | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
 if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
     echo "Configuring OpenJDK 17 specific logic--start" | log; flag=${PIPESTATUS[0]}
-    # sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-full-ha.xml
+    sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-full-ha.xml
     echo "Configuring OpenJDK 17 specific logic--end" | log; flag=${PIPESTATUS[0]}
 else
     echo "JDK_VERSION=${JDK_VERSION,,}" | log; flag=${PIPESTATUS[0]}
