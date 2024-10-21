@@ -178,7 +178,7 @@ jobs:
                 az mysql flexible-server parameter set --resource-group ${{ env.singleResourceGroup }} \
                     --server-name ${{ env.dbInstanceName }} \
                     --name require_secure_transport \
-                    --value false          
+                    --value OFF          
                 mysql -h $host -u myadmin -p${{ env.dbPassword }} << EOF
                 CREATE DATABASE testdb;
                 CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ env.dbPassword }}';
