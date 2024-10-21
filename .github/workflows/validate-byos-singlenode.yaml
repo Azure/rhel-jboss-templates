@@ -164,13 +164,13 @@ jobs:
                   --yes
                 # Allow Azure services to access
                 az mysql flexible-server firewall-rule create \
-                  --resource-group ${{ env.singleResourceGroup }} --server ${{ env.dbInstanceName }} \
-                  --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --rule-name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
                 # Allow current IP to access MySQL server
                 currentIp=$(curl -s https://icanhazip.com)
                 az mysql flexible-server firewall-rule create \
-                  --resource-group ${{ env.singleResourceGroup }} --server ${{ env.dbInstanceName }} \
-                  --name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
+                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --rule-name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
                 host=$(az mysql flexible-server show \
                   --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --query "fullyQualifiedDomainName" -o tsv)
