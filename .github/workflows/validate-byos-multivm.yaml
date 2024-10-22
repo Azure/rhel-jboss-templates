@@ -140,6 +140,7 @@ jobs:
                 host=$(az vm show -g ${{ env.dependencyResourceGroup }} -n ${{ env.dbInstanceName }} -d --query publicIps -o tsv)
                 echo "oracleHost=${host}" >> "$GITHUB_OUTPUT"
             - name: Deploy an instance of Azure Database for MySQL
+              id: deploy-mysql
               if: ${{ inputs.databaseType == 'mysql-flexible(Disable-SSL)' || github.event.client_payload.databaseType == 'mysql-flexible(Disable-SSL)' }}
               run: |
                 az group create -n ${{ env.dependencyResourceGroup }} -l ${{ env.location }}
