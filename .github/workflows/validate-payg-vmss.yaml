@@ -306,6 +306,7 @@ jobs:
                 exit 0
 
     resources-cleanup:
+      name: resources-cleanup after ${{ github.event.inputs.timeWaitBeforeDelete }}
       needs:
         - preflight
         - deploy-vmss

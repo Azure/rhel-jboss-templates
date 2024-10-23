@@ -149,6 +149,7 @@ jobs:
       #   uses: mxschmitt/action-tmate@v3
 
   resources-cleanup:
+    name: resources-cleanup after ${{ github.event.inputs.timeWaitBeforeDelete }}
     needs:
       - preflight
       - deploy-eap-aro
