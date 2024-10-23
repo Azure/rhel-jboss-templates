@@ -301,6 +301,7 @@ jobs:
 
 
     resources-cleanup:
+      name: resources-cleanup after ${{ github.event.inputs.timeWaitBeforeDelete }}
       needs:
         - deploy-single
         - preflight
