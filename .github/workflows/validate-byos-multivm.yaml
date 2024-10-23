@@ -12,8 +12,8 @@ on:
         options:
         - mssqlserver
         - oracle
-        - mysql-flexible
-        - postgresql-single
+        - mysql(flexible)
+        - postgresql(single)
         - none
       jdkVersion:
         description: 'jdkVersion'
@@ -141,7 +141,7 @@ jobs:
                 echo "oracleHost=${host}" >> "$GITHUB_OUTPUT"
             - name: Deploy an instance of Azure Database for MySQL
               id: deploy-mysql
-              if: ${{ inputs.databaseType == 'mysql-flexible' || github.event.client_payload.databaseType == 'mysql-flexible' }}
+              if: ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}
               run: |
                 az group create -n ${{ env.dependencyResourceGroup }} -l ${{ env.location }}
                 az mysql flexible-server create \
@@ -174,7 +174,7 @@ jobs:
                 EOF
             - name: Deploy an instance of Azure Database for PostgreSQL
               id: deploy-postgresql
-              if: ${{ inputs.databaseType == 'postgresql-single' || github.event.client_payload.databaseType == 'postgresql-single' }}
+              if: ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}
               run: |
                 az postgres server create \
                   --resource-group ${{ env.dependencyResourceGroup}} --name ${{ env.dbInstanceName }} \
@@ -255,13 +255,13 @@ jobs:
                   dsConnectionURL=jdbc:oracle:thin:@${{ needs.deploy-dependent-resources.outputs.oracleHost }}:1521/oratest1
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'mysql-flexible' || github.event.client_payload.databaseType == 'mysql-flexible' }}; then
+                elif ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}; then
                   enableDB=true
                   databaseType=mysql
                   dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlHost }}:3306/testdb?useSSL=false
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'postgresql-single' || github.event.client_payload.databaseType == 'postgresql-single' }}; then
+                elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
                   enableDB=true
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlHost }}:5432/testdb"
@@ -486,13 +486,13 @@ jobs:
                   dsConnectionURL=jdbc:oracle:thin:@${{ needs.deploy-dependent-resources.outputs.oracleHost }}:1521/oratest1
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'mysql-flexible' || github.event.client_payload.databaseType == 'mysql-flexible' }}; then
+                elif ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}; then
                   enableDB=true
                   databaseType=mysql
                   dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlHost }}:3306/testdb?useSSL=false
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'postgresql-single' || github.event.client_payload.databaseType == 'postgresql-single' }}; then
+                elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
                   enableDB=true
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlHost }}:5432/testdb"

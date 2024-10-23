@@ -12,8 +12,8 @@ on:
         options:
         - mssqlserver
         - oracle
-        - mysql-flexible
-        - postgresql-single
+        - mysql(flexible)
+        - postgresql(single)
         - none
       jdkVersion:
         description: 'jdkVersion'
@@ -157,7 +157,7 @@ jobs:
                   --settings "{\"fileUris\": [\"${{ env.scriptLocation }}install-oracle-main.sh\", \"${{ env.scriptLocation }}install-oracle.sh\"]}" \
                   --protected-settings "{\"commandToExecute\":\"bash install-oracle-main.sh ${{ env.dbPassword }}\"}"
             - name: Deploy an instance of Azure Database for MySQL
-              if: ${{ inputs.databaseType == 'mysql-flexible' || github.event.client_payload.databaseType == 'mysql-flexible' }}
+              if: ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}
               run: |
                 az group create -n ${{ env.vmssResourceGroup }} -l ${{ env.location }}
                 az mysql flexible-server create \
@@ -189,7 +189,7 @@ jobs:
                 FLUSH PRIVILEGES;
                 EOF
             - name: Deploy an instance of Azure Database for PostgreSQL
-              if: ${{ inputs.databaseType == 'postgresql-single' || github.event.client_payload.databaseType == 'postgresql-single' }}
+              if: ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}
               run: |
                 az group create -n ${{ env.vmssResourceGroup}} -l ${{ env.location }}
                 az postgres server create \
@@ -225,13 +225,13 @@ jobs:
                   dsConnectionURL=jdbc:oracle:thin:@${publicIp}:1521/oratest1
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'mysql-flexible' || github.event.client_payload.databaseType == 'mysql-flexible' }}; then
+                elif ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}; then
                   enableDB=true
                   databaseType=mysql
                   dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?useSSL=false
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'postgresql-single' || github.event.client_payload.databaseType == 'postgresql-single' }}; then
+                elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
                   enableDB=true
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ env.postgresqlHost }}:5432/testdb"
