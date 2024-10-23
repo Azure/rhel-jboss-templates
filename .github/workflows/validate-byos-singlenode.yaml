@@ -12,7 +12,7 @@ on:
         options:
         - mssqlserver
         - oracle
-        - mysql-flexible(Disable-SSL)
+        - mysql-flexible
         - postgresql
         - none
       jdkVersion:
@@ -154,7 +154,7 @@ jobs:
                   --settings "{\"fileUris\": [\"${{ env.scriptLocation }}install-oracle-main.sh\", \"${{ env.scriptLocation }}install-oracle.sh\"]}" \
                   --protected-settings "{\"commandToExecute\":\"bash install-oracle-main.sh ${{ env.dbPassword }}\"}"
             - name: Deploy an instance of Azure Database for MySQL
-              if: ${{ inputs.databaseType == 'mysql-flexible(Disable-SSL)' || github.event.client_payload.databaseType == 'mysql-flexible(Disable-SSL)' }}
+              if: ${{ inputs.databaseType == 'mysql-flexible' || github.event.client_payload.databaseType == 'mysql-flexible' }}
               run: |
                 az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
                 az mysql flexible-server create \
@@ -219,7 +219,7 @@ jobs:
                   dsConnectionURL=jdbc:oracle:thin:@${publicIp}:1521/oratest1
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'mysql-flexible(Disable-SSL)' || github.event.client_payload.databaseType == 'mysql-flexible(Disable-SSL)' }}; then
+                elif ${{ inputs.databaseType == 'mysql-flexible' || github.event.client_payload.databaseType == 'mysql-flexible' }}; then
                   enableDB=true
                   databaseType=mysql
                   dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?sslMode=REQUIRED
