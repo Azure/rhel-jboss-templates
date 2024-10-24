@@ -163,7 +163,7 @@ jobs:
                   --sku-name Standard_B1ms --location ${{ env.location }} \
                   --yes
                 # https://github.com/azure-javaee/rhel-jboss-templates/issues/2                
-                if [[ "${{ inputs.jdkVersion }}" == *"jdk17" ]]; then
+                if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
                     az mysql flexible-server parameter set --resource-group ${{ env.singleResourceGroup }} \
                     --server-name ${{ env.dbInstanceName }} \
                     --name require_secure_transport \
@@ -229,7 +229,7 @@ jobs:
                 elif ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}; then
                   enableDB=true
                   databaseType=mysql
-                  if [[ "${{ inputs.jdkVersion }}" == *"jdk17" ]]; then
+                  if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
                     dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?useSSL=false
                   else
                     dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?sslMode=REQUIRED

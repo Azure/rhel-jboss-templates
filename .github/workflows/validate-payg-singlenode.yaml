@@ -163,11 +163,8 @@ jobs:
                   --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --query "fullyQualifiedDomainName" -o tsv)
                 echo "mysqlHost=${host}" >> "$GITHUB_ENV"
-                az mysql flexible-server parameter set --resource-group ${{ env.singleResourceGroup }} \
-                    --server-name ${{ env.dbInstanceName }} \
-                    --name require_secure_transport \
-                    --value OFF          
-                mysql -h $host -u myadmin -p${{ env.dbPassword }} << EOF
+                wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
+                mysql -h $host -u myadmin -p${{ env.dbPassword }} --ssl-ca=DigiCertGlobalRootCA.crt.pem << EOF       
                 CREATE DATABASE testdb;
                 CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ env.dbPassword }}';
                 GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
@@ -213,7 +210,7 @@ jobs:
                 elif ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}; then
                   enableDB=true
                   databaseType=mysql
-                  dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?useSSL=false
+                  dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?sslMode=REQUIRED
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
                 elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
