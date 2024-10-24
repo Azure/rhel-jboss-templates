@@ -4,14 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       timeWaitBeforeDelete:
-        description: 'Choose the wait time before deleting resources: 30m (30 minutes), 2h (2 hours), 6h (6 hours), 0 (immediately)'
+        description: 'Choose the wait time before deleting resources: 30m (30 minutes), 2h (2 hours), 5h (5 hours), 0 (immediately)'
         required: true
         type: choice
         default: 0
         options:
           - 30m
           - 2h
-          - 6h
+          - 5h
           - 0
 
 env:
