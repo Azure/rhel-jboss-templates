@@ -387,8 +387,8 @@
                         "name": "gracefulShutdownTimeout",
                         "type": "Microsoft.Common.TextBox",
                         "visible": "[steps('jbossEAPSettings').setgracefulShutdownTimeout]",
-                        
                         "label": "Graceful Shutdown Timeout",
+                        "defaultValue": "-1",
                         "constraints": {
                             "required": false,
                             "regex": "^[a-zA-Z0-9+_.-]{1,30}(@[a-zA-Z0-9.-]+){0,1}$",
