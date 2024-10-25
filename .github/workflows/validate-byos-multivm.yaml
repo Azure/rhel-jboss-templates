@@ -168,8 +168,7 @@ jobs:
                 host=$(az mysql flexible-server show \
                   --resource-group ${{ env.dependencyResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --query "fullyQualifiedDomainName" -o tsv)
-                echo "mysqlHost=${host}"
-                echo "mysqlHost=${host}" >> "$GITHUB_ENV"
+                echo "mysqlHost=${host}" >> "$GITHUB_OUTPUT"
                 wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
                 mysql -h $host -u myadmin -p${{ env.dbPassword }} --ssl-ca=DigiCertGlobalRootCA.crt.pem << EOF
                 CREATE DATABASE testdb;
