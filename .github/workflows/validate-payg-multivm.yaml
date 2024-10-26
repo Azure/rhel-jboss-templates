@@ -331,7 +331,7 @@ jobs:
                     --account-name ${{ env.domainBootStorageAccountName }} \
                     --container-name cafeapp \
                     --name javaee-cafe.war \
-                    --file rhel-jboss-templates/eap-coffee-app/target/javaee-cafe.war
+                    --file rhel-jboss-templates-to-build/eap-coffee-app/target/javaee-cafe.war
                   
                   # query the app url
                   sasTokenValidTime=3600
