@@ -104,7 +104,7 @@ jobs:
                 git add .
                 git status
                 git commit -m "test branch for pipeline"
-                git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f
+                git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git -f
             - uses: azure/login@v1
               id: azure-login
               with:
@@ -342,4 +342,4 @@ jobs:
           if: always()
           run: |
             cd rhel-jboss-templates
-            git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $vmssTestBranchName  
+            git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git -f --delete $vmssTestBranchName  
