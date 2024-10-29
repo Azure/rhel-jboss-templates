@@ -1,5 +1,5 @@
 name: Validate byos-vmss offer
-run-name: Validate byos-vmss offer with with `jdk`:${{ inputs.jdkVersion }} and `db`:${{ inputs.databaseType }}
+run-name: Validate byos-vmss offer with `jdk`:${{ inputs.jdkVersion }} and `db`:${{ inputs.databaseType }}
 
 on:
   workflow_dispatch:
@@ -110,7 +110,7 @@ jobs:
                 git add .
                 git status
                 git commit -m "test branch for pipeline"
-                git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f
+                git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git -f
             - uses: azure/login@v1
               id: azure-login
               with:
@@ -165,6 +165,13 @@ jobs:
                   --admin-user myadmin --admin-password ${{ env.dbPassword }} \
                   --sku-name Standard_B1ms --location ${{ env.location }} \
                   --yes
+                # https://github.com/azure-javaee/rhel-jboss-templates/issues/2                
+                if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
+                    az mysql flexible-server parameter set --resource-group ${{ env.vmssResourceGroup }} \
+                    --server-name ${{ env.dbInstanceName }} \
+                    --name require_secure_transport \
+                    --value OFF       
+                fi
                 # Allow Azure services to access
                 az mysql flexible-server firewall-rule create \
                   --resource-group ${{ env.vmssResourceGroup }} --name ${{ env.dbInstanceName }} \
@@ -178,11 +185,8 @@ jobs:
                   --resource-group ${{ env.vmssResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --query "fullyQualifiedDomainName" -o tsv)
                 echo "mysqlHost=${host}" >> "$GITHUB_ENV"
-                az mysql flexible-server parameter set --resource-group ${{ env.vmssResourceGroup }} \
-                    --server-name ${{ env.dbInstanceName }} \
-                    --name require_secure_transport \
-                    --value OFF          
-                mysql -h $host -u myadmin -p${{ env.dbPassword }} << EOF
+                wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
+                mysql -h $host -u myadmin -p${{ env.dbPassword }} --ssl-ca=DigiCertGlobalRootCA.crt.pem << EOF
                 CREATE DATABASE testdb;
                 CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ env.dbPassword }}';
                 GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
@@ -228,7 +232,11 @@ jobs:
                 elif ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}; then
                   enableDB=true
                   databaseType=mysql
-                  dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?useSSL=false
+                  if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
+                    dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?useSSL=false
+                  else
+                    dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?sslMode=REQUIRED
+                  fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
                 elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
@@ -362,4 +370,4 @@ jobs:
           if: always()
           run: |
             cd rhel-jboss-templates
-            git push https://$gitToken@github.com/${GITHUB_REPOSITORY}.git -f --delete $vmssTestBranchName 
+            git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git -f --delete $vmssTestBranchName 
