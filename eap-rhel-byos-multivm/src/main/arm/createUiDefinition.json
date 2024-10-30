@@ -428,37 +428,16 @@
                         "visible": true
                     },
                     {
-                        "name": "setgracefulShutdownTimeout",
-                        "type": "Microsoft.Common.OptionsGroup",
-                        "label": "Do you want to configure Graceful Shutdown Timeout?",
-                        "defaultValue": "No",
-                        "toolTip": "Select 'Yes' to provide Graceful Shutdown Timeout and indicate the maximum number of seconds to wait for requests to complete before the server shuts down.",
-                        "constraints": {
-                            "allowedValues": [
-                                {
-                                    "label": "Yes",
-                                    "value": true
-                                },
-                                {
-                                    "label": "No",
-                                    "value": false
-                                }
-                            ],
-                            "required": false
-                        }
-                    },
-                    {
                         "name": "gracefulShutdownTimeout",
                         "type": "Microsoft.Common.TextBox",
-                        "visible": "[steps('jbossEAPSettings').setgracefulShutdownTimeout]",
-                        "label": "Graceful Shutdown Timeout",
+                        "label": "Graceful shutdown timeout in seconds (-1 to disable)",
                         "defaultValue": "-1",
                         "constraints": {
                             "required": false,
                             "regex": "^[a-zA-Z0-9+_.-]{1,30}(@[a-zA-Z0-9.-]+){0,1}$",
-                            "validationMessage": "Please enter a Graceful Shutdown Timeout in seconds"
+                            "validationMessage": "Please enter a graceful shutdown timeout in seconds"
                         },
-                        "toolTip": "Please enter a Graceful Shutdown Timeout in seconds"
+                        "toolTip": "Please enter a graceful shutdown timeout in seconds (-1 to disable)"
                     },
                     {
                         "name": "connectToSatelliteServer",
