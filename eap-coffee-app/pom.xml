@@ -28,6 +28,11 @@
       <version>9.1.0</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>com.azure</groupId>
+      <artifactId>azure-identity-extensions</artifactId>
+      <version>1.1.20</version>
+    </dependency>
   </dependencies>
 
   <build>
