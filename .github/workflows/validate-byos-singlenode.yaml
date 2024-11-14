@@ -161,7 +161,7 @@ jobs:
                   --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --admin-user myadmin --admin-password ${{ env.dbPassword }} \
                   --sku-name Standard_B1ms --location ${{ env.location }} \
-                  --verbose 8.0.21 \
+                  --version 8.0.21 \
                   --yes
                 # https://github.com/azure-javaee/rhel-jboss-templates/issues/2                
                 if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
