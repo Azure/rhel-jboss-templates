@@ -18,12 +18,14 @@ on:
       jdkVersion:
         description: 'jdkVersion'
         required: true
-        default: 'openjdk17'
+        default: 'eap8-openjdk17'
         type: choice
         options:
-          - openjdk8
-          - openjdk11
-          - openjdk17
+          - eap8-openjdk17
+          - eap8-openjdk11
+          - eap74-openjdk17
+          - eap74-openjdk11
+          - eap74-openjdk8
       timeWaitBeforeDelete:
         description: 'Choose the wait time before deleting resources: 30m (30 minutes), 2h (2 hours), 5h (5 hours), 0 (immediately)'
         required: true
@@ -54,7 +56,8 @@ env:
     testPubIpName: testPubIp
     nsgName: jbosseap-nsg
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
-    offerName: "eap74-rhel8-payg"
+    offerName: "eap-rhel-payg"
+    gracefulShutdownTimeout: "-1"
 
 jobs:
     preflight:
@@ -95,8 +98,8 @@ jobs:
                 git config --global user.name $gitUserName
                 echo "create branch $singleTestBranchName"
                 git checkout -b $singleTestBranchName
-                rm -r -f $current/rhel-jboss-templates/eap74-rhel8-payg/src/main/*
-                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap74-rhel8-payg/
+                rm -r -f $current/rhel-jboss-templates/eap-rhel-payg/src/main/*
+                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap-rhel-payg/
                 git add .
                 git status
                 git commit -m "test branch for pipeline"
@@ -223,8 +226,8 @@ jobs:
                 fi
 
                 echo "generate parameter file for single"
-                bash rhel-jboss-templates/eap74-rhel8-payg/src/test/scripts/gen-parameters.sh \
-                <<< "rhel-jboss-templates/eap74-rhel8-payg/src/test/parameters-test-single.json  \
+                bash rhel-jboss-templates/eap-rhel-payg/src/test/scripts/gen-parameters.sh \
+                <<< "rhel-jboss-templates/eap-rhel-payg/src/test/parameters-test-single.json  \
                 ${gitUserName} \
                 ${singleTestBranchName} \
                 ${location} \
@@ -249,7 +252,7 @@ jobs:
               if: success()
               with:
                 name: parameters-test-single
-                path: rhel-jboss-templates/eap74-rhel8-payg/src/test/parameters-test-single.json
+                path: rhel-jboss-templates/eap-rhel-payg/src/test/parameters-test-single.json
             - name: Create Resource Group if needed
               if: ${{ inputs.databaseType == 'none' || github.event.client_payload.databaseType == 'none' }}
               uses: azure/CLI@v1
@@ -268,8 +271,8 @@ jobs:
                     --verbose \
                     --resource-group ${{ env.singleResourceGroup }} \
                     --name single \
-                    --parameters @rhel-jboss-templates/eap74-rhel8-payg/src/test/parameters-test-single.json \
-                    --template-file rhel-jboss-templates/eap74-rhel8-payg/mainTemplate.json
+                    --parameters @rhel-jboss-templates/eap-rhel-payg/src/test/parameters-test-single.json \
+                    --template-file rhel-jboss-templates/eap-rhel-payg/mainTemplate.json
             - name: Get public IP
               id: get_public_ip
               uses: azure/CLI@v1

@@ -5,6 +5,16 @@ log() {
     done
 }
 
+# firewalld installation and configuration
+if ! rpm -qa | grep firewalld 2>&1 > /dev/null ; then
+    sudo yum install firewalld -y
+    sudo systemctl start firewalld
+    sudo systemctl enable firewalld
+fi
+
+## Update JBoss EAP to use latest patch.
+sudo yum update -y | log; flag=${PIPESTATUS[0]}
+
 openport() {
     port=$1
 
@@ -15,25 +25,20 @@ openport() {
 JBOSS_EAP_USER=$1
 JBOSS_EAP_PASSWORD_BASE64=$2
 JBOSS_EAP_PASSWORD=$(echo $JBOSS_EAP_PASSWORD_BASE64 | base64 -d)
-RHSM_USER=$3
-RHSM_PASSWORD_BASE64=$4
-RHSM_PASSWORD=$(echo $RHSM_PASSWORD_BASE64 | base64 -d)
-RHSM_EAPPOOL=$5
-RHSM_RHELPOOL=$6
-CONNECT_SATELLITE=${7}
-SATELLITE_ACTIVATION_KEY_BASE64=${8}
+CONNECT_SATELLITE=${3}
+SATELLITE_ACTIVATION_KEY_BASE64=${4}
 SATELLITE_ACTIVATION_KEY=$(echo $SATELLITE_ACTIVATION_KEY_BASE64 | base64 -d)
-SATELLITE_ORG_NAME_BASE64=${9}
+SATELLITE_ORG_NAME_BASE64=${5}
 SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
-SATELLITE_VM_FQDN=${10}
-JDK_VERSION=${11}
-enableDB=${12}
-dbType=${13}
-jdbcDSJNDIName=${14}
-dsConnectionString=${15}
-databaseUser=${16}
-databasePassword=${17}
-gracefulShutdownTimeout=${18}
+SATELLITE_VM_FQDN=${6}
+JDK_VERSION=${7}
+enableDB=${8}
+dbType=${9}
+jdbcDSJNDIName=${10}
+dsConnectionString=${11}
+databaseUser=${12}
+databasePassword=${13}
+gracefulShutdownTimeout=${14}
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
 if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
@@ -77,97 +82,46 @@ if [[ "${CONNECT_SATELLITE,,}" == "true" ]]; then
 
     echo "sudo subscription-manager register --org=${SATELLITE_ORG_NAME} --activationkey=${SATELLITE_ACTIVATION_KEY}" | log; flag=${PIPESTATUS[0]}
     sudo subscription-manager register --org="${SATELLITE_ORG_NAME}" --activationkey="${SATELLITE_ACTIVATION_KEY}" --force | log; flag=${PIPESTATUS[0]}
-else
-    echo "Initial JBoss EAP setup" | log; flag=${PIPESTATUS[0]}
-    echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
-    subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force  | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo "ERROR! Red Hat Subscription Manager Registration Failed" >&2 log; exit $flag;  fi
-
-    echo "Subscribing the system to get access to JBoss EAP repos ($RHSM_EAPPOOL)" | log; flag=${PIPESTATUS[0]}
-    echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
-    subscription-manager attach --pool=${RHSM_EAPPOOL} | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
-gracefulShutdownTimeout=${18}access to RHEL repos" | log; flag=${PIPESTATUS[0]}
-    fi
 fi
 
-####################### Install required dependencies
-echo "Install curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
+####################### Install openjdk, EAP 7.4 is shipped with JDK 1.8, we are allowing more
+echo "Install openjdk, curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
 echo "sudo yum install curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
 sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}
 
+        if [ -z "$value" ] || [ "$value" == "null" ]; then
+
+## Set the right JDK version on the instance
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap7-openjdk17" ]]; then
+    echo "sudo alternatives --set java java-17-openjdk.x86_64" | log; flag=${PIPESTATUS[0]}
+    sudo alternatives --set java java-17-openjdk.x86_64| log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "eap8-openjdk11" ] || [ "${JDK_VERSION,,}" == "eap7-openjdk11" ]]; then
+    echo "sudo alternatives --set java java-11-openjdk.x86_64" | log; flag=${PIPESTATUS[0]}
+    sudo alternatives --set java java-11-openjdk.x86_64 | log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "eap7-openjdk8" ]]; then
+    echo "sudo alternatives --set java java-1.8.0-openjdk.x86_64" | log; flag=${PIPESTATUS[0]}
+    sudo alternatives --set java java-1.8.0-openjdk.x86_64 | log; flag=${PIPESTATUS[0]}
+fi
 ####################### 
 
-if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
-# Install JBoss EAP 8
-    echo "subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
-    subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
-
-    if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
-
-        echo "Installing JBoss EAP 8 JDK 17" | log; flag=${PIPESTATUS[0]}
-        echo "yum groupinstall -y jboss-eap8" | log; flag=${PIPESTATUS[0]}
-        yum groupinstall -y jboss-eap8       | log; flag=${PIPESTATUS[0]}
-        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
-    
-    elif [[ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
-        echo "Installing JBoss EAP 8 JDK 11" | log; flag=${PIPESTATUS[0]}
-        echo "yum groupinstall -y jboss-eap8-jdk11" | log; flag=${PIPESTATUS[0]}
-        yum groupinstall -y jboss-eap8-jdk11       | log; flag=${PIPESTATUS[0]}
-        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
-    fi
-
-else
-# Install JBoss EAP 7.4
-    echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
-    subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
-
-    if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" ]]; then
-        echo "Installing JBoss EAP 7.4 JDK 17" | log; flag=${PIPESTATUS[0]}
-        echo "yum groupinstall -y jboss-eap7-jdk17" | log; flag=${PIPESTATUS[0]}
-        yum groupinstall -y jboss-eap7-jdk17       | log; flag=${PIPESTATUS[0]}
-        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
-    
-    elif [[ "${JDK_VERSION,,}" == "eap74-openjdk11" ]]; then
-        echo "Installing JBoss EAP 7.4 JDK 11" | log; flag=${PIPESTATUS[0]}
-        echo "yum groupinstall -y jboss-eap7-jdk11" | log; flag=${PIPESTATUS[0]}
-        yum groupinstall -y jboss-eap7-jdk11       | log; flag=${PIPESTATUS[0]}
-        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
-    
-     elif [[ "${JDK_VERSION,,}" == "eap74-openjdk8" ]]; then
-        echo "Installing JBoss EAP 7.4 JDK 8" | log; flag=${PIPESTATUS[0]}
-        echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
-        yum groupinstall -y jboss-eap7       | log; flag=${PIPESTATUS[0]}
-        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
-    fi
-
-fi
-
-echo "Updating standalone-full-ha.xml" | log; flag=${PIPESTATUS[0]}
-echo -e "\t stack UDP to TCP"       | log; flag=${PIPESTATUS[0]}
-echo -e "\t set transaction id"     | log; flag=${PIPESTATUS[0]}
-
 ## OpenJDK 17 specific logic
-if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ] || [ "${JDK_VERSION,,}" == "eap7-openjdk17" ]]; then
     sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-full-ha.xml
 fi
 
 sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --echo-command \
-"embed-server --std-out=echo  --server-config=standalone-full-ha.xml",\
+'embed-server --std-out=echo  --server-config=standalone-full-ha.xml',\
 '/subsystem=transactions:write-attribute(name=node-identifier,value="'${NODE_ID}'")',\
-'/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")' | log; flag=${PIPESTATUS[0]} 
+'/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")' | log; flag=${PIPESTATUS[0]}
 
 ####################### Configure the JBoss server and setup eap service
 echo "Setting configurations in $EAP_RPM_CONF_STANDALONE"
 echo -e "\t-> WILDFLY_SERVER_CONFIG=standalone-full-ha.xml" | log; flag=${PIPESTATUS[0]}
 echo 'WILDFLY_SERVER_CONFIG=standalone-full-ha.xml' >> $EAP_RPM_CONF_STANDALONE | log; flag=${PIPESTATUS[0]}
-echo 'WILDFLY_OPTS=-Dorg.wildfly.sigterm.suspend.timeout=${gracefulShutdownTimeout}' >> $EAP_RPM_CONF_STANDALONE | log; flag=${PIPESTATUS[0]}
 
 echo "Setting configurations in $EAP_LAUNCH_CONFIG"
-echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=0.0.0.0"' | log; flag=${PIPESTATUS[0]}
-echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0"' | log; flag=${PIPESTATUS[0]}
+echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address=0.0.0.0' | log; flag=${PIPESTATUS[0]}
+echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address.management=0.0.0.0' | log; flag=${PIPESTATUS[0]}
 echo -e '\t-> JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address.private=$(hostname -I)"' | log; flag=${PIPESTATUS[0]}
 
 echo -e 'JAVA_OPTS="$JAVA_OPTS -Djboss.bind.address=0.0.0.0"' >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
@@ -177,7 +131,20 @@ echo -e 'JAVA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true"' >> $EAP_LAUNCH_
 
 echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
-echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
+echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]} 
+####################### Start the JBoss server and setup eap service
+
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+    echo "Start JBoss-EAP service"                   | log; flag=${PIPESTATUS[0]}
+    echo "systemctl enable eap8-standalone.service"  | log; flag=${PIPESTATUS[0]}
+    systemctl enable eap8-standalone.service         | log; flag=${PIPESTATUS[0]}
+
+else
+    echo "Start JBoss-EAP service"                   | log; flag=${PIPESTATUS[0]}
+    echo "systemctl enable eap7-standalone.service"  | log; flag=${PIPESTATUS[0]}
+    systemctl enable eap7-standalone.service         | log; flag=${PIPESTATUS[0]}
+fi
+####################### 
 
 ####################### Start the JBoss server and setup eap service
 
@@ -239,24 +206,26 @@ else
 fi
 ####################### 
 
-####################### Open Red Hat software firewall for port 8080 and 9990:
 openport 8080
 openport 9990
-openport 9999   # native management
-openport 8443   # HTTPS
-openport 8009   # AJP
-openport 22     # SSH
-echo "firewall-cmd --reload" | log; flag=${PIPESTATUS[0]}
-firewall-cmd --reload | log; flag=${PIPESTATUS[0]}
+openport 9999
+openport 8443
+openport 8009
+openport 22
+echo "firewall-cmd --reload"    | log; flag=${PIPESTATUS[0]}
+firewall-cmd --reload           | log; flag=${PIPESTATUS[0]}
+echo "iptables-save"            | log; flag=${PIPESTATUS[0]}
+sudo iptables-save              | log; flag=${PIPESTATUS[0]}
 
-echo "iptables-save" | log; flag=${PIPESTATUS[0]}
-sudo iptables-save   | log; flag=${PIPESTATUS[0]}
-
-/bin/date +%H:%M:%S 
+/bin/date +%H:%M:%S | log; flag=${PIPESTATUS[0]}
 echo "Configuring JBoss EAP management user" | log; flag=${PIPESTATUS[0]}
 echo "$EAP_HOME/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
-$EAP_HOME/bin/add-user.sh -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'  | log; flag=${PIPESTATUS[0]}
-if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; exit $flag;  fi 
+$EAP_HOME/bin/add-user.sh -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
+
+if [ $flag != 0 ]; then 
+    echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; flag=${PIPESTATUS[0]}
+    exit $flag;
+fi 
 
 # Seeing a race condition timing error so sleep to delay
 sleep 20

@@ -28,12 +28,14 @@ param adminPasswordOrSSHKey string
 param vmSize string = 'Standard_B1ms'
 
 @allowed([
-  'openjdk8'
-  'openjdk11'
-  'openjdk17'
+  'eap8-openjdk17'
+  'eap8-openjdk11'
+  'eap74-openjdk17'
+  'eap74-openjdk11'
+  'eap74-openjdk8'
 ])
 @description('The JDK version of the Virtual Machine')
-param jdkVersion string = 'openjdk17'
+param jdkVersion string = 'eap8-openjdk17'
 
 @description('Capture serial console outputs and screenshots of the virtual machine running on a host to help diagnose startup issues')
 @allowed([
@@ -86,6 +88,9 @@ param jbossEAPUserName string
 @description('Password for JBoss EAP Manager')
 @secure()
 param jbossEAPPassword string
+
+@description('Please enter a Graceful Shutdown Timeout in seconds')
+param gracefulShutdownTimeout string
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated')
 param artifactsLocation string = deployment().properties.templateLink.uri
@@ -155,7 +160,7 @@ var obj_uamiForDeploymentScript = {
 var plan = {
   publisher: 'redhat'
   product: 'rh-jboss-eap'
-  name: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
+  name: (jdkVersion == 'eap8-openjdk17') ? 'rh-jboss-eap8-jdk17-rhel9' : (jdkVersion == 'eap8-openjdk11') ? 'rh-jboss-eap8-jdk11-rhel9' : (jdkVersion == 'eap74-openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'eap74-openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'eap74-openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
 }
 
 /*
@@ -303,7 +308,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
       imageReference: {
         publisher: 'RedHat'
         offer: 'rh-jboss-eap'
-        sku: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
+        sku: (jdkVersion == 'eap8-openjdk17') ? 'rh-jboss-eap8-jdk17-rhel9' : (jdkVersion == 'eap8-openjdk11') ? 'rh-jboss-eap8-jdk11-rhel9' : (jdkVersion == 'eap74-openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'eap74-openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'eap74-openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
         version: 'latest'
       }
       osDisk: {
@@ -330,7 +335,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
 }
 
 module baseImageSelected './modules/_pids/_empty.bicep' = {
-  name: (jdkVersion == 'openjdk8') ? '${azure.guid.eap74-rhel8-payg.rh-jboss-eap74-jdk8-rhel8}' : (jdkVersion == 'openjdk11') ? '${azure.guid.eap74-rhel8-payg.rh-jboss-eap74-jdk11-rhel8}' : (jdkVersion == 'openjdk17') ? '${azure.guid.eap74-rhel8-payg.rh-jboss-eap74-jdk17-rhel8}' :  'eap74-rhel8-payg.null'
+  name: (jdkVersion == 'eap8-openjdk17') ? '${azure.guid.eap-rhel-payg.rh-jboss-eap8-jdk17-rhel9}' : (jdkVersion == 'eap8-openjdk11') ? '${azure.guid.eap-rhel-payg.rh-jboss-eap8-jdk11-rhel9}' : (jdkVersion == 'eap74-openjdk8') ? '${azure.guid.eap-rhel-payg.rh-jboss-eap74-jdk8-rhel8}' : (jdkVersion == 'eap74-openjdk11') ? '${azure.guid.eap-rhel-payg.rh-jboss-eap74-jdk11-rhel8}' : (jdkVersion == 'eap74-openjdk17') ? '${azure.guid.eap-rhel-payg.rh-jboss-eap74-jdk17-rhel8}' :  'eap-rhel-payg.null'
   params: {}
 }
 
@@ -378,7 +383,7 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
       ]
     }
     protectedSettings: {
-      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\''
+      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\' \'${gracefulShutdownTimeout}\''
     }
   }
 }
