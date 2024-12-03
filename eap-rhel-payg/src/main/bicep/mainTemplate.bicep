@@ -335,7 +335,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
 }
 
 module baseImageSelected './modules/_pids/_empty.bicep' = {
-  name: (jdkVersion == 'eap8-openjdk17') ? '${azure.guid.eap-rhel-payg.rh-jboss-eap8-jdk17-rhel9}' : (jdkVersion == 'eap8-openjdk11') ? '${azure.guid.eap-rhel-payg.rh-jboss-eap8-jdk11-rhel9}' : (jdkVersion == 'eap74-openjdk8') ? '${azure.guid.eap-rhel-payg.rh-jboss-eap74-jdk8-rhel8}' : (jdkVersion == 'eap74-openjdk11') ? '${azure.guid.eap-rhel-payg.rh-jboss-eap74-jdk11-rhel8}' : (jdkVersion == 'eap74-openjdk17') ? '${azure.guid.eap-rhel-payg.rh-jboss-eap74-jdk17-rhel8}' :  'eap-rhel-payg.null'
+  name: (jdkVersion == 'eap74-openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'eap74-openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'eap74-openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  (jdkVersion == 'eap8-openjdk17') ? 'rh-jboss-eap8-jdk17-rhel9' : (jdkVersion == 'eap8-openjdk11') ? 'rh-jboss-eap8-jdk11-rhel9}' : 'null'
   params: {}
 }
 
