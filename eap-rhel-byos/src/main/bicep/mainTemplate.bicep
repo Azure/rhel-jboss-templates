@@ -1,17 +1,19 @@
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
+
 @description('Location for all resources')
 param location string = resourceGroup().location
 
 @description('Name for the Virtual Machine.')
-param vmName string= 'jbosseapVm'
+param vmName string= 'jbosseapVm-${guidValue}'
 
 @description('Linux VM user account name')
 param adminUsername string = 'jbossuser'
 
 @description('Public IP Name for the VM')
-param vmPublicIPAddressName string = 'jbosseapVm-ip'
+param vmPublicIPAddressName string = 'jbosseapVm-ip-${guidValue}'
 
 @description('DNS prefix for VM')
-param dnsNameforVM string = 'jbossvm${take(uniqueString(utcNow()), 6)}'
+param dnsNameforVM string = 'jbossvm-${guidValue}'
 
 @description('Type of authentication to use on the Virtual Machine')
 @allowed([
@@ -44,7 +46,7 @@ param storageNewOrExisting string = 'New'
 param existingStorageAccount string = ''
 
 @description('Name of the storage account')
-param storageAccountName string = 'storage${uniqueString(resourceGroup().id)}'
+param storageAccountName string = 'storage${uniqueString(resourceGroup().id)}-${guidValue}'
 
 @description('Storage account type')
 param storageAccountType string = 'Standard_LRS'
@@ -59,7 +61,7 @@ param storageAccountResourceGroupName string = resourceGroup().name
 param virtualNetworkNewOrExisting string = 'new'
 
 @description('Name of the virtual network')
-param virtualNetworkName string = 'VirtualNetwork'
+param virtualNetworkName string = 'VirtualNetwork-${guidValue}'
 
 @description('Address prefix of the virtual network')
 param addressPrefixes array = [
@@ -67,7 +69,7 @@ param addressPrefixes array = [
 ]
 
 @description('Name of the subnet')
-param subnetName string = 'default'
+param subnetName string = 'default-${guidValue}'
 
 @description('Subnet prefix of the virtual network')
 param subnetPrefix string = '10.0.0.0/29'
@@ -141,10 +143,9 @@ param dbUser string = 'contosoDbUser'
 @description('Password for Database')
 param dbPassword string = newGuid()
 
-param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
-var nicName_var = '${uniqueString(resourceGroup().id)}-nic'
-var networkSecurityGroupName_var = 'jbosseap-nsg'
+var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
+var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
 var bootDiagnosticsCheck = ((storageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
 var bootStorageName_var = ((storageNewOrExisting == 'Existing') ? existingStorageAccount : storageAccountName)
 var linuxConfiguration = {
@@ -170,7 +171,7 @@ var obj_uamiForDeploymentScript = {
 * Beginning of the offer deployment
 */
 module pids './modules/_pids/_pid.bicep' = {
-  name: 'initialization'
+  name: 'initialization-${guidValue}'
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -179,14 +180,14 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
 }
 
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
-  name: 'uami-deployment'
+  name: 'uami-deployment-${guidValue}'
   params: {
     location: location
   }
 }
 
 module byosSingleStartPid './modules/_pids/_pid.bicep' = {
-  name: 'byosSingleStartPid'
+  name: 'byosSingleStartPid-${guidValue}'
   params: {
     name: pids.outputs.byosSingleStart
   }
@@ -342,7 +343,7 @@ resource vmPublicIP 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPu
 }
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionStartPid'
+  name: 'dbConnectionStartPid-${guidValue}'
   params: {
     name: pids.outputs.dbStart
   }
@@ -354,7 +355,7 @@ module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
 
 resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/extensions@${azure.apiVersionForVirtualMachineExtensions}' = {
   parent: vmName_resource
-  name: 'jbosseap-setup-extension'
+  name: 'jbosseap-setup-extension-${guidValue}'
   location: location
   properties: {
     publisher: 'Microsoft.Azure.Extensions'
@@ -394,7 +395,7 @@ module updateNicPrivateIpStatic 'modules/_deployment-scripts/_dsPostDeployment.b
 }
 
 module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionEndPid'
+  name: 'dbConnectionEndPid-${guidValue}'
   params: {
     name: pids.outputs.dbEnd
   }
@@ -405,7 +406,7 @@ module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
 }
 
 module byosSingleEndPid './modules/_pids/_pid.bicep' = {
-  name: 'byosSingleEndPid'
+  name: 'byosSingleEndPid-${guidValue}'
   params: {
     name: pids.outputs.byosSingleEnd
   }
