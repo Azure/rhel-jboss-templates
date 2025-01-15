@@ -159,7 +159,7 @@ var linuxConfiguration = {
     ]
   }
 }
-var name_postDeploymentDsName = format('updateNicPrivateIpStatic{0}', guidValue)
+var name_postDeploymentDsName = format('updateNicPrivateIpStatic-{0}', guidValue)
 var obj_uamiForDeploymentScript = {
   type: 'UserAssigned'
   userAssignedIdentities: {
