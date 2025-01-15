@@ -46,7 +46,7 @@ param storageNewOrExisting string = 'New'
 param existingStorageAccount string = ''
 
 @description('Name of the storage account')
-param storageAccountName string = 'storage${uniqueString(resourceGroup().id)}-${guidValue}'
+param storageAccountName string = 'storage${guidValue}'
 
 @description('Storage account type')
 param storageAccountType string = 'Standard_LRS'
