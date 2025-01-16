@@ -41,7 +41,7 @@ param bootStorageNewOrExisting string = 'New'
 param existingStorageAccount string = ''
 
 @description('Name of the Storage Account.')
-param bootStorageAccountName string = 'jbboot${uniqueString(resourceGroup().id)}'
+param bootStorageAccountName string = 'jbboot${guidValue}'
 
 @description('Storage account kind')
 param storageAccountKind string = 'Storage'
