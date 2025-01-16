@@ -1,3 +1,5 @@
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
+
 @description('User name for the Virtual Machine')
 param adminUsername string = 'jbossuser'
 
@@ -62,10 +64,10 @@ param enableAppGWIngress bool = false
 param operatingMode string = 'managed-domain'
 
 @description('Name of the availability set')
-param asName string = 'jbosseapAs'
+param asName string = 'jbosseapAs-${guidValue}'
 
 @description('Name of the virtual machines')
-param vmName string = 'jbosseapVm'
+param vmName string = 'jbosseapVm-${guidValue}'
 
 @allowed([
   'on'
@@ -114,7 +116,7 @@ param bootStorageNewOrExisting string = 'New'
 param existingStorageAccount string = ''
 
 @description('Name of the Storage Account.')
-param bootStorageAccountName string = 'boot${uniqueString(resourceGroup().id)}'
+param bootStorageAccountName string = 'boot${guidValue}'
 
 @description('Storage account kind')
 param storageAccountKind string = 'Storage'
@@ -148,8 +150,6 @@ param satelliteOrgName string = newGuid()
 
 @description('Red Hat Satellite Server VM FQDN name.')
 param satelliteFqdn string = newGuid()
-
-param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
 @description('Price tier for Key Vault.')
 param keyVaultSku string = 'Standard'
@@ -186,15 +186,16 @@ param dbUser string = 'contosoDbUser'
 @description('Password for Database')
 param dbPassword string = newGuid()
 
-var name_managedDomain = 'managed-domain'
-var name_fileshare = 'jbossshare'
-var containerName = 'eapblobcontainer'
-var eapStorageAccountName = 'jbosstrg${uniqueString(resourceGroup().id)}'
+var name_managedDomain = 'managed-domain-${guidValue}'
+var name_fileshare = 'jbossshare-${guidValue}'
+var containerName = 'eapblobcontainer-${guidValue}'
+var eapStorageAccountName = 'jbosstrg-${guidValue}'
 var eapstorageReplication = 'Standard_LRS'
 var vmName_var = vmName
 var asName_var = asName
 var skuName = 'Aligned'
-var nicName_var = 'jbosseap-server-nic'
+var nicName_var = 'jbosseap-server-nic-${guidValue}'
+var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
 var privateSaEndpointName_var = 'saep${uniqueString(resourceGroup().id)}'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
 var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
@@ -222,7 +223,7 @@ var plan = {
 }
 
 var name_failFastDsName = format('failFast{0}', guidValue)
-var name_jbossEAPDsName = 'jbosseap-setup'
+var name_jbossEAPDsName = 'jbosseap-setup-${guidValue}'
 var obj_uamiForDeploymentScript = {
   type: 'UserAssigned'
   userAssignedIdentities: {
@@ -230,12 +231,12 @@ var obj_uamiForDeploymentScript = {
   }
 }
 var name_keyVaultName = take('jboss-kv${guidValue}', 24)
-var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}${take(uniqueString('${utcValue}${resourceGroup().id}'), 6)}'
+var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}-${guidValue}'
 var name_rgNameWithoutSpecialCharacter = replace(replace(replace(replace(resourceGroup().name, '.', ''), '(', ''), ')', ''), '_', '') // remove . () _ from resource group name
 var name_domainLabelforApplicationGateway = take('${name_dnsNameforApplicationGateway}-${toLower(name_rgNameWithoutSpecialCharacter)}', 63)
 var const_azureSubjectName = format('{0}.{1}.{2}', name_domainLabelforApplicationGateway, location, 'cloudapp.azure.com')
-var name_appgwFrontendSSLCertName = 'appGatewaySslCert'
-var name_appGateway = 'appgw${uniqueString(utcValue)}'
+var name_appgwFrontendSSLCertName = 'appGatewaySslCert-${guidValue}'
+var name_appGateway = 'appgw-${guidValue}'
 var property_subnet_with_app_gateway = [
   {
     name: subnetName
@@ -336,7 +337,7 @@ module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep
 
 // Get existing VNET.
 resource existingVnet 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' existing = if (virtualNetworkNewOrExisting != 'new') {
-  name: virtualNetworkName
+  name: virtualNetworkName_var
   scope: resourceGroup(virtualNetworkResourceGroupName)
 }
 
@@ -352,7 +353,7 @@ module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
     appGatewayName: name_appGateway
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
     gatewayPublicIPAddressName: name_appGatewayPublicIPAddress
-    gatewaySubnetId: virtualNetworkNewOrExisting == 'new' ? resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetForAppGateway) : existingSubnet.id
+    gatewaySubnetId: virtualNetworkNewOrExisting == 'new' ? resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName_var, subnetForAppGateway) : existingSubnet.id
     gatewaySslCertName: name_appgwFrontendSSLCertName
     location: location
     sslCertDataSecretName: (enableAppGWIngress ? appgwSecretDeployment.outputs.sslCertDataSecretName : keyVaultSSLCertDataSecretName)
@@ -455,7 +456,7 @@ resource symbolicname 'Microsoft.Network/privateEndpoints@${azure.apiVersionForP
       }
     ]
     subnet: {
-      id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
+      id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName_var, subnetName)
     }
   }
   dependsOn: [
@@ -504,7 +505,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@${azure.apiVersionForNetwo
 }
 
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
-  name: virtualNetworkName
+  name: virtualNetworkName_var
   location: location
   tags: {
     QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
@@ -544,7 +545,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
+            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName_var, subnetName)
           }
           applicationGatewayBackendAddressPools: enableAppGWIngress ? ((operatingMode == name_managedDomain) ? ((i != 0) ? [
             {
