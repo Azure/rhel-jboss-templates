@@ -146,6 +146,7 @@ param dbPassword string = newGuid()
 
 var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
 var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
+var virtualNetworkName_var = '$virtualNetworkName-${guidValue}'
 var bootDiagnosticsCheck = ((storageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
 var bootStorageName_var = ((storageNewOrExisting == 'Existing') ? existingStorageAccount : storageAccountName)
 var linuxConfiguration = {
@@ -233,7 +234,7 @@ resource networkSecurityGroupName 'Microsoft.Network/networkSecurityGroups@${azu
 }
 
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
-  name: '${virtualNetworkName}-${guidValue}'
+  name: virtualNetworkName_var
   location: location
   properties: {
     addressSpace: {
@@ -266,7 +267,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName, subnetName)
+            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName_var, subnetName)
           }
           publicIPAddress: {
             id: resourceId('Microsoft.Network/publicIPAddresses', vmPublicIPAddressName)
