@@ -1,3 +1,5 @@
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
+
 @description('User name for the Virtual Machine')
 param adminUsername string = 'jbossuser'
 
@@ -76,14 +78,14 @@ param addressPrefixes array = [
 ]
 
 @description('Name of the existing or new Subnet')
-param subnetName string = 'jbosseap-server-subnet'
+param subnetName string = 'jbosseap-server-subnet-${guidValue}'
 
 @description('Address prefix of the subnet')
 param subnetPrefix string = '10.0.0.0/24'
 
 @description('String used as a base for naming resources (9 characters or less). A hash is prepended to this string for some resources, and resource-specific information is appended')
 @maxLength(9)
-param vmssName string = 'jbossvmss'
+param vmssName string = 'jbossvmss-${guidValue}'
 
 @description('Number of VM instances (100 or less)')
 @minValue(2)
@@ -120,13 +122,11 @@ param satelliteOrgName string = newGuid()
 @description('Red Hat Satellite Server VM FQDN name.')
 param satelliteFqdn string = newGuid()
 
-param guidValue string = take(replace(newGuid(), '-', ''), 6)
-
 @description('true to set up Application Gateway ingress.')
 param enableAppGWIngress bool = false
 
 @description('Name of the existing or new Subnet')
-param subnetForAppGateway string = 'jboss-appgateway-subnet'
+param subnetForAppGateway string = 'jboss-appgateway-subnet-${guidValue}'
 
 @description('Address prefix of the subnet')
 param subnetPrefixForAppGateway string = '10.0.1.0/24'
@@ -138,7 +138,7 @@ param keyVaultSku string = 'Standard'
 param utcValue string = utcNow()
 
 @description('DNS prefix for ApplicationGateway')
-param dnsNameforApplicationGateway string = 'jbossgw'
+param dnsNameforApplicationGateway string = 'jbossgw-${guidValue}'
 
 @description('The name of the secret in the specified KeyVault whose value is the SSL Certificate Data for Appliation Gateway frontend TLS/SSL.')
 param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
@@ -167,9 +167,10 @@ param dbUser string = 'contosoDbUser'
 param dbPassword string = newGuid()
 
 var containerName = 'eapblobcontainer'
-var eapStorageAccountName_var = 'jbosstrg${uniqueString(resourceGroup().id)}'
+var eapStorageAccountName_var = 'jbosstrg-${guidValue}'
 var eapstorageReplication = 'Standard_LRS'
 var var_vmssInstanceName   = 'jbosseap-server${vmssName}'
+var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
 var nicName = 'jbosseap-server-nic'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
 var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
@@ -201,12 +202,12 @@ var obj_uamiForDeploymentScript = {
   }
 }
 var name_keyVaultName = take('jboss-kv${guidValue}', 24)
-var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}${take(uniqueString(utcValue), 6)}'
+var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}-${guidValue}'
 var name_rgNameWithoutSpecialCharacter = replace(replace(replace(replace(resourceGroup().name, '.', ''), '(', ''), ')', ''), '_', '') // remove . () _ from resource group name
 var name_domainLabelforApplicationGateway = take('${name_dnsNameforApplicationGateway}-${toLower(name_rgNameWithoutSpecialCharacter)}', 63)
 var const_azureSubjectName = format('{0}.{1}.{2}', name_domainLabelforApplicationGateway, location, 'cloudapp.azure.com')
-var name_appgwFrontendSSLCertName = 'appGatewaySslCert'
-var name_appGateway = 'appgw${uniqueString(utcValue)}'
+var name_appgwFrontendSSLCertName = 'appGatewaySslCert-${guidValue}'
+var name_appGateway = 'appgw-${guidValue}'
 var property_subnet_with_app_gateway = [
   {
     name: subnetName
@@ -239,8 +240,8 @@ var property_subnet_without_app_gateway = [
   }
 ]
 var name_publicIPAddress = '-pubIp'
-var name_networkSecurityGroup = 'jboss-nsg'
-var name_appGatewayPublicIPAddress = 'gwip'
+var name_networkSecurityGroup = 'jboss-nsg-${guidValue}'
+var name_appGatewayPublicIPAddress = 'gwip-${guidValue}'
 var plan = {
   publisher: 'redhat'
   product: 'rh-jboss-eap'
@@ -287,7 +288,7 @@ module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep
 
 // Get existing VNET.
 resource existingVnet 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' existing = if (virtualNetworkNewOrExisting != 'new') {
-  name: virtualNetworkName
+  name: virtualNetworkName_var
   scope: resourceGroup(virtualNetworkResourceGroupName)
 }
 
@@ -303,7 +304,7 @@ module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
     appGatewayName: name_appGateway
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
     gatewayPublicIPAddressName: name_appGatewayPublicIPAddress
-    gatewaySubnetId: virtualNetworkNewOrExisting == 'new' ? resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetForAppGateway) : existingSubnet.id
+    gatewaySubnetId: virtualNetworkNewOrExisting == 'new' ? resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName_var, subnetForAppGateway) : existingSubnet.id
     gatewaySslCertName: name_appgwFrontendSSLCertName
     location: location
     sslCertDataSecretName: (enableAppGWIngress ? appgwSecretDeployment.outputs.sslCertDataSecretName : keyVaultSSLCertDataSecretName)
@@ -410,7 +411,7 @@ module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = {
 }
 
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
-  name: virtualNetworkName
+  name: virtualNetworkName_var
   location: location
   tags: {
     QuickstartName: 'JBoss EAP on RHEL VMSS'
@@ -477,7 +478,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
                   name: 'ipconfig'
                   properties: {
                     subnet: {
-                      id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
+                      id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName_var, subnetName)
                     }
                     applicationGatewayBackendAddressPools: enableAppGWIngress ? [
                       {
