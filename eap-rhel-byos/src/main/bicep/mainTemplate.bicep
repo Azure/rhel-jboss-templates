@@ -146,7 +146,7 @@ param dbPassword string = newGuid()
 
 var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
 var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
-var virtualNetworkName_var = '$virtualNetworkName-${guidValue}'
+var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
 var bootDiagnosticsCheck = ((storageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
 var bootStorageName_var = ((storageNewOrExisting == 'Existing') ? existingStorageAccount : storageAccountName)
 var linuxConfiguration = {
