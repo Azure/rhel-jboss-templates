@@ -143,9 +143,6 @@ param guidValue string = take(replace(newGuid(), '-', ''), 6)
 @description('Price tier for Key Vault.')
 param keyVaultSku string = 'Standard'
 
-@description('UTC value for generating unique names.')
-param utcValue string = utcNow()
-
 @description('DNS prefix for ApplicationGateway')
 param dnsNameforApplicationGateway string = 'jbossgw'
 
@@ -215,12 +212,12 @@ var obj_uamiForDeploymentScript = {
   }
 }
 var name_keyVaultName = take('jboss-kv${guidValue}', 24)
-var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}${take(uniqueString('${utcValue}${resourceGroup().id}'), 6)}'
+var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}-${guidValue}'
 var name_rgNameWithoutSpecialCharacter = replace(replace(replace(replace(resourceGroup().name, '.', ''), '(', ''), ')', ''), '_', '') // remove . () _ from resource group name
 var name_domainLabelforApplicationGateway = take('${name_dnsNameforApplicationGateway}-${toLower(name_rgNameWithoutSpecialCharacter)}', 63)
 var const_azureSubjectName = format('{0}.{1}.{2}', name_domainLabelforApplicationGateway, location, 'cloudapp.azure.com')
 var name_appgwFrontendSSLCertName = 'appGatewaySslCert'
-var name_appGateway = 'appgw${uniqueString(utcValue)}'
+var name_appGateway = 'appgw-${guidValue}'
 var property_subnet_with_app_gateway = [
   {
     name: subnetName
