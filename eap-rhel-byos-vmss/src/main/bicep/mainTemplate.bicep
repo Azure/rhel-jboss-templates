@@ -175,7 +175,7 @@ param dbUser string = 'contosoDbUser'
 param dbPassword string = newGuid()
 
 var containerName = 'eapblobcontainer'
-var eapStorageAccountName_var = 'jbosstrg${uniqueString(resourceGroup().id)}'
+var eapStorageAccountName_var = 'jbosstrg-${guidValue}'
 var eapstorageReplication = 'Standard_LRS'
 var vmssInstanceName_var = 'jbosseap-server${vmssName}'
 var nicName = 'jbosseap-server-nic-${guidValue}'
@@ -259,7 +259,7 @@ var name_appGatewayPublicIPAddress = 'gwip'
 var const_azcliVersion = '2.53.0'
 
 module pids './modules/_pids/_pid.bicep' = {
-  name: 'initialization'
+  name: 'initialization-${guidValue}'
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -268,7 +268,7 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
 }
 
 module byosVmssStartPid './modules/_pids/_pid.bicep' = {
-  name: 'byosVmssStartPid'
+  name: 'byosVmssStartPid-${guidValue}'
   params: {
     name: pids.outputs.byosVmssStart
   }
@@ -278,14 +278,14 @@ module byosVmssStartPid './modules/_pids/_pid.bicep' = {
 }
 
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
-  name: 'uami-deployment'
+  name: 'uami-deployment-${guidValue}'
   params: {
     location: location
   }
 }
 
 module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep' = if (enableAppGWIngress) {
-  name: 'appgateway-certificates-secrets-deployment'
+  name: 'appgateway-certificates-secrets-deployment-${guidValue}'
   params: {
     identity: obj_uamiForDeploymentScript
     location: location
@@ -419,7 +419,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.
 }
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionStartPid'
+  name: 'dbConnectionStartPid-${guidValue}'
   params: {
     name: pids.outputs.dbStart
   }
@@ -526,7 +526,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
 }
 
 module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionEndPid'
+  name: 'dbConnectionEndPid-${guidValue}'
   params: {
     name: pids.outputs.dbEnd
   }
@@ -537,7 +537,7 @@ module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
 }
 
 module byosVmssEndPid './modules/_pids/_pid.bicep' = {
-  name: 'byosVmssEndPid'
+  name: 'byosVmssEndPid-${guidValue}'
   params: {
     name: pids.outputs.byosVmssEnd
   }
