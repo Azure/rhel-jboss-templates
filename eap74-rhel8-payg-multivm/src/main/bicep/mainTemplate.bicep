@@ -103,7 +103,7 @@ param bootStorageNewOrExisting string = 'New'
 param existingStorageAccount string = ''
 
 @description('Name of the Storage Account.')
-param bootStorageAccountName string = 'boot${uniqueString(resourceGroup().id)}'
+param bootStorageAccountName string = 'boot${guidValue}'
 
 @description('Name of the resource group for the existing storage account')
 param storageAccountResourceGroupName string = resourceGroup().name
