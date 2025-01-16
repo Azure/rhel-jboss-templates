@@ -61,7 +61,7 @@ param storageAccountResourceGroupName string = resourceGroup().name
 param virtualNetworkNewOrExisting string = 'new'
 
 @description('Name of the virtual network')
-param virtualNetworkName string = 'VirtualNetwork-${guidValue}'
+param virtualNetworkName string = 'VirtualNetwork'
 
 @description('Address prefix of the virtual network')
 param addressPrefixes array = [
@@ -69,7 +69,7 @@ param addressPrefixes array = [
 ]
 
 @description('Name of the subnet')
-param subnetName string = 'default-${guidValue}'
+param subnetName string = 'default'
 
 @description('Subnet prefix of the virtual network')
 param subnetPrefix string = '10.0.0.0/29'
@@ -233,7 +233,7 @@ resource networkSecurityGroupName 'Microsoft.Network/networkSecurityGroups@${azu
 }
 
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
-  name: virtualNetworkName
+  name: '${virtualNetworkName}-${guidValue}'
   location: location
   properties: {
     addressSpace: {
