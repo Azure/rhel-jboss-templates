@@ -154,9 +154,6 @@ param satelliteFqdn string = newGuid()
 @description('Price tier for Key Vault.')
 param keyVaultSku string = 'Standard'
 
-@description('UTC value for generating unique names')
-param utcValue string = utcNow()
-
 @description('DNS prefix for ApplicationGateway')
 param dnsNameforApplicationGateway string = 'jbossgw'
 

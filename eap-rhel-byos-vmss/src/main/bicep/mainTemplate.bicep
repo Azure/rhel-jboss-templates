@@ -145,9 +145,6 @@ param subnetPrefixForAppGateway string = '10.0.1.0/24'
 @description('Price tier for Key Vault.')
 param keyVaultSku string = 'Standard'
 
-@description('UTC value for generating unique names.')
-param utcValue string = utcNow()
-
 @description('DNS prefix for ApplicationGateway')
 param dnsNameforApplicationGateway string = 'jbossgw-${guidValue}'
 
