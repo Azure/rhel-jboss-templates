@@ -268,7 +268,7 @@ var plan = {
 * Beginning of the offer deployment
 */
 module pids './modules/_pids/_pid.bicep' = {
-  name: 'initialization'
+  name: 'initialization-${guidValue}'
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -277,7 +277,7 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
 }
 
 module paygMultivmStartPid './modules/_pids/_pid.bicep' = {
-  name: 'paygMultivmStartPid'
+  name: 'paygMultivmStartPid-${guidValue}'
   params: {
     name: pids.outputs.paygMultivmStart
   }
@@ -287,7 +287,7 @@ module paygMultivmStartPid './modules/_pids/_pid.bicep' = {
 }
 
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
-  name: 'uami-deployment'
+  name: 'uami-deployment-${guidValue}'
   params: {
     location: location
   }
@@ -311,7 +311,7 @@ module failFastDeployment 'modules/_deployment-scripts/_ds-failfast.bicep' = {
 }
 
 module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep' = if (enableAppGWIngress) {
-  name: 'appgateway-certificates-secrets-deployment'
+  name: 'appgateway-certificates-secrets-deployment-${guidValue}'
   params: {
     identity: obj_uamiForDeploymentScript
     location: location
@@ -337,7 +337,7 @@ resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVe
 }
 
 module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
-  name: 'app-gateway-deployment'
+  name: 'app-gateway-deployment-${guidValue}'
   params: {
     appGatewayName: name_appGateway
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
@@ -619,7 +619,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
 }]
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionStartPid'
+  name: 'dbConnectionStartPid-${guidValue}'
   params: {
     name: pids.outputs.dbStart
   }
@@ -667,7 +667,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
 }
 
 module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionEndPid'
+  name: 'dbConnectionEndPid-${guidValue}'
   params: {
     name: pids.outputs.dbEnd
   }
@@ -696,7 +696,7 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@${azure.apiVersionF
 }
 
 module paygMultivmEndPid './modules/_pids/_pid.bicep' = {
-  name: 'paygMultivmEndPid'
+  name: 'paygMultivmEndPid-${guidValue}'
   params: {
     name: pids.outputs.paygMultivmEnd
   }

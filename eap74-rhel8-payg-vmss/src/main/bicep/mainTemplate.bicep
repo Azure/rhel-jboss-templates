@@ -249,7 +249,7 @@ var plan = {
 var const_azcliVersion = '2.53.0'
 
 module pids './modules/_pids/_pid.bicep' = {
-  name: 'initialization'
+  name: 'initialization-${guidValue}'
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -258,7 +258,7 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
 }
 
 module paygVmssStartPid './modules/_pids/_pid.bicep' = {
-  name: 'paygVmssStartPid'
+  name: 'paygVmssStartPid-${guidValue}'
   params: {
     name: pids.outputs.paygVmssStart
   }
@@ -268,14 +268,14 @@ module paygVmssStartPid './modules/_pids/_pid.bicep' = {
 }
 
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
-  name: 'uami-deployment'
+  name: 'uami-deployment-${guidValue}'
   params: {
     location: location
   }
 }
 
 module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep' = if (enableAppGWIngress) {
-  name: 'appgateway-certificates-secrets-deployment'
+  name: 'appgateway-certificates-secrets-deployment-${guidValue}'
   params: {
     identity: obj_uamiForDeploymentScript
     location: location
@@ -298,7 +298,7 @@ resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVe
 }
 
 module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
-  name: 'app-gateway-deployment'
+  name: 'app-gateway-deployment-${guidValue}'
   params: {
     appGatewayName: name_appGateway
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
@@ -424,7 +424,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.
 }
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionStartPid'
+  name: 'dbConnectionStartPid-${guidValue}'
   params: {
     name: pids.outputs.dbStart
   }
@@ -531,7 +531,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
 }
 
 module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionEndPid'
+  name: 'dbConnectionEndPid-${guidValue}'
   params: {
     name: pids.outputs.dbEnd
   }
