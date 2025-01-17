@@ -220,7 +220,7 @@ var plan = {
 }
 
 var name_failFastDsName = format('failFast{0}', guidValue)
-var name_jbossEAPDsName = 'jbosseap-setup-${guidValue}'
+var name_jbossEAPDsName = 'jbosseap-setup'
 var obj_uamiForDeploymentScript = {
   type: 'UserAssigned'
   userAssignedIdentities: {
