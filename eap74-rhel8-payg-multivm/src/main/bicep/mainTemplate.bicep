@@ -175,13 +175,13 @@ param dbPassword string = newGuid()
 var name_managedDomain = 'managed-domain'
 var name_fileshare = 'jbossshare'
 var containerName = 'eapblobcontainer'
-var eapStorageAccountName = 'jbosstrg${uniqueString(resourceGroup().id)}'
+var eapStorageAccountName = 'jbosstrg${guidValue}'
 var eapstorageReplication = 'Standard_LRS'
 var vmName_var = vmName
 var asName_var = asName
 var skuName = 'Aligned'
 var nicName_var = 'jbosseap-server-nic'
-var privateSaEndpointName_var = 'saep${uniqueString(resourceGroup().id)}'
+var privateSaEndpointName_var = 'saep-${guidValue}'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
 var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
 var linuxConfiguration = {

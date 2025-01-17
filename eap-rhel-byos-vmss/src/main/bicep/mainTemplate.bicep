@@ -175,7 +175,7 @@ param dbUser string = 'contosoDbUser'
 param dbPassword string = newGuid()
 
 var containerName = 'eapblobcontainer'
-var eapStorageAccountName_var = 'jbosstrg-${guidValue}'
+var eapStorageAccountName_var = 'jbosstrg${guidValue}'
 var eapstorageReplication = 'Standard_LRS'
 var vmssInstanceName_var = 'jbosseap-server${vmssName}-${guidValue}'
 var nicName = 'jbosseap-server-nic-${guidValue}'
