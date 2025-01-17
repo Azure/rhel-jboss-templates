@@ -101,7 +101,7 @@ param subnetPrefix string = '10.0.0.0/24'
 
 @description('String used as a base for naming resources (9 characters or less). A hash is prepended to this string for some resources, and resource-specific information is appended')
 @maxLength(9)
-param vmssName string = 'jbossvmss-${guidValue}'
+param vmssName string = 'jbossvmss'
 
 @description('Number of VM instances (100 or less)')
 @minValue(2)
@@ -177,7 +177,7 @@ param dbPassword string = newGuid()
 var containerName = 'eapblobcontainer'
 var eapStorageAccountName_var = 'jbosstrg-${guidValue}'
 var eapstorageReplication = 'Standard_LRS'
-var vmssInstanceName_var = 'jbosseap-server${vmssName}'
+var vmssInstanceName_var = 'jbosseap-server${vmssName}-${guidValue}'
 var nicName = 'jbosseap-server-nic-${guidValue}'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
 var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
