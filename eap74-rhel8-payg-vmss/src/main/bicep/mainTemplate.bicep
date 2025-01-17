@@ -85,7 +85,7 @@ param subnetPrefix string = '10.0.0.0/24'
 
 @description('String used as a base for naming resources (9 characters or less). A hash is prepended to this string for some resources, and resource-specific information is appended')
 @maxLength(9)
-param vmssName string = 'jbossvmss-${guidValue}'
+param vmssName string = 'jbossvmss'
 
 @description('Number of VM instances (100 or less)')
 @minValue(2)
@@ -166,7 +166,7 @@ param dbPassword string = newGuid()
 var containerName = 'eapblobcontainer'
 var eapStorageAccountName_var = 'jbosstrg-${guidValue}'
 var eapstorageReplication = 'Standard_LRS'
-var var_vmssInstanceName   = 'jbosseap-server${vmssName}'
+var vmssInstanceName_var   = 'jbosseap-server${vmssName}-${guidValue}'
 var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
 var nicName = 'jbosseap-server-nic'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
@@ -435,7 +435,7 @@ module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
 }
 
 resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.apiVersionForVirtualMachineScaleSets}' = {
-  name: var_vmssInstanceName
+  name: vmssInstanceName_var
   location: location
   sku: {
     name: vmSize
@@ -459,7 +459,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
         imageReference: imageReference
       }
       osProfile: {
-        computerNamePrefix: var_vmssInstanceName
+        computerNamePrefix: vmssInstanceName_var
         adminUsername: adminUsername
         adminPassword: adminPasswordOrSSHKey
         linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
@@ -483,7 +483,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
                       }
                     ] : null
                     publicIPAddressConfiguration: {
-                      name: '${var_vmssInstanceName  }${name_publicIPAddress}'
+                      name: '${vmssInstanceName_var}${name_publicIPAddress}'
                     }
                   }
                 }
@@ -585,7 +585,7 @@ resource getAdminConsolesScripts 'Microsoft.Resources/deploymentScripts@${azure.
     environmentVariables: [
       {
         name: 'VMSS_NAME'
-        value: var_vmssInstanceName
+        value: vmssInstanceName_var
       }
       {
         name: 'RESOURCE_GROUP'
