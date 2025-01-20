@@ -191,7 +191,7 @@ var eapstorageReplication = 'Standard_LRS'
 var vmName_var = vmName
 var asName_var = asName
 var skuName = 'Aligned'
-var nicName_var = 'jbosseap-server-nic-${guidValue}'
+var nicName_var = 'jbosseap-server-nic-${guidValue}-'
 var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
 var privateSaEndpointName_var = 'saep${uniqueString(resourceGroup().id)}'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
@@ -220,7 +220,7 @@ var plan = {
 }
 
 var name_failFastDsName = format('failFast{0}', guidValue)
-var name_jbossEAPDsName = 'jbosseap-setup'
+var name_jbossEAPDsName = 'jbosseap-setup-${guidValue}'
 var obj_uamiForDeploymentScript = {
   type: 'UserAssigned'
   userAssignedIdentities: {
@@ -269,14 +269,14 @@ var name_publicIPAddress = '-pubIp'
 var name_adminVmName = '-adminVM'
 var dnsNameforAdminVm = 'jboss-admin${guidValue}'
 var dnsNameforManagedVm = 'jboss-managed${guidValue}'
-var name_networkSecurityGroup = 'jboss-nsg'
-var name_appGatewayPublicIPAddress = 'gwip'
+var name_networkSecurityGroup = 'jboss-nsg-${guidValue}'
+var name_appGatewayPublicIPAddress = 'gwip-${guidValue}'
 
 /*
 * Beginning of the offer deployment
 */
 module pids './modules/_pids/_pid.bicep' = {
-  name: 'initialization'
+  name: 'initialization-${guidValue}'
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -295,7 +295,7 @@ module byosMultivmStartPid './modules/_pids/_pid.bicep' = {
 }
 
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
-  name: 'uami-deployment'
+  name: 'uami-deployment-${guidValue}'
   params: {
     location: location
   }
@@ -345,7 +345,7 @@ resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVe
 }
 
 module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
-  name: 'app-gateway-deployment'
+  name: 'app-gateway-deployment-${guidValue}'
   params: {
     appGatewayName: name_appGateway
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
