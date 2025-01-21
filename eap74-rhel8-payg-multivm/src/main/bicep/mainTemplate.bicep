@@ -103,7 +103,7 @@ param bootStorageNewOrExisting string = 'New'
 param existingStorageAccount string = ''
 
 @description('Name of the Storage Account.')
-param bootStorageAccountName string = 'boot${guidValue}'
+param bootStorageAccountName string = 'boot${uniqueString(resourceGroup().id)}'
 
 @description('Name of the resource group for the existing storage account')
 param storageAccountResourceGroupName string = resourceGroup().name
@@ -143,6 +143,9 @@ param guidValue string = take(replace(newGuid(), '-', ''), 6)
 @description('Price tier for Key Vault.')
 param keyVaultSku string = 'Standard'
 
+@description('UTC value for generating unique names.')
+param utcValue string = utcNow()
+
 @description('DNS prefix for ApplicationGateway')
 param dnsNameforApplicationGateway string = 'jbossgw'
 
@@ -173,17 +176,15 @@ param dbUser string = 'contosoDbUser'
 param dbPassword string = newGuid()
 
 var name_managedDomain = 'managed-domain'
-var eapstorageReplication = 'Standard_LRS'
-
 var name_fileshare = 'jbossshare'
 var containerName = 'eapblobcontainer'
-var eapStorageAccountName = 'jbosstrg${guidValue}'
-
+var eapStorageAccountName = 'jbosstrg${uniqueString(resourceGroup().id)}'
+var eapstorageReplication = 'Standard_LRS'
 var vmName_var = vmName
 var asName_var = asName
 var skuName = 'Aligned'
 var nicName_var = 'jbosseap-server-nic'
-var privateSaEndpointName_var = 'saep-${guidValue}'
+var privateSaEndpointName_var = 'saep${uniqueString(resourceGroup().id)}'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
 var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
 var linuxConfiguration = {
@@ -214,12 +215,12 @@ var obj_uamiForDeploymentScript = {
   }
 }
 var name_keyVaultName = take('jboss-kv${guidValue}', 24)
-var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}-${guidValue}'
+var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}${take(uniqueString('${utcValue}${resourceGroup().id}'), 6)}'
 var name_rgNameWithoutSpecialCharacter = replace(replace(replace(replace(resourceGroup().name, '.', ''), '(', ''), ')', ''), '_', '') // remove . () _ from resource group name
 var name_domainLabelforApplicationGateway = take('${name_dnsNameforApplicationGateway}-${toLower(name_rgNameWithoutSpecialCharacter)}', 63)
 var const_azureSubjectName = format('{0}.{1}.{2}', name_domainLabelforApplicationGateway, location, 'cloudapp.azure.com')
 var name_appgwFrontendSSLCertName = 'appGatewaySslCert'
-var name_appGateway = 'appgw-${guidValue}'
+var name_appGateway = 'appgw${uniqueString(utcValue)}'
 var property_subnet_with_app_gateway = [
   {
     name: subnetName
@@ -267,7 +268,7 @@ var plan = {
 * Beginning of the offer deployment
 */
 module pids './modules/_pids/_pid.bicep' = {
-  name: 'initialization-${guidValue}'
+  name: 'initialization'
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -276,7 +277,7 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
 }
 
 module paygMultivmStartPid './modules/_pids/_pid.bicep' = {
-  name: 'paygMultivmStartPid-${guidValue}'
+  name: 'paygMultivmStartPid'
   params: {
     name: pids.outputs.paygMultivmStart
   }
@@ -286,7 +287,7 @@ module paygMultivmStartPid './modules/_pids/_pid.bicep' = {
 }
 
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
-  name: 'uami-deployment-${guidValue}'
+  name: 'uami-deployment'
   params: {
     location: location
   }
@@ -310,7 +311,7 @@ module failFastDeployment 'modules/_deployment-scripts/_ds-failfast.bicep' = {
 }
 
 module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep' = if (enableAppGWIngress) {
-  name: 'appgateway-certificates-secrets-deployment-${guidValue}'
+  name: 'appgateway-certificates-secrets-deployment'
   params: {
     identity: obj_uamiForDeploymentScript
     location: location
@@ -336,7 +337,7 @@ resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVe
 }
 
 module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
-  name: 'app-gateway-deployment-${guidValue}'
+  name: 'app-gateway-deployment'
   params: {
     appGatewayName: name_appGateway
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
@@ -618,7 +619,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
 }]
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionStartPid-${guidValue}'
+  name: 'dbConnectionStartPid'
   params: {
     name: pids.outputs.dbStart
   }
@@ -666,7 +667,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
 }
 
 module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionEndPid-${guidValue}'
+  name: 'dbConnectionEndPid'
   params: {
     name: pids.outputs.dbEnd
   }
@@ -695,7 +696,7 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@${azure.apiVersionF
 }
 
 module paygMultivmEndPid './modules/_pids/_pid.bicep' = {
-  name: 'paygMultivmEndPid-${guidValue}'
+  name: 'paygMultivmEndPid'
   params: {
     name: pids.outputs.paygMultivmEnd
   }
