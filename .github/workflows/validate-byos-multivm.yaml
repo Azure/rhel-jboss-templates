@@ -50,8 +50,8 @@ env:
     numberOfInstances: 3
     domainOperatingMode: managed-domain
     standaloneOperatingMode: standalone
-    domainBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}domainsa
-    standaloneBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}standsa
+    domainBootStorageAccountName: domainsa
+    standaloneBootStorageAccountName: standsa
     dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
     dbPassword: ${{ secrets.DATABASE_PASSWORD }}
     jbossEAPUserName: jbossadmin
