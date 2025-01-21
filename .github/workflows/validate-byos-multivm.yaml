@@ -386,7 +386,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # query public ip address of admin VM
-                    publicip=$(az vm show --resource-group ${{ env.domainResourceGroup }} --name ${{ github.run_id }}${{ github.run_number }}vm-adminVM -d --query publicIps -o tsv)
+                    publicip=$(az network public-ip list --resource-group $singleResourceGroup --query "[?starts_with(name, '${{ github.run_id }}${{ github.run_number }}vm-adminVM')].ipAddress" -o tsv)
                     
                     echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Deploy cafe application
@@ -406,11 +406,10 @@ jobs:
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
-                    # query public ip address of Application Gateway
-                    publicip=$(az network public-ip show --name gwip \
-                                --resource-group $domainResourceGroup --query dnsSettings.fqdn -o tsv)
-                    
-                    echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
+                  # query public ip address of Application Gateway
+                  publicip=$(az network public-ip list --resource-group $singleResourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
+                  
+                  echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Verify cafe application
               run: |
                 publicip=${{steps.query_app_gateway_public_ip.outputs.publicip}}
@@ -575,9 +574,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # query public ip address of Application Gateway
-                    publicip=$(az network public-ip show --name gwip \
-                                --resource-group $standaloneResourceGroup --query dnsSettings.fqdn -o tsv)
-                    
+                    publicip=$(az network public-ip list --resource-group $singleResourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
                     echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Verify eap-session-replication application
               run: |
