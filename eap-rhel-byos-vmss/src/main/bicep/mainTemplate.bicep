@@ -180,7 +180,7 @@ var eapstorageReplication = 'Standard_LRS'
 var vmssInstanceName_var = 'jbosseap-server${vmssName}-${guidValue}'
 var nicName = 'jbosseap-server-nic-${guidValue}'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
-var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
+var bootStorageName_var = format({0}{1},((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName),guidValue)
 var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
 var linuxConfiguration = {
   disablePasswordAuthentication: true

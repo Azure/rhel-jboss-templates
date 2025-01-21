@@ -48,7 +48,7 @@ env:
     adminUsername: azureadmin
     password: ${{ secrets.VM_PASSWORD }}
     numberOfInstances: 3
-    vmssBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}vmsssa
+    vmssBootStorageAccountName: vmsssa
     jbossEAPUserName: jbossadmin
     jbossEAPPassword: ${{ secrets.JBOSS_EAP_USER_PASSWORD }}
     rhsmUserName: ${{ secrets.RHSM_USERNAME }}
