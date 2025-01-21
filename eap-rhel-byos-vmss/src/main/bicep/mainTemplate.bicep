@@ -254,8 +254,8 @@ var property_subnet_without_app_gateway = [
   }
 ]
 var name_publicIPAddress = '-pubIp'
-var name_networkSecurityGroup = 'jboss-nsg'
-var name_appGatewayPublicIPAddress = 'gwip'
+var name_networkSecurityGroup = 'jboss-nsg-${guidValue}'
+var name_appGatewayPublicIPAddress = 'gwip-${guidValue}'
 var const_azcliVersion = '2.53.0'
 
 module pids './modules/_pids/_pid.bicep' = {
@@ -547,7 +547,7 @@ module byosVmssEndPid './modules/_pids/_pid.bicep' = {
 }
 
 resource deploymentScriptIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@${azure.apiVersionForIdentity}' = {
-  name: 'deploymentScriptIdentity'
+  name: 'deploymentScriptIdentity-${guidValue}'
   location: location
 }
 
@@ -561,7 +561,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@${azure.apiVers
 }
 
 resource getAdminConsolesScripts 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
-  name: 'fetchPublicIPs'
+  name: 'fetchPublicIPs-${guidValue}'
   location: location
   kind: 'AzureCLI'
   identity: {
