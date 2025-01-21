@@ -184,10 +184,10 @@ param dbUser string = 'contosoDbUser'
 param dbPassword string = newGuid()
 
 var name_managedDomain = 'managed-domain'
+var name_fileshare = 'jbossshare'
 var skuName = 'Aligned'
 var eapstorageReplication = 'Standard_LRS'
 
-var name_fileshare = 'jbossshare-${guidValue}'
 var containerName = 'eapblobcontainer-${guidValue}'
 var eapStorageAccountName = 'jbosstrg${guidValue}'
 var vmName_var = vmName
