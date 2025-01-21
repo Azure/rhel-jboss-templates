@@ -174,8 +174,8 @@ param dbPassword string = newGuid()
 
 var name_managedDomain = 'managed-domain'
 var eapstorageReplication = 'Standard_LRS'
-
 var name_fileshare = 'jbossshare'
+
 var containerName = 'eapblobcontainer'
 var eapStorageAccountName = 'jbosstrg${guidValue}'
 
