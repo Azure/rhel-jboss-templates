@@ -183,15 +183,15 @@ param dbUser string = 'contosoDbUser'
 @description('Password for Database')
 param dbPassword string = newGuid()
 
-var name_managedDomain = 'managed-domain-${guidValue}'
-var name_fileshare = 'jbossshare-${guidValue}'
-var containerName = 'eapblobcontainer-${guidValue}'
-var eapStorageAccountName = 'jbosstrg${guidValue}'
+var name_managedDomain = 'managed-domain'
+var name_fileshare = 'jbossshare'
+var containerName = 'eapblobcontainer'
+var eapStorageAccountName = 'jbosstrg${uniqueString(resourceGroup().id)}'
 var eapstorageReplication = 'Standard_LRS'
 var vmName_var = vmName
 var asName_var = asName
 var skuName = 'Aligned'
-var nicName_var = 'jbosseap-server-nic-${guidValue}-'
+var nicName_var = 'jbosseap-server-nic'
 var privateSaEndpointName_var = 'saep${uniqueString(resourceGroup().id)}'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
 var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
@@ -219,7 +219,7 @@ var plan = {
 }
 
 var name_failFastDsName = format('failFast{0}', guidValue)
-var name_jbossEAPDsName = 'jbosseap-setup-${guidValue}'
+var name_jbossEAPDsName = 'jbosseap-setup'
 var obj_uamiForDeploymentScript = {
   type: 'UserAssigned'
   userAssignedIdentities: {
@@ -268,14 +268,14 @@ var name_publicIPAddress = '-pubIp'
 var name_adminVmName = '-adminVM'
 var dnsNameforAdminVm = 'jboss-admin${guidValue}'
 var dnsNameforManagedVm = 'jboss-managed${guidValue}'
-var name_networkSecurityGroup = 'jboss-nsg-${guidValue}'
-var name_appGatewayPublicIPAddress = 'gwip-${guidValue}'
+var name_networkSecurityGroup = 'jboss-nsg'
+var name_appGatewayPublicIPAddress = 'gwip'
 
 /*
 * Beginning of the offer deployment
 */
 module pids './modules/_pids/_pid.bicep' = {
-  name: 'initialization-${guidValue}'
+  name: 'initialization'
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -294,7 +294,7 @@ module byosMultivmStartPid './modules/_pids/_pid.bicep' = {
 }
 
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
-  name: 'uami-deployment-${guidValue}'
+  name: 'uami-deployment'
   params: {
     location: location
   }
@@ -344,7 +344,7 @@ resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVe
 }
 
 module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
-  name: 'app-gateway-deployment-${guidValue}'
+  name: 'app-gateway-deployment'
   params: {
     appGatewayName: name_appGateway
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
