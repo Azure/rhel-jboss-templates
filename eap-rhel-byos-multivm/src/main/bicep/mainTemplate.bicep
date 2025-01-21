@@ -116,7 +116,7 @@ param bootStorageNewOrExisting string = 'New'
 param existingStorageAccount string = ''
 
 @description('Name of the Storage Account.')
-param bootStorageAccountName string = 'boot${guidValue}'
+param bootStorageAccountName string = 'boot'
 
 @description('Storage account kind')
 param storageAccountKind string = 'Storage'
@@ -190,13 +190,13 @@ var eapstorageReplication = 'Standard_LRS'
 
 var containerName = 'eapblobcontainer-${guidValue}'
 var eapStorageAccountName = 'jbosstrg${guidValue}'
-var vmName_var = vmName
-var asName_var = asName
+var vmName_var = '${vmName}-${guidValue}'
+var asName_var = '${asName}-${guidValue}'
 
 var nicName_var = 'jbosseap-server-nic-${guidValue}'
 var privateSaEndpointName_var = 'saep-${guidValue}'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
-var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
+var bootStorageName_var = format('{0}{1}',((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName), guidValue)
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -270,8 +270,8 @@ var name_publicIPAddress = '-pubIp'
 var name_adminVmName = '-adminVM'
 var dnsNameforAdminVm = 'jboss-admin${guidValue}'
 var dnsNameforManagedVm = 'jboss-managed${guidValue}'
-var name_networkSecurityGroup = 'jboss-nsg'
-var name_appGatewayPublicIPAddress = 'gwip'
+var name_networkSecurityGroup = 'jboss-nsg-${guidValue}'
+var name_appGatewayPublicIPAddress = 'gwip-${guidValue}'
 
 /*
 * Beginning of the offer deployment
