@@ -343,13 +343,6 @@ jobs:
           run: |
             echo "Sleeping for ${{ github.event.inputs.timeWaitBeforeDelete }}"
             sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
-        - name: Unregister VM
-          if: ${{ github.event_name == 'workflow_dispatch' }}
-          continue-on-error: true
-          uses: azure/CLI@v1
-          with:
-            inlineScript: |
-              az vm run-command invoke -g ${singleResourceGroup} -n ${vmName} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
         - name: Delete Resource Group
           if: ${{ github.event_name == 'workflow_dispatch' }}
           id: delete-resource-group

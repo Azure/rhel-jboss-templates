@@ -616,28 +616,6 @@ jobs:
           run: |
             echo "Sleeping for ${{ github.event.inputs.timeWaitBeforeDelete }}"
             sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
-        - name: Unregister domain mode VMs before deleting resources
-          if: ${{ github.event_name == 'workflow_dispatch' }}
-          continue-on-error: true
-          uses: azure/CLI@v1
-          with:
-            inlineScript: |
-              echo "Unregister admin VM"
-              az vm run-command invoke -g ${domainResourceGroup} -n ${vmName}-adminVM --command-id RunShellScript --scripts "sudo subscription-manager unregister"
-              for ((i = 1; i < numberOfInstances; i++)); do
-                echo "Unregister ${vmName}${i}"
-                az vm run-command invoke -g ${domainResourceGroup} -n ${vmName}${i} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
-              done
-        - name: Unregister standalone mode VMs before deleting resources
-          if: ${{ github.event_name == 'workflow_dispatch' }}
-          continue-on-error: true
-          uses: azure/CLI@v1
-          with:
-            inlineScript: |
-              for ((i = 0; i < numberOfInstances; i++)); do
-                echo "Unregister ${vmName}${i}"
-                az vm run-command invoke -g ${standaloneResourceGroup} -n ${vmName}${i} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
-              done
         - name: Delete Dependent Resource Group
           if: ${{ github.event_name == 'workflow_dispatch' }}
           run: |
