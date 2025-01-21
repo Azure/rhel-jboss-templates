@@ -309,8 +309,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # query public ip address of Application Gateway
-                    publicip=$(az network public-ip show --name gwip \
-                                --resource-group ${{ env.vmssResourceGroup }} --query dnsSettings.fqdn -o tsv)
+                    publicip=$(az network public-ip list --resource-group ${{ env.vmssResourceGroup }} --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
                     echo "##[set-output name=publicip;]${publicip}"
             - name: Verify eap-session-replication application
               run: |
