@@ -304,7 +304,7 @@ jobs:
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
-                    publicip=$(az network public-ip list --resource-group $singleResourceGroup --query "[?starts_with(name, 'jbosseapVm-ip')].ipAddress" -o tsv)
+                    publicip=$(az network public-ip show --name 'jbosseapVm-ip' --resource-group $singleResourceGroup --query ipAddress -o tsv)
                     echo "##[set-output name=publicip;]${publicip}"
             - name: Verify console is accessible
               run: |

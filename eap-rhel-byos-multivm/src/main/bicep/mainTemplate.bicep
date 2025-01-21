@@ -1,5 +1,3 @@
-param guidValue string = take(replace(newGuid(), '-', ''), 6)
-
 @description('User name for the Virtual Machine')
 param adminUsername string = 'jbossuser'
 
@@ -64,10 +62,10 @@ param enableAppGWIngress bool = false
 param operatingMode string = 'managed-domain'
 
 @description('Name of the availability set')
-param asName string = 'jbosseapAs-${guidValue}'
+param asName string = 'jbosseapAs'
 
 @description('Name of the virtual machines')
-param vmName string = 'jbosseapVm-${guidValue}'
+param vmName string = 'jbosseapVm'
 
 @allowed([
   'on'
@@ -116,7 +114,7 @@ param bootStorageNewOrExisting string = 'New'
 param existingStorageAccount string = ''
 
 @description('Name of the Storage Account.')
-param bootStorageAccountName string = 'boot${guidValue}'
+param bootStorageAccountName string = 'boot${uniqueString(resourceGroup().id)}'
 
 @description('Storage account kind')
 param storageAccountKind string = 'Storage'
@@ -151,8 +149,13 @@ param satelliteOrgName string = newGuid()
 @description('Red Hat Satellite Server VM FQDN name.')
 param satelliteFqdn string = newGuid()
 
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
+
 @description('Price tier for Key Vault.')
 param keyVaultSku string = 'Standard'
+
+@description('UTC value for generating unique names')
+param utcValue string = utcNow()
 
 @description('DNS prefix for ApplicationGateway')
 param dnsNameforApplicationGateway string = 'jbossgw'
@@ -184,17 +187,15 @@ param dbUser string = 'contosoDbUser'
 param dbPassword string = newGuid()
 
 var name_managedDomain = 'managed-domain'
-var skuName = 'Aligned'
+var name_fileshare = 'jbossshare'
+var containerName = 'eapblobcontainer'
+var eapStorageAccountName = 'jbosstrg${uniqueString(resourceGroup().id)}'
 var eapstorageReplication = 'Standard_LRS'
-
-var name_fileshare = 'jbossshare-${guidValue}'
-var containerName = 'eapblobcontainer-${guidValue}'
-var eapStorageAccountName = 'jbosstrg${guidValue}'
 var vmName_var = vmName
 var asName_var = asName
-
-var nicName_var = 'jbosseap-server-nic-${guidValue}'
-var privateSaEndpointName_var = 'saep-${guidValue}'
+var skuName = 'Aligned'
+var nicName_var = 'jbosseap-server-nic'
+var privateSaEndpointName_var = 'saep${uniqueString(resourceGroup().id)}'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
 var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
 var linuxConfiguration = {
@@ -228,13 +229,13 @@ var obj_uamiForDeploymentScript = {
     '${uamiDeployment.outputs.uamiIdForDeploymentScript}': {}
   }
 }
-var name_keyVaultName = take('jboss-kv-${guidValue}', 24)
-var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}-${guidValue}'
+var name_keyVaultName = take('jboss-kv${guidValue}', 24)
+var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}${take(uniqueString('${utcValue}${resourceGroup().id}'), 6)}'
 var name_rgNameWithoutSpecialCharacter = replace(replace(replace(replace(resourceGroup().name, '.', ''), '(', ''), ')', ''), '_', '') // remove . () _ from resource group name
 var name_domainLabelforApplicationGateway = take('${name_dnsNameforApplicationGateway}-${toLower(name_rgNameWithoutSpecialCharacter)}', 63)
 var const_azureSubjectName = format('{0}.{1}.{2}', name_domainLabelforApplicationGateway, location, 'cloudapp.azure.com')
-var name_appgwFrontendSSLCertName = 'appGatewaySslCert-${guidValue}'
-var name_appGateway = 'appgw-${guidValue}'
+var name_appgwFrontendSSLCertName = 'appGatewaySslCert'
+var name_appGateway = 'appgw${uniqueString(utcValue)}'
 var property_subnet_with_app_gateway = [
   {
     name: subnetName
@@ -277,7 +278,7 @@ var name_appGatewayPublicIPAddress = 'gwip'
 * Beginning of the offer deployment
 */
 module pids './modules/_pids/_pid.bicep' = {
-  name: 'initialization-${guidValue}'
+  name: 'initialization'
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -286,7 +287,7 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
 }
 
 module byosMultivmStartPid './modules/_pids/_pid.bicep' = {
-  name: 'byosMultivmStartPid-${guidValue}'
+  name: 'byosMultivmStartPid'
   params: {
     name: pids.outputs.byosMultivmStart
   }
@@ -296,7 +297,7 @@ module byosMultivmStartPid './modules/_pids/_pid.bicep' = {
 }
 
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
-  name: 'uami-deployment-${guidValue}'
+  name: 'uami-deployment'
   params: {
     location: location
   }
@@ -320,7 +321,7 @@ module failFastDeployment 'modules/_deployment-scripts/_ds-failfast.bicep' = {
 }
 
 module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep' = if (enableAppGWIngress) {
-  name: 'appgateway-certificates-secrets-deployment-${guidValue}'
+  name: 'appgateway-certificates-secrets-deployment'
   params: {
     identity: obj_uamiForDeploymentScript
     location: location
@@ -346,7 +347,7 @@ resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVe
 }
 
 module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
-  name: 'app-gateway-deployment-${guidValue}'
+  name: 'app-gateway-deployment'
   params: {
     appGatewayName: name_appGateway
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway

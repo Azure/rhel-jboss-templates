@@ -1,5 +1,3 @@
-param guidValue string = take(replace(newGuid(), '-', ''), 6)
-
 @description('User name for the Virtual Machine')
 param adminUsername string = 'jbossuser'
 
@@ -59,7 +57,7 @@ param bootStorageNewOrExisting string = 'New'
 param existingStorageAccount string = ''
 
 @description('Name of the Storage Account.')
-param bootStorageAccountName string = 'jbboot-${guidValue}'
+param bootStorageAccountName string = 'jbboot${uniqueString(resourceGroup().id)}'
 
 @description('Storage account kind')
 param storageAccountKind string = 'Storage'
@@ -133,11 +131,13 @@ param satelliteOrgName string = newGuid()
 @description('Red Hat Satellite Server VM FQDN name.')
 param satelliteFqdn string = newGuid()
 
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
+
 @description('true to set up Application Gateway ingress.')
 param enableAppGWIngress bool = false
 
 @description('Name of the existing or new Subnet')
-param subnetForAppGateway string = 'jboss-appgateway-subnet-${guidValue}'
+param subnetForAppGateway string = 'jboss-appgateway-subnet'
 
 @description('Address prefix of the subnet')
 param subnetPrefixForAppGateway string = '10.0.1.0/24'
@@ -145,8 +145,11 @@ param subnetPrefixForAppGateway string = '10.0.1.0/24'
 @description('Price tier for Key Vault.')
 param keyVaultSku string = 'Standard'
 
+@description('UTC value for generating unique names.')
+param utcValue string = utcNow()
+
 @description('DNS prefix for ApplicationGateway')
-param dnsNameforApplicationGateway string = 'jbossgw-${guidValue}'
+param dnsNameforApplicationGateway string = 'jbossgw'
 
 @description('The name of the secret in the specified KeyVault whose value is the SSL Certificate Data for Appliation Gateway frontend TLS/SSL.')
 param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
@@ -175,13 +178,12 @@ param dbUser string = 'contosoDbUser'
 param dbPassword string = newGuid()
 
 var containerName = 'eapblobcontainer'
-var eapStorageAccountName_var = 'jbosstrg${guidValue}'
+var var_eapStorageAccountName = 'jbosstrg${uniqueString(resourceGroup().id)}'
 var eapstorageReplication = 'Standard_LRS'
-var vmssInstanceName_var = 'jbosseap-server${vmssName}-${guidValue}'
-var nicName = 'jbosseap-server-nic-${guidValue}'
+var var_vmssInstanceName = 'jbosseap-server${vmssName}'
+var nicName = 'jbosseap-server-nic'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
-var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
-var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
+var var_bootStorageName = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -216,12 +218,12 @@ var obj_uamiForDeploymentScript = {
   }
 }
 var name_keyVaultName = take('jboss-kv${guidValue}', 24)
-var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}'
+var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}${take(uniqueString(utcValue), 6)}'
 var name_rgNameWithoutSpecialCharacter = replace(replace(replace(replace(resourceGroup().name, '.', ''), '(', ''), ')', ''), '_', '') // remove . () _ from resource group name
 var name_domainLabelforApplicationGateway = take('${name_dnsNameforApplicationGateway}-${toLower(name_rgNameWithoutSpecialCharacter)}', 63)
 var const_azureSubjectName = format('{0}.{1}.{2}', name_domainLabelforApplicationGateway, location, 'cloudapp.azure.com')
-var name_appgwFrontendSSLCertName = 'appGatewaySslCert-${guidValue}'
-var name_appGateway = 'appgw-${guidValue}'
+var name_appgwFrontendSSLCertName = 'appGatewaySslCert'
+var name_appGateway = 'appgw${uniqueString(utcValue)}'
 var property_subnet_with_app_gateway = [
   {
     name: subnetName
@@ -259,7 +261,7 @@ var name_appGatewayPublicIPAddress = 'gwip'
 var const_azcliVersion = '2.53.0'
 
 module pids './modules/_pids/_pid.bicep' = {
-  name: 'initialization-${guidValue}'
+  name: 'initialization'
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -268,7 +270,7 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
 }
 
 module byosVmssStartPid './modules/_pids/_pid.bicep' = {
-  name: 'byosVmssStartPid-${guidValue}'
+  name: 'byosVmssStartPid'
   params: {
     name: pids.outputs.byosVmssStart
   }
@@ -278,14 +280,14 @@ module byosVmssStartPid './modules/_pids/_pid.bicep' = {
 }
 
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
-  name: 'uami-deployment-${guidValue}'
+  name: 'uami-deployment'
   params: {
     location: location
   }
 }
 
 module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep' = if (enableAppGWIngress) {
-  name: 'appgateway-certificates-secrets-deployment-${guidValue}'
+  name: 'appgateway-certificates-secrets-deployment'
   params: {
     identity: obj_uamiForDeploymentScript
     location: location
@@ -297,7 +299,7 @@ module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep
 
 // Get existing VNET.
 resource existingVnet 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' existing = if (virtualNetworkNewOrExisting != 'new') {
-  name: virtualNetworkName_var
+  name: virtualNetworkName
   scope: resourceGroup(virtualNetworkResourceGroupName)
 }
 
@@ -313,7 +315,7 @@ module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
     appGatewayName: name_appGateway
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
     gatewayPublicIPAddressName: name_appGatewayPublicIPAddress
-    gatewaySubnetId: virtualNetworkNewOrExisting == 'new' ? resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName_var, subnetForAppGateway) : existingSubnet.id
+    gatewaySubnetId: virtualNetworkNewOrExisting == 'new' ? resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetForAppGateway) : existingSubnet.id
     gatewaySslCertName: name_appgwFrontendSSLCertName
     location: location
     sslCertDataSecretName: (enableAppGWIngress ? appgwSecretDeployment.outputs.sslCertDataSecretName : keyVaultSSLCertDataSecretName)
@@ -371,7 +373,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@${azure.apiVersionForNetwo
 }
 
 resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = if (bootDiagnosticsCheck) {
-  name: bootStorageName_var
+  name: var_bootStorageName
   location: location
   sku: {
     name: bootStorageReplication
@@ -383,7 +385,7 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionFo
 }
 
 resource eapStorageAccountName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = {
-  name: eapStorageAccountName_var
+  name: var_eapStorageAccountName
   location: location
   sku: {
     name: eapstorageReplication
@@ -395,7 +397,7 @@ resource eapStorageAccountName 'Microsoft.Storage/storageAccounts@${azure.apiVer
 }
 
 resource eapStorageAccountName_default_containerName 'Microsoft.Storage/storageAccounts/blobServices/containers@${azure.apiVersionForStorageBlobService}' = {
-  name: '${eapStorageAccountName_var}/default/${containerName}'
+  name: '${var_eapStorageAccountName}/default/${containerName}'
   properties: {
     publicAccess: 'None'
   }
@@ -405,7 +407,7 @@ resource eapStorageAccountName_default_containerName 'Microsoft.Storage/storageA
 }
 
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
-  name: virtualNetworkName_var
+  name: virtualNetworkName
   location: location
   tags: {
     QuickstartName: 'JBoss EAP on RHEL VMSS'
@@ -419,7 +421,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.
 }
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionStartPid-${guidValue}'
+  name: 'dbConnectionStartPid'
   params: {
     name: pids.outputs.dbStart
   }
@@ -432,7 +434,7 @@ module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
 }
 
 resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.apiVersionForVirtualMachineScaleSets}' = {
-  name: vmssInstanceName_var
+  name: var_vmssInstanceName
   location: location
   sku: {
     name: vmSize
@@ -457,7 +459,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
         imageReference: imageReference
       }
       osProfile: {
-        computerNamePrefix: vmssInstanceName_var
+        computerNamePrefix: var_vmssInstanceName
         adminUsername: adminUsername
         adminPassword: adminPasswordOrSSHKey
         linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
@@ -473,7 +475,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
                   name: 'ipconfig'
                   properties: {
                     subnet: {
-                      id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName_var, subnetName)
+                      id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
                     }
                     applicationGatewayBackendAddressPools: enableAppGWIngress ? [
                       {
@@ -481,7 +483,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
                       }
                     ] : null
                     publicIPAddressConfiguration: {
-                      name: '${vmssInstanceName_var}${name_publicIPAddress}'
+                      name: '${var_vmssInstanceName}${name_publicIPAddress}'
                     }
                   }
                 }
@@ -490,7 +492,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
           }
         ]
       }
-      diagnosticsProfile: ((bootDiagnostics == 'on') ? json('{"bootDiagnostics": {"enabled": true,"storageUri": "${reference(resourceId(storageAccountResourceGroupName, 'Microsoft.Storage/storageAccounts/', bootStorageName_var), '2021-06-01').primaryEndpoints.blob}"}}') : json('{"bootDiagnostics": {"enabled": false}}'))
+      diagnosticsProfile: ((bootDiagnostics == 'on') ? json('{"bootDiagnostics": {"enabled": true,"storageUri": "${reference(resourceId(storageAccountResourceGroupName, 'Microsoft.Storage/storageAccounts/', var_bootStorageName), '2021-06-01').primaryEndpoints.blob}"}}') : json('{"bootDiagnostics": {"enabled": false}}'))
       extensionProfile: {
         extensions: [
           {
@@ -510,7 +512,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
                 ]
               }
               protectedSettings: {
-                commandToExecute: 'sh jbosseap-setup-redhat.sh ${scriptArgs} \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${eapStorageAccountName_var}\' \'${containerName}\' \'${base64(listKeys(eapStorageAccountName.id, '2021-04-01').keys[0].value)}\' \'${rhsmPoolRHEL}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\' \'${gracefulShutdownTimeout}\''
+                commandToExecute: 'sh jbosseap-setup-redhat.sh ${scriptArgs} \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${var_eapStorageAccountName}\' \'${containerName}\' \'${base64(listKeys(eapStorageAccountName.id, '2021-04-01').keys[0].value)}\' \'${rhsmPoolRHEL}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\' \'${gracefulShutdownTimeout}\''
               }
             }
           }
@@ -526,7 +528,7 @@ resource vmssInstanceName 'Microsoft.Compute/virtualMachineScaleSets@${azure.api
 }
 
 module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionEndPid-${guidValue}'
+  name: 'dbConnectionEndPid'
   params: {
     name: pids.outputs.dbEnd
   }
@@ -537,7 +539,7 @@ module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
 }
 
 module byosVmssEndPid './modules/_pids/_pid.bicep' = {
-  name: 'byosVmssEndPid-${guidValue}'
+  name: 'byosVmssEndPid'
   params: {
     name: pids.outputs.byosVmssEnd
   }
@@ -577,7 +579,7 @@ resource getAdminConsolesScripts 'Microsoft.Resources/deploymentScripts@${azure.
     environmentVariables: [
       {
         name: 'VMSS_NAME'
-        value: vmssInstanceName_var
+        value: var_vmssInstanceName
       }
       {
         name: 'RESOURCE_GROUP'
