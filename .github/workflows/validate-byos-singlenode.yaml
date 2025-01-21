@@ -47,7 +47,7 @@ env:
     password: ${{ secrets.VM_PASSWORD }}
     dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
     dbPassword: ${{ secrets.DATABASE_PASSWORD }}
-    singleStorageAccountName: ${{ github.run_id }}${{ github.run_number }}singlesa
+    singleStorageAccountName: singlesa
     jbossEAPUserName: jbossadmin
     jbossEAPPassword: ${{ secrets.JBOSS_EAP_USER_PASSWORD }}
     rhsmUserName: ${{ secrets.RHSM_USERNAME }}
