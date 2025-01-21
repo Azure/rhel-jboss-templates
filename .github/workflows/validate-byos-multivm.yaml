@@ -50,6 +50,7 @@ env:
     numberOfInstances: 3
     domainOperatingMode: managed-domain
     standaloneOperatingMode: standalone
+    cafeappStorageAccountName: cafeappsa
     domainBootStorageAccountName: domainsa
     standaloneBootStorageAccountName: standsa
     dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
@@ -353,11 +354,16 @@ jobs:
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
+                  az storage account create \
+                    --name ${{ env.cafeappStorageAccountName }} \
+                    --resource-group ${{ env.domainResourceGroup }} \
+                    --location ${{ env.location }} \
+                    --sku "Standard_LRS" 
                   # create a container
-                  az storage container create --name cafeapp --account-name ${{ env.domainBootStorageAccountName }}
+                  az storage container create --name cafeapp --account-name ${{ env.cafeappStorageAccountName }}
                   # upload cafe app
                   az storage blob upload \
-                    --account-name ${{ env.domainBootStorageAccountName }} \
+                    --account-name ${{ env.cafeappStorageAccountName }} \
                     --container-name cafeapp \
                     --name javaee-cafe.war \
                     --file rhel-jboss-templates-to-build/eap-coffee-app/target/javaee-cafe.war
@@ -368,14 +374,14 @@ jobs:
                   sasEnd=`date -d@"$expiryData" -u '+%Y-%m-%dT%H:%MZ'`
                   sasToken=$(az storage account generate-sas \
                       --permissions r \
-                      --account-name ${{ env.domainBootStorageAccountName }} \
+                      --account-name ${{ env.cafeappStorageAccountName }} \
                       --services b \
                       --resource-types sco \
                       --expiry $sasEnd  -o tsv)
                   appbloburl=$(az storage blob url \
                       --container-name cafeapp \
                       --name javaee-cafe.war \
-                      --account-name ${{ env.domainBootStorageAccountName }} \
+                      --account-name ${{ env.cafeappStorageAccountName }} \
                       --sas-token ${sasToken} -o tsv) 
                   echo "appbloburl=${appbloburl}" >> "$GITHUB_OUTPUT"
 
@@ -386,7 +392,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # query public ip address of admin VM
-                    publicip=$(az network public-ip list --resource-group $singleResourceGroup --query "[?starts_with(name, '${{ github.run_id }}${{ github.run_number }}vm-adminVM')].ipAddress" -o tsv)
+                    publicip=$(az network public-ip list --resource-group ${{ env.domainResourceGroup }} --query "[?starts_with(name, '${{ github.run_id }}${{ github.run_number }}vm-adminVM')].ipAddress" -o tsv)
                     
                     echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Deploy cafe application
@@ -407,7 +413,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                   # query public ip address of Application Gateway
-                  publicip=$(az network public-ip list --resource-group $singleResourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
+                  publicip=$(az network public-ip list --resource-group $domainResourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
                   
                   echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Verify cafe application
@@ -574,7 +580,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # query public ip address of Application Gateway
-                    publicip=$(az network public-ip list --resource-group $singleResourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
+                    publicip=$(az network public-ip list --resource-group $standaloneResourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
                     echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Verify eap-session-replication application
               run: |
