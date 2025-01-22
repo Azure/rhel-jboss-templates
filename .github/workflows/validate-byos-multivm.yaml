@@ -50,7 +50,7 @@ env:
     numberOfInstances: 3
     domainOperatingMode: managed-domain
     standaloneOperatingMode: standalone
-    cafeappStorageAccountName: cafeappsa
+    cafeappStorageAccountName: ${{ github.run_id }}${{ github.run_number }}cafeappsa
     domainBootStorageAccountName: domainsa
     standaloneBootStorageAccountName: standsa
     dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
