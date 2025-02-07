@@ -85,7 +85,7 @@ else
 
     # deploy sample app to domain controller
     echo "Deploy sample app to domain controller: ${ADMIN_VM_NAME}"
-    az vm extension set --verbose --name DeployAppScript \
+    az vm extension set --verbose --name CustomScript \
         --resource-group ${RESOURCE_GROUP_NAME} \
         --vm-name ${ADMIN_VM_NAME} \
         --publisher Microsoft.Azure.Extensions \
