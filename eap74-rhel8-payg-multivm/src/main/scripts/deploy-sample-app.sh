@@ -46,7 +46,13 @@ fileUrl="$artifactsLocation$pathToFile/$fileToDownload$token"
 
 echo "Deploy an application" | log; flag=${PIPESTATUS[0]}
 echo "curl -o eap-session-replication.war $fileUrl" | log; flag=${PIPESTATUS[0]}
-sudo curl -o "eap-session-replication.war" "$fileUrl" | log; flag=${PIPESTATUS[0]}
+sudo curl -o "$HOME/eap-session-replication.war" "$fileUrl" | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! Sample Application Download Failed" >&2 log; exit $flag; fi
 
-sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh -c --controller=$(hostname -I) "deploy $(pwd)/eap-session-replication.war --server-groups=main-server-group"
+if [ -e "$HOME/eap-session-replication.war" ]; then
+    echo "File $HOME/eap-session-replication.war exists." | log; flag=${PIPESTATUS[0]}
+else
+    echo "File $HOME/eap-session-replication.war does not exist." | log; flag=${PIPESTATUS[0]}
+fi
+
+sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh -c --controller=$(hostname -I) "deploy $HOME/eap-session-replication.war --server-groups=main-server-group"
