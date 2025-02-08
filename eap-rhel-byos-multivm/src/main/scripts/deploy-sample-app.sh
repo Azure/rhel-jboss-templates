@@ -5,6 +5,8 @@ log() {
     done
 }
 
+JDK_VERSION=${9}
+
 ##################### Configure EAP_LAUNCH_CONFIG and EAP_HOME
 if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
     export EAP_LAUNCH_CONFIG="/opt/rh/eap8/root/usr/share/wildfly/bin/domain.conf"

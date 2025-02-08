@@ -91,7 +91,7 @@ else
         --publisher Microsoft.Azure.Extensions \
         --version 2.0 \
         --settings "{\"fileUris\": [\"${SCRIPT_LOCATION}/deploy-sample-app.sh\"]}" \
-        --protected-settings "{\"commandToExecute\":\"sh deploy-sample-app.sh  -a ${ARTIFACTS_LOCATION} -t ${ARTIFACTS_LOCATION_SAS_TOKEN} -p ${PATH_TO_FILE} -f ${FILE_TO_DOWNLOAD}\"}"
+        --protected-settings "{\"commandToExecute\":\"sh deploy-sample-app.sh  -a ${ARTIFACTS_LOCATION} -t ${ARTIFACTS_LOCATION_SAS_TOKEN} -p ${PATH_TO_FILE} -f ${FILE_TO_DOWNLOAD} ${JDK_VERSION}\"}"
 
     if [ "$ENABLE_DB" == "True" ]; then
         # Configure data source
