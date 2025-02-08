@@ -37,7 +37,7 @@ on:
 
 env:
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS_PAYG }}
-    location: australiacentral
+    location: eastus
     domainResourceGroup: multivm-domain-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
     standaloneResourceGroup: multivm-standalone-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
     dependencyResourceGroup: multivm-dep-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
