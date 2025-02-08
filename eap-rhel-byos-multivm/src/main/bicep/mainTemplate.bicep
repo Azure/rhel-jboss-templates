@@ -707,8 +707,4 @@ output appHttpURL string = enableAppGWIngress ? uri(format('http://{0}/', appgwD
 output appHttpsURL string = enableAppGWIngress ? uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication/') : ''
 output adminUsername string = jbossEAPUserName
 var domainmode = operatingMode == name_managedDomain
-output adminConsoles array = [                                                                                                                               /*
-*/ for i in range(0, numberOfInstances):                                                                                                                     /*
-*/    domainmode ? '' : format('http://{0}:9990', publicIp[i].properties.ipAddress)                                              /*
-*/ ]
 output adminConsole string = (operatingMode == name_managedDomain) ? (enableAppGWIngress ? (uri(format('http://{0}:9990', (reference(resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${name_adminVmName}${name_publicIPAddress}')).dnsSettings.fqdn)), '')) : (uri(format('http://{0}:9990', (reference(resourceId('Microsoft.Network/networkInterfaces', '${nicName_var}0')).ipConfigurations[0].properties.privateIPAddress)), ''))) : ''
