@@ -5,6 +5,23 @@ log() {
     done
 }
 
+##################### Configure EAP_LAUNCH_CONFIG and EAP_HOME
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+    export EAP_LAUNCH_CONFIG="/opt/rh/eap8/root/usr/share/wildfly/bin/domain.conf"
+    echo 'export EAP_RPM_CONF_DOMAIN="/etc/opt/rh/eap8/wildfly/eap8-domain.conf"' >> ~/.bash_profile
+    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share"' >> ~/.bash_profile
+    source ~/.bash_profile
+    touch /etc/profile.d/eap_env.sh
+    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share"' >> /etc/profile.d/eap_env.sh
+else
+    export EAP_LAUNCH_CONFIG="/opt/rh/eap7/root/usr/share/wildfly/bin/domain.conf"
+    echo 'export EAP_RPM_CONF_DOMAIN="/etc/opt/rh/eap7/wildfly/eap7-domain.conf"' >> ~/.bash_profile
+    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> ~/.bash_profile
+    source ~/.bash_profile
+    touch /etc/profile.d/eap_env.sh
+    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> /etc/profile.d/eap_env.sh
+fi
+
 while getopts "a:t:p:f:" opt; do
     case $opt in
         a)
