@@ -166,11 +166,11 @@ param dbPassword string = newGuid()
 var containerName = 'eapblobcontainer'
 var eapStorageAccountName_var = 'jbosstrg${guidValue}'
 var eapstorageReplication = 'Standard_LRS'
-var vmssInstanceName_var   = 'jbosseap-server${vmssName}-${guidValue}'
+var vmssInstanceName_var = 'jbosseap-server${vmssName}-${guidValue}'
 var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
-var nicName = 'jbosseap-server-nic'
+var nicName = 'jbosseap-server-nic-${guidValue}'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
-var bootStorageName_var = ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName)
+var bootStorageName_var = format('{0}{1}', ((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName), guidValue)
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -199,7 +199,7 @@ var obj_uamiForDeploymentScript = {
   }
 }
 var name_keyVaultName = take('jboss-kv${guidValue}', 24)
-var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}-${guidValue}'
+var name_dnsNameforApplicationGateway = '${dnsNameforApplicationGateway}'
 var name_rgNameWithoutSpecialCharacter = replace(replace(replace(replace(resourceGroup().name, '.', ''), '(', ''), ')', ''), '_', '') // remove . () _ from resource group name
 var name_domainLabelforApplicationGateway = take('${name_dnsNameforApplicationGateway}-${toLower(name_rgNameWithoutSpecialCharacter)}', 63)
 var const_azureSubjectName = format('{0}.{1}.{2}', name_domainLabelforApplicationGateway, location, 'cloudapp.azure.com')
@@ -540,7 +540,7 @@ module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
 }
 
 module paygVmssEndPid './modules/_pids/_pid.bicep' = {
-  name: 'paygVmssEndPid'
+  name: 'paygVmssEndPid-${guidValue}'
   params: {
     name: pids.outputs.paygVmssEnd
   }
@@ -555,7 +555,7 @@ module baseImageSelected './modules/_pids/_empty.bicep' = {
 }
 
 resource deploymentScriptIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@${azure.apiVersionForIdentity}' = {
-  name: 'deploymentScriptIdentity'
+  name: 'deploymentScriptIdentity-${guidValue}'
   location: location
 }
 
@@ -569,7 +569,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@${azure.apiVers
 }
 
 resource getAdminConsolesScripts 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
-  name: 'fetchPublicIPs'
+  name: 'fetchPublicIPs-${guidValue}'
   location: location
   kind: 'AzureCLI'
   identity: {
