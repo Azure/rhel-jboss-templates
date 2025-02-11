@@ -428,7 +428,23 @@ jobs:
                   echo "Cafe is accessible"
                 fi
                 exit 0
-            
+            - name: Verify eap-session-replication application
+              run: |
+                publicip=${{steps.query_app_gateway_public_ip.outputs.publicip}}
+                echo "publicip: " $publicip
+                CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
+
+                echo "Verifying eap-session-replication is deployed as expected"
+                curl --verbose http://${publicip}/eap-session-replication/
+                response=$(curl ${CURL_RETRY_PARMS}  --write-out '%{http_code}' --silent --output /dev/null http://${publicip}/eap-session-replication/)
+                echo "$response"
+                if [ "$response" -ne 200 ]; then
+                  echo "eap-session-replication is not accessible"
+                  exit 1
+                else
+                  echo "eap-session-replication is accessible"
+                fi
+                exit 0         
 
     deploy-multivm-standalone:
         needs: 
