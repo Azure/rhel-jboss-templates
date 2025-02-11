@@ -51,7 +51,7 @@ param storageNewOrExisting string = 'New'
 param existingStorageAccount string = ''
 
 @description('Name of the storage account')
-param storageAccountName string = 'storage${guidValue}'
+param storageAccountName string = 'storage'
 
 @description('Storage account type')
 param storageAccountType string = 'Standard_LRS'
@@ -128,10 +128,12 @@ param dbUser string = 'contosoDbUser'
 @description('Password for Database')
 param dbPassword string = newGuid()
 
-var nicName_var = 'nic-${guidValue}'
-var networkSecurityGroupName_var = 'jbosseap-nsg-${guidValue}'
+var vmName_var = '${vmName}-${guidValue}'
+var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
+var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
+var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
 var bootDiagnosticsCheck = ((storageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
-var bootStorageName_var = ((storageNewOrExisting == 'Existing') ? existingStorageAccount : storageAccountName)
+var bootStorageName_var = format('{0}{1}',((storageNewOrExisting == 'Existing') ? existingStorageAccount : storageAccountName), guidValue)
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -143,7 +145,7 @@ var linuxConfiguration = {
     ]
   }
 }
-var name_postDeploymentDsName = format('updateNicPrivateIpStatic{0}', guidValue)
+var name_postDeploymentDsName = format('updateNicPrivateIpStatic-{0}', guidValue)
 var name_vmAcceptTerms = format('vmAcceptTerms{0}', guidValue)
 var obj_uamiForDeploymentScript = {
   type: 'UserAssigned'
@@ -162,7 +164,7 @@ var plan = {
 * Beginning of the offer deployment
 */
 module pids './modules/_pids/_pid.bicep' = {
-  name: 'initialization'
+  name: 'initialization-${guidValue}'
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -224,7 +226,7 @@ resource networkSecurityGroupName 'Microsoft.Network/networkSecurityGroups@${azu
 }
 
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
-  name: virtualNetworkName
+  name: virtualNetworkName_var
   location: location
   properties: {
     addressSpace: {
@@ -257,7 +259,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName, subnetName)
+            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName_var, subnetName)
           }
           publicIPAddress: {
             id: resourceId('Microsoft.Network/publicIPAddresses', vmPublicIPAddressName)
@@ -287,14 +289,14 @@ module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' =  {
 }
 
 resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionForVirtualMachines}' = {
-  name: vmName
+  name: vmName_var
   location: location
   properties: {
     hardwareProfile: {
       vmSize: vmSize
     }
     osProfile: {
-      computerName: vmName
+      computerName: vmName_var
       adminUsername: adminUsername
       adminPassword: adminPasswordOrSSHKey
       linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
@@ -307,7 +309,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
         version: 'latest'
       }
       osDisk: {
-        name: '${vmName}_OSDisk'
+        name: '${vmName_var}_OSDisk'
         caching: 'ReadWrite'
         createOption: 'FromImage'
       }
