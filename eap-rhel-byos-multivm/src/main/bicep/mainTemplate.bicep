@@ -64,10 +64,10 @@ param enableAppGWIngress bool = false
 param operatingMode string = 'managed-domain'
 
 @description('Name of the availability set')
-param asName string = 'jbosseapAs-${guidValue}'
+param asName string = 'jbosseapAs'
 
 @description('Name of the virtual machines')
-param vmName string = 'jbosseapVm-${guidValue}'
+param vmName string = 'jbosseapVm'
 
 @allowed([
   'on'
