@@ -1,3 +1,5 @@
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
+
 @description('User name for the Virtual Machine')
 param adminUsername string = 'jbossuser'
 
@@ -103,7 +105,7 @@ param bootStorageNewOrExisting string = 'New'
 param existingStorageAccount string = ''
 
 @description('Name of the Storage Account.')
-param bootStorageAccountName string = 'boot${guidValue}'
+param bootStorageAccountName string = 'boot'
 
 @description('Name of the resource group for the existing storage account')
 param storageAccountResourceGroupName string = resourceGroup().name
@@ -138,8 +140,6 @@ param satelliteOrgName string = newGuid()
 @description('Red Hat Satellite Server VM FQDN name.')
 param satelliteFqdn string = newGuid()
 
-param guidValue string = take(replace(newGuid(), '-', ''), 6)
-
 @description('Price tier for Key Vault.')
 param keyVaultSku string = 'Standard'
 
@@ -173,15 +173,17 @@ param dbUser string = 'contosoDbUser'
 param dbPassword string = newGuid()
 
 var name_managedDomain = 'managed-domain'
+var skuName = 'Aligned'
 var eapstorageReplication = 'Standard_LRS'
+
+var containerName = 'eapblobcontainer-${guidValue}'
+var eapStorageAccountName = 'jbosstrg${guidValue}'
+var vmName_var = '${vmName}-${guidValue}'
+var asName_var = '${asName}-${guidValue}'
 var name_fileshare = 'jbossshare'
 
-var containerName = 'eapblobcontainer'
-var eapStorageAccountName = 'jbosstrg${guidValue}'
 
-var vmName_var = vmName
-var asName_var = asName
-var skuName = 'Aligned'
+
 var nicName_var = 'jbosseap-server-nic'
 var privateSaEndpointName_var = 'saep-${guidValue}'
 var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
