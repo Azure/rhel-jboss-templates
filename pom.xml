@@ -44,7 +44,7 @@
         <version.eap-rhel-byos>1.0.21</version.eap-rhel-byos>
         <version.eap-rhel-byos-multivm>1.0.29</version.eap-rhel-byos-multivm>
         <version.eap-rhel-byos-vmss>1.0.27</version.eap-rhel-byos-vmss>
-        <version.eap74-rhel8-payg>1.0.32</version.eap74-rhel8-payg>
+        <version.eap-rhel-payg>1.0.32</version.eap-rhel-payg>
         <version.eap74-rhel8-payg-multivm>1.0.33</version.eap74-rhel8-payg-multivm>
         <version.eap74-rhel8-payg-vmss>1.0.34</version.eap74-rhel8-payg-vmss>
         <version.eap-aro>1.0.20</version.eap-aro>
@@ -54,7 +54,7 @@
         <module>eap-rhel-byos</module>
         <module>eap-rhel-byos-multivm</module>
         <module>eap-rhel-byos-vmss</module>
-        <module>eap74-rhel8-payg</module>
+        <module>eap-rhel-payg</module>
         <module>eap74-rhel8-payg-multivm</module>
         <module>eap74-rhel8-payg-vmss</module>
         <module>eap-aro</module>

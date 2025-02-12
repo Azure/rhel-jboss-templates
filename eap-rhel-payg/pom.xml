@@ -10,8 +10,8 @@
     </parent>
 
     <groupId>com.rhel.jboss.azure</groupId>
-    <artifactId>eap74-rhel8-payg</artifactId>
-    <version>${version.eap74-rhel8-payg}</version>
+    <artifactId>eap-rhel-payg</artifactId>
+    <version>${version.eap-rhel-payg}</version>
     <packaging>pom</packaging>
     <name>${project.artifactId}</name>
 
