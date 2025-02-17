@@ -88,6 +88,7 @@ param dbUser string = 'contosoDbUser'
 @secure()
 @description('Password for Database')
 param dbPassword string = newGuid()
+param guidValue string = ''
 
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jbosseap-setup-redhat.sh'
@@ -101,7 +102,7 @@ var fileFolder = 'bin'
 var fileToBeDownloaded = 'eap-session-replication.war'
 
 resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
-  name: 'jbosseap-setup'
+  name: 'jbosseap-setup-${guidValue}'
   location: location
   kind: 'AzureCLI'
   identity: identity
