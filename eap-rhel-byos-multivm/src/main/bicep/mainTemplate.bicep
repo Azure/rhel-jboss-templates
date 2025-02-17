@@ -306,6 +306,7 @@ module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
 module failFastDeployment 'modules/_deployment-scripts/_ds-failfast.bicep' = {
   name: name_failFastDsName
   params: {
+    guidValue: guidValue
     artifactsLocation: artifactsLocation
     artifactsLocationSasToken: artifactsLocationSasToken
     location: location
@@ -323,6 +324,7 @@ module failFastDeployment 'modules/_deployment-scripts/_ds-failfast.bicep' = {
 module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep' = if (enableAppGWIngress) {
   name: 'appgateway-certificates-secrets-deployment-${guidValue}'
   params: {
+    guidValue: guidValue
     identity: obj_uamiForDeploymentScript
     location: location
     sku: keyVaultSku
@@ -627,6 +629,7 @@ module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
 module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' = {
   name: name_jbossEAPDsName
   params: {
+    guidValue: guidValue
     artifactsLocation: artifactsLocation
     artifactsLocationSasToken: artifactsLocationSasToken
     location: location

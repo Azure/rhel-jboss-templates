@@ -287,6 +287,7 @@ module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
 module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep' = if (enableAppGWIngress) {
   name: 'appgateway-certificates-secrets-deployment-${guidValue}'
   params: {
+    guidValue: guidValue
     identity: obj_uamiForDeploymentScript
     location: location
     sku: keyVaultSku

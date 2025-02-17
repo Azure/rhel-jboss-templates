@@ -25,6 +25,7 @@ param sku string = 'Standard'
 @description('Subject name to create a new certificate, example: \'CN=contoso.com\'.')
 param subjectName string = 'contoso.xyz'
 param utcValue string = utcNow()
+param guidValue string = ''
 
 var const_identityId = substring(string(identity.userAssignedIdentities), indexOf(string(identity.userAssignedIdentities), '"') + 1, lastIndexOf(string(identity.userAssignedIdentities), '"') - (indexOf(string(identity.userAssignedIdentities), '"') + 1))
 
@@ -56,7 +57,7 @@ resource keyvault 'Microsoft.KeyVault/vaults@${azure.apiVersionForKeyVault}' = {
 }
 
 resource createAddCertificate 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
-  name: 'ds-create-add-appgw-certificate'
+  name: 'ds-create-add-appgw-certificate-${guidValue}'
   location: location
   identity: identity
   kind: 'AzurePowerShell'
