@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 #read arguments from stdin
-read parametersPath gitUserName testbranchName location vmName adminUsername password virtualNetworkResourceGroupName storageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword enableDB databaseType jdbcDataSourceJNDIName dsConnectionURL dbUser dbPassword jdkVersion
+read parametersPath gitUserName testbranchName location vmName adminUsername password virtualNetworkResourceGroupName storageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword enableDB databaseType jdbcDataSourceJNDIName dsConnectionURL dbUser dbPassword jdkVersion gracefulShutdownTimeout
  
 cat <<EOF > ${parametersPath}
 {
@@ -10,7 +10,7 @@ cat <<EOF > ${parametersPath}
     "contentVersion": "1.0.0.0",
     "parameters": {
         "artifactsLocation": {
-            "value": "https://raw.githubusercontent.com/${gitUserName}/rhel-jboss-templates/${testbranchName}/eap74-rhel8-payg/"
+            "value": "https://raw.githubusercontent.com/${gitUserName}/rhel-jboss-templates/${testbranchName}/eap-rhel-payg/"
         },
         "location": {
             "value": "${location}"
@@ -91,6 +91,9 @@ cat <<EOF > ${parametersPath}
         },
         "jdkVersion": {
             "value": "${jdkVersion}"
+        },
+        "gracefulShutdownTimeout": {
+            "value": "${gracefulShutdownTimeout}"
         }
     }
 }
