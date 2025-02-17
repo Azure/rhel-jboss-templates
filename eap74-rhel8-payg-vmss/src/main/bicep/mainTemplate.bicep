@@ -550,7 +550,7 @@ module paygVmssEndPid './modules/_pids/_pid.bicep' = {
 }
 
 module baseImageSelected './modules/_pids/_empty.bicep' = {
-  name: (jdkVersion == 'openjdk8') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk8-rhel8}' : (jdkVersion == 'openjdk11') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk11-rhel8}' : (jdkVersion == 'openjdk17') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk17-rhel8}' :  'eap74-rhel8-payg.null'
+  name: (jdkVersion == 'openjdk8') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk8-rhel8}' : (jdkVersion == 'openjdk11') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk11-rhel8}' : (jdkVersion == 'openjdk17') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk17-rhel8}' :  'eap-rhel-payg.null'
   params: {}
 }
 
