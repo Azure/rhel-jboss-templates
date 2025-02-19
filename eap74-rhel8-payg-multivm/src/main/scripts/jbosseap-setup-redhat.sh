@@ -83,6 +83,16 @@ else
         echo "Slave ${VM_NAME_PREFIX}${i} extension execution completed"
     done
 
+    # deploy sample app to domain controller
+    echo "Deploy sample app to domain controller: ${ADMIN_VM_NAME}"
+    az vm extension set --verbose --name CustomScript \
+        --resource-group ${RESOURCE_GROUP_NAME} \
+        --vm-name ${ADMIN_VM_NAME} \
+        --publisher Microsoft.Azure.Extensions \
+        --version 2.0 \
+        --settings "{\"fileUris\": [\"${SCRIPT_LOCATION}/deploy-sample-app.sh\"]}" \
+        --protected-settings "{\"commandToExecute\":\"sh deploy-sample-app.sh  -a ${ARTIFACTS_LOCATION} -t ${ARTIFACTS_LOCATION_SAS_TOKEN} -p ${PATH_TO_FILE} -f ${FILE_TO_DOWNLOAD} ${JDK_VERSION}\"}"
+
     if [ "$ENABLE_DB" == "True" ]; then
         # Configure data source
         echo "Configure data source for host: ${ADMIN_VM_NAME}"
