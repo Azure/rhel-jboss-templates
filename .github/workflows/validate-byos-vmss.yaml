@@ -48,7 +48,7 @@ env:
     adminUsername: azureadmin
     password: ${{ secrets.VM_PASSWORD }}
     numberOfInstances: 3
-    vmssBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}vmsssa
+    vmssBootStorageAccountName: vmsssa
     jbossEAPUserName: jbossadmin
     jbossEAPPassword: ${{ secrets.JBOSS_EAP_USER_PASSWORD }}
     rhsmUserName: ${{ secrets.RHSM_USERNAME }}
@@ -309,8 +309,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # query public ip address of Application Gateway
-                    publicip=$(az network public-ip show --name gwip \
-                                --resource-group ${{ env.vmssResourceGroup }} --query dnsSettings.fqdn -o tsv)
+                    publicip=$(az network public-ip list --resource-group ${{ env.vmssResourceGroup }} --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
                     echo "##[set-output name=publicip;]${publicip}"
             - name: Verify eap-session-replication application
               run: |
@@ -351,16 +350,6 @@ jobs:
           run: |
             echo "Sleeping for ${{ github.event.inputs.timeWaitBeforeDelete }}"
             sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
-        - name: Unregister before deleting resources
-          if: ${{ github.event_name == 'workflow_dispatch' }}
-          continue-on-error: true
-          uses: azure/CLI@v1
-          with:
-            inlineScript: |
-              for ((i = 0; i < numberOfInstances; i++)); do
-                echo "Unregister VMSS instance ${i}"
-                az vmss run-command invoke -g ${vmssResourceGroup} -n jbosseap-server${vmssName} --command-id RunShellScript --instance-id ${i} --scripts "sudo subscription-manager unregister"
-              done
         - name: Delete Resource Group
           if: ${{ github.event_name == 'workflow_dispatch' }}
           id: delete-resource-group

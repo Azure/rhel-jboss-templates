@@ -17,10 +17,12 @@ param subjectName string = ''
 
 @description('Current deployment time. Used as a tag in deployment script.')
 param keyVaultName string = 'GEN_UNIQUE'
+param guidValue string = ''
 
 module keyVaultwithSelfSignedAppGatewaySSLCert '_keyvault/_keyvaultWithNewCert.bicep' = {
-  name: 'kv-appgw-selfsigned-certificate-deployment'
+  name: 'kv-appgw-selfsigned-certificate-deployment-${guidValue}'
   params: {
+    guidValue: guidValue
     identity: identity
     keyVaultName: keyVaultName
     location: location
