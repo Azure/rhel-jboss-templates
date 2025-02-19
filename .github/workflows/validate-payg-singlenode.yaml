@@ -47,7 +47,7 @@ env:
     password: ${{ secrets.VM_PASSWORD }}
     dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
     dbPassword: ${{ secrets.DATABASE_PASSWORD }}
-    singleStorageAccountName: ${{ github.run_id }}${{ github.run_number }}singlesa
+    singleStorageAccountName: singlesa
     jbossEAPUserName: jbossadmin
     jbossEAPPassword: ${{ secrets.JBOSS_EAP_USER_PASSWORD }}
     gitUserName: ${{ secrets.USER_NAME }}
@@ -286,7 +286,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # Query public IP for later use
-                    publicip=$(az network public-ip show --name 'jbosseapVm-ip' --resource-group $singleResourceGroup --query ipAddress -o tsv)
+                    publicip=$(az network public-ip list --resource-group $singleResourceGroup --query "[?starts_with(name, 'jbosseapVm-ip')].ipAddress" -o tsv)
                     echo "##[set-output name=publicip;]${publicip}"
             - name: Verify console is accessible
               run: |
@@ -327,13 +327,6 @@ jobs:
           run: |
             echo "Sleeping for ${{ github.event.inputs.timeWaitBeforeDelete }}"
             sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
-        - name: Unregister VM
-          if: ${{ github.event_name == 'workflow_dispatch'}}
-          continue-on-error: true
-          uses: azure/CLI@v1
-          with:
-            inlineScript: |
-              az vm run-command invoke -g ${singleResourceGroup} -n ${vmName} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
         - name: Delete Resource Group
           if: ${{ github.event_name == 'workflow_dispatch'}}
           id: delete-resource-group
