@@ -1,17 +1,19 @@
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
+
 @description('Location for all resources')
 param location string = resourceGroup().location
 
 @description('Name for the Virtual Machine.')
-param vmName string = 'jbosseapVm'
+param vmName string = 'jbosseapVm-${guidValue}'
 
 @description('Linux VM user account name')
 param adminUsername string = 'jbossuser'
 
 @description('Public IP Name for the VM')
-param vmPublicIPAddressName string = 'jbosseapVm-ip'
+param vmPublicIPAddressName string = 'jbosseapVm-ip-${guidValue}'
 
 @description('DNS prefix for VM')
-param dnsNameforVM string = 'jbossvm${take(uniqueString(utcNow()), 6)}'
+param dnsNameforVM string = 'jbossvm-${guidValue}'
 
 @description('Type of authentication to use on the Virtual Machine')
 @allowed([
@@ -44,7 +46,7 @@ param storageNewOrExisting string = 'New'
 param existingStorageAccount string = ''
 
 @description('Name of the storage account')
-param storageAccountName string = 'storage${uniqueString(resourceGroup().id)}'
+param storageAccountName string = 'storage'
 
 @description('Storage account type')
 param storageAccountType string = 'Standard_LRS'
@@ -124,12 +126,12 @@ param dbUser string = 'contosoDbUser'
 @description('Password for Database')
 param dbPassword string = newGuid()
 
-param guidValue string = take(replace(newGuid(), '-', ''), 6)
-
-var nicName_var = '${uniqueString(resourceGroup().id)}-nic'
-var networkSecurityGroupName_var = 'jbosseap-nsg'
+var vmName_var = '${vmName}-${guidValue}'
+var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
+var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
+var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
 var bootDiagnosticsCheck = ((storageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
-var bootStorageName_var = ((storageNewOrExisting == 'Existing') ? existingStorageAccount : storageAccountName)
+var bootStorageName_var = format('{0}{1}',((storageNewOrExisting == 'Existing') ? existingStorageAccount : storageAccountName), guidValue)
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -141,7 +143,7 @@ var linuxConfiguration = {
     ]
   }
 }
-var name_postDeploymentDsName = format('updateNicPrivateIpStatic{0}', guidValue)
+var name_postDeploymentDsName = format('updateNicPrivateIpStatic-{0}', guidValue)
 var name_vmAcceptTerms = format('vmAcceptTerms{0}', guidValue)
 var obj_uamiForDeploymentScript = {
   type: 'UserAssigned'
@@ -160,7 +162,7 @@ var plan = {
 * Beginning of the offer deployment
 */
 module pids './modules/_pids/_pid.bicep' = {
-  name: 'initialization'
+  name: 'initialization-${guidValue}'
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -169,14 +171,14 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
 }
 
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
-  name: 'uami-deployment'
+  name: 'uami-deployment-${guidValue}'
   params: {
     location: location
   }
 }
 
 module paygSingleStartPid './modules/_pids/_pid.bicep' = {
-  name: 'paygSingleStartPid'
+  name: 'paygSingleStartPid-${guidValue}'
   params: {
     name: pids.outputs.paygSingleStart
   }
@@ -222,7 +224,7 @@ resource networkSecurityGroupName 'Microsoft.Network/networkSecurityGroups@${azu
 }
 
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
-  name: virtualNetworkName
+  name: virtualNetworkName_var
   location: location
   properties: {
     addressSpace: {
@@ -255,7 +257,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName, subnetName)
+            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName_var, subnetName)
           }
           publicIPAddress: {
             id: resourceId('Microsoft.Network/publicIPAddresses', vmPublicIPAddressName)
@@ -285,14 +287,14 @@ module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' =  {
 }
 
 resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionForVirtualMachines}' = {
-  name: vmName
+  name: vmName_var
   location: location
   properties: {
     hardwareProfile: {
       vmSize: vmSize
     }
     osProfile: {
-      computerName: vmName
+      computerName: vmName_var
       adminUsername: adminUsername
       adminPassword: adminPasswordOrSSHKey
       linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
@@ -305,7 +307,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
         version: (jdkVersion == 'eap8-openjdk11') ? '8.0.2024111801' :  (jdkVersion == 'eap8-openjdk17') ? '8.0.2024111801' :  'latest'
       }
       osDisk: {
-        name: '${vmName}_OSDisk'
+        name: '${vmName_var}_OSDisk'
         caching: 'ReadWrite'
         createOption: 'FromImage'
       }
@@ -352,7 +354,7 @@ resource vmPublicIP 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPu
 }
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionStartPid'
+  name: 'dbConnectionStartPid-${guidValue}'
   params: {
     name: pids.outputs.dbStart
   }
@@ -364,7 +366,7 @@ module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
 
 resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/extensions@${azure.apiVersionForVirtualMachineExtensions}' = {
   parent: vmName_resource
-  name: 'jbosseap-setup-extension'
+  name: 'jbosseap-setup-extension-${guidValue}'
   location: location
   properties: {
     publisher: 'Microsoft.Azure.Extensions'
@@ -404,7 +406,7 @@ module updateNicPrivateIpStatic 'modules/_deployment-scripts/_dsPostDeployment.b
 }
 
 module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionEndPid'
+  name: 'dbConnectionEndPid-${guidValue}'
   params: {
     name: pids.outputs.dbEnd
   }
@@ -415,7 +417,7 @@ module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
 }
 
 module paygSingleEndPid './modules/_pids/_pid.bicep' = {
-  name: 'paygSingleEndPid'
+  name: 'paygSingleEndPid-${guidValue}'
   params: {
     name: pids.outputs.paygSingleEnd
   }

@@ -48,8 +48,9 @@ env:
     numberOfInstances: 3
     domainOperatingMode: managed-domain
     standaloneOperatingMode: standalone
-    domainBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}domainsa
-    standaloneBootStorageAccountName: ${{ github.run_id }}${{ github.run_number }}standsa
+    cafeappStorageAccountName: ${{ github.run_id }}${{ github.run_number }}cafeappsa
+    domainBootStorageAccountName: domainsa
+    standaloneBootStorageAccountName: standsa
     dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
     dbPassword: ${{ secrets.DATABASE_PASSWORD }}
     jbossEAPUserName: jbossadmin
@@ -325,11 +326,16 @@ jobs:
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
+                  az storage account create \
+                    --name ${{ env.cafeappStorageAccountName }} \
+                    --resource-group ${{ env.domainResourceGroup }} \
+                    --location ${{ env.location }} \
+                    --sku "Standard_LRS" 
                   # create a container
-                  az storage container create --name cafeapp --account-name ${{ env.domainBootStorageAccountName }}
+                  az storage container create --name cafeapp --account-name ${{ env.cafeappStorageAccountName }}
                   # upload cafe app
                   az storage blob upload \
-                    --account-name ${{ env.domainBootStorageAccountName }} \
+                    --account-name ${{ env.cafeappStorageAccountName }} \
                     --container-name cafeapp \
                     --name javaee-cafe.war \
                     --file rhel-jboss-templates-to-build/eap-coffee-app/target/javaee-cafe.war
@@ -340,14 +346,14 @@ jobs:
                   sasEnd=`date -d@"$expiryData" -u '+%Y-%m-%dT%H:%MZ'`
                   sasToken=$(az storage account generate-sas \
                       --permissions r \
-                      --account-name ${{ env.domainBootStorageAccountName }} \
+                      --account-name ${{ env.cafeappStorageAccountName }} \
                       --services b \
                       --resource-types sco \
                       --expiry $sasEnd  -o tsv)
                   appbloburl=$(az storage blob url \
                       --container-name cafeapp \
                       --name javaee-cafe.war \
-                      --account-name ${{ env.domainBootStorageAccountName }} \
+                      --account-name ${{ env.cafeappStorageAccountName }} \
                       --sas-token ${sasToken} -o tsv) 
                   echo "appbloburl=${appbloburl}" >> "$GITHUB_OUTPUT"
             - name: Query public ip of admin VM
@@ -357,7 +363,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # query public ip address of admin VM
-                    publicip=$(az vm show --resource-group ${{ env.domainResourceGroup }} --name ${{ github.run_id }}${{ github.run_number }}vm-adminVM -d --query publicIps -o tsv)
+                    publicip=$(az network public-ip list --resource-group ${{ env.domainResourceGroup }} --query "[?ends_with(name, '-adminVM-pubIp')].ipAddress" -o tsv)
                     
                     echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Deploy cafe application
@@ -377,11 +383,9 @@ jobs:
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
-                    # query public ip address of Application Gateway
-                    publicip=$(az network public-ip show --name gwip \
-                                --resource-group $domainResourceGroup --query dnsSettings.fqdn -o tsv)
-                    
-                    echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
+                  # query public ip address of Application Gateway
+                  publicip=$(az network public-ip list --resource-group $domainResourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)                  
+                  echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Verify cafe application
               run: |
                 publicip=${{steps.query_app_gateway_public_ip.outputs.publicip}}
@@ -397,6 +401,23 @@ jobs:
                   exit 1
                 else
                   echo "Cafe is accessible"
+                fi
+                exit 0
+            - name: Verify eap-session-replication application
+              run: |
+                publicip=${{steps.query_app_gateway_public_ip.outputs.publicip}}
+                echo "publicip: " $publicip
+                CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
+
+                echo "Verifying eap-session-replication is deployed as expected"
+                curl --verbose http://${publicip}/eap-session-replication/
+                response=$(curl ${CURL_RETRY_PARMS}  --write-out '%{http_code}' --silent --output /dev/null http://${publicip}/eap-session-replication/)
+                echo "$response"
+                if [ "$response" -ne 200 ]; then
+                  echo "eap-session-replication is not accessible"
+                  exit 1
+                else
+                  echo "eap-session-replication is accessible"
                 fi
                 exit 0
 
@@ -536,8 +557,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # query public ip address of Application Gateway
-                    publicip=$(az network public-ip show --name gwip \
-                                --resource-group $standaloneResourceGroup --query dnsSettings.fqdn -o tsv)
+                    publicip=$(az network public-ip list --resource-group $standaloneResourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
                     
                     echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Verify eap-session-replication application
@@ -580,28 +600,6 @@ jobs:
           run: |
             echo "Sleeping for ${{ github.event.inputs.timeWaitBeforeDelete }}"
             sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
-        - name: Unregister admin VM before deleting resources
-          if: ${{ github.event_name == 'workflow_dispatch' }}
-          continue-on-error: true
-          uses: azure/CLI@v1
-          with:
-            inlineScript: |
-              echo "Unregister admin VM"
-              az vm run-command invoke -g ${domainResourceGroup} -n ${vmName}-adminVM --command-id RunShellScript --scripts "sudo subscription-manager unregister"
-              for ((i = 1; i < numberOfInstances; i++)); do
-                echo "Unregister ${vmName}${i}"
-                az vm run-command invoke -g ${domainResourceGroup} -n ${vmName}${i} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
-              done
-        - name: Unregister before deleting resources
-          if: ${{ github.event_name == 'workflow_dispatch' }}
-          continue-on-error: true
-          uses: azure/CLI@v1
-          with:
-            inlineScript: |
-              for ((i = 0; i < numberOfInstances; i++)); do
-                echo "Unregister ${vmName}${i}"
-                az vm run-command invoke -g ${standaloneResourceGroup} -n ${vmName}${i} --command-id RunShellScript --scripts "sudo subscription-manager unregister"
-              done
         - name: Delete Dependent Resource Group
           if: ${{ github.event_name == 'workflow_dispatch' }}
           run: |

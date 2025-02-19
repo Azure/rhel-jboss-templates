@@ -88,6 +88,7 @@ param dbUser string = 'contosoDbUser'
 @secure()
 @description('Password for Database')
 param dbPassword string = newGuid()
+param guidValue string = ''
 
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jbosseap-setup-redhat.sh'
@@ -95,13 +96,14 @@ var const_setupDomainMasterScript = 'jbosseap-setup-master.sh'
 var const_setupDomainSlaveScript = 'jbosseap-setup-slave.sh'
 var const_setupDomainStandaloneScript = 'jbosseap-setup-standalone.sh'
 var const_enableElytronSe17DomainCli = 'enable-elytron-se17-domain.cli'
+var const_deploySampleAppScript = 'deploy-sample-app.sh'
 var const_azcliVersion = '2.15.0'
 var scriptFolder = 'scripts'
 var fileFolder = 'bin'
 var fileToBeDownloaded = 'eap-session-replication.war'
 
 resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
-  name: 'jbosseap-setup'
+  name: 'jbosseap-setup-${guidValue}'
   location: location
   kind: 'AzureCLI'
   identity: identity
@@ -227,6 +229,7 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersion
       uri(const_scriptLocation, '${const_setupDomainSlaveScript}${artifactsLocationSasToken}')
       uri(const_scriptLocation, '${const_setupDomainStandaloneScript}${artifactsLocationSasToken}')
       uri(const_scriptLocation, '${const_enableElytronSe17DomainCli}${artifactsLocationSasToken}')
+      uri(const_scriptLocation, '${const_deploySampleAppScript}${artifactsLocationSasToken}')
     ]
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
