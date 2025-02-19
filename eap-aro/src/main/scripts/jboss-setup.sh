@@ -373,6 +373,15 @@ apk update
 apk add gettext
 apk add apache2-utils
 
+# Check if /usr/lib/libresolv.so.2 exists that is required by the OpenShift CLI
+if [ ! -f /usr/lib/libresolv.so.2 ]; then
+    echo "Install gcompat package which provides /usr/lib/libresolv.so.2"
+    apk add gcompat
+
+    echo "Create a symbolic link for /usr/lib/libresolv.so.2"
+    ln -sf /lib/libgcompat.so.0 /usr/lib/libresolv.so.2
+fi
+
 # Retrieve cluster credentials and api/console URLs
 credentials=$(az aro list-credentials -g $RESOURCE_GROUP -n $CLUSTER_NAME -o json)
 kubeadminUsername=$(echo $credentials | jq -r '.kubeadminUsername')
