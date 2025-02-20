@@ -25,16 +25,14 @@ param jbossEAPUserName string
 @secure()
 param jbossEAPPassword string
 
+@description('Please enter a Graceful Shutdown Timeout in seconds')
+param gracefulShutdownTimeout string
+
 @description('The size of the Virtual Machine')
 param vmSize string = 'Standard_DS2_v2'
 
-@allowed([
-  'openjdk8'
-  'openjdk11'
-  'openjdk17'
-])
 @description('The JDK version of the Virtual Machine')
-param jdkVersion string = 'openjdk17'
+param jdkVersion string = 'eap8-openjdk17'
 
 @description('Number of VMs to deploy')
 param numberOfInstances int = 2
@@ -202,7 +200,11 @@ var name_vmAcceptTerms = format('vmAcceptTerms{0}', guidValue)
 var imageReference = {
   publisher: 'RedHat'
   offer: 'rh-jboss-eap'
-  sku: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
+  sku: (jdkVersion == 'eap74-openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : /*
+     */(jdkVersion == 'eap74-openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : /*
+     */(jdkVersion == 'eap74-openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' : /*
+     */(jdkVersion == 'eap8-openjdk11') ? 'rh-jboss-eap8-jdk11-rhel9-gen2' : /*
+     */(jdkVersion == 'eap8-openjdk17') ? 'rh-jboss-eap8-jdk17-rhel9-gen2' :  null
   version: 'latest'
 }
 
@@ -258,10 +260,15 @@ var dnsNameforAdminVm = 'jboss-admin${guidValue}'
 var dnsNameforManagedVm = 'jboss-managed${guidValue}'
 var name_networkSecurityGroup = 'jboss-nsg-${guidValue}'
 var name_appGatewayPublicIPAddress = 'gwip-${guidValue}'
+
 var plan = {
   publisher: 'redhat'
   product: 'rh-jboss-eap'
-  name: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
+  name: (jdkVersion == 'eap74-openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : /*
+      */(jdkVersion == 'eap74-openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : /*
+      */(jdkVersion == 'eap74-openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' : /*
+      */(jdkVersion == 'eap8-openjdk11') ? 'rh-jboss-eap8-jdk11-rhel9-gen2' : /*
+      */(jdkVersion == 'eap8-openjdk17') ? 'rh-jboss-eap8-jdk17-rhel9-gen2' :  null
 }
 
 /*
