@@ -563,6 +563,6 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@${azure.apiVers
 }
 
 output appGatewayEnabled bool = enableAppGWIngress
-output appHttpURL string = enableAppGWIngress ? uri(format('http://{0}/', appgwDeployment.outputs.appGatewayURL), 'eap-session-replication/') : ''
-output appHttpsURL string = enableAppGWIngress ? uri(format('https://{0}/', appgwDeployment.outputs.appGatewaySecuredURL), 'eap-session-replication/') : ''
+output appHttpURL string = enableAppGWIngress ? uri('http://${appgwDeployment.outputs.appGatewayURL}/', 'eap-session-replication/') : ''
+output appHttpsURL string = enableAppGWIngress ? uri(''https://${appgwDeployment.outputs.appGatewaySecuredURL}/', 'eap-session-replication/') : ''
 output adminUsername string = jbossEAPUserName
