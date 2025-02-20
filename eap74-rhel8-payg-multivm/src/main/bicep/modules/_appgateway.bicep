@@ -12,6 +12,7 @@ param _pidAppgwStart string = 'pid-networking-appgateway-start'
 param keyVaultName string = 'keyVaultName'
 param sslCertDataSecretName string = 'sslCertDataSecretName'
 param enableCookieBasedAffinity bool = false
+param guidValue string = ''
 
 
 var name_appGateway = appGatewayName
