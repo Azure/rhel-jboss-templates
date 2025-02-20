@@ -244,7 +244,6 @@ var plan = {
   product: 'rh-jboss-eap'
   name: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
 }
-var const_azcliVersion = '2.53.0'
 
 module pids './modules/_pids/_pid.bicep' = {
   name: 'initialization-${guidValue}'
