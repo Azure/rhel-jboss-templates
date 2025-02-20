@@ -13,6 +13,7 @@ param keyVaultName string = 'keyVaultName'
 param sslCertDataSecretName string = 'sslCertDataSecretName'
 param enableCookieBasedAffinity bool = false
 param guidValue string = ''
+param appgwDeploymentName string = 'app-gateway-deployment-with-self-signed-cert'
 
 var name_appGateway = appGatewayName
 
@@ -23,7 +24,7 @@ resource existingKeyvault 'Microsoft.KeyVault/vaults@${azure.apiVersionForKeyVau
 }
 
 module appgwDeployment1 './_azure-resources/_appGateway.bicep' = {
-  name: 'app-gateway-deployment-with-self-signed-cert'
+  name: appgwDeploymentName
   params: {
     guidValue: guidValue
     appGatewayName: name_appGateway
