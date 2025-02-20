@@ -22,15 +22,15 @@ param connectSatellite bool = false
 
 @description('Red Hat Satellite Server VM FQDN name.')
 param satelliteFqdn string = ''
+param guidValue string = ''
 
 var const_validateParameterScript = 'validate-parameters.sh'
-var deploymentName = 'validate-parameters-and-fail-fast'
 var const_azcliVersion = '2.15.0'
 var const_arguments_validate_parameters = '${location} ${vmSize} ${numberOfInstances} ${connectSatellite} ${satelliteFqdn}'
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 
 resource validateParameters 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
-  name: deploymentName
+  name: 'validate-parameters-and-fail-fast-${guidValue}'
   location: location
   kind: 'AzureCLI'
   identity: identity

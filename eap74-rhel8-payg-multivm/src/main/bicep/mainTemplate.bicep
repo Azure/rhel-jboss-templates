@@ -297,6 +297,7 @@ module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
 module failFastDeployment 'modules/_deployment-scripts/_ds-failfast.bicep' = {
   name: name_failFastDsName
   params: {
+    guidValue: guidValue
     artifactsLocation: artifactsLocation
     artifactsLocationSasToken: artifactsLocationSasToken
     location: location
