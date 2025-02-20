@@ -206,7 +206,7 @@ var imageReference = {
   version: 'latest'
 }
 
-var name_failFastDsName = format('failFast{0}', guidValue)
+var name_failFastDsName = format('failFast-{0}', guidValue)
 var name_jbossEAPDsName = 'jbosseap-setup-${guidValue}'
 var obj_uamiForDeploymentScript = {
   type: 'UserAssigned'
