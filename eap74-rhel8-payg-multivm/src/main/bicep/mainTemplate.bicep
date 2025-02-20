@@ -289,6 +289,7 @@ module paygMultivmStartPid './modules/_pids/_pid.bicep' = {
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
   name: 'uami-deployment-${guidValue}'
   params: {
+    guidValue: guidValue
     location: location
   }
 }

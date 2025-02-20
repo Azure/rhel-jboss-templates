@@ -15,11 +15,11 @@
 */
 
 param location string
-param name_deploymentScriptContributorRoleAssignmentName string = newGuid()
+param guidValue string = ''
 
 // https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
 var const_roleDefinitionIdOfContributor = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
-var name_deploymentScriptUserDefinedManagedIdentity = 'jboss-eap-vm-deployment-script-user-defined-managed-itentity-${substring(uniqueString(name_deploymentScriptContributorRoleAssignmentName),0,5)}'
+var name_deploymentScriptUserDefinedManagedIdentity = 'jboss-eap-vm-deployment-script-user-defined-managed-itentity-${guidValue}'
 
 // UAMI for deployment script
 resource uamiForDeploymentScript 'Microsoft.ManagedIdentity/userAssignedIdentities@${azure.apiVersionForIdentity}' = {
@@ -29,7 +29,7 @@ resource uamiForDeploymentScript 'Microsoft.ManagedIdentity/userAssignedIdentiti
 
 // Assign Contributor role in subscription scope, we need the permission to get/update resource cross resource groups.
 module deploymentScriptUAMICotibutorRoleAssignment '_roleAssignment.bicep' = {
-  name: name_deploymentScriptContributorRoleAssignmentName
+  name: 'deploymentScriptUAMICotibutorRoleAssignment-${guidValue}'
   scope: subscription()
   params: {
     roleDefinitionId: const_roleDefinitionIdOfContributor
