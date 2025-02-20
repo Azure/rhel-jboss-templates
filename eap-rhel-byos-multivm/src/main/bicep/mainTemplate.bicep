@@ -221,7 +221,7 @@ var plan = {
   product: 'rhel-byos'
 }
 
-var name_failFastDsName = format('failFast{0}', guidValue)
+var name_failFastDsName = format('failFast-{0}', guidValue)
 var name_jbossEAPDsName = 'jbosseap-setup-${guidValue}'
 var obj_uamiForDeploymentScript = {
   type: 'UserAssigned'
@@ -299,6 +299,7 @@ module byosMultivmStartPid './modules/_pids/_pid.bicep' = {
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
   name: 'uami-deployment-${guidValue}'
   params: {
+    guidValue: guidValue
     location: location
   }
 }
@@ -351,6 +352,7 @@ resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVe
 module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
   name: 'app-gateway-deployment-${guidValue}'
   params: {
+    guidValue: guidValue
     appGatewayName: name_appGateway
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
     gatewayPublicIPAddressName: name_appGatewayPublicIPAddress
@@ -615,7 +617,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
 }]
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionStartPid'
+  name: 'dbConnectionStartPid-${guidValue}'
   params: {
     name: pids.outputs.dbStart
   }
@@ -669,7 +671,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
 }
 
 module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
-  name: 'dbConnectionEndPid'
+  name: 'dbConnectionEndPid-${guidValue}'
   params: {
     name: pids.outputs.dbEnd
   }

@@ -206,7 +206,7 @@ var imageReference = {
   version: 'latest'
 }
 
-var name_failFastDsName = format('failFast{0}', guidValue)
+var name_failFastDsName = format('failFast-{0}', guidValue)
 var name_jbossEAPDsName = 'jbosseap-setup-${guidValue}'
 var obj_uamiForDeploymentScript = {
   type: 'UserAssigned'
@@ -289,6 +289,7 @@ module paygMultivmStartPid './modules/_pids/_pid.bicep' = {
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
   name: 'uami-deployment-${guidValue}'
   params: {
+    guidValue: guidValue
     location: location
   }
 }
@@ -296,6 +297,7 @@ module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
 module failFastDeployment 'modules/_deployment-scripts/_ds-failfast.bicep' = {
   name: name_failFastDsName
   params: {
+    guidValue: guidValue
     artifactsLocation: artifactsLocation
     artifactsLocationSasToken: artifactsLocationSasToken
     location: location
@@ -340,6 +342,7 @@ resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVe
 module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
   name: 'app-gateway-deployment-${guidValue}'
   params: {
+    guidValue: guidValue
     appGatewayName: name_appGateway
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
     gatewayPublicIPAddressName: name_appGatewayPublicIPAddress

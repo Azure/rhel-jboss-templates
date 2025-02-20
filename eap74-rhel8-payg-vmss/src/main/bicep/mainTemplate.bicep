@@ -244,7 +244,6 @@ var plan = {
   product: 'rh-jboss-eap'
   name: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
 }
-var const_azcliVersion = '2.53.0'
 
 module pids './modules/_pids/_pid.bicep' = {
   name: 'initialization-${guidValue}'
@@ -268,6 +267,7 @@ module paygVmssStartPid './modules/_pids/_pid.bicep' = {
 module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
   name: 'uami-deployment-${guidValue}'
   params: {
+    guidValue: guidValue
     location: location
   }
 }
@@ -299,6 +299,7 @@ resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVe
 module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
   name: 'app-gateway-deployment-${guidValue}'
   params: {
+    guidValue: guidValue
     appGatewayName: name_appGateway
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
     gatewayPublicIPAddressName: name_appGatewayPublicIPAddress
