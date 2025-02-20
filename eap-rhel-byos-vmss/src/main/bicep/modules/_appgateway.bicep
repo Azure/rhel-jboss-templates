@@ -23,7 +23,7 @@ resource existingKeyvault 'Microsoft.KeyVault/vaults@${azure.apiVersionForKeyVau
 }
 
 module appgwDeployment1 './_azure-resources/_appGateway.bicep' = {
-  name: 'app-gateway-deployment-with-self-signed-cert-${guidValue}'
+  name: 'app-gateway-deployment-with-self-signed-cert'
   params: {
     guidValue: guidValue
     appGatewayName: name_appGateway
