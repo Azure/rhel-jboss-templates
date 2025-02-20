@@ -352,6 +352,7 @@ resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVe
 module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
   name: 'app-gateway-deployment-${guidValue}'
   params: {
+    guidValue: guidValue
     appGatewayName: name_appGateway
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
     gatewayPublicIPAddressName: name_appGatewayPublicIPAddress

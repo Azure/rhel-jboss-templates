@@ -12,6 +12,7 @@ param appGatewayName string = 'jbossappgw'
 param _pidAppgwEnd string = 'pid-networking-appgateway-end'
 param _pidAppgwStart string = 'pid-networking-appgateway-start'
 param enableCookieBasedAffinity bool = false
+param guidValue string = ''
 
 var name_appGateway = appGatewayName
 var const_appGatewayFrontEndHTTPPort = 80
@@ -45,7 +46,7 @@ var obj_frontendIPConfigurations1 = [
 ]
 
 module pidAppgwStart '../_pids/_pid.bicep' = {
-  name: 'pid-app-gateway-start-deployment'
+  name: 'pid-app-gateway-start-deployment-${guidValue}'
   params: {
     name: _pidAppgwStart
   }
@@ -206,7 +207,7 @@ resource wafv2AppGateway 'Microsoft.Network/applicationGateways@${azure.apiVersi
 
 
 module pidAppgwEnd '../_pids/_pid.bicep' = {
-  name: 'pid-app-gateway-end-deployment'
+  name: 'pid-app-gateway-end-deployment-${guidValue}'
   params: {
     name: _pidAppgwEnd
   }
