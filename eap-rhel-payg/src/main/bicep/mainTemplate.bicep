@@ -155,7 +155,11 @@ var obj_uamiForDeploymentScript = {
 var plan = {
   publisher: 'redhat'
   product: 'rh-jboss-eap'
-  name: (jdkVersion == 'eap74-openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'eap74-openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'eap74-openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  (jdkVersion == 'eap8-openjdk11') ? 'rh-jboss-eap8-jdk11-rhel9' :  (jdkVersion == 'eap8-openjdk17') ? 'rh-jboss-eap8-jdk17-rhel9' :  null
+  name: (jdkVersion == 'eap74-openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : /*
+      */(jdkVersion == 'eap74-openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : /*
+      */(jdkVersion == 'eap74-openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' : /*
+      */(jdkVersion == 'eap8-openjdk11') ? 'rh-jboss-eap8-jdk11-rhel9' :  /*
+      */(jdkVersion == 'eap8-openjdk17') ? 'rh-jboss-eap8-jdk17-rhel9' :  null
 }
 
 /*
@@ -303,7 +307,11 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
       imageReference: {
         publisher: 'RedHat'
         offer: 'rh-jboss-eap'
-        sku: (jdkVersion == 'eap74-openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'eap74-openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'eap74-openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  (jdkVersion == 'eap8-openjdk11') ? 'rh-jboss-eap8-jdk11-rhel9-gen2' :  (jdkVersion == 'eap8-openjdk17') ? 'rh-jboss-eap8-jdk17-rhel9-gen2' :  null
+        sku: (jdkVersion == 'eap74-openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : /*
+           */(jdkVersion == 'eap74-openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : /*
+           */(jdkVersion == 'eap74-openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' : /*
+           */(jdkVersion == 'eap8-openjdk11') ? 'rh-jboss-eap8-jdk11-rhel9-gen2' : /*
+           */(jdkVersion == 'eap8-openjdk17') ? 'rh-jboss-eap8-jdk17-rhel9-gen2' :  null
         version: 'latest'
       }
       osDisk: {
