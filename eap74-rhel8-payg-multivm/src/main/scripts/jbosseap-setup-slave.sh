@@ -57,15 +57,15 @@ function mountFileShare()
 # Get domain.xml file from share point to slave host vm
 function getDomainXmlFileFromShare()
 {
-  sudo -u jboss mv $EAP_HOME/wildfly/domain/configuration/domain.xml $EAP_HOME/wildfly/domain/configuration/domain.xml.backup
-  sudo -u jboss cp ${MOUNT_POINT_PATH}/domain.xml $EAP_HOME/wildfly/domain/configuration/.
-  ls -lt $EAP_HOME/wildfly/domain/configuration/domain.xml
+  sudo -u jboss mv $EAP_HOME/domain/configuration/domain.xml $EAP_HOME/domain/configuration/domain.xml.backup
+  sudo -u jboss cp ${MOUNT_POINT_PATH}/domain.xml $EAP_HOME/domain/configuration/.
+  ls -lt $EAP_HOME/domain/configuration/domain.xml
   if [[ $? != 0 ]]; 
   then
       echo "Failed to get ${MOUNT_POINT_PATH}/domain.xml"
       exit 1
   fi
-  sudo -u jboss chmod 640 $EAP_HOME/wildfly/domain/configuration/domain.xml
+  sudo -u jboss chmod 640 $EAP_HOME/domain/configuration/domain.xml
 }
 
 echo "Red Hat JBoss EAP Cluster Intallation Start " | log; flag=${PIPESTATUS[0]}
@@ -73,10 +73,10 @@ echo "Red Hat JBoss EAP Cluster Intallation Start " | log; flag=${PIPESTATUS[0]}
 
 export EAP_LAUNCH_CONFIG="/opt/rh/eap7/root/usr/share/wildfly/bin/domain.conf"
 echo 'export EAP_RPM_CONF_DOMAIN="/etc/opt/rh/eap7/wildfly/eap7-domain.conf"' >> ~/.bash_profile
-echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> ~/.bash_profile
+echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> ~/.bash_profile
 source ~/.bash_profile
 touch /etc/profile.d/eap_env.sh
-echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> /etc/profile.d/eap_env.sh
+echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> /etc/profile.d/eap_env.sh
 
 JBOSS_EAP_USER=${1}
 JBOSS_EAP_PASSWORD_BASE64=${2}
@@ -172,9 +172,9 @@ fi
 
 ## OpenJDK 17 specific logic
 if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
-    cp ${BASE_DIR}/enable-elytron-se17-domain.cli $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
-    chmod 644 $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
-    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
+    cp ${BASE_DIR}/enable-elytron-se17-domain.cli $EAP_HOME/docs/examples/enable-elytron-se17-domain.cli
+    chmod 644 $EAP_HOME/docs/examples/enable-elytron-se17-domain.cli
+    sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17-domain.cli
 fi
 
 echo "Updating domain.xml" | log; flag=${PIPESTATUS[0]}
@@ -196,8 +196,8 @@ done
 echo "firewall-cmd --reload" | log; flag=${PIPESTATUS[0]}
 sudo firewall-cmd  --reload  | log; flag=${PIPESTATUS[0]}
 
-# sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
-sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
+# sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --echo-command \
+sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --echo-command \
 "embed-host-controller --std-out=echo --domain-config=domain.xml --host-config=host-slave.xml",\
 "/host=${HOST_VM_NAME_LOWERCASES}/server-config=server-one:remove",\
 "/host=${HOST_VM_NAME_LOWERCASES}/server-config=server-two:remove",\
@@ -240,8 +240,8 @@ systemctl status eap7-domain.service        | log; flag=${PIPESTATUS[0]}
 ######################
 
 echo "Configuring JBoss EAP management user..." | log; flag=${PIPESTATUS[0]}
-echo "$EAP_HOME/wildfly/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
-$EAP_HOME/wildfly/bin/add-user.sh  -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
+echo "$EAP_HOME/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
+$EAP_HOME/bin/add-user.sh  -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; exit $flag;  fi
 
 # Seeing a race condition timing error so sleep to delay

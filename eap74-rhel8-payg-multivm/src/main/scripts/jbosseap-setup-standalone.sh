@@ -29,10 +29,10 @@ echo "Red Hat JBoss EAP Cluster Intallation Start " | log; flag=${PIPESTATUS[0]}
 
 export EAP_LAUNCH_CONFIG="/opt/rh/eap7/root/usr/share/wildfly/bin/standalone.conf"
 echo 'export EAP_RPM_CONF_STANDALONE="/etc/opt/rh/eap7/wildfly/eap7-standalone.conf"' >> ~/.bash_profile
-echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> ~/.bash_profile
+echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> ~/.bash_profile
 source ~/.bash_profile
 touch /etc/profile.d/eap_env.sh
-echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> /etc/profile.d/eap_env.sh
+echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> /etc/profile.d/eap_env.sh
 
 while getopts "a:t:p:f:" opt; do
     case $opt in
@@ -139,8 +139,8 @@ fi
 ####################### 
 
 echo "Copy the standalone-azure-ha.xml from EAP_HOME/doc/wildfly/examples/configs folder to EAP_HOME/wildfly/standalone/configuration folder" | log; flag=${PIPESTATUS[0]}
-echo "cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
-sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/ | log; flag=${PIPESTATUS[0]}
+echo "cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
+sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/ | log; flag=${PIPESTATUS[0]}
 
 echo "Updating standalone-azure-ha.xml" | log; flag=${PIPESTATUS[0]}
 echo -e "\t stack UDP to TCP"           | log; flag=${PIPESTATUS[0]}
@@ -148,15 +148,15 @@ echo -e "\t set transaction id"         | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
 if [[ "${JDK_VERSION,,}" == "openjdk17" ]]; then
-    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-azure-ha.xml
+    sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-azure-ha.xml
 fi
 
 echo "Copy the standalone-azure-ha.xml from EAP_HOME/doc/wildfly/examples/configs folder to EAP_HOME/wildfly/standalone/configuration folder" | log; flag=${PIPESTATUS[0]}
-echo "cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
-sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/wildfly/standalone/configuration/ | log; flag=${PIPESTATUS[0]}
+echo "cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
+sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/ | log; flag=${PIPESTATUS[0]}
 
 
-sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
+sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --echo-command \
 'embed-server --std-out=echo  --server-config=standalone-azure-ha.xml',\
 '/subsystem=transactions:write-attribute(name=node-identifier,value="'${NODE_ID}'")',\
 '/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")' | log; flag=${PIPESTATUS[0]}
@@ -203,14 +203,14 @@ echo "Deploy an application" | log; flag=${PIPESTATUS[0]}
 echo "curl -o eap-session-replication.war $fileUrl" | log; flag=${PIPESTATUS[0]}
 curl -o "eap-session-replication.war" "$fileUrl" | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! Sample Application Download Failed" >&2 log; exit $flag; fi
-echo "cp ./eap-session-replication.war $EAP_HOME/wildfly/standalone/deployments/" | log; flag=${PIPESTATUS[0]}
-cp ./eap-session-replication.war $EAP_HOME/wildfly/standalone/deployments/ | log; flag=${PIPESTATUS[0]}
-echo "touch $EAP_HOME/wildfly/standalone/deployments/eap-session-replication.war.dodeploy" | log; flag=${PIPESTATUS[0]}
-touch $EAP_HOME/wildfly/standalone/deployments/eap-session-replication.war.dodeploy | log; flag=${PIPESTATUS[0]}
+echo "cp ./eap-session-replication.war $EAP_HOME/standalone/deployments/" | log; flag=${PIPESTATUS[0]}
+cp ./eap-session-replication.war $EAP_HOME/standalone/deployments/ | log; flag=${PIPESTATUS[0]}
+echo "touch $EAP_HOME/standalone/deployments/eap-session-replication.war.dodeploy" | log; flag=${PIPESTATUS[0]}
+touch $EAP_HOME/standalone/deployments/eap-session-replication.war.dodeploy | log; flag=${PIPESTATUS[0]}
 
 echo "Configuring JBoss EAP management user..." | log; flag=${PIPESTATUS[0]}
-echo "$EAP_HOME/wildfly/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
-$EAP_HOME/wildfly/bin/add-user.sh  -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
+echo "$EAP_HOME/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
+$EAP_HOME/bin/add-user.sh  -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; exit $flag;  fi
 
 # Seeing a race condition timing error so sleep to delay
@@ -223,7 +223,7 @@ if [ "$enableDB" == "True" ]; then
     ./create-ds-${dbType}.sh $EAP_HOME/wildfly "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" false false
 
     # Test connection for the created data source
-    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --connect "/subsystem=datasources/data-source=$jdbcDataSourceName:test-connection-in-pool" | log; flag=${PIPESTATUS[0]}
+    sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --connect "/subsystem=datasources/data-source=$jdbcDataSourceName:test-connection-in-pool" | log; flag=${PIPESTATUS[0]}
     if [ $flag != 0 ]; then
         echo "ERROR! Test data source connection failed." >&2 log
         exit $flag

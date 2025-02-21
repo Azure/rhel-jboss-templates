@@ -11,17 +11,17 @@ JDK_VERSION=${9}
 if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
     export EAP_LAUNCH_CONFIG="/opt/rh/eap8/root/usr/share/wildfly/bin/domain.conf"
     echo 'export EAP_RPM_CONF_DOMAIN="/etc/opt/rh/eap8/wildfly/eap8-domain.conf"' >> ~/.bash_profile
-    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share"' >> ~/.bash_profile
+    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share/wildfly"' >> ~/.bash_profile
     source ~/.bash_profile
     touch /etc/profile.d/eap_env.sh
-    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share"' >> /etc/profile.d/eap_env.sh
+    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share/wildfly"' >> /etc/profile.d/eap_env.sh
 else
     export EAP_LAUNCH_CONFIG="/opt/rh/eap7/root/usr/share/wildfly/bin/domain.conf"
     echo 'export EAP_RPM_CONF_DOMAIN="/etc/opt/rh/eap7/wildfly/eap7-domain.conf"' >> ~/.bash_profile
-    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> ~/.bash_profile
+    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> ~/.bash_profile
     source ~/.bash_profile
     touch /etc/profile.d/eap_env.sh
-    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> /etc/profile.d/eap_env.sh
+    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> /etc/profile.d/eap_env.sh
 fi
 
 while getopts "a:t:p:f:" opt; do
@@ -53,4 +53,4 @@ else
     echo "File $HOME/eap-session-replication.war does not exist." | log; flag=${PIPESTATUS[0]}
 fi
 
-sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh -c --controller=$(hostname -I) "deploy $HOME/eap-session-replication.war --server-groups=main-server-group"
+sudo -u jboss $EAP_HOME/bin/jboss-cli.sh -c --controller=$(hostname -I) "deploy $HOME/eap-session-replication.war --server-groups=main-server-group"

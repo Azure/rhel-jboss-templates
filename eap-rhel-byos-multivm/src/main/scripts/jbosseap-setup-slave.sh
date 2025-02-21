@@ -41,11 +41,11 @@ function mountFileShare()
 # Get domain.xml file from share point to slave/secondary host vm
 function getDomainXmlFileFromShare()
 {
-  sudo -u jboss mv $EAP_HOME/wildfly/domain/configuration/domain.xml $EAP_HOME/wildfly/domain/configuration/domain.xml.backup | log; flag=${PIPESTATUS[0]}
-  sudo -u jboss cp ${MOUNT_POINT_PATH}/domain.xml $EAP_HOME/wildfly/domain/configuration/.
-  ls -lt $EAP_HOME/wildfly/domain/configuration/domain.xml | log; flag=${PIPESTATUS[0]}
+  sudo -u jboss mv $EAP_HOME/domain/configuration/domain.xml $EAP_HOME/domain/configuration/domain.xml.backup | log; flag=${PIPESTATUS[0]}
+  sudo -u jboss cp ${MOUNT_POINT_PATH}/domain.xml $EAP_HOME/domain/configuration/.
+  ls -lt $EAP_HOME/domain/configuration/domain.xml | log; flag=${PIPESTATUS[0]}
   if [ $flag != 0 ] ; then echo "Failed to get ${MOUNT_POINT_PATH}/domain.xml" >&2 log; exit $flag;  fi
-  sudo -u jboss chmod 640 $EAP_HOME/wildfly/domain/configuration/domain.xml | log; flag=${PIPESTATUS[0]}
+  sudo -u jboss chmod 640 $EAP_HOME/domain/configuration/domain.xml | log; flag=${PIPESTATUS[0]}
 }
 
 echo "Red Hat JBoss EAP Cluster Intallation Start " | log; flag=${PIPESTATUS[0]}
@@ -100,17 +100,17 @@ echo "Folder where script is executing ${pwd}" | log; flag=${PIPESTATUS[0]}
 if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
     export EAP_LAUNCH_CONFIG="/opt/rh/eap8/root/usr/share/wildfly/bin/domain.conf"
     echo 'export EAP_RPM_CONF_DOMAIN="/etc/opt/rh/eap8/wildfly/eap8-domain.conf"' >> ~/.bash_profile
-    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share"' >> ~/.bash_profile
+    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share/wildfly"' >> ~/.bash_profile
     source ~/.bash_profile
     touch /etc/profile.d/eap_env.sh
-    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share"' >> /etc/profile.d/eap_env.sh
+    echo 'export EAP_HOME="/opt/rh/eap8/root/usr/share/wildfly"' >> /etc/profile.d/eap_env.sh
 else
     export EAP_LAUNCH_CONFIG="/opt/rh/eap7/root/usr/share/wildfly/bin/domain.conf"
     echo 'export EAP_RPM_CONF_DOMAIN="/etc/opt/rh/eap7/wildfly/eap7-domain.conf"' >> ~/.bash_profile
-    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> ~/.bash_profile
+    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> ~/.bash_profile
     source ~/.bash_profile
     touch /etc/profile.d/eap_env.sh
-    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> /etc/profile.d/eap_env.sh
+    echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> /etc/profile.d/eap_env.sh
 fi
 ####################### Configuring firewall for ports
 echo "Configure firewall for ports 8080, 9990, 45700, 7600" | log; flag=${PIPESTATUS[0]}
@@ -234,12 +234,12 @@ systemctl restart sshd | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
 if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
-    cp ${BASE_DIR}/enable-elytron-se17-domain.cli $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
-    chmod 644 $EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli
+    cp ${BASE_DIR}/enable-elytron-se17-domain.cli $EAP_HOME/docs/examples/enable-elytron-se17-domain.cli
+    chmod 644 $EAP_HOME/docs/examples/enable-elytron-se17-domain.cli
     if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" ]]; then
-        sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli -Dhost_config_primary=host-master.xml -Dhost_config_secondary=host-slave.xml
+        sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17-domain.cli -Dhost_config_primary=host-master.xml -Dhost_config_secondary=host-slave.xml
     else
-        sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --file=$EAP_HOME/wildfly/docs/examples/enable-elytron-se17-domain.cli -Dhost_config_primary=host-primary.xml -Dhost_config_secondary=host-secondary.xml
+        sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17-domain.cli -Dhost_config_primary=host-primary.xml -Dhost_config_secondary=host-secondary.xml
     fi
 fi
 
@@ -263,7 +263,7 @@ echo "firewall-cmd --reload" | log; flag=${PIPESTATUS[0]}
 sudo firewall-cmd  --reload  | log; flag=${PIPESTATUS[0]}
 
 if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
-    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
+    sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --echo-command \
 "embed-host-controller --std-out=echo --domain-config=domain.xml --host-config=host-secondary.xml",\
 "/host=${HOST_VM_NAME_LOWERCASES}/server-config=server-one:remove",\
 "/host=${HOST_VM_NAME_LOWERCASES}/server-config=server-two:remove",\
@@ -282,7 +282,7 @@ if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-open
     echo -e "\t-> WILDFLY_HOST_CONFIG=host-secondary.xml" | log; flag=${PIPESTATUS[0]}
     echo 'WILDFLY_HOST_CONFIG=host-secondary.xml' >> $EAP_RPM_CONF_DOMAIN | log; flag=${PIPESTATUS[0]}
 else
-    sudo -u jboss $EAP_HOME/wildfly/bin/jboss-cli.sh --echo-command \
+    sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --echo-command \
 "embed-host-controller --std-out=echo --domain-config=domain.xml --host-config=host-slave.xml",\
 "/host=${HOST_VM_NAME_LOWERCASES}/server-config=server-one:remove",\
 "/host=${HOST_VM_NAME_LOWERCASES}/server-config=server-two:remove",\
@@ -335,8 +335,8 @@ if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-open
     ######################
 
     echo "Configuring JBoss EAP management user..." | log; flag=${PIPESTATUS[0]}
-    echo "$EAP_HOME/wildfly/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
-    $EAP_HOME/wildfly/bin/add-user.sh  -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
+    echo "$EAP_HOME/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
+    $EAP_HOME/bin/add-user.sh  -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
     if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; exit $flag;  fi
 
 else
@@ -372,8 +372,8 @@ else
     ######################
 
     echo "Configuring JBoss EAP management user..." | log; flag=${PIPESTATUS[0]}
-    echo "$EAP_HOME/wildfly/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
-    $EAP_HOME/wildfly/bin/add-user.sh  -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
+    echo "$EAP_HOME/bin/add-user.sh -u JBOSS_EAP_USER -p JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup'" | log; flag=${PIPESTATUS[0]}
+    $EAP_HOME/bin/add-user.sh  -u $JBOSS_EAP_USER -p $JBOSS_EAP_PASSWORD -g 'guest,mgmtgroup' | log; flag=${PIPESTATUS[0]}
     if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user configuration Failed" >&2 log; exit $flag;  fi
 fi
 

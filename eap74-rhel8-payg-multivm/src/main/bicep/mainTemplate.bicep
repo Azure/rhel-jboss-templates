@@ -676,6 +676,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
     dsConnectionURL: dsConnectionURL
     dbUser: dbUser
     dbPassword: dbPassword
+    gracefulShutdownTimeout: gracefulShutdownTimeout
   }
   dependsOn: [
     vmName_resource
