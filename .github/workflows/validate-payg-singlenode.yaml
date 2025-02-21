@@ -251,7 +251,8 @@ jobs:
                 ${dsConnectionURL} \
                 ${dbUser} \
                 ${dbPassword} \
-                ${{ inputs.jdkVersion }} "
+                ${{ inputs.jdkVersion }} \
+                ${{ env.gracefulShutdownTimeout }} "
 
             - name: Archive parameters-test-single.json
               uses: actions/upload-artifact@v4

@@ -18,12 +18,14 @@ on:
       jdkVersion:
         description: 'jdkVersion'
         required: true
-        default: 'openjdk17'
+        default: 'eap8-openjdk17'
         type: choice
         options:
-          - openjdk8
-          - openjdk11
-          - openjdk17
+          - eap8-openjdk17
+          - eap8-openjdk11
+          - eap74-openjdk17
+          - eap74-openjdk11
+          - eap74-openjdk8
       timeWaitBeforeDelete:
         description: 'Choose the wait time before deleting resources: 30m (30 minutes), 2h (2 hours), 5h (5 hours), 0 (immediately)'
         required: true
@@ -59,6 +61,7 @@ env:
     disableLoadBalancer: disable
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
     offerName: "eap74-rhel8-payg-vmss"
+    gracefulShutdownTimeout: "-1"
 
 jobs:
     preflight:
@@ -247,7 +250,8 @@ jobs:
                 ${dsConnectionURL} \
                 ${dbUser} \
                 ${dbPassword} \
-                ${{ inputs.jdkVersion }} "
+                ${{ inputs.jdkVersion }} \
+                ${{ env.gracefulShutdownTimeout }}"
 
             - name: Archive parameters-test-vmss.json
               uses: actions/upload-artifact@v4
