@@ -10,8 +10,8 @@
     </parent>
 
     <groupId>com.rhel.jboss.azure</groupId>
-    <artifactId>eap74-rhel8-payg-multivm</artifactId>
-    <version>${version.eap74-rhel8-payg-multivm}</version>
+    <artifactId>eap-rhel-payg-multivm</artifactId>
+    <version>${version.eap-rhel-payg-multivm}</version>
     <packaging>jar</packaging>
     <name>${project.artifactId}</name>
     <!-- mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests -->

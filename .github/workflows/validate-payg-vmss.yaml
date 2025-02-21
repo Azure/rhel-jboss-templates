@@ -60,7 +60,7 @@ env:
     enableLoadBalancer: enable
     disableLoadBalancer: disable
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
-    offerName: "eap74-rhel8-payg-vmss"
+    offerName: "eap-rhel-payg-vmss"
     gracefulShutdownTimeout: "-1"
 
 jobs:
@@ -102,8 +102,8 @@ jobs:
                 git config --global user.name $gitUserName
                 echo "create branch $vmssTestBranchName"
                 git checkout -b $vmssTestBranchName
-                rm -r -f $current/rhel-jboss-templates/eap74-rhel8-payg-vmss/src/main/*
-                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap74-rhel8-payg-vmss/
+                rm -r -f $current/rhel-jboss-templates/eap-rhel-payg-vmss/src/main/*
+                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap-rhel-payg-vmss/
                 git add .
                 git status
                 git commit -m "test branch for pipeline"
@@ -230,8 +230,8 @@ jobs:
                 fi
 
                 echo "generate parameter file for vmss"
-                bash rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/scripts/gen-parameters.sh \
-                <<< "rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/parameters-test-vmss.json  \
+                bash rhel-jboss-templates/eap-rhel-payg-vmss/src/test/scripts/gen-parameters.sh \
+                <<< "rhel-jboss-templates/eap-rhel-payg-vmss/src/test/parameters-test-vmss.json  \
                 ${gitUserName} \
                 ${vmssTestBranchName} \
                 ${location} \
@@ -258,7 +258,7 @@ jobs:
               if: success()
               with:
                 name: parameters-test-vmss
-                path: rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/parameters-test-vmss.json
+                path: rhel-jboss-templates/eap-rhel-payg-vmss/src/test/parameters-test-vmss.json
             - name: Create Resource Group if needed
               if: ${{ inputs.databaseType == 'none' || github.event.client_payload.databaseType == 'none' }}
               uses: azure/CLI@v1
@@ -277,8 +277,8 @@ jobs:
                     --verbose \
                     --resource-group ${{ env.vmssResourceGroup }} \
                     --name vmss \
-                    --parameters @rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/parameters-test-vmss.json \
-                    --template-file rhel-jboss-templates/eap74-rhel8-payg-vmss/mainTemplate.json
+                    --parameters @rhel-jboss-templates/eap-rhel-payg-vmss/src/test/parameters-test-vmss.json \
+                    --template-file rhel-jboss-templates/eap-rhel-payg-vmss/mainTemplate.json
             - name: Query public ip of Application Gateway
               id: query_app_gateway_public_ip
               uses: azure/CLI@v1

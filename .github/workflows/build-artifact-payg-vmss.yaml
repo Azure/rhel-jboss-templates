@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  offerName: "eap74-rhel8-payg-vmss"
+  offerName: "eap-rhel-payg-vmss"
 
 jobs:
   preflight:
