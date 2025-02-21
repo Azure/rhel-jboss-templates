@@ -143,7 +143,7 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersion
       }
       {
         name: 'gracefulShutdownTimeout'
-        secureValue: base64(gracefulShutdownTimeout)
+        value: gracefulShutdownTimeout
       {
         name: 'STORAGE_ACCOUNT_NAME'
         value: eapStorageAccountName

@@ -98,13 +98,8 @@ param instanceCount int = 2
 @description('The size of the Virtual Machine scale set')
 param vmSize string = 'Standard_DS2_v2'
 
-@allowed([
-  'openjdk8'
-  'openjdk11'
-  'openjdk17'
-])
 @description('The JDK version of the Virtual Machine')
-param jdkVersion string = 'openjdk17'
+param jdkVersion string = 'eap8-openjdk17'
 
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated')
 param artifactsLocation string = deployment().properties.templateLink.uri
