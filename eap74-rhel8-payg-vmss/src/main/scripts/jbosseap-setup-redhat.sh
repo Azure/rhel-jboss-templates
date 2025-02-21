@@ -177,24 +177,64 @@ echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_account_name
 echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 ####################### Start the JBoss server and setup eap service
-echo "Start JBoss-EAP service"                | log; flag=${PIPESTATUS[0]}
-echo "systemctl enable eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
-systemctl enable eap7-standalone.service      | log; flag=${PIPESTATUS[0]}
-####################### 
 
-###################### Editing eap7-standalone.services
-echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
-sed -i 's/After=syslog.target network.target/After=syslog.target network.target NetworkManager-wait-online.service/' /usr/lib/systemd/system/eap7-standalone.service
-echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
-sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap7-standalone.service
-echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
-systemctl daemon-reload
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
+    echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
+    echo "systemctl enable eap8-standalone.service" | log; flag=${PIPESTATUS[0]}
+    systemctl enable eap8-standalone.service        | log; flag=${PIPESTATUS[0]}
 
-echo "systemctl restart eap7-standalone.service"| log; flag=${PIPESTATUS[0]}
-systemctl restart eap7-standalone.service       | log; flag=${PIPESTATUS[0]}
-echo "systemctl status eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
-systemctl status eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
-######################
+    ###################### Editing eap8-standalone.services
+    echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
+    sed -i 's/After=syslog.target network.target/After=syslog.target network.target NetworkManager-wait-online.service/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+    echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
+    sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+    # Calculating EAP gracefulShutdownTimeout and passing it the service.
+    if  [[ "${gracefulShutdownTimeout,,}" == "-1" ]]; then
+        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec=infinity/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+    else
+        timeoutStopSec=$gracefulShutdownTimeout+20
+        if  "${timeoutStopSec}">90; then
+        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec='${timeoutStopSec}'/' /usr/lib/systemd/system/eap8-standalone.service | log; flag=${PIPESTATUS[0]}
+        fi
+    fi
+    systemd-analyze verify --recursive-errors=no /usr/lib/systemd/system/eap8-standalone.service
+    echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
+    systemctl daemon-reload | log; flag=${PIPESTATUS[0]}
+
+    echo "systemctl restart eap8-standalone.service"| log; flag=${PIPESTATUS[0]}
+    systemctl restart eap8-standalone.service       | log; flag=${PIPESTATUS[0]}
+    echo "systemctl status eap8-standalone.service" | log; flag=${PIPESTATUS[0]}
+    systemctl status eap8-standalone.service        | log; flag=${PIPESTATUS[0]}
+
+else
+    echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
+    echo "systemctl enable eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
+    systemctl enable eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
+
+    ###################### Editing eap7-standalone.services
+    echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
+    sed -i 's/After=syslog.target network.target/After=syslog.target network.target NetworkManager-wait-online.service/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
+    echo "Adding - Wants=NetworkManager-wait-online.service \nBefore=httpd.service" | log; flag=${PIPESTATUS[0]}
+    sed -i 's/Before=httpd.service/Wants=NetworkManager-wait-online.service \nBefore=httpd.service/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
+    # Calculating EAP gracefulShutdownTimeout and passing it the service.
+    if  [[ "${gracefulShutdownTimeout,,}" == "infinity" ]]; then
+        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec=infinity/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
+    else
+        timeoutStopSec=$gracefulShutdownTimeout+20
+        if  "${timeoutStopSec}">90; then
+        sed -i 's/Environment="WILDFLY_OPTS="/Environment="WILDFLY_OPTS="\nTimeoutStopSec='${timeoutStopSec}'/' /usr/lib/systemd/system/eap7-standalone.service | log; flag=${PIPESTATUS[0]}
+        fi
+    fi
+    systemd-analyze verify --recursive-errors=no /usr/lib/systemd/system/eap7-standalone.service
+    echo "systemctl daemon-reload" | log; flag=${PIPESTATUS[0]}
+    systemctl daemon-reload | log; flag=${PIPESTATUS[0]}
+
+    echo "systemctl restart eap7-standalone.service"| log; flag=${PIPESTATUS[0]}
+    systemctl restart eap7-standalone.service       | log; flag=${PIPESTATUS[0]}
+    echo "systemctl status eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
+    systemctl status eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
+fi
+#######################
 
 echo "Deploy an application" | log; flag=${PIPESTATUS[0]}
 echo "curl -o eap-session-replication.war $fileUrl" | log; flag=${PIPESTATUS[0]}
