@@ -515,8 +515,13 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.
 }
 
 module baseImageSelected './modules/_pids/_empty.bicep' = {
-  name: (jdkVersion == 'openjdk8') ? '${azure.guid.eap74-rhel8-payg-multivm.rh-jboss-eap74-jdk8-rhel8}' : (jdkVersion == 'openjdk11') ? '${azure.guid.eap74-rhel8-payg-multivm.rh-jboss-eap74-jdk11-rhel8}' : (jdkVersion == 'openjdk17') ? '${azure.guid.eap74-rhel8-payg-multivm.rh-jboss-eap74-jdk17-rhel8}' :  'eap74-rhel8-payg.null'
-  params: {}
+  name:(jdkVersion == 'eap74-openjdk8') ? '${azure.guid.eap74-rhel8-payg-multivm.rh-jboss-eap74-jdk8-rhel8}' : /*
+       */(jdkVersion == 'eap74-openjdk11') ? '${azure.guid.eap74-rhel8-payg-multivm.rh-jboss-eap74-jdk11-rhel8}' : /*
+       */(jdkVersion == 'eap74-openjdk17') ? '${azure.guid.eap74-rhel8-payg-multivm.rh-jboss-eap74-jdk17-rhel8}' : /*
+       */(jdkVersion == 'eap8-openjdk11') ? '${azure.guid.eap74-rhel8-payg-multivm.rh-jboss-eap8-jdk11-rhel9}' : /*
+       */(jdkVersion == 'eap8-openjdk17') ? '${azure.guid.eap74-rhel8-payg-multivm.rh-jboss-eap8-jdk17-rhel9}' : /*
+       */'eap-rhel-payg.null'
+    params: {}
 }
 
 resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPublicIPAddresses}' = [for i in range(0, numberOfInstances): if (enableAppGWIngress) {

@@ -186,7 +186,11 @@ var name_vmAcceptTerms = format('vmAcceptTerms{0}', guidValue)
 var imageReference = {
   publisher: 'RedHat'
   offer: 'rh-jboss-eap'
-  sku: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
+  sku: (jdkVersion == 'eap74-openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : /*
+       */(jdkVersion == 'eap74-openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : /*
+       */(jdkVersion == 'eap74-openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' : /*
+       */(jdkVersion == 'eap8-openjdk11') ? 'rh-jboss-eap8-jdk11-rhel9' : /*
+       */(jdkVersion == 'eap8-openjdk17') ? 'rh-jboss-eap8-jdk17-rhel9' :  null
   version: 'latest'
 }
 var scriptFolder = 'bin'
@@ -242,7 +246,11 @@ var name_appGatewayPublicIPAddress = 'gwip-${guidValue}'
 var plan = {
   publisher: 'redhat'
   product: 'rh-jboss-eap'
-  name: (jdkVersion == 'openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : (jdkVersion == 'openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : (jdkVersion == 'openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' :  null
+  name: (jdkVersion == 'eap74-openjdk8') ? 'rh-jboss-eap74-jdk8-rhel8' : /*
+      */(jdkVersion == 'eap74-openjdk11') ? 'rh-jboss-eap74-jdk11-rhel8' : /*
+      */(jdkVersion == 'eap74-openjdk17') ? 'rh-jboss-eap74-jdk17-rhel8' : /*
+      */(jdkVersion == 'eap8-openjdk11') ? 'rh-jboss-eap8-jdk11-rhel9' : /*
+      */(jdkVersion == 'eap8-openjdk17') ? 'rh-jboss-eap8-jdk17-rhel9' :  null
 }
 
 module pids './modules/_pids/_pid.bicep' = {
@@ -552,8 +560,13 @@ module paygVmssEndPid './modules/_pids/_pid.bicep' = {
 }
 
 module baseImageSelected './modules/_pids/_empty.bicep' = {
-  name: (jdkVersion == 'openjdk8') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk8-rhel8}' : (jdkVersion == 'openjdk11') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk11-rhel8}' : (jdkVersion == 'openjdk17') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk17-rhel8}' :  'eap-rhel-payg.null'
-  params: {}
+  name:(jdkVersion == 'eap74-openjdk8') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk8-rhel8}' : /*
+       */(jdkVersion == 'eap74-openjdk11') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk11-rhel8}' : /*
+       */(jdkVersion == 'eap74-openjdk17') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap74-jdk17-rhel8}' : /*
+       */(jdkVersion == 'eap8-openjdk11') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap8-jdk11-rhel9}' : /*
+       */(jdkVersion == 'eap8-openjdk17') ? '${azure.guid.eap74-rhel8-payg-vmss.rh-jboss-eap8-jdk17-rhel9}' : /*
+       */'eap-rhel-payg.null'
+    params: {}
 }
 
 resource deploymentScriptIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@${azure.apiVersionForIdentity}' = {
