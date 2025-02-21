@@ -19,6 +19,9 @@ param jbossEAPUserName string
 @secure()
 param jbossEAPPassword string
 
+@description('Please enter a Graceful Shutdown Timeout in seconds')
+param gracefulShutdownTimeout string
+
 @description('Storage account name created in main')
 param eapStorageAccountName string = ''
 
@@ -138,6 +141,9 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersion
         name: 'JBOSS_EAP_PASSWORD_BASE64'
         secureValue: base64(jbossEAPPassword)
       }
+      {
+        name: 'gracefulShutdownTimeout'
+        secureValue: base64(gracefulShutdownTimeout)
       {
         name: 'STORAGE_ACCOUNT_NAME'
         value: eapStorageAccountName

@@ -93,6 +93,7 @@ jdbcDSJNDIName=${16}
 dsConnectionString=${17}
 databaseUser=${18}
 databasePassword=${19}
+gracefulShutdownTimeout=${20}
 
 HOST_VM_NAME=$(hostname)
 HOST_VM_NAME_LOWERCASES=$(echo "${HOST_VM_NAME,,}")
