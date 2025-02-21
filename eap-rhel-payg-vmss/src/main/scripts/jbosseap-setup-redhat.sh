@@ -141,8 +141,8 @@ fi
 #######################
 
 echo "Copy the standalone-azure-ha.xml from EAP_HOME/doc/wildfly/examples/configs folder to EAP_HOME/wildfly/standalone/configuration folder" | log; flag=${PIPESTATUS[0]}
-echo "cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
-sudo -u jboss cp $EAP_HOME/doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/ | log; flag=${PIPESTATUS[0]}
+echo "cp $EAP_HOME/../doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
+sudo -u jboss cp $EAP_HOME/../doc/wildfly/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/ | log; flag=${PIPESTATUS[0]}
 
 echo "Updating standalone-azure-ha.xml" | log; flag=${PIPESTATUS[0]}
 echo -e "\t stack UDP to TCP"         | log; flag=${PIPESTATUS[0]}
@@ -150,7 +150,7 @@ echo -e "\t set transaction id"       | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
 if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap74-openjdk17" ]]; then
-    sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-full-ha.xml
+    sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/../doc/examples/enable-elytron-se17.cli -Dconfig=standalone-full-ha.xml
 fi
 
 sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --echo-command \
