@@ -112,8 +112,8 @@ jobs:
               id: accept-terms
               run: |
                   echo "accept terms for VM image"
-                  az vm image terms accept --urn RedHat:rh-jboss-eap:rh-jboss-eap8-jdk17-rhel9-gen2:latest
-                  az vm image terms accept --urn RedHat:rh-jboss-eap:rh-jboss-eap8-jdk11-rhel9-gen2:latest
+                  az vm image terms accept --urn RedHat:rh-jboss-eap:rh-jboss-eap8-jdk17-rhel9:latest
+                  az vm image terms accept --urn RedHat:rh-jboss-eap:rh-jboss-eap8-jdk11-rhel9:latest
             - name: Deploy an instance of Azure SQL Database
               if: ${{ inputs.databaseType == 'mssqlserver' || github.event.client_payload.databaseType == 'mssqlserver' }}
               run: |
