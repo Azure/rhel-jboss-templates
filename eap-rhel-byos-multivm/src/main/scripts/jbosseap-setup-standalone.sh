@@ -227,7 +227,7 @@ echo -e "\t set transaction id"         | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
 if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
-    sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/../doc/examples/enable-elytron-se17.cli -Dconfig=standalone-azure-ha.xml
+    sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/doc/examples/enable-elytron-se17.cli -Dconfig=standalone-azure-ha.xml
 fi
 
 sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --echo-command \
