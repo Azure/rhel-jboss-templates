@@ -197,14 +197,14 @@ yum install cifs-utils -y
 mountFileShare
 getDomainXmlFileFromShare
 
-sudo touch ${EAP_HOME}/wildfly/domain/configuration/addservercmd.txt
-sudo chmod 666 ${EAP_HOME}/wildfly/domain/configuration/addservercmd.txt
+sudo touch $EAP_HOME/wildfly/domain/configuration/addservercmd.txt
+sudo chmod 666 $EAP_HOME/wildfly/domain/configuration/addservercmd.txt
 for ((i = 0; i < NUMBER_OF_SERVER_INSTANCE; i++)); do
 	port_offset=$(( i*150 ))
     port=$(( port_offset + 8080 ))
     echo "open port: $port"
     openport $port
-    sudo -u jboss echo "/host=${HOST_VM_NAME_LOWERCASES}/server-config=${HOST_VM_NAME_LOWERCASES}-server${i}:add(group=main-server-group, socket-binding-port-offset=${port_offset})" >> ${EAP_HOME}/wildfly/domain/configuration/addservercmd.txt
+    sudo -u jboss echo "/host=${HOST_VM_NAME_LOWERCASES}/server-config=${HOST_VM_NAME_LOWERCASES}-server${i}:add(group=main-server-group, socket-binding-port-offset=${port_offset})" >> $EAP_HOME/wildfly/domain/configuration/addservercmd.txt
 done
 
 echo "firewall-cmd --reload" | log; flag=${PIPESTATUS[0]}
@@ -216,7 +216,7 @@ if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-open
 "/host=${HOST_VM_NAME_LOWERCASES}/server-config=server-one:remove",\
 "/host=${HOST_VM_NAME_LOWERCASES}/server-config=server-two:remove",\
 "/host=${HOST_VM_NAME_LOWERCASES}/core-service=discovery-options/static-discovery=primary:remove",\
-"run-batch --file=${EAP_HOME}/wildfly/domain/configuration/addservercmd.txt",\
+"run-batch --file=$EAP_HOME/wildfly/domain/configuration/addservercmd.txt",\
 "/host=${HOST_VM_NAME_LOWERCASES}/subsystem=elytron/authentication-configuration=secondary:add(authentication-name=${JBOSS_EAP_USER}, credential-reference={clear-text=${JBOSS_EAP_PASSWORD}})",\
 "/host=${HOST_VM_NAME_LOWERCASES}/subsystem=elytron/authentication-context=secondary-context:add(match-rules=[{authentication-configuration=secondary}])",\
 "/host=${HOST_VM_NAME_LOWERCASES}:write-attribute(name=domain-controller.remote.username, value=${JBOSS_EAP_USER})",\
@@ -235,7 +235,7 @@ else
 "/host=${HOST_VM_NAME_LOWERCASES}/server-config=server-one:remove",\
 "/host=${HOST_VM_NAME_LOWERCASES}/server-config=server-two:remove",\
 "/host=${HOST_VM_NAME_LOWERCASES}/core-service=discovery-options/static-discovery=primary:remove",\
-"run-batch --file=${EAP_HOME}/wildfly/domain/configuration/addservercmd.txt",\
+"run-batch --file=$EAP_HOME/wildfly/domain/configuration/addservercmd.txt",\
 "/host=${HOST_VM_NAME_LOWERCASES}/subsystem=elytron/authentication-configuration=slave:add(authentication-name=${JBOSS_EAP_USER}, credential-reference={clear-text=${JBOSS_EAP_PASSWORD}})",\
 "/host=${HOST_VM_NAME_LOWERCASES}/subsystem=elytron/authentication-context=slave-context:add(match-rules=[{authentication-configuration=slave}])",\
 "/host=${HOST_VM_NAME_LOWERCASES}:write-attribute(name=domain-controller.remote.username, value=${JBOSS_EAP_USER})",\
