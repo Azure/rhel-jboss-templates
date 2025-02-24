@@ -19,5 +19,5 @@ source /etc/profile.d/eap_env.sh
 
 # Configure JDBC driver and data source
 echo "Start to configure JDBC driver and data source" | log
-./create-ds-${dbType}.sh $EAP_HOME/wildfly "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true false
+./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true false
 echo "Complete to configure JDBC driver and data source" | log
