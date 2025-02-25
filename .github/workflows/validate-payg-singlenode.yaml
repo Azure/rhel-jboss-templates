@@ -160,6 +160,13 @@ jobs:
                   --sku-name Standard_B1ms --location ${{ env.location }} \
                   --version 8.0.21 \
                   --yes
+                # https://github.com/azure-javaee/rhel-jboss-templates/issues/2                
+                if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
+                    az mysql flexible-server parameter set --resource-group ${{ env.vmssResourceGroup }} \
+                    --server-name ${{ env.dbInstanceName }} \
+                    --name require_secure_transport \
+                    --value OFF       
+                fi
                 # Allow Azure services to access
                 az mysql flexible-server firewall-rule create \
                   --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
