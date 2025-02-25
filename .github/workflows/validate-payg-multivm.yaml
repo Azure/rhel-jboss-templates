@@ -150,7 +150,7 @@ jobs:
                   --yes
                 # https://github.com/azure-javaee/rhel-jboss-templates/issues/2                
                 if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
-                    az mysql flexible-server parameter set --resource-group ${{ env.vmssResourceGroup }} \
+                    az mysql flexible-server parameter set --resource-group ${{ env.dependencyResourceGroup }} \
                     --server-name ${{ env.dbInstanceName }} \
                     --name require_secure_transport \
                     --value OFF       
