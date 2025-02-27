@@ -5,6 +5,13 @@ log() {
     done
 }
 
+openport() {
+    port=$1
+
+    echo "firewall-cmd --zone=public --add-port=$port/tcp  --permanent" | log; flag=${PIPESTATUS[0]}
+    sudo firewall-cmd  --zone=public --add-port=$port/tcp  --permanent  | log; flag=${PIPESTATUS[0]}
+}
+
 ## Update JBoss EAP to use latest patch.
 # WALinuxAgent packages need to be excluded from update as it will stop the azure vm extension execution.
 sudo yum update -y --exclude=WALinuxAgent | log; flag=${PIPESTATUS[0]}
@@ -16,13 +23,6 @@ if ! rpm -qa | grep firewalld 2>&1 > /dev/null ; then
     sudo systemctl start firewalld
     sudo systemctl enable firewalld
 fi
-
-openport() {
-    port=$1
-
-    echo "firewall-cmd --zone=public --add-port=$port/tcp  --permanent" | log; flag=${PIPESTATUS[0]}
-    sudo firewall-cmd  --zone=public --add-port=$port/tcp  --permanent  | log; flag=${PIPESTATUS[0]}
-}
 
 echo "Red Hat JBoss EAP Cluster Intallation Start " | log; flag=${PIPESTATUS[0]}
 /bin/date +%H:%M:%S | log; flag=${PIPESTATUS[0]}
@@ -150,13 +150,14 @@ elif [[ "${JDK_VERSION,,}" == "eap74-openjdk8" ]]; then
     sudo alternatives --set java java-1.8.0-openjdk.x86_64 | log; flag=${PIPESTATUS[0]}
 fi
 #######################
-
-echo "Copy the standalone-azure-ha.xml from EAP_HOME/doc/wildfly/examples/configs folder to EAP_HOME/wildfly/standalone/configuration folder" | log; flag=${PIPESTATUS[0]}
+echo "Copy the standalone-azure-ha.xml from EAP_HOME/docs/examples/configs folder to EAP_HOME/standalone/configuration folder" | log; flag=${PIPESTATUS[0]}
 echo "cp $EAP_HOME/docs/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
 sudo -u jboss cp $EAP_HOME/docs/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/ | log; flag=${PIPESTATUS[0]}
 
 echo "Updating standalone-azure-ha.xml" | log; flag=${PIPESTATUS[0]}
 echo -e "\t stack UDP to TCP"           | log; flag=${PIPESTATUS[0]}
+echo -e "\t management:inet-address"    | log; flag=${PIPESTATUS[0]}
+echo -e "\t public:inet-address"        | log; flag=${PIPESTATUS[0]}
 echo -e "\t set transaction id"         | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
@@ -165,20 +166,17 @@ if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" || "${JDK_VERSION,,}" == "eap8-ope
     sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-azure-ha.xml
 fi
 
-echo "Copy the standalone-azure-ha.xml from EAP_HOME/doc/wildfly/examples/configs folder to EAP_HOME/wildfly/standalone/configuration folder" | log; flag=${PIPESTATUS[0]}
-echo "cp $EAP_HOME/docs/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
-sudo -u jboss cp $EAP_HOME/docs/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/ | log; flag=${PIPESTATUS[0]}
-
-
 sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --echo-command \
 'embed-server --std-out=echo  --server-config=standalone-azure-ha.xml',\
 '/subsystem=transactions:write-attribute(name=node-identifier,value="'${NODE_ID}'")',\
-'/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")' | log; flag=${PIPESTATUS[0]}
+'/subsystem=jgroups/channel=ee:write-attribute(name="stack", value="tcp")',\
+'/interface=public:write-attribute(name=inet-address, value="${jboss.bind.address:0.0.0.0}")' | log; flag=${PIPESTATUS[0]}
 
 ####################### Configure the JBoss server and setup eap service
 echo "Setting configurations in $EAP_RPM_CONF_STANDALONE"
 echo -e "\t-> WILDFLY_SERVER_CONFIG=standalone-azure-ha.xml" | log; flag=${PIPESTATUS[0]}
 echo 'WILDFLY_SERVER_CONFIG=standalone-azure-ha.xml' >> $EAP_RPM_CONF_STANDALONE | log; flag=${PIPESTATUS[0]}
+echo 'WILDFLY_OPTS=-Dorg.wildfly.sigterm.suspend.timeout=${gracefulShutdownTimeout}' >> $EAP_RPM_CONF_STANDALONE | log; flag=${PIPESTATUS[0]}
 
 echo "Setting configurations in $EAP_LAUNCH_CONFIG"
 echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address=0.0.0.0' | log; flag=${PIPESTATUS[0]}
@@ -193,13 +191,12 @@ echo -e 'JAVA_OPTS="$JAVA_OPTS -Djava.net.preferIPv4Stack=true"' >> $EAP_LAUNCH_
 echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_account_name=$STORAGE_ACCOUNT_NAME\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.storage_access_key=$STORAGE_ACCESS_KEY\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
 echo -e "JAVA_OPTS=\"\$JAVA_OPTS -Djboss.jgroups.azure_ping.container=$CONTAINER_NAME\"" >> $EAP_LAUNCH_CONFIG | log; flag=${PIPESTATUS[0]}
+####################### Start the JBoss server and setup eap service
 
 if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
-    ####################### Start the JBoss server and setup eap service
     echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
     echo "systemctl enable eap8-standalone.service" | log; flag=${PIPESTATUS[0]}
     systemctl enable eap8-standalone.service        | log; flag=${PIPESTATUS[0]}
-    #######################
 
     ###################### Editing eap8-standalone.services
     echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
@@ -223,7 +220,6 @@ if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-open
     systemctl restart eap8-standalone.service       | log; flag=${PIPESTATUS[0]}
     echo "systemctl status eap8-standalone.service" | log; flag=${PIPESTATUS[0]}
     systemctl status eap8-standalone.service        | log; flag=${PIPESTATUS[0]}
-    ######################
 
 else
     ####################### Start the JBoss server and setup eap service

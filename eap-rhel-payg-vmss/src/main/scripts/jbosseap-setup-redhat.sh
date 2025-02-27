@@ -5,6 +5,13 @@ log() {
     done
 }
 
+openport() {
+    port=$1
+
+    echo "firewall-cmd --zone=public --add-port=$port/tcp  --permanent" | log; flag=${PIPESTATUS[0]}
+    sudo firewall-cmd  --zone=public --add-port=$port/tcp  --permanent  | log; flag=${PIPESTATUS[0]}
+}
+
 ## Update JBoss EAP to use latest patch.
 # WALinuxAgent packages need to be excluded from update as it will stop the azure vm extension execution.
 sudo yum update -y --exclude=WALinuxAgent | log; flag=${PIPESTATUS[0]}
@@ -15,13 +22,6 @@ if ! rpm -qa | grep firewalld 2>&1 > /dev/null ; then
     sudo systemctl start firewalld
     sudo systemctl enable firewalld
 fi
-
-openport() {
-    port=$1
-
-    echo "firewall-cmd --zone=public --add-port=$port/tcp  --permanent" | log; flag=${PIPESTATUS[0]}
-    sudo firewall-cmd  --zone=public --add-port=$port/tcp  --permanent  | log; flag=${PIPESTATUS[0]}
-}
 
 echo "Red Hat JBoss EAP Cluster Intallation Start " | log; flag=${PIPESTATUS[0]}
 /bin/date +%H:%M:%S  | log; flag=${PIPESTATUS[0]}
@@ -139,18 +139,19 @@ elif [[ "${JDK_VERSION,,}" == "eap74-openjdk8" ]]; then
     sudo alternatives --set java java-1.8.0-openjdk.x86_64 | log; flag=${PIPESTATUS[0]}
 fi
 #######################
-
-echo "Copy the standalone-azure-ha.xml from EAP_HOME/doc/wildfly/examples/configs folder to EAP_HOME/wildfly/standalone/configuration folder" | log; flag=${PIPESTATUS[0]}
-echo "cp $EAP_HOME/docs/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
+echo "Copy the standalone-azure-ha.xml from EAP_HOME/docs/examples/configs/ folder to EAP_HOME/standalone/configuration folder" | log; flag=${PIPESTATUS[0]}
+echo "cp $EAP_HOME/docs/examples/configs/standalone-azure-ha.xml to $EAP_HOME/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
 sudo -u jboss cp $EAP_HOME/docs/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/ | log; flag=${PIPESTATUS[0]}
 
 echo "Updating standalone-azure-ha.xml" | log; flag=${PIPESTATUS[0]}
-echo -e "\t stack UDP to TCP"         | log; flag=${PIPESTATUS[0]}
-echo -e "\t set transaction id"       | log; flag=${PIPESTATUS[0]}
+echo -e "\t stack UDP to TCP"           | log; flag=${PIPESTATUS[0]}
+echo -e "\t management:inet-address"    | log; flag=${PIPESTATUS[0]}
+echo -e "\t public:inet-address"        | log; flag=${PIPESTATUS[0]}
+echo -e "\t set transaction id"         | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
 if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap74-openjdk17" ]]; then
-    sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-full-ha.xml
+    sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --file=$EAP_HOME/docs/examples/enable-elytron-se17.cli -Dconfig=standalone-azure-ha.xml
 fi
 
 sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --echo-command \
@@ -162,6 +163,7 @@ sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --echo-command \
 echo "Setting configurations in $EAP_RPM_CONF_STANDALONE"
 echo -e "\t-> WILDFLY_SERVER_CONFIG=standalone-azure-ha.xml" | log; flag=${PIPESTATUS[0]}
 echo 'WILDFLY_SERVER_CONFIG=standalone-azure-ha.xml' >> $EAP_RPM_CONF_STANDALONE | log; flag=${PIPESTATUS[0]}
+echo 'WILDFLY_OPTS=-Dorg.wildfly.sigterm.suspend.timeout=${gracefulShutdownTimeout}' >> $EAP_RPM_CONF_STANDALONE | log; flag=${PIPESTATUS[0]}
 
 echo "Setting configurations in $EAP_LAUNCH_CONFIG"
 echo -e '\t-> JAVA_OPTS=$JAVA_OPTS -Djboss.bind.address=0.0.0.0' | log; flag=${PIPESTATUS[0]}
@@ -207,9 +209,11 @@ if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-open
     systemctl status eap8-standalone.service        | log; flag=${PIPESTATUS[0]}
 
 else
+    ####################### Start the JBoss server and setup eap service
     echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
     echo "systemctl enable eap7-standalone.service" | log; flag=${PIPESTATUS[0]}
     systemctl enable eap7-standalone.service        | log; flag=${PIPESTATUS[0]}
+    #######################
 
     ###################### Editing eap7-standalone.services
     echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
@@ -255,6 +259,7 @@ sleep 20
 
 # Configure JDBC driver and data source
 if [ "$enableDB" == "True" ]; then
+    echo "Start to configure JDBC driver and data source" | log
     jdbcDataSourceName=dataSource-$dbType
     ./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword"
 
@@ -264,6 +269,7 @@ if [ "$enableDB" == "True" ]; then
         echo "ERROR! Test data source connection failed." >&2 log
         exit $flag
     fi
+    echo "Complete to configure JDBC driver and data source" | log
 fi
 
 echo "Red Hat JBoss EAP Cluster Intallation End " | log; flag=${PIPESTATUS[0]}

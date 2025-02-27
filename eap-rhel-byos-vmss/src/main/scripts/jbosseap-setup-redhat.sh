@@ -196,7 +196,7 @@ echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]
 echo "systemctl restart sshd" | log; flag=${PIPESTATUS[0]}
 systemctl restart sshd | log; flag=${PIPESTATUS[0]}
 
-echo "Copy the standalone-azure-ha.xml from EAP_HOME/doc/wildfly/examples/configs folder to EAP_HOME/wildfly/standalone/configuration folder" | log; flag=${PIPESTATUS[0]}
+echo "Copy the standalone-azure-ha.xml from EAP_HOME/docs/examples/configs/ folder to EAP_HOME/standalone/configuration folder" | log; flag=${PIPESTATUS[0]}
 echo "cp $EAP_HOME/docs/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/" | log; flag=${PIPESTATUS[0]}
 sudo -u jboss cp $EAP_HOME/docs/examples/configs/standalone-azure-ha.xml $EAP_HOME/standalone/configuration/ | log; flag=${PIPESTATUS[0]}
 
@@ -314,6 +314,7 @@ sleep 20
 
 # Configure JDBC driver and data source
 if [ "$enableDB" == "True" ]; then
+    echo "Start to configure JDBC driver and data source" | log
     jdbcDataSourceName=dataSource-$dbType
     ./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword"
 
@@ -323,6 +324,7 @@ if [ "$enableDB" == "True" ]; then
         echo "ERROR! Test data source connection failed." >&2 log
         exit $flag
     fi
+    echo "Complete to configure JDBC driver and data source" | log
 fi
 
 echo "Red Hat JBoss EAP Cluster Intallation End " | log; flag=${PIPESTATUS[0]}
