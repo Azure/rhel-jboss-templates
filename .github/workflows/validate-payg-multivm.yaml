@@ -18,12 +18,14 @@ on:
       jdkVersion:
         description: 'jdkVersion'
         required: true
-        default: 'openjdk17'
+        default: 'eap8-openjdk17'
         type: choice
         options:
-          - openjdk8
-          - openjdk11
-          - openjdk17
+          - eap8-openjdk17
+          - eap8-openjdk11
+          - eap74-openjdk17
+          - eap74-openjdk11
+          - eap74-openjdk8
       timeWaitBeforeDelete:
         description: 'Choose the wait time before deleting resources: 30m (30 minutes), 2h (2 hours), 5h (5 hours), 0 (immediately)'
         required: true
@@ -60,7 +62,8 @@ env:
     standaloneTestBranchName: standalone-cicd-${{ github.run_id }}-${{ github.run_number }}
     gitEmail: ${{ secrets.USER_EMAIL }}
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
-    offerName: "eap74-rhel8-payg-multivm"
+    offerName: "eap-rhel-payg-multivm"
+    gracefulShutdownTimeout: "-1"
 
 jobs:
     preflight:
@@ -145,6 +148,13 @@ jobs:
                   --sku-name Standard_B1ms --location ${{ env.location }} \
                   --version 8.0.21 \
                   --yes
+                # https://github.com/azure-javaee/rhel-jboss-templates/issues/2                
+                if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
+                    az mysql flexible-server parameter set --resource-group ${{ env.dependencyResourceGroup }} \
+                    --server-name ${{ env.dbInstanceName }} \
+                    --name require_secure_transport \
+                    --value OFF       
+                fi
                 # Allow Azure services to access
                 az mysql flexible-server firewall-rule create \
                   --resource-group ${{ env.dependencyResourceGroup }} --name ${{ env.dbInstanceName }} \
@@ -214,8 +224,8 @@ jobs:
                 git config --global user.name $gitUserName
                 echo "create branch $domainTestBranchName"
                 git checkout -b $domainTestBranchName
-                rm -r -f $current/rhel-jboss-templates/eap74-rhel8-payg-multivm/src/main/*
-                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap74-rhel8-payg-multivm/
+                rm -r -f $current/rhel-jboss-templates/eap-rhel-payg-multivm/src/main/*
+                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap-rhel-payg-multivm/
                 git add .
                 git status
                 git commit -m "test branch for pipeline"
@@ -246,7 +256,11 @@ jobs:
                 elif ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}; then
                   enableDB=true
                   databaseType=mysql
-                  dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlHost }}:3306/testdb?sslMode=REQUIRED
+                  if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
+                    dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlHost }}:3306/testdb?useSSL=false
+                  else
+                    dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlHost }}:3306/testdb?sslMode=REQUIRED
+                  fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
                 elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
@@ -260,8 +274,8 @@ jobs:
 
                 echo "generate parameter file for domain mode"
                 # Generate parameters for db template deployment
-                bash rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/scripts/gen-parameters.sh \
-                <<< "rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/parameters-test-domain.json \
+                bash rhel-jboss-templates/eap-rhel-payg-multivm/src/test/scripts/gen-parameters.sh \
+                <<< "rhel-jboss-templates/eap-rhel-payg-multivm/src/test/parameters-test-domain.json \
                 ${gitUserName} \
                 ${domainTestBranchName} \
                 ${location} \
@@ -282,14 +296,15 @@ jobs:
                 ${dsConnectionURL} \
                 ${dbUser} \
                 ${dbPassword} \
-                ${{ inputs.jdkVersion }} "
+                ${{ inputs.jdkVersion }} \
+                ${{ env.gracefulShutdownTimeout }}"
 
             - name: Archive parameters-test-domain.json
               uses: actions/upload-artifact@v4
               if: success()
               with:
                 name: parameters-test-domain
-                path: rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/parameters-test-domain.json
+                path: rhel-jboss-templates/eap-rhel-payg-multivm/src/test/parameters-test-domain.json
             - name: Create Resource Group
               uses: azure/CLI@v1
               with:
@@ -307,8 +322,8 @@ jobs:
                     --verbose \
                     --resource-group ${{ env.domainResourceGroup }} \
                     --name multivm-managed-domain \
-                    --parameters @rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/parameters-test-domain.json \
-                    --template-file rhel-jboss-templates/eap74-rhel8-payg-multivm/mainTemplate.json
+                    --parameters @rhel-jboss-templates/eap-rhel-payg-multivm/src/test/parameters-test-domain.json \
+                    --template-file rhel-jboss-templates/eap-rhel-payg-multivm/mainTemplate.json
             - name: Build javaee cafe
               run: |
                 if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk17" || "${{ inputs.jdkVersion }}" == "eap8-openjdk11" ]]; then
@@ -454,8 +469,8 @@ jobs:
                 git config --global user.name $gitUserName
                 echo "create branch $standaloneTestBranchName"
                 git checkout -b $standaloneTestBranchName
-                rm -r -f $current/rhel-jboss-templates/eap74-rhel8-payg-multivm/src/main/*
-                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap74-rhel8-payg-multivm/
+                rm -r -f $current/rhel-jboss-templates/eap-rhel-payg-multivm/src/main/*
+                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap-rhel-payg-multivm/
                 git add .
                 git status
                 git commit -m "test branch for pipeline"
@@ -486,7 +501,11 @@ jobs:
                 elif ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}; then
                   enableDB=true
                   databaseType=mysql
-                  dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlHost }}:3306/testdb?sslMode=REQUIRED
+                  if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
+                    dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlHost }}:3306/testdb?useSSL=false
+                  else
+                    dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlHost }}:3306/testdb?sslMode=REQUIRED
+                  fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
                 elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
@@ -498,8 +517,8 @@ jobs:
                 fi
 
                 echo "generate parameter file for standalone mode"
-                bash rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/scripts/gen-parameters.sh \
-                <<< "rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/parameters-test-standalone.json  \
+                bash rhel-jboss-templates/eap-rhel-payg-multivm/src/test/scripts/gen-parameters.sh \
+                <<< "rhel-jboss-templates/eap-rhel-payg-multivm/src/test/parameters-test-standalone.json  \
                 ${gitUserName} \
                 ${standaloneTestBranchName} \
                 ${location} \
@@ -523,14 +542,15 @@ jobs:
                 ${dsConnectionURL} \
                 ${dbUser} \
                 ${dbPassword} \
-                ${{ inputs.jdkVersion }} "
+                ${{ inputs.jdkVersion }} \
+                ${{ env.gracefulShutdownTimeout }}"
 
             - name: Archive parameters-test-standalone.json
               uses: actions/upload-artifact@v4
               if: success()
               with:
                 name: parameters-test-standalone
-                path: rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/parameters-test-standalone.json
+                path: rhel-jboss-templates/eap-rhel-payg-multivm/src/test/parameters-test-standalone.json
             - name: Create Resource Group
               uses: azure/CLI@v1
               with:
@@ -548,8 +568,8 @@ jobs:
                     --verbose \
                     --resource-group ${{ env.standaloneResourceGroup }} \
                     --name multivm-standalone \
-                    --parameters @rhel-jboss-templates/eap74-rhel8-payg-multivm/src/test/parameters-test-standalone.json \
-                    --template-file rhel-jboss-templates/eap74-rhel8-payg-multivm/mainTemplate.json
+                    --parameters @rhel-jboss-templates/eap-rhel-payg-multivm/src/test/parameters-test-standalone.json \
+                    --template-file rhel-jboss-templates/eap-rhel-payg-multivm/mainTemplate.json
             - name: Query public ip of Application Gateway
               id: query_app_gateway_public_ip
               uses: azure/CLI@v1

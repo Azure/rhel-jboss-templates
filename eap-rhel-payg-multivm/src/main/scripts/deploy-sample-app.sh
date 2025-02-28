@@ -24,6 +24,7 @@ else
     echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share/wildfly"' >> /etc/profile.d/eap_env.sh
 fi
 
+
 while getopts "a:t:p:f:" opt; do
     case $opt in
         a)
@@ -47,6 +48,7 @@ echo "Deploy an application" | log; flag=${PIPESTATUS[0]}
 echo "curl -o eap-session-replication.war $fileUrl" | log; flag=${PIPESTATUS[0]}
 sudo curl -o "$HOME/eap-session-replication.war" "$fileUrl" | log; flag=${PIPESTATUS[0]}
 if [ $flag != 0 ] ; then echo  "ERROR! Sample Application Download Failed" >&2 log; exit $flag; fi
+
 if [ -e "$HOME/eap-session-replication.war" ]; then
     echo "File $HOME/eap-session-replication.war exists." | log; flag=${PIPESTATUS[0]}
 else

@@ -160,6 +160,13 @@ jobs:
                   --sku-name Standard_B1ms --location ${{ env.location }} \
                   --version 8.0.21 \
                   --yes
+                # https://github.com/azure-javaee/rhel-jboss-templates/issues/2                
+                if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
+                    az mysql flexible-server parameter set --resource-group ${{ env.singleResourceGroup }}  \
+                    --server-name ${{ env.dbInstanceName }} \
+                    --name require_secure_transport \
+                    --value OFF       
+                fi
                 # Allow Azure services to access
                 az mysql flexible-server firewall-rule create \
                   --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
@@ -220,7 +227,11 @@ jobs:
                 elif ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}; then
                   enableDB=true
                   databaseType=mysql
-                  dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?sslMode=REQUIRED
+                  if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
+                    dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?useSSL=false
+                  else
+                    dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?sslMode=REQUIRED
+                  fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
                 elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
@@ -251,7 +262,8 @@ jobs:
                 ${dsConnectionURL} \
                 ${dbUser} \
                 ${dbPassword} \
-                ${{ inputs.jdkVersion }} "
+                ${{ inputs.jdkVersion }} \
+                ${{ env.gracefulShutdownTimeout }} "
 
             - name: Archive parameters-test-single.json
               uses: actions/upload-artifact@v4

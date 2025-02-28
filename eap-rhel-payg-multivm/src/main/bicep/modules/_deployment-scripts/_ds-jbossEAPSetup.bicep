@@ -22,19 +22,6 @@ param jbossEAPPassword string
 @description('Please enter a Graceful Shutdown Timeout in seconds')
 param gracefulShutdownTimeout string
 
-@description('User name for Red Hat subscription Manager')
-param rhsmUserName string = newGuid()
-
-@description('Password for Red Hat subscription Manager')
-@secure()
-param rhsmPassword string = newGuid()
-
-@description('Red Hat Subscription Manager Pool ID (Should have EAP entitlement)')
-param rhsmPoolEAP string = newGuid()
-
-@description('Red Hat Subscription Manager Pool ID (Should have RHEL entitlement). Mandartory if you select the BYOS RHEL OS License Type')
-param rhsmPoolRHEL string = newGuid()
-
 @description('Storage account name created in main')
 param eapStorageAccountName string = ''
 
@@ -51,7 +38,7 @@ param adminVmName string = 'jbosseap-byos-server'
 param vmName string = 'jbosseap-byos-server'
 
 @description('Number of server instances per host')
-param numberOfServerInstances int = 1
+param numberOfServerInstances int = 2
 
 @description('Managed domain mode or standalone mode')
 @allowed([
@@ -85,7 +72,7 @@ param jdkVersion string = 'openjdk17'
 @description('NIC name prefix')
 param nicName string
 
-@description('Boolean value indicating if user wants to enable database connection.')
+@description('Boolean value indicating, if user wants to enable database connection.')
 param enableDB bool = false
 @allowed([
   'mssqlserver'
@@ -115,9 +102,7 @@ var const_enableElytronSe17DomainCli = 'enable-elytron-se17-domain.cli'
 var const_deploySampleAppScript = 'deploy-sample-app.sh'
 var const_azcliVersion = '2.15.0'
 var scriptFolder = 'scripts'
-// A workaround for publishing private plan in Partner center, see issue: https://github.com/Azure/rhel-jboss-templates/issues/108
-// This change is coupled with .github/workflows/validate-byos-multivm.yaml#81
-var fileFolder = 'scripts'
+var fileFolder = 'bin'
 var fileToBeDownloaded = 'eap-session-replication.war'
 
 resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
@@ -130,7 +115,7 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersion
     environmentVariables: [
       {
         name: 'ARTIFACTS_LOCATION'
-        value: '\'${uri(artifactsLocation, '.')}\''
+        value: uri(artifactsLocation, '.')
       }
       {
         name: 'ARTIFACTS_LOCATION_SAS_TOKEN'
@@ -159,22 +144,6 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersion
       {
         name: 'gracefulShutdownTimeout'
         value: gracefulShutdownTimeout
-      }
-      {
-        name: 'RHSM_USER'
-        value: rhsmUserName
-      }
-      {
-        name: 'RHSM_PASSWORD_BASE64'
-        secureValue: base64(rhsmPassword)
-      }
-      {
-        name: 'EAP_POOL'
-        secureValue: rhsmPoolEAP
-      }
-      {
-        name: 'RHEL_POOL'
-        secureValue: rhsmPoolRHEL
       }
       {
         name: 'STORAGE_ACCOUNT_NAME'

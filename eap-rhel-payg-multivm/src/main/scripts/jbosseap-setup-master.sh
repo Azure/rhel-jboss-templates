@@ -6,6 +6,18 @@ log() {
     done
 }
 
+## Update JBoss EAP to use latest patch.
+# WALinuxAgent packages need to be excluded from update as it will stop the azure vm extension execution.
+sudo yum update -y --exclude=WALinuxAgent | log; flag=${PIPESTATUS[0]}
+
+# firewalld installation and configuration
+if ! rpm -qa | grep firewalld 2>&1 > /dev/null ; then
+    sudo yum update -y --disablerepo='*' --enablerepo='*microsoft*' | log; flag=${PIPESTATUS[0]}
+    sudo yum install firewalld -y | log; flag=${PIPESTATUS[0]}
+    sudo systemctl start firewalld
+    sudo systemctl enable firewalld
+fi
+
 openport() {
     port=$1
 
@@ -13,37 +25,50 @@ openport() {
     sudo firewall-cmd  --zone=public --add-port=$port/tcp  --permanent  | log; flag=${PIPESTATUS[0]}
 }
 
+sudo yum update -y --disablerepo='*' --enablerepo='*microsoft*' | log; flag=${PIPESTATUS[0]}
+sudo yum install firewalld -y | log; flag=${PIPESTATUS[0]}
+sudo systemctl start firewalld
+sudo systemctl enable firewalld
+
 # Mount the Azure file share on all VMs created
 function mountFileShare()
 {
-  echo "Creating mount point" | log; flag=${PIPESTATUS[0]}
-  echo "Mount point: $MOUNT_POINT_PATH" | log; flag=${PIPESTATUS[0]}
-  sudo mkdir -p $MOUNT_POINT_PATH | log; flag=${PIPESTATUS[0]}
+  echo "Creating mount point"
+  echo "Mount point: $MOUNT_POINT_PATH"
+  sudo mkdir -p $MOUNT_POINT_PATH
   if [ ! -d "/etc/smbcredentials" ]; then
-    sudo mkdir /etc/smbcredentials | log; flag=${PIPESTATUS[0]}
+    sudo mkdir /etc/smbcredentials
   fi
   if [ ! -f "/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred" ]; then
-    echo "Crearing smbcredentials" | log; flag=${PIPESTATUS[0]}
-    echo "username=$STORAGE_ACCOUNT_NAME >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred" | log; flag=${PIPESTATUS[0]}
-    echo "password=$STORAGE_ACCESS_KEY >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred" | log; flag=${PIPESTATUS[0]}
-    sudo bash -c "echo "username=$STORAGE_ACCOUNT_NAME" >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred" | log; flag=${PIPESTATUS[0]}
-    sudo bash -c "echo "password=$STORAGE_ACCESS_KEY" >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred" | log; flag=${PIPESTATUS[0]}
+    echo "Crearing smbcredentials"
+    echo "username=$STORAGE_ACCOUNT_NAME >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred"
+    echo "password=$STORAGE_ACCESS_KEY >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred"
+    sudo bash -c "echo "username=$STORAGE_ACCOUNT_NAME" >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred"
+    sudo bash -c "echo "password=$STORAGE_ACCESS_KEY" >> /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred"
   fi
-  echo "chmod 600 /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred" | log; flag=${PIPESTATUS[0]}
-  sudo chmod 600 /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred | log; flag=${PIPESTATUS[0]}
-  echo "//${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH cifs nofail,vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred ,dir_mode=0777,file_mode=0777,serverino" | log; flag=${PIPESTATUS[0]}
-  sudo bash -c "echo \"//${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH cifs nofail,vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred ,dir_mode=0777,file_mode=0777,serverino\" >> /etc/fstab" | log; flag=${PIPESTATUS[0]}
-  echo "mount -t cifs //${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH -o vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred,dir_mode=0777,file_mode=0777,serverino" | log; flag=${PIPESTATUS[0]}
-  sudo mount -t cifs //${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH -o vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred,dir_mode=0777,file_mode=0777,serverino | log; flag=${PIPESTATUS[0]}
-  if [ $flag != 0 ] ; then echo "Failed to mount //${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH" >&2 log; exit $flag;  fi
+  echo "chmod 600 /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred"
+  sudo chmod 600 /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred
+  echo "//${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH cifs nofail,vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred ,dir_mode=0777,file_mode=0777,serverino"
+  sudo bash -c "echo \"//${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH cifs nofail,vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred ,dir_mode=0777,file_mode=0777,serverino\" >> /etc/fstab"
+  echo "mount -t cifs //${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH -o vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred,dir_mode=0777,file_mode=0777,serverino"
+  sudo mount -t cifs //${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH -o vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred,dir_mode=0777,file_mode=0777,serverino
+  if [[ $? != 0 ]];
+  then
+         echo "Failed to mount //${STORAGE_ACCOUNT_PRIVATE_IP}/jbossshare $MOUNT_POINT_PATH"
+	 exit 1
+  fi
 }
 
 # Copy domain.xml file from master/primary host vm to share point
 function copyDomainXmlFileToShare()
 {
   sudo -u jboss cp $EAP_HOME/domain/configuration/domain.xml ${MOUNT_POINT_PATH}/.
-  ls -lt ${MOUNT_POINT_PATH}/domain.xml | log; flag=${PIPESTATUS[0]}
-  if [ $flag != 0 ] ; then echo "Failed to copy $EAP_HOME/domain/configuration/domain.xml" >&2 log; exit $flag;  fi
+  ls -lt ${MOUNT_POINT_PATH}/domain.xml
+  if [[ $? != 0 ]]; 
+  then
+      echo "Failed to copy $EAP_HOME/domain/configuration/domain.xml"
+      exit 1
+  fi
 }
 
 echo "Red Hat JBoss EAP Cluster Intallation Start " | log; flag=${PIPESTATUS[0]}
@@ -52,23 +77,18 @@ echo "Red Hat JBoss EAP Cluster Intallation Start " | log; flag=${PIPESTATUS[0]}
 JBOSS_EAP_USER=${1}
 JBOSS_EAP_PASSWORD_BASE64=${2}
 JBOSS_EAP_PASSWORD=$(echo $JBOSS_EAP_PASSWORD_BASE64 | base64 -d)
-RHSM_USER=${3}
-RHSM_PASSWORD_BASE64=${4}
-RHSM_PASSWORD=$(echo $RHSM_PASSWORD_BASE64 | base64 -d)
-EAP_POOL=${5}
-RHEL_POOL=${6}
-JDK_VERSION=${7}
-STORAGE_ACCOUNT_NAME=${8}
-CONTAINER_NAME=${9}
-STORAGE_ACCESS_KEY=${10}
-STORAGE_ACCOUNT_PRIVATE_IP=${11}
-CONNECT_SATELLITE=${12}
-SATELLITE_ACTIVATION_KEY_BASE64=${13}
+JDK_VERSION=${3}
+STORAGE_ACCOUNT_NAME=${4}
+CONTAINER_NAME=${5}
+STORAGE_ACCESS_KEY=${6}
+STORAGE_ACCOUNT_PRIVATE_IP=${7}
+CONNECT_SATELLITE=${8}
+SATELLITE_ACTIVATION_KEY_BASE64=${9}
 SATELLITE_ACTIVATION_KEY=$(echo $SATELLITE_ACTIVATION_KEY_BASE64 | base64 -d)
-SATELLITE_ORG_NAME_BASE64=${14}
+SATELLITE_ORG_NAME_BASE64=${10}
 SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
-SATELLITE_VM_FQDN=${15}
-gracefulShutdownTimeout=${16}
+SATELLITE_VM_FQDN=${11}
+gracefulShutdownTimeout=${12}
 
 MOUNT_POINT_PATH=/mnt/jbossshare
 HOST_VM_IP=$(hostname -I)
@@ -76,9 +96,9 @@ CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BASE_DIR="$(readlink -f ${CURR_DIR})"
 
 echo "JBoss EAP admin user: " ${JBOSS_EAP_USER} | log; flag=${PIPESTATUS[0]}
+echo "JBoss EAP on RHEL version you selected : JBoss-EAP7.4-on-RHEL8.4" | log; flag=${PIPESTATUS[0]}
 echo "Storage Account Name: " ${STORAGE_ACCOUNT_NAME} | log; flag=${PIPESTATUS[0]}
 echo "Storage Container Name: " ${CONTAINER_NAME} | log; flag=${PIPESTATUS[0]}
-echo "RHSM_USER: " ${RHSM_USER} | log; flag=${PIPESTATUS[0]}
 
 echo "Folder where script is executing ${pwd}" | log; flag=${PIPESTATUS[0]}
 
@@ -134,94 +154,27 @@ if [[ "${CONNECT_SATELLITE,,}" == "true" ]]; then
 
     echo "sudo subscription-manager register --org=${SATELLITE_ORG_NAME} --activationkey=${SATELLITE_ACTIVATION_KEY}" | log; flag=${PIPESTATUS[0]}
     sudo subscription-manager register --org="${SATELLITE_ORG_NAME}" --activationkey="${SATELLITE_ACTIVATION_KEY}" --force | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "Failed to register host to Satellite server" >&2 log; exit $flag;  fi
-else
-    ####################### Register to subscription Manager
-    echo "Register subscription manager" | log; flag=${PIPESTATUS[0]}
-    echo "subscription-manager register --username RHSM_USER --password RHSM_PASSWORD" | log; flag=${PIPESTATUS[0]}
-    subscription-manager register --username $RHSM_USER --password $RHSM_PASSWORD --force | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Red Hat Manager Registration Failed" >&2 log; exit $flag;  fi
-    #######################
 
-    sleep 20
-
-    ####################### Attach EAP Pool
-    echo "Subscribing the system to get access to JBoss EAP repos" | log; flag=${PIPESTATUS[0]}
-    echo "subscription-manager attach --pool=EAP_POOL" | log; flag=${PIPESTATUS[0]}
-    subscription-manager attach --pool=${EAP_POOL} | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for JBoss EAP Failed" >&2 log; exit $flag;  fi
-    #######################
-
-    ####################### Attach RHEL Pool
-    echo "Attaching Pool ID for RHEL OS" | log; flag=${PIPESTATUS[0]}
-    if [ "$EAP_POOL" != "$RHEL_POOL" ]; then
-        echo "subscription-manager attach --pool=RHEL_POOL" | log; flag=${PIPESTATUS[0]}
-        subscription-manager attach --pool=${RHEL_POOL}  | log; flag=${PIPESTATUS[0]}
-        if [ $flag != 0 ] ; then echo  "ERROR! Pool Attach for RHEL Failed" >&2 log; exit $flag;  fi
-    else
-        echo "Using the same pool to get access to RHEL repos" | log; flag=${PIPESTATUS[0]}
-    fi
-    #######################
 fi
 
-####################### Install curl, wget, git, unzip, vim
-echo "Install curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
+####################### Install openjdk: is it needed? it should be installed with eap7.4
+echo "Install openjdk, curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
 echo "sudo yum install curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
-sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.8.4-openjdk
+sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}
 ####################### 
 
-####################### Setitng up the satelitte channels for EAP instalation
-if [[ "${JDK_VERSION,,}" == "eap8-openjdk17"  ||  "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
-# Install JBoss EAP 8
-    echo "subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
-    subscription-manager repos --enable=jb-eap-8.0-for-rhel-9-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
-    if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
-        echo "Installing JBoss EAP 8 JDK 17" | log; flag=${PIPESTATUS[0]}
-        echo "yum groupinstall -y jboss-eap8" | log; flag=${PIPESTATUS[0]}
-        yum groupinstall -y jboss-eap8       | log; flag=${PIPESTATUS[0]}
-        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
-    
-    elif [[ "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
-        echo "Installing JBoss EAP 8 JDK 11" | log; flag=${PIPESTATUS[0]}
-        echo "yum groupinstall -y jboss-eap8-jdk11" | log; flag=${PIPESTATUS[0]}
-        yum groupinstall -y jboss-eap8-jdk11       | log; flag=${PIPESTATUS[0]}
-        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
-    fi
-else
-# Install JBoss EAP 7.4
-    echo "subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms"         | log; flag=${PIPESTATUS[0]}
-    subscription-manager repos --enable=jb-eap-7.4-for-rhel-8-x86_64-rpms                | log; flag=${PIPESTATUS[0]}
-    if [ $flag != 0 ] ; then echo  "ERROR! Enabling repos for JBoss EAP Failed" >&2 log; exit $flag;  fi
-    if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" ]]; then
-        echo "Installing JBoss EAP 7.4 JDK 17" | log; flag=${PIPESTATUS[0]}
-        echo "yum groupinstall -y jboss-eap7-jdk17" | log; flag=${PIPESTATUS[0]}
-        yum groupinstall -y jboss-eap7-jdk17       | log; flag=${PIPESTATUS[0]}
-        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
-    
-    elif [[ "${JDK_VERSION,,}" == "eap74-openjdk11" ]]; then
-        echo "Installing JBoss EAP 7.4 JDK 11" | log; flag=${PIPESTATUS[0]}
-        echo "yum groupinstall -y jboss-eap7-jdk11" | log; flag=${PIPESTATUS[0]}
-        yum groupinstall -y jboss-eap7-jdk11       | log; flag=${PIPESTATUS[0]}
-        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
-    
-     elif [[ "${JDK_VERSION,,}" == "eap74-openjdk8" ]]; then
-        echo "Installing JBoss EAP 7.4 JDK 8" | log; flag=${PIPESTATUS[0]}
-        echo "yum groupinstall -y jboss-eap7" | log; flag=${PIPESTATUS[0]}
-        yum groupinstall -y jboss-eap7       | log; flag=${PIPESTATUS[0]}
-        if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP installation Failed" >&2 log; exit $flag;  fi
-    fi
-
+## Set the right JDK version on the instance
+if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap74-openjdk17" ]]; then
+    echo "sudo alternatives --set java java-17-openjdk.x86_64" | log; flag=${PIPESTATUS[0]}
+    sudo alternatives --set java java-17-openjdk.x86_64| log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "eap8-openjdk11" || "${JDK_VERSION,,}" == "eap74-openjdk11" ]]; then
+    echo "sudo alternatives --set java java-11-openjdk.x86_64" | log; flag=${PIPESTATUS[0]}
+    sudo alternatives --set java java-11-openjdk.x86_64 | log; flag=${PIPESTATUS[0]}
+elif [[ "${JDK_VERSION,,}" == "eap74-openjdk8" ]]; then
+    echo "sudo alternatives --set java java-1.8.0-openjdk.x86_64" | log; flag=${PIPESTATUS[0]}
+    sudo alternatives --set java java-1.8.0-openjdk.x86_64 | log; flag=${PIPESTATUS[0]}
 fi
-
-echo "sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config" | log; flag=${PIPESTATUS[0]}
-sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]}
-echo "echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config" | log; flag=${PIPESTATUS[0]}
-echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config | log; flag=${PIPESTATUS[0]}
 ####################### 
-
-echo "systemctl restart sshd" | log; flag=${PIPESTATUS[0]}
-systemctl restart sshd | log; flag=${PIPESTATUS[0]}
 
 ## OpenJDK 17 specific logic
 if [[ "${JDK_VERSION,,}" == "eap74-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk17" ]]; then
@@ -321,7 +274,7 @@ if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-open
     echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
     echo "systemctl enable eap8-domain.service" | log; flag=${PIPESTATUS[0]}
     systemctl enable eap8-domain.service        | log; flag=${PIPESTATUS[0]}
-    ####################### 
+    #######################
 
     ###################### Editing eap8-domain.services
     echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}
@@ -361,7 +314,7 @@ else
     echo "Start JBoss-EAP service"                  | log; flag=${PIPESTATUS[0]}
     echo "systemctl enable eap7-domain.service" | log; flag=${PIPESTATUS[0]}
     systemctl enable eap7-domain.service        | log; flag=${PIPESTATUS[0]}
-    ####################### 
+    #######################
 
     ###################### Editing eap7-domain.services
     echo "Adding - After=syslog.target network.target NetworkManager-wait-online.service" | log; flag=${PIPESTATUS[0]}

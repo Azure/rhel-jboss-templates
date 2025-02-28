@@ -9,8 +9,8 @@ There are three different types of EAP on VM offers based on their outcomes.
 | Type   | Offer                                         | Description                                                                                                                                                                                                 |
 |--------|-----------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | on VMs | JBoss EAP standalone on RHEL VM(PAYG/BYOS)    | [Deployment description](https://htmlpreview.github.io/?https://github.com/azure-javaee/rhel-jboss-templates/blob/main/eap-rhel-payg/src/main/resources/marketing-artifacts/partner-center.html)         |
-| on VMs | JBoss EAP Cluster on VM Scale Sets(PAYG/BYOS) | [Deployment description](https://htmlpreview.github.io/?https://github.com/azure-javaee/rhel-jboss-templates/blob/main/eap74-rhel8-payg-vmss/src/main/resources/marketing-artifacts/partner-center.html)    |
-| on VMs | JBoss EAP Cluster on VMs(PAYG/BYOS)           | [Deployment description](https://htmlpreview.github.io/?https://github.com/azure-javaee/rhel-jboss-templates/blob/main/eap74-rhel8-payg-multivm/src/main/resources/marketing-artifacts/partner-center.html) |
+| on VMs | JBoss EAP Cluster on VM Scale Sets(PAYG/BYOS) | [Deployment description](https://htmlpreview.github.io/?https://github.com/azure-javaee/rhel-jboss-templates/blob/main/eap-rhel-payg-vmss/src/main/resources/marketing-artifacts/partner-center.html)    |
+| on VMs | JBoss EAP Cluster on VMs(PAYG/BYOS)           | [Deployment description](https://htmlpreview.github.io/?https://github.com/azure-javaee/rhel-jboss-templates/blob/main/eap-rhel-payg-multivm/src/main/resources/marketing-artifacts/partner-center.html) |
 | on ARO | JBoss EAP on ARO                              | [Deployment description](https://htmlpreview.github.io/?https://github.com/azure-javaee/rhel-jboss-templates/blob/main/eap-aro/src/main/resources/marketing-artifacts/partner-center.html)                  |
 
 ## Local Build Setup and Requirements
@@ -156,7 +156,7 @@ This file should contain values for all the parameters
     }
 
 ```powershell
-.\Deploy-AzTemplate.ps1 -ArtifactStagingDirectory .\eap74-rhel8-payg-multivm -ResourceGroupLocation southeastasia -dev -UploadArtifacts
+.\Deploy-AzTemplate.ps1 -ArtifactStagingDirectory .\eap-rhel-payg-multivm -ResourceGroupLocation southeastasia -dev -UploadArtifacts
 ```
 
 ## Validating templates

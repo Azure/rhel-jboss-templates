@@ -18,12 +18,14 @@ on:
       jdkVersion:
         description: 'jdkVersion'
         required: true
-        default: 'openjdk17'
+        default: 'eap8-openjdk17'
         type: choice
         options:
-          - openjdk8
-          - openjdk11
-          - openjdk17
+          - eap8-openjdk17
+          - eap8-openjdk11
+          - eap74-openjdk17
+          - eap74-openjdk11
+          - eap74-openjdk8
       timeWaitBeforeDelete:
         description: 'Choose the wait time before deleting resources: 30m (30 minutes), 2h (2 hours), 5h (5 hours), 0 (immediately)'
         required: true
@@ -58,7 +60,8 @@ env:
     enableLoadBalancer: enable
     disableLoadBalancer: disable
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
-    offerName: "eap74-rhel8-payg-vmss"
+    offerName: "eap-rhel-payg-vmss"
+    gracefulShutdownTimeout: "-1"
 
 jobs:
     preflight:
@@ -99,8 +102,8 @@ jobs:
                 git config --global user.name $gitUserName
                 echo "create branch $vmssTestBranchName"
                 git checkout -b $vmssTestBranchName
-                rm -r -f $current/rhel-jboss-templates/eap74-rhel8-payg-vmss/src/main/*
-                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap74-rhel8-payg-vmss/
+                rm -r -f $current/rhel-jboss-templates/eap-rhel-payg-vmss/src/main/*
+                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap-rhel-payg-vmss/
                 git add .
                 git status
                 git commit -m "test branch for pipeline"
@@ -155,6 +158,13 @@ jobs:
                   --sku-name Standard_B1ms --location ${{ env.location }} \
                   --version 8.0.21 \
                   --yes
+                # https://github.com/azure-javaee/rhel-jboss-templates/issues/2                
+                if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
+                    az mysql flexible-server parameter set --resource-group ${{ env.vmssResourceGroup }} \
+                    --server-name ${{ env.dbInstanceName }} \
+                    --name require_secure_transport \
+                    --value OFF       
+                fi
                 # Allow Azure services to access
                 az mysql flexible-server firewall-rule create \
                   --resource-group ${{ env.vmssResourceGroup }} --name ${{ env.dbInstanceName }} \
@@ -215,7 +225,11 @@ jobs:
                 elif ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}; then
                   enableDB=true
                   databaseType=mysql
-                  dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?sslMode=REQUIRED
+                  if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
+                    dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?useSSL=false
+                  else
+                    dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?sslMode=REQUIRED
+                  fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
                 elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
@@ -227,8 +241,8 @@ jobs:
                 fi
 
                 echo "generate parameter file for vmss"
-                bash rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/scripts/gen-parameters.sh \
-                <<< "rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/parameters-test-vmss.json  \
+                bash rhel-jboss-templates/eap-rhel-payg-vmss/src/test/scripts/gen-parameters.sh \
+                <<< "rhel-jboss-templates/eap-rhel-payg-vmss/src/test/parameters-test-vmss.json  \
                 ${gitUserName} \
                 ${vmssTestBranchName} \
                 ${location} \
@@ -247,14 +261,15 @@ jobs:
                 ${dsConnectionURL} \
                 ${dbUser} \
                 ${dbPassword} \
-                ${{ inputs.jdkVersion }} "
+                ${{ inputs.jdkVersion }} \
+                ${{ env.gracefulShutdownTimeout }}"
 
             - name: Archive parameters-test-vmss.json
               uses: actions/upload-artifact@v4
               if: success()
               with:
                 name: parameters-test-vmss
-                path: rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/parameters-test-vmss.json
+                path: rhel-jboss-templates/eap-rhel-payg-vmss/src/test/parameters-test-vmss.json
             - name: Create Resource Group if needed
               if: ${{ inputs.databaseType == 'none' || github.event.client_payload.databaseType == 'none' }}
               uses: azure/CLI@v1
@@ -273,8 +288,8 @@ jobs:
                     --verbose \
                     --resource-group ${{ env.vmssResourceGroup }} \
                     --name vmss \
-                    --parameters @rhel-jboss-templates/eap74-rhel8-payg-vmss/src/test/parameters-test-vmss.json \
-                    --template-file rhel-jboss-templates/eap74-rhel8-payg-vmss/mainTemplate.json
+                    --parameters @rhel-jboss-templates/eap-rhel-payg-vmss/src/test/parameters-test-vmss.json \
+                    --template-file rhel-jboss-templates/eap-rhel-payg-vmss/mainTemplate.json
             - name: Query public ip of Application Gateway
               id: query_app_gateway_public_ip
               uses: azure/CLI@v1

@@ -1,0 +1,448 @@
+# This is a temporary solution to: https://issues.redhat.com/browse/JBEAP-23983,
+# once the issue is fixed, this file should be removed from the offer.
+# This CLI script modifies the default domain configuration files (domain.xml,
+# host.xml, host-master.xml and host-slave.xml) in order to remove legacy
+# security, configure elytron and be able to be run the domain with Java SE 17.
+# There are different sections to prepare the profiles, remove legacy extensions
+# and modify the host controller files. The file can be used as an example to
+# prepare other domain configuration files for Java 17.
+#
+# Run it from JBOSS_HOME as:
+# bin/jboss-cli.sh --file=docs/examples/enable-elytron-se17-domain.cli
+
+#
+# domain.xml and host.xml
+
+echo INFO: Modifying domain.xml and host.xml
+
+embed-host-controller
+
+#
+# Profile default
+
+set profile=default
+
+echo INFO: Updating configuration to use elytron in profile $profile
+
+if (outcome != success) of /profile=$profile/subsystem=elytron/http-authentication-factory=application-http-authentication:read-resource
+  echo INFO: Adding http-authentication-factory=application-http-authentication to Elytron
+  /profile=$profile/subsystem=elytron/http-authentication-factory=application-http-authentication:add(security-domain=ApplicationDomain, http-server-mechanism-factory=global, mechanism-configurations=[{mechanism-name=BASIC, mechanism-realm-configurations=[{realm-name=ApplicationRealm}]}])
+end-if
+
+if (outcome != success) of /profile=$profile/subsystem=undertow/application-security-domain=other:read-resource
+  echo INFO: Adding application-security-domain=other to Undertow
+  /profile=$profile/subsystem=undertow/application-security-domain=other:add(security-domain=ApplicationDomain)
+end-if
+
+if (outcome == success && result.ssl-context == undefined) of /profile=$profile/subsystem=undertow/server=default-server/https-listener=https:read-resource
+  echo INFO: Configuring the Undertow https listener
+  batch
+  /profile=$profile/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=security-realm,value=undefined)
+  /profile=$profile/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context, value=applicationSSC)
+  run-batch
+end-if
+
+if (outcome == success && result.http-authentication-factory == undefined) of /profile=$profile/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:read-resource
+  echo INFO: Configuring the Undertow https-invoker for Elytron
+  batch
+  /profile=$profile/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:undefine-attribute(name=security-realm)
+  /profile=$profile/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:write-attribute(name=http-authentication-factory, value=application-http-authentication)
+  run-batch
+end-if
+
+if (outcome != success) of /profile=$profile/subsystem=ejb3/application-security-domain=other:read-resource
+  echo INFO: Adding application-security-domain=other to ejb3
+  /profile=$profile/subsystem=ejb3/application-security-domain=other:add(security-domain=ApplicationDomain)
+end-if
+
+if (outcome == success && result.security-domain == undefined) of /profile=$profile/subsystem=batch-jberet:read-resource
+  echo INFO: Configuring JBeret
+  /profile=$profile/subsystem=batch-jberet:write-attribute(name=security-domain, value=ApplicationDomain)
+end-if
+
+if (outcome == success && result.elytron-domain == undefined) of /profile=$profile/subsystem=messaging-activemq/server=default:read-resource
+  echo INFO: Configuring Messaging
+  batch
+  /profile=$profile/subsystem=messaging-activemq/server=default:undefine-attribute(name=security-domain)
+  /profile=$profile/subsystem=messaging-activemq/server=default:write-attribute(name=elytron-domain, value=ApplicationDomain)
+  run-batch
+end-if
+
+if (outcome == success && result.sasl-authentication-factory == undefined) of /profile=$profile/subsystem=remoting/http-connector=http-remoting-connector:read-resource
+  echo INFO: Configuring the remoting http-connector
+  batch
+  /profile=$profile/subsystem=remoting/http-connector=http-remoting-connector:undefine-attribute(name=security-realm)
+  /profile=$profile/subsystem=remoting/http-connector=http-remoting-connector:write-attribute(name=sasl-authentication-factory, value=application-sasl-authentication)
+  run-batch
+end-if
+
+if (outcome == success && result.security != elytron) of /profile=$profile/subsystem=iiop-openjdk:read-resource
+  echo INFO: Configuring the iiop-openjdk subsystem
+  /profile=$profile/subsystem=iiop-openjdk:write-attribute(name=security, value=elytron)
+end-if
+
+if (outcome == success) of /profile=$profile/subsystem=security:read-resource
+  echo INFO: Removing legacy security subsystem
+  /profile=$profile/subsystem=security:remove
+end-if
+
+if (outcome == success) of /profile=$profile/subsystem=picketlink-federation:read-resource
+  echo INFO: Removing Picketlink federation subsystem
+  /profile=$profile/subsystem=picketlink-federation:remove
+end-if
+
+if (outcome == success) of /profile=$profile/subsystem=picketlink-identity-management:read-resource
+  echo INFO: Removing Picketlink identity management subsystem
+  /profile=$profile/subsystem=picketlink-identity-management:remove
+end-if
+
+#
+# Profile full
+
+set profile=full
+
+echo INFO: Updating configuration to use elytron in profile $profile
+
+if (outcome != success) of /profile=$profile/subsystem=elytron/http-authentication-factory=application-http-authentication:read-resource
+  echo INFO: Adding http-authentication-factory=application-http-authentication to Elytron
+  /profile=$profile/subsystem=elytron/http-authentication-factory=application-http-authentication:add(security-domain=ApplicationDomain, http-server-mechanism-factory=global, mechanism-configurations=[{mechanism-name=BASIC, mechanism-realm-configurations=[{realm-name=ApplicationRealm}]}])
+end-if
+
+if (outcome != success) of /profile=$profile/subsystem=undertow/application-security-domain=other:read-resource
+  echo INFO: Adding application-security-domain=other to Undertow
+  /profile=$profile/subsystem=undertow/application-security-domain=other:add(security-domain=ApplicationDomain)
+end-if
+
+if (outcome == success && result.ssl-context == undefined) of /profile=$profile/subsystem=undertow/server=default-server/https-listener=https:read-resource
+  echo INFO: Configuring the Undertow https listener
+  batch
+  /profile=$profile/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=security-realm,value=undefined)
+  /profile=$profile/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context, value=applicationSSC)
+  run-batch
+end-if
+
+if (outcome == success && result.http-authentication-factory == undefined) of /profile=$profile/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:read-resource
+  echo INFO: Configuring the Undertow https-invoker for Elytron
+  batch
+  /profile=$profile/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:undefine-attribute(name=security-realm)
+  /profile=$profile/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:write-attribute(name=http-authentication-factory, value=application-http-authentication)
+  run-batch
+end-if
+
+if (outcome != success) of /profile=$profile/subsystem=ejb3/application-security-domain=other:read-resource
+  echo INFO: Adding application-security-domain=other to ejb3
+  /profile=$profile/subsystem=ejb3/application-security-domain=other:add(security-domain=ApplicationDomain)
+end-if
+
+if (outcome == success && result.security-domain == undefined) of /profile=$profile/subsystem=batch-jberet:read-resource
+  echo INFO: Configuring JBeret
+  /profile=$profile/subsystem=batch-jberet:write-attribute(name=security-domain, value=ApplicationDomain)
+end-if
+
+if (outcome == success && result.elytron-domain == undefined) of /profile=$profile/subsystem=messaging-activemq/server=default:read-resource
+  echo INFO: Configuring Messaging
+  batch
+  /profile=$profile/subsystem=messaging-activemq/server=default:undefine-attribute(name=security-domain)
+  /profile=$profile/subsystem=messaging-activemq/server=default:write-attribute(name=elytron-domain, value=ApplicationDomain)
+  run-batch
+end-if
+
+if (outcome == success && result.sasl-authentication-factory == undefined) of /profile=$profile/subsystem=remoting/http-connector=http-remoting-connector:read-resource
+  echo INFO: Configuring the remoting http-connector
+  batch
+  /profile=$profile/subsystem=remoting/http-connector=http-remoting-connector:undefine-attribute(name=security-realm)
+  /profile=$profile/subsystem=remoting/http-connector=http-remoting-connector:write-attribute(name=sasl-authentication-factory, value=application-sasl-authentication)
+  run-batch
+end-if
+
+if (outcome == success && result.security != elytron) of /profile=$profile/subsystem=iiop-openjdk:read-resource
+  echo INFO: Configuring the iiop-openjdk subsystem
+  /profile=$profile/subsystem=iiop-openjdk:write-attribute(name=security, value=elytron)
+end-if
+
+if (outcome == success) of /profile=$profile/subsystem=security:read-resource
+  echo INFO: Removing legacy security subsystem
+  /profile=$profile/subsystem=security:remove
+end-if
+
+if (outcome == success) of /profile=$profile/subsystem=picketlink-federation:read-resource
+  echo INFO: Removing Picketlink federation subsystem
+  /profile=$profile/subsystem=picketlink-federation:remove
+end-if
+
+if (outcome == success) of /profile=$profile/subsystem=picketlink-identity-management:read-resource
+  echo INFO: Removing Picketlink identity management subsystem
+  /profile=$profile/subsystem=picketlink-identity-management:remove
+end-if
+
+#
+# Profile ha
+
+set profile=ha
+
+echo INFO: Updating configuration to use elytron in profile $profile
+
+if (outcome != success) of /profile=$profile/subsystem=elytron/http-authentication-factory=application-http-authentication:read-resource
+  echo INFO: Adding http-authentication-factory=application-http-authentication to Elytron
+  /profile=$profile/subsystem=elytron/http-authentication-factory=application-http-authentication:add(security-domain=ApplicationDomain, http-server-mechanism-factory=global, mechanism-configurations=[{mechanism-name=BASIC, mechanism-realm-configurations=[{realm-name=ApplicationRealm}]}])
+end-if
+
+if (outcome != success) of /profile=$profile/subsystem=undertow/application-security-domain=other:read-resource
+  echo INFO: Adding application-security-domain=other to Undertow
+  /profile=$profile/subsystem=undertow/application-security-domain=other:add(security-domain=ApplicationDomain)
+end-if
+
+if (outcome == success && result.ssl-context == undefined) of /profile=$profile/subsystem=undertow/server=default-server/https-listener=https:read-resource
+  echo INFO: Configuring the Undertow https listener
+  batch
+  /profile=$profile/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=security-realm,value=undefined)
+  /profile=$profile/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context, value=applicationSSC)
+  run-batch
+end-if
+
+if (outcome == success && result.http-authentication-factory == undefined) of /profile=$profile/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:read-resource
+  echo INFO: Configuring the Undertow https-invoker for Elytron
+  batch
+  /profile=$profile/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:undefine-attribute(name=security-realm)
+  /profile=$profile/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:write-attribute(name=http-authentication-factory, value=application-http-authentication)
+  run-batch
+end-if
+
+if (outcome != success) of /profile=$profile/subsystem=ejb3/application-security-domain=other:read-resource
+  echo INFO: Adding application-security-domain=other to ejb3
+  /profile=$profile/subsystem=ejb3/application-security-domain=other:add(security-domain=ApplicationDomain)
+end-if
+
+if (outcome == success && result.security-domain == undefined) of /profile=$profile/subsystem=batch-jberet:read-resource
+  echo INFO: Configuring JBeret
+  /profile=$profile/subsystem=batch-jberet:write-attribute(name=security-domain, value=ApplicationDomain)
+end-if
+
+if (outcome == success && result.elytron-domain == undefined) of /profile=$profile/subsystem=messaging-activemq/server=default:read-resource
+  echo INFO: Configuring Messaging
+  batch
+  /profile=$profile/subsystem=messaging-activemq/server=default:undefine-attribute(name=security-domain)
+  /profile=$profile/subsystem=messaging-activemq/server=default:write-attribute(name=elytron-domain, value=ApplicationDomain)
+  run-batch
+end-if
+
+if (outcome == success && result.sasl-authentication-factory == undefined) of /profile=$profile/subsystem=remoting/http-connector=http-remoting-connector:read-resource
+  echo INFO: Configuring the remoting http-connector
+  batch
+  /profile=$profile/subsystem=remoting/http-connector=http-remoting-connector:undefine-attribute(name=security-realm)
+  /profile=$profile/subsystem=remoting/http-connector=http-remoting-connector:write-attribute(name=sasl-authentication-factory, value=application-sasl-authentication)
+  run-batch
+end-if
+
+if (outcome == success && result.security != elytron) of /profile=$profile/subsystem=iiop-openjdk:read-resource
+  echo INFO: Configuring the iiop-openjdk subsystem
+  /profile=$profile/subsystem=iiop-openjdk:write-attribute(name=security, value=elytron)
+end-if
+
+if (outcome == success) of /profile=$profile/subsystem=security:read-resource
+  echo INFO: Removing legacy security subsystem
+  /profile=$profile/subsystem=security:remove
+end-if
+
+if (outcome == success) of /profile=$profile/subsystem=picketlink-federation:read-resource
+  echo INFO: Removing Picketlink federation subsystem
+  /profile=$profile/subsystem=picketlink-federation:remove
+end-if
+
+if (outcome == success) of /profile=$profile/subsystem=picketlink-identity-management:read-resource
+  echo INFO: Removing Picketlink identity management subsystem
+  /profile=$profile/subsystem=picketlink-identity-management:remove
+end-if
+
+#
+# Profile full-ha
+
+set profile=full-ha
+
+echo INFO: Updating configuration to use elytron in profile $profile
+
+if (outcome != success) of /profile=$profile/subsystem=elytron/http-authentication-factory=application-http-authentication:read-resource
+  echo INFO: Adding http-authentication-factory=application-http-authentication to Elytron
+  /profile=$profile/subsystem=elytron/http-authentication-factory=application-http-authentication:add(security-domain=ApplicationDomain, http-server-mechanism-factory=global, mechanism-configurations=[{mechanism-name=BASIC, mechanism-realm-configurations=[{realm-name=ApplicationRealm}]}])
+end-if
+
+if (outcome != success) of /profile=$profile/subsystem=undertow/application-security-domain=other:read-resource
+  echo INFO: Adding application-security-domain=other to Undertow
+  /profile=$profile/subsystem=undertow/application-security-domain=other:add(security-domain=ApplicationDomain)
+end-if
+
+if (outcome == success && result.ssl-context == undefined) of /profile=$profile/subsystem=undertow/server=default-server/https-listener=https:read-resource
+  echo INFO: Configuring the Undertow https listener
+  batch
+  /profile=$profile/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=security-realm,value=undefined)
+  /profile=$profile/subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context, value=applicationSSC)
+  run-batch
+end-if
+
+if (outcome == success && result.http-authentication-factory == undefined) of /profile=$profile/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:read-resource
+  echo INFO: Configuring the Undertow https-invoker for Elytron
+  batch
+  /profile=$profile/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:undefine-attribute(name=security-realm)
+  /profile=$profile/subsystem=undertow/server=default-server/host=default-host/setting=http-invoker:write-attribute(name=http-authentication-factory, value=application-http-authentication)
+  run-batch
+end-if
+
+if (outcome != success) of /profile=$profile/subsystem=ejb3/application-security-domain=other:read-resource
+  echo INFO: Adding application-security-domain=other to ejb3
+  /profile=$profile/subsystem=ejb3/application-security-domain=other:add(security-domain=ApplicationDomain)
+end-if
+
+if (outcome == success && result.security-domain == undefined) of /profile=$profile/subsystem=batch-jberet:read-resource
+  echo INFO: Configuring JBeret
+  /profile=$profile/subsystem=batch-jberet:write-attribute(name=security-domain, value=ApplicationDomain)
+end-if
+
+if (outcome == success && result.elytron-domain == undefined) of /profile=$profile/subsystem=messaging-activemq/server=default:read-resource
+  echo INFO: Configuring Messaging
+  batch
+  /profile=$profile/subsystem=messaging-activemq/server=default:undefine-attribute(name=security-domain)
+  /profile=$profile/subsystem=messaging-activemq/server=default:write-attribute(name=elytron-domain, value=ApplicationDomain)
+  run-batch
+end-if
+
+if (outcome == success && result.sasl-authentication-factory == undefined) of /profile=$profile/subsystem=remoting/http-connector=http-remoting-connector:read-resource
+  echo INFO: Configuring the remoting http-connector
+  batch
+  /profile=$profile/subsystem=remoting/http-connector=http-remoting-connector:undefine-attribute(name=security-realm)
+  /profile=$profile/subsystem=remoting/http-connector=http-remoting-connector:write-attribute(name=sasl-authentication-factory, value=application-sasl-authentication)
+  run-batch
+end-if
+
+if (outcome == success && result.security != elytron) of /profile=$profile/subsystem=iiop-openjdk:read-resource
+  echo INFO: Configuring the iiop-openjdk subsystem
+  /profile=$profile/subsystem=iiop-openjdk:write-attribute(name=security, value=elytron)
+end-if
+
+if (outcome == success) of /profile=$profile/subsystem=security:read-resource
+  echo INFO: Removing legacy security subsystem
+  /profile=$profile/subsystem=security:remove
+end-if
+
+if (outcome == success) of /profile=$profile/subsystem=picketlink-federation:read-resource
+  echo INFO: Removing Picketlink federation subsystem
+  /profile=$profile/subsystem=picketlink-federation:remove
+end-if
+
+if (outcome == success) of /profile=$profile/subsystem=picketlink-identity-management:read-resource
+  echo INFO: Removing Picketlink identity management subsystem
+  /profile=$profile/subsystem=picketlink-identity-management:remove
+end-if
+
+#
+# Extensions in domain.xml
+
+if (outcome == success) of /extension=org.jboss.as.security:read-resource
+  echo INFO: Removing legacy security extension.
+  /extension=org.jboss.as.security:remove
+end-if
+
+if (outcome == success) of /extension=org.wildfly.extension.picketlink:read-resource
+  echo INFO: Removing Picketlink extension
+  /extension=org.wildfly.extension.picketlink:remove
+end-if
+
+#
+# Configure host (there can be only one)
+
+set host=`/:read-children-names(child-type=host)`
+
+if (outcome == success && result.security-realm != undefined) of /host=$host/core-service=management/management-interface=http-interface:read-resource
+  echo INFO: Configuring the management http-interface
+  batch
+  /host=$host/core-service=management/management-interface=http-interface:write-attribute(name=http-upgrade,value={enabled=true, sasl-authentication-factory=management-sasl-authentication})
+  /host=$host/core-service=management/management-interface=http-interface:write-attribute(name=http-authentication-factory,value=management-http-authentication)
+  /host=$host/core-service=management/management-interface=http-interface:undefine-attribute(name=security-realm)
+  run-batch
+end-if
+
+for realm in /host=$host/core-service=management:read-children-names(child-type=security-realm)
+   echo INFO: Removing security-realm $realm
+  /host=$host/core-service=management/security-realm=$realm:remove
+done
+
+if (outcome == success) of /host=$host/core-service=vault:read-resource
+  echo INFO: Removing legacy security vault.
+  /host=$host/core-service=vault:remove
+end-if
+
+if (outcome == success && result != undefined) of /host=$host/:read-attribute(name=domain-controller.remote.security-realm)
+  echo INFO: Removing security-realm in the remote controller
+  /host=$host:undefine-attribute(name=domain-controller.remote.security-realm)
+end-if
+
+stop-embedded-host-controller
+
+#
+# host-master.xml/host-primary.xml
+
+echo INFO: Modifying ${host_config_primary}
+
+embed-host-controller --host-config=${host_config_primary:host-master.xml}
+
+set host=`/:read-children-names(child-type=host)`
+
+if (outcome == success && result.security-realm != undefined) of /host=$host/core-service=management/management-interface=http-interface:read-resource
+  echo INFO: Configuring the management http-interface
+  batch
+  /host=$host/core-service=management/management-interface=http-interface:write-attribute(name=http-upgrade,value={enabled=true, sasl-authentication-factory=management-sasl-authentication})
+  /host=$host/core-service=management/management-interface=http-interface:write-attribute(name=http-authentication-factory,value=management-http-authentication)
+  /host=$host/core-service=management/management-interface=http-interface:undefine-attribute(name=security-realm)
+  run-batch
+end-if
+
+for realm in /host=$host/core-service=management:read-children-names(child-type=security-realm)
+   echo INFO: Removing security-realm $realm
+  /host=$host/core-service=management/security-realm=$realm:remove
+done
+
+if (outcome == success) of /host=$host/core-service=vault:read-resource
+  echo INFO: Removing legacy security vault.
+  /host=$host/core-service=vault:remove
+end-if
+
+if (outcome == success && result != undefined) of /host=$host/:read-attribute(name=domain-controller.remote.security-realm)
+  echo INFO: Removing security-realm in the remote controller
+  /host=$host:undefine-attribute(name=domain-controller.remote.security-realm)
+end-if
+
+stop-embedded-host-controller
+
+#
+# host-slave.xml/host-secondary.xml
+
+echo INFO: Modifying ${host_config_secondary}
+
+embed-host-controller --host-config=${host_config_secondary:host-slave.xml}
+
+set host=`/:read-children-names(child-type=host)`
+
+if (outcome == success && result.security-realm != undefined) of /host=$host/core-service=management/management-interface=http-interface:read-resource
+  echo INFO: Configuring the management http-interface
+  batch
+  /host=$host/core-service=management/management-interface=http-interface:write-attribute(name=http-upgrade,value={enabled=true, sasl-authentication-factory=management-sasl-authentication})
+  /host=$host/core-service=management/management-interface=http-interface:write-attribute(name=http-authentication-factory,value=management-http-authentication)
+  /host=$host/core-service=management/management-interface=http-interface:undefine-attribute(name=security-realm)
+  run-batch
+end-if
+
+for realm in /host=$host/core-service=management:read-children-names(child-type=security-realm)
+   echo INFO: Removing security-realm $realm
+  /host=$host/core-service=management/security-realm=$realm:remove
+done
+
+if (outcome == success) of /host=$host/core-service=vault:read-resource
+  echo INFO: Removing legacy security vault.
+  /host=$host/core-service=vault:remove
+end-if
+
+if (outcome == success && result != undefined) of /host=$host/:read-attribute(name=domain-controller.remote.security-realm)
+  echo INFO: Removing security-realm in the remote controller
+  /host=$host:undefine-attribute(name=domain-controller.remote.security-realm)
+end-if
+
+stop-embedded-host-controller
