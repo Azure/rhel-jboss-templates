@@ -48,15 +48,15 @@
                 "name": "jdkVersion",
                 "type": "Microsoft.Common.DropDown",
                 "label": "EAP and JDK version",
-                "defaultValue": "EAP 8 with JDK 17",
+                "defaultValue": "EAP 8 with JDK 17 on RHEL 9",
                 "toolTip": "Choose JDK version.",
                 "constraints": {
                     "allowedValues": [
-                        { "label": "EAP 8 with JDK 17",     "value": "eap8-openjdk17" },
-                        { "label": "EAP 8 with JDK 11",     "value": "eap8-openjdk11" },
-                        { "label": "EAP 7.4 with JDK 17",   "value": "eap74-openjdk17" },
-                        { "label": "EAP 7.4 with JDK 11",   "value": "eap74-openjdk11" },
-                        { "label": "EAP 7.4 with JDK 8",    "value": "eap74-openjdk8" }
+                        { "label": "EAP 8 with JDK 17 on RHEL 9",     "value": "eap8-openjdk17" },
+                        { "label": "EAP 8 with JDK 11 on RHEL 9",     "value": "eap8-openjdk11" },
+                        { "label": "EAP 7.4 with JDK 17 on RHEL 8",   "value": "eap74-openjdk17" },
+                        { "label": "EAP 7.4 with JDK 11 on RHEL 8",   "value": "eap74-openjdk11" },
+                        { "label": "EAP 7.4 with JDK 8 on RHEL 8",    "value": "eap74-openjdk8" }
                     ],
                     "required": true
                 },
