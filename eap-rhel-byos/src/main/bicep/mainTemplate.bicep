@@ -143,6 +143,9 @@ param dbUser string = 'contosoDbUser'
 @description('Password for Database')
 param dbPassword string = newGuid()
 
+@description('${label.tagsLabel}')
+param tagsByResource object = {}
+
 var vmName_var = '${vmName}-${guidValue}'
 var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
 var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
@@ -168,11 +171,32 @@ var obj_uamiForDeploymentScript = {
   }
 }
 
+var _objTagsByResource = {
+  '${identifier.accounts}': contains(tagsByResource, '${identifier.accounts}') ? tagsByResource['${identifier.accounts}'] : json('{}')
+  '${identifier.managedClusters}': contains(tagsByResource, '${identifier.managedClusters}') ? tagsByResource['${identifier.managedClusters}'] : json('{}')
+  '${identifier.applicationGateways}': contains(tagsByResource, '${identifier.applicationGateways}') ? tagsByResource['${identifier.applicationGateways}'] : json('{}')
+  '${identifier.registries}': contains(tagsByResource, '${identifier.registries}') ? tagsByResource['${identifier.registries}'] : json('{}')
+  '${identifier.virtualMachines}': contains(tagsByResource, '${identifier.virtualMachines}') ? tagsByResource['${identifier.virtualMachines}'] : json('{}')
+  '${identifier.virtualMachinesExtensions}': contains(tagsByResource, '${identifier.virtualMachinesExtensions}') ? tagsByResource['${identifier.virtualMachinesExtensions}'] : json('{}')
+  '${identifier.virtualNetworks}': contains(tagsByResource, '${identifier.virtualNetworks}') ? tagsByResource['${identifier.virtualNetworks}'] : json('{}')
+  '${identifier.networkInterfaces}': contains(tagsByResource, '${identifier.networkInterfaces}') ? tagsByResource['${identifier.networkInterfaces}'] : json('{}')
+  '${identifier.networkSecurityGroups}': contains(tagsByResource, '${identifier.networkSecurityGroups}') ? tagsByResource['${identifier.networkSecurityGroups}'] : json('{}')
+  '${identifier.publicIPAddresses}': contains(tagsByResource, '${identifier.publicIPAddresses}') ? tagsByResource['${identifier.publicIPAddresses}'] : json('{}')
+  '${identifier.storageAccounts}': contains(tagsByResource, '${identifier.storageAccounts}') ? tagsByResource['${identifier.storageAccounts}'] : json('{}')
+  '${identifier.vaults}': contains(tagsByResource, '${identifier.vaults}') ? tagsByResource['${identifier.vaults}'] : json('{}')
+  '${identifier.userAssignedIdentities}': contains(tagsByResource, '${identifier.userAssignedIdentities}') ? tagsByResource['${identifier.userAssignedIdentities}'] : json('{}')
+  '${identifier.dnszones}': contains(tagsByResource, '${identifier.dnszones}') ? tagsByResource['${identifier.dnszones}'] : json('{}')
+  '${identifier.workspaces}': contains(tagsByResource, '${identifier.workspaces}') ? tagsByResource['${identifier.workspaces}'] : json('{}')
+  '${identifier.deploymentScripts}': contains(tagsByResource, '${identifier.deploymentScripts}') ? tagsByResource['${identifier.deploymentScripts}'] : json('{}')
+}
+
+
 /*
 * Beginning of the offer deployment
 */
 module pids './modules/_pids/_pid.bicep' = {
   name: 'initialization-${guidValue}'
+  
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -185,6 +209,7 @@ module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
   params: {
     guidValue: guidValue
     location: location
+    tagsByResource: _objTagsByResource
   }
 }
 
@@ -192,6 +217,7 @@ module byosSingleStartPid './modules/_pids/_pid.bicep' = {
   name: 'byosSingleStartPid-${guidValue}'
   params: {
     name: pids.outputs.byosSingleStart
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     pids
