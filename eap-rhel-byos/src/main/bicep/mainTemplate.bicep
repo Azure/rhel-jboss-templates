@@ -414,12 +414,12 @@ module updateNicPrivateIpStatic 'modules/_deployment-scripts/_dsPostDeployment.b
     identity: obj_uamiForDeploymentScript
     resourceGroupName: resourceGroup().name
     nicName: nicName_var
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     nicName
     uamiDeployment
   ]
-  tagsByResource: _objTagsByResource
 }
 
 module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
