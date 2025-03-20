@@ -217,7 +217,6 @@ module byosSingleStartPid './modules/_pids/_pid.bicep' = {
   name: 'byosSingleStartPid-${guidValue}'
   params: {
     name: pids.outputs.byosSingleStart
-    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     pids
@@ -231,6 +230,7 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionFo
     name: storageAccountType
   }
   kind: storageAccountKind
+  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 resource networkSecurityGroupName 'Microsoft.Network/networkSecurityGroups@${azure.apiVersionForNetworkSecurityGroups}' = {
