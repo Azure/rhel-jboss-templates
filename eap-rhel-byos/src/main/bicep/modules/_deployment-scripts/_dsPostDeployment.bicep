@@ -6,7 +6,8 @@ param name string = ''
 param identity object = {}
 param resourceGroupName string
 param nicName string
-
+@description('${label.tagsLabel}')
+param tagsByResource object
 param utcValue string = utcNow()
 
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
@@ -32,5 +33,6 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
     forceUpdateTag: utcValue
+    tags: tagsByResource['${identifier.deploymentScripts}']
   }
 }
