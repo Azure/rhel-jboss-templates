@@ -42,7 +42,7 @@
         <template.azure-common.properties.url>file:///${rootmoduledir}/utilities/azure-common.properties</template.azure-common.properties.url>
 
         <version.eap-rhel-byos>1.0.25</version.eap-rhel-byos>
-        <version.eap-rhel-byos-multivm>1.0.33</version.eap-rhel-byos-multivm>
+        <version.eap-rhel-byos-multivm>1.0.34</version.eap-rhel-byos-multivm>
         <version.eap-rhel-byos-vmss>1.0.31</version.eap-rhel-byos-vmss>
         <version.eap-rhel-payg>1.0.42</version.eap-rhel-payg>
         <version.eap-rhel-payg-multivm>1.0.37</version.eap-rhel-payg-multivm>
