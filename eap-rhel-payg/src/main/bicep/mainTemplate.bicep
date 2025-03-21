@@ -201,7 +201,6 @@ module paygSingleStartPid './modules/_pids/_pid.bicep' = {
   name: 'paygSingleStartPid-${guidValue}'
   params: {
     name: pids.outputs.paygSingleStart
-    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     pids
