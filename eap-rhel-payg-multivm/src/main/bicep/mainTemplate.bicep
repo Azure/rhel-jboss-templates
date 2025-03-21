@@ -302,7 +302,6 @@ module paygMultivmStartPid './modules/_pids/_pid.bicep' = {
   name: 'paygMultivmStartPid-${guidValue}'
   params: {
     name: pids.outputs.paygMultivmStart
-    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     pids
@@ -671,7 +670,6 @@ module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
   name: 'dbConnectionStartPid-${guidValue}'
   params: {
     name: pids.outputs.dbStart
-    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     pids
@@ -723,7 +721,6 @@ module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
   name: 'dbConnectionEndPid-${guidValue}'
   params: {
     name: pids.outputs.dbEnd
-    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     pids
@@ -754,7 +751,6 @@ module paygMultivmEndPid './modules/_pids/_pid.bicep' = {
   name: 'paygMultivmEndPid-${guidValue}'
   params: {
     name: pids.outputs.paygMultivmEnd
-    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     dbConnectionEndPid
