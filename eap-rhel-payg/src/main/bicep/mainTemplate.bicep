@@ -389,7 +389,6 @@ module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
   name: 'dbConnectionStartPid-${guidValue}'
   params: {
     name: pids.outputs.dbStart
-    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     pids
@@ -444,7 +443,6 @@ module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
   name: 'dbConnectionEndPid-${guidValue}'
   params: {
     name: pids.outputs.dbEnd
-    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     pids
@@ -456,7 +454,6 @@ module paygSingleEndPid './modules/_pids/_pid.bicep' = {
   name: 'paygSingleEndPid-${guidValue}'
   params: {
     name: pids.outputs.paygSingleEnd
-    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     dbConnectionEndPid
