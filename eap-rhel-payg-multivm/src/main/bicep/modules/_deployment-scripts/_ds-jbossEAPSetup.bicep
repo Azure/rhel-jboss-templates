@@ -92,6 +92,8 @@ param dbUser string = 'contosoDbUser'
 @description('Password for Database')
 param dbPassword string = newGuid()
 param guidValue string = ''
+@description('${label.tagsLabel}')
+param tagsByResource object
 
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jbosseap-setup-redhat.sh'
@@ -241,4 +243,5 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersion
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
   }
+  tags: _objTagsByResource['${identifier.storageAccounts}']
 }

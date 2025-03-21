@@ -843,6 +843,28 @@
                         "visible": "[bool(steps('section_database').enableDB)]"
                     }
                 ]
+            },
+            {
+                "name": "tags",
+                "label": "Tags",
+                "elements": [
+                    {
+                        "name": "tagsByResource",
+                        "type": "Microsoft.Common.TagsByResource",
+                        "resources": [
+                            "${identifier.virtualMachines}",
+                            "${identifier.virtualMachinesExtensions}",
+                            "${identifier.virtualNetworks}",
+                            "${identifier.networkInterfaces}",
+                            "${identifier.networkSecurityGroups}",
+                            "${identifier.publicIPAddresses}",
+                            "${identifier.storageAccounts}",
+                            "${identifier.userAssignedIdentities}",
+                            "${identifier.deploymentScripts}"
+                        ],
+                        "toolTip": "Tags help you organize your resources and categorize them for billing or management purposes. You can apply tags to resources deployed by the offer."
+                    }
+                ]
             }
         ],
         "outputs": {
@@ -886,7 +908,8 @@
             "jdbcDataSourceJNDIName": "[steps('section_database').databaseConnectionInfo.jdbcDataSourceJNDIName]",
             "dsConnectionURL": "[if(equals(steps('section_database').databaseConnectionInfo.databaseType, 'oracle'), steps('section_database').databaseConnectionInfo.oracleDsConnectionURL, if(equals(steps('section_database').databaseConnectionInfo.databaseType, 'mysql'), steps('section_database').databaseConnectionInfo.mysqlDsConnectionURL, if(equals(steps('section_database').databaseConnectionInfo.databaseType, 'postgresql'), steps('section_database').databaseConnectionInfo.postgresDsConnectionURL, steps('section_database').databaseConnectionInfo.sqlserverDsConnectionURL)))]",
             "dbUser": "[steps('section_database').databaseConnectionInfo.dbUser]",
-            "dbPassword": "[steps('section_database').databaseConnectionInfo.dbPassword]"
+            "dbPassword": "[steps('section_database').databaseConnectionInfo.dbPassword]",
+            "tagsByResource": "[steps('tags').tagsByResource]"
         }
     }
 }

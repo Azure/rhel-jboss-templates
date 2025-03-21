@@ -45,7 +45,7 @@
         <version.eap-rhel-byos-multivm>1.0.34</version.eap-rhel-byos-multivm>
         <version.eap-rhel-byos-vmss>1.0.31</version.eap-rhel-byos-vmss>
         <version.eap-rhel-payg>1.0.42</version.eap-rhel-payg>
-        <version.eap-rhel-payg-multivm>1.0.37</version.eap-rhel-payg-multivm>
+        <version.eap-rhel-payg-multivm>1.0.38</version.eap-rhel-payg-multivm>
         <version.eap-rhel-payg-vmss>1.0.38</version.eap-rhel-payg-vmss>
         <version.eap-aro>1.0.21</version.eap-aro>
     </properties>
