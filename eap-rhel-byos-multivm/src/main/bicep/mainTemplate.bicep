@@ -405,7 +405,7 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionFo
   dependsOn: [
     failFastDeployment
   ]
-  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
+  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 resource eapStorageAccount 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = {
@@ -439,7 +439,7 @@ resource eapStorageAccount 'Microsoft.Storage/storageAccounts@${azure.apiVersion
   dependsOn: [
     failFastDeployment
   ]
-  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
+  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 resource eapStorageAccountNameContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@${azure.apiVersionForStorageBlobService}' = {
@@ -451,7 +451,7 @@ resource eapStorageAccountNameContainer 'Microsoft.Storage/storageAccounts/blobS
     eapStorageAccount
     failFastDeployment
   ]
-  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
+  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 resource fileService 'Microsoft.Storage/storageAccounts/fileServices/shares@${azure.apiVersionForStorageFileService}' = if (operatingMode == name_managedDomain) {
@@ -464,7 +464,7 @@ resource fileService 'Microsoft.Storage/storageAccounts/fileServices/shares@${az
   dependsOn: [
     eapStorageAccount
   ]
-  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
+  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 resource symbolicname 'Microsoft.Network/privateEndpoints@${azure.apiVersionForPrivateEndpoint}' = if (operatingMode == name_managedDomain) {
@@ -489,7 +489,7 @@ resource symbolicname 'Microsoft.Network/privateEndpoints@${azure.apiVersionForP
   dependsOn: [
     eapStorageAccount
   ]
-  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
+  tags: _objTagsByResource['${identifier.privateEndpoints}']
 }
 
 // Create new network security group.
@@ -545,7 +545,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.
     }
     subnets: enableAppGWIngress ? property_subnet_with_app_gateway : property_subnet_without_app_gateway
   }
-  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
+  tags: _objTagsByResource['${identifier.virtualNetworks}']
 }
 
 resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPublicIPAddresses}' = [for i in range(0, numberOfInstances): if (enableAppGWIngress) {
@@ -560,7 +560,7 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPubl
       domainNameLabel: (operatingMode == name_managedDomain) ? ((i == 0) ? '${dnsNameforAdminVm}' : '${dnsNameforManagedVm}${i}') : '${dnsNameforManagedVm}${i}'
     }
   }
-  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
+  tags: _objTagsByResource['${identifier.publicIPAddresses}']
 }]
 
 resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetworkInterfaces}' = [for i in range(0, numberOfInstances): {
@@ -599,7 +599,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
     appgwDeployment
     publicIp
   ]
-  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
+  tags: _objTagsByResource['${identifier.networkInterfaces}']
 }]
 
 resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionForVirtualMachines}' = [for i in range(0, numberOfInstances): {
@@ -643,14 +643,13 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
     virtualNetworkName_resource
     eapStorageAccount
   ]
-  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
+  tags: _objTagsByResource['${identifier.virtualMachines}']
 }]
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
   name: 'dbConnectionStartPid-${guidValue}'
   params: {
     name: pids.outputs.dbStart
-    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     pids
@@ -706,7 +705,6 @@ module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
   name: 'dbConnectionEndPid-${guidValue}'
   params: {
     name: pids.outputs.dbEnd
-    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     pids
@@ -727,14 +725,13 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@${azure.apiVersionF
     platformUpdateDomainCount: 2
     platformFaultDomainCount: 2
   }
-  tags: _objTagsByResource['${identifier.storageAccounts}']
+  tags: _objTagsByResource['${identifier.availabilitySets}']
 }
 
 module byosMultivmEndPid './modules/_pids/_pid.bicep' = {
   name: 'byosMultivmEndPid'
   params: {
     name: pids.outputs.byosMultivmEnd
-    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     dbConnectionEndPid
