@@ -381,7 +381,7 @@ module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
     _pidAppgwEnd: pids.outputs.appgwEnd
     keyVaultName: name_keyVaultName
     enableCookieBasedAffinity: enableCookieBasedAffinity
-    tags: _objTagsByResource
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     appgwSecretDeployment
@@ -397,9 +397,6 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionFo
     name: bootStorageReplication
   }
   kind: storageAccountKind
-  tags: {
-
-  }
   tags: union(tagsByResource['${identifier.storageAccounts}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
       })
@@ -432,9 +429,6 @@ resource eapStorageAccount 'Microsoft.Storage/storageAccounts@${azure.apiVersion
       keySource: 'Microsoft.Storage'
     }
     accessTier: 'Hot'
-  }
-  tags: {
-
   }
   tags: union(tagsByResource['${identifier.storageAccounts}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
@@ -538,8 +532,6 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@${azure.apiVersionForNetwo
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
   name: virtualNetworkName_var
   location: location
-  tags: {
-  }
   tags: union(tagsByResource['${identifier.virtualNetworks}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
   })
@@ -569,9 +561,6 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPubl
 resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetworkInterfaces}' = [for i in range(0, numberOfInstances): {
   name: '${nicName_var}${i}'
   location: location
-  tags: {
-
-  }
   tags: union(tagsByResource['${identifier.networkInterfaces}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
   })
@@ -611,9 +600,9 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
   name: (operatingMode == name_managedDomain) ? (i == 0 ? '${vmName_var}${name_adminVmName}' : '${vmName_var}${i}') : '${vmName_var}${i}'
   location: location
   plan: plan
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-  }
+  tags: union(tagsByResource['${identifier.virtualMachines}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+  })
   properties: {
     availabilitySet: {
       id: asName_resource.id
@@ -648,7 +637,6 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
     virtualNetworkName_resource
     eapStorageAccount
   ]
-  tags: _objTagsByResource['${identifier.virtualMachines}']
 }]
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
@@ -723,14 +711,13 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@${azure.apiVersionF
   sku: {
     name: skuName
   }
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-  }
+  tags: union(tagsByResource['${identifier.availabilitySets}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+    })
   properties: {
     platformUpdateDomainCount: 2
     platformFaultDomainCount: 2
   }
-  tags: _objTagsByResource['${identifier.availabilitySets}']
 }
 
 module byosMultivmEndPid './modules/_pids/_pid.bicep' = {
