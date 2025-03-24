@@ -275,6 +275,8 @@ var plan = {
 
 
 var _objTagsByResource = {
+  '${identifier.availabilitySets}': contains(tagsByResource, '${identifier.availabilitySets}') ? tagsByResource['${identifier.availabilitySets}'] : json('{}')
+  '${identifier.privateEndpoints}': contains(tagsByResource, '${identifier.privateEndpoints}') ? tagsByResource['${identifier.privateEndpoints}'] : json('{}')
   '${identifier.virtualMachines}': contains(tagsByResource, '${identifier.virtualMachines}') ? tagsByResource['${identifier.virtualMachines}'] : json('{}')
   '${identifier.virtualMachinesExtensions}': contains(tagsByResource, '${identifier.virtualMachinesExtensions}') ? tagsByResource['${identifier.virtualMachinesExtensions}'] : json('{}')
   '${identifier.virtualNetworks}': contains(tagsByResource, '${identifier.virtualNetworks}') ? tagsByResource['${identifier.virtualNetworks}'] : json('{}')
