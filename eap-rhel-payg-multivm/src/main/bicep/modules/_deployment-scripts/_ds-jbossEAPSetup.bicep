@@ -243,5 +243,5 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersion
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
   }
-  tags: _objTagsByResource['${identifier.storageAccounts}']
+  tags: tagsByResource['${identifier.deploymentScripts}']
 }

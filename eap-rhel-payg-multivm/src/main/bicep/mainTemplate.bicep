@@ -290,7 +290,6 @@ var _objTagsByResource = {
 */
 module pids './modules/_pids/_pid.bicep' = {
   name: 'initialization-${guidValue}'
-  tagsByResource: _objTagsByResource
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -356,14 +355,12 @@ module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep
 resource existingVnet 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' existing = if (virtualNetworkNewOrExisting != 'new') {
   name: virtualNetworkName_var
   scope: resourceGroup(virtualNetworkResourceGroupName)
-  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 // Get existing subnet.
 resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVersionForVirtualNetworks}' existing = if (virtualNetworkNewOrExisting != 'new') {
   name: subnetForAppGateway
   parent: existingVnet
-  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
@@ -397,13 +394,12 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionFo
     name: bootStorageReplication
   }
   kind: storageAccountKind
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-  }
+  tags: union(_objTagsByResource['${identifier.storageAccounts}'], {
+      'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+    })
   dependsOn: [
     failFastDeployment
   ]
-  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 resource eapStorageAccount 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = {
@@ -431,13 +427,12 @@ resource eapStorageAccount 'Microsoft.Storage/storageAccounts@${azure.apiVersion
     }
     accessTier: 'Hot'
   }
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-  }
+  tags: union(_objTagsByResource['${identifier.storageAccounts}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+      })
   dependsOn: [
     failFastDeployment
   ]
-  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 resource eapStorageAccountNameContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@${azure.apiVersionForStorageBlobService}' = {
@@ -483,7 +478,7 @@ resource symbolicname 'Microsoft.Network/privateEndpoints@${azure.apiVersionForP
   dependsOn: [
     eapStorageAccount
   ]
-  tags: _objTagsByResource['${identifier.storageAccounts}']
+  tags: _objTagsByResource['${identifier.privateEndpoints}']
 }
 
 // Create new network security group.
@@ -524,7 +519,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@${azure.apiVersionForNetwo
       }
     ]
   }
-  tags: _objTagsByResource['${identifier.storageAccounts}']
+  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
 }
 
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
@@ -539,7 +534,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.
     }
     subnets: enableAppGWIngress ? property_subnet_with_app_gateway : property_subnet_without_app_gateway
   }
-  tags: _objTagsByResource['${identifier.storageAccounts}']
+  tags: _objTagsByResource['${identifier.virtualNetworks}']
 }
 
 module baseImageSelected './modules/_pids/_empty.bicep' = {
@@ -564,7 +559,7 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPubl
       domainNameLabel: (operatingMode == name_managedDomain) ? ((i == 0) ? '${dnsNameforAdminVm}' : '${dnsNameforManagedVm}${i}') : '${dnsNameforManagedVm}${i}'
     }
   }
-  tags: _objTagsByResource['${identifier.storageAccounts}']
+  tags: _objTagsByResource['${identifier.publicIPAddresses}']
 }]
 
 resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetworkInterfaces}' = [for i in range(0, numberOfInstances): {
@@ -603,7 +598,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
     appgwDeployment
     publicIp
   ]
-  tags: _objTagsByResource['${identifier.storageAccounts}']
+  tags: _objTagsByResource['${identifier.networkInterfaces}']
 }]
 
 module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = {
@@ -663,7 +658,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
     virtualNetworkName_resource
     eapStorageAccount
   ]
-  tags: _objTagsByResource['${identifier.storageAccounts}']
+  tags: _objTagsByResource['${identifier.virtualMachines}']
 }]
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
@@ -737,6 +732,9 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@${azure.apiVersionF
   tags: {
     QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
   }
+  tags: union(_objTagsByResource['${identifier.availabilitySets}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+      })
   properties: {
     platformUpdateDomainCount: 2
     platformFaultDomainCount: 2
@@ -744,7 +742,6 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@${azure.apiVersionF
   dependsOn: [
     failFastDeployment
   ]
-  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 module paygMultivmEndPid './modules/_pids/_pid.bicep' = {
