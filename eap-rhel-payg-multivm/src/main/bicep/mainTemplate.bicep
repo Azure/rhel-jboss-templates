@@ -525,16 +525,15 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@${azure.apiVersionForNetwo
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
   name: virtualNetworkName_var
   location: location
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-  }
+  tags: union(tagsByResource['${identifier.virtualNetworks}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+      })
   properties: {
     addressSpace: {
       addressPrefixes: addressPrefixes
     }
     subnets: enableAppGWIngress ? property_subnet_with_app_gateway : property_subnet_without_app_gateway
   }
-  tags: _objTagsByResource['${identifier.virtualNetworks}']
 }
 
 module baseImageSelected './modules/_pids/_empty.bicep' = {
@@ -565,9 +564,9 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPubl
 resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetworkInterfaces}' = [for i in range(0, numberOfInstances): {
   name: '${nicName_var}${i}'
   location: location
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-  }
+  tags: union(tagsByResource['${identifier.networkInterfaces}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+      })
   properties: {
     ipConfigurations: [
       {
@@ -598,7 +597,6 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
     appgwDeployment
     publicIp
   ]
-  tags: _objTagsByResource['${identifier.networkInterfaces}']
 }]
 
 module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = {
@@ -620,9 +618,9 @@ module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = {
 resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionForVirtualMachines}' = [for i in range(0, numberOfInstances): {
   name: (operatingMode == name_managedDomain) ? (i == 0 ? '${vmName_var}${name_adminVmName}' : '${vmName_var}${i}') : '${vmName_var}${i}'
   location: location
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-  }
+  tags: union(tagsByResource['${identifier.virtualMachines}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+      })
   properties: {
     availabilitySet: {
       id: asName_resource.id
@@ -658,7 +656,6 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
     virtualNetworkName_resource
     eapStorageAccount
   ]
-  tags: _objTagsByResource['${identifier.virtualMachines}']
 }]
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
@@ -728,9 +725,6 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@${azure.apiVersionF
   location: location
   sku: {
     name: skuName
-  }
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
   }
   tags: union(_objTagsByResource['${identifier.availabilitySets}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
