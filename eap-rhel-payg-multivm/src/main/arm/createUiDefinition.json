@@ -854,6 +854,7 @@
                         "resources": [
                             "${identifier.availabilitySets}",
                             "${identifier.privateEndpoints}",
+                            "${identifier.vaults}",
                             "${identifier.virtualMachines}",
                             "${identifier.virtualNetworks}",
                             "${identifier.networkInterfaces}",
