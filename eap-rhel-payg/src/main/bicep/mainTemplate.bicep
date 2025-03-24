@@ -242,7 +242,7 @@ resource networkSecurityGroupName 'Microsoft.Network/networkSecurityGroups@${azu
       }
     ]
   }
-  tags: _objTagsByResource['${identifier.storageAccounts}']
+  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
 }
 
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
@@ -264,7 +264,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.
       }
     ]
   }
-  tags: _objTagsByResource['${identifier.storageAccounts}']
+  tags: _objTagsByResource['${identifier.virtualNetworks}']
 }
 
 resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetworkInterfaces}' = {
@@ -292,7 +292,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
   dependsOn: [
     virtualNetworkName_resource
   ]
-  tags: _objTagsByResource['${identifier.storageAccounts}']
+  tags: _objTagsByResource['${identifier.networkInterfaces}']
 }
 
 module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' =  {
@@ -356,7 +356,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
     networkSecurityGroupName
     vmPublicIP
   ]
-  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
+  tags: _objTagsByResource['${identifier.virtualMachines}']
 }
 
 module baseImageSelected './modules/_pids/_empty.bicep' = {
@@ -381,7 +381,7 @@ resource vmPublicIP 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPu
       domainNameLabel: dnsNameforVM
     }
   }
-  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
+  tags: _objTagsByResource['${identifier.publicIPAddresses}']
 }
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
@@ -417,7 +417,7 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
       commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\' \'${gracefulShutdownTimeout}\''
     }
   }
-  tags: _objTagsByResource['${identifier.networkInterfaces}']
+  tags: _objTagsByResource['${identifier.virtualMachinesExtensions}']
 }
 
 module updateNicPrivateIpStatic 'modules/_deployment-scripts/_dsPostDeployment.bicep' = {
