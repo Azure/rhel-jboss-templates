@@ -904,8 +904,9 @@
                         "name": "tagsByResource",
                         "type": "Microsoft.Common.TagsByResource",
                         "resources": [
+                            "${identifier.availabilitySets}",
+                            "${identifier.privateEndpoints}",
                             "${identifier.virtualMachines}",
-                            "${identifier.virtualMachinesExtensions}",
                             "${identifier.virtualNetworks}",
                             "${identifier.networkInterfaces}",
                             "${identifier.networkSecurityGroups}",

@@ -19,6 +19,10 @@ param subjectName string = ''
 param keyVaultName string = 'GEN_UNIQUE'
 
 param guidValue string = ''
+
+@description('${label.tagsLabel}')
+param tagsByResource object
+
 module keyVaultwithSelfSignedAppGatewaySSLCert '_keyvault/_keyvaultWithNewCert.bicep' = {
   name: 'kv-appgw-selfsigned-certificate-deployment-${guidValue}'
   params: {
@@ -29,6 +33,7 @@ module keyVaultwithSelfSignedAppGatewaySSLCert '_keyvault/_keyvaultWithNewCert.b
     permission: permission
     subjectName: subjectName
     sku: sku
+    tagsByResource: tagsByResource
   }
 }
 

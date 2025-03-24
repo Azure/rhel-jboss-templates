@@ -13,6 +13,8 @@ param _pidAppgwEnd string = 'pid-networking-appgateway-end'
 param _pidAppgwStart string = 'pid-networking-appgateway-start'
 param enableCookieBasedAffinity bool = false
 param guidValue string = ''
+@description('${label.tagsLabel}')
+param tagsByResource object
 
 var name_appGateway = appGatewayName
 var const_appGatewayFrontEndHTTPPort = 80
@@ -64,14 +66,15 @@ resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@${azure.apiVersion
       domainNameLabel: dnsNameforApplicationGateway
     }
   }
+  tags: tagsByResource['${identifier.publicIPAddresses}']
 }
 
 resource wafv2AppGateway 'Microsoft.Network/applicationGateways@${azure.apiVersionForApplicationGateways}' = {
   name: name_appGateway
   location: location
-  tags: {
-    'managed-by-k8s-ingress': 'true'
-  }
+  tags: union(tagsByResource['${identifier.applicationGateways}'], {
+        'managed-by-k8s-ingress': 'true'
+  })
   properties: {
     sku: {
       name: 'WAF_v2'

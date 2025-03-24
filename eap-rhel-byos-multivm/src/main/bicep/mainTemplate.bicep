@@ -278,8 +278,9 @@ var name_networkSecurityGroup = 'jboss-nsg-${guidValue}'
 var name_appGatewayPublicIPAddress = 'gwip-${guidValue}'
 
 var _objTagsByResource = {
+  '${identifier.availabilitySets}': contains(tagsByResource, '${identifier.availabilitySets}') ? tagsByResource['${identifier.availabilitySets}'] : json('{}')
+  '${identifier.privateEndpoints}': contains(tagsByResource, '${identifier.privateEndpoints}') ? tagsByResource['${identifier.privateEndpoints}'] : json('{}')
   '${identifier.virtualMachines}': contains(tagsByResource, '${identifier.virtualMachines}') ? tagsByResource['${identifier.virtualMachines}'] : json('{}')
-  '${identifier.virtualMachinesExtensions}': contains(tagsByResource, '${identifier.virtualMachinesExtensions}') ? tagsByResource['${identifier.virtualMachinesExtensions}'] : json('{}')
   '${identifier.virtualNetworks}': contains(tagsByResource, '${identifier.virtualNetworks}') ? tagsByResource['${identifier.virtualNetworks}'] : json('{}')
   '${identifier.networkInterfaces}': contains(tagsByResource, '${identifier.networkInterfaces}') ? tagsByResource['${identifier.networkInterfaces}'] : json('{}')
   '${identifier.networkSecurityGroups}': contains(tagsByResource, '${identifier.networkSecurityGroups}') ? tagsByResource['${identifier.networkSecurityGroups}'] : json('{}')
@@ -297,16 +298,12 @@ module pids './modules/_pids/_pid.bicep' = {
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-1879addb-1fa9-4225-8bd2-6d0a1ffc5dc0-partnercenter'
-  params: {
-    tagsByResource: _objTagsByResource
-  }
 }
 
 module byosMultivmStartPid './modules/_pids/_pid.bicep' = {
   name: 'byosMultivmStartPid-${guidValue}'
   params: {
     name: pids.outputs.byosMultivmStart
-    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     pids
