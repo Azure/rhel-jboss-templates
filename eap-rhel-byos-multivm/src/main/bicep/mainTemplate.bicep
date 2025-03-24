@@ -398,7 +398,7 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionFo
     name: bootStorageReplication
   }
   kind: storageAccountKind
-  tags: union(tagsByResource['${identifier.storageAccounts}'], {
+  tags: union(_objTagsByResource['${identifier.storageAccounts}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
       })
   dependsOn: [
@@ -431,7 +431,7 @@ resource eapStorageAccount 'Microsoft.Storage/storageAccounts@${azure.apiVersion
     }
     accessTier: 'Hot'
   }
-  tags: union(tagsByResource['${identifier.storageAccounts}'], {
+  tags: union(_objTagsByResource['${identifier.storageAccounts}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
   })
   dependsOn: [
@@ -533,7 +533,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@${azure.apiVersionForNetwo
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
   name: virtualNetworkName_var
   location: location
-  tags: union(tagsByResource['${identifier.virtualNetworks}'], {
+  tags: union(_objTagsByResource['${identifier.virtualNetworks}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
   })
   properties: {
@@ -562,7 +562,7 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPubl
 resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetworkInterfaces}' = [for i in range(0, numberOfInstances): {
   name: '${nicName_var}${i}'
   location: location
-  tags: union(tagsByResource['${identifier.networkInterfaces}'], {
+  tags: union(_objTagsByResource['${identifier.networkInterfaces}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
   })
   properties: {
@@ -601,7 +601,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
   name: (operatingMode == name_managedDomain) ? (i == 0 ? '${vmName_var}${name_adminVmName}' : '${vmName_var}${i}') : '${vmName_var}${i}'
   location: location
   plan: plan
-  tags: union(tagsByResource['${identifier.virtualMachines}'], {
+  tags: union(_objTagsByResource['${identifier.virtualMachines}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
   })
   properties: {
@@ -712,7 +712,7 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@${azure.apiVersionF
   sku: {
     name: skuName
   }
-  tags: union(tagsByResource['${identifier.availabilitySets}'], {
+  tags: union(_objTagsByResource['${identifier.availabilitySets}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
     })
   properties: {

@@ -527,7 +527,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@${azure.apiVersionForNetwo
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
   name: virtualNetworkName_var
   location: location
-  tags: union(tagsByResource['${identifier.virtualNetworks}'], {
+  tags: union(_objTagsByResource['${identifier.virtualNetworks}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
       })
   properties: {
@@ -566,7 +566,7 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPubl
 resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetworkInterfaces}' = [for i in range(0, numberOfInstances): {
   name: '${nicName_var}${i}'
   location: location
-  tags: union(tagsByResource['${identifier.networkInterfaces}'], {
+  tags: union(_objTagsByResource['${identifier.networkInterfaces}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
       })
   properties: {
@@ -620,7 +620,7 @@ module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = {
 resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionForVirtualMachines}' = [for i in range(0, numberOfInstances): {
   name: (operatingMode == name_managedDomain) ? (i == 0 ? '${vmName_var}${name_adminVmName}' : '${vmName_var}${i}') : '${vmName_var}${i}'
   location: location
-  tags: union(tagsByResource['${identifier.virtualMachines}'], {
+  tags: union(_objTagsByResource['${identifier.virtualMachines}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
       })
   properties: {
