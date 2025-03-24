@@ -358,14 +358,12 @@ module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep
 resource existingVnet 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' existing = if (virtualNetworkNewOrExisting != 'new') {
   name: virtualNetworkName_var
   scope: resourceGroup(virtualNetworkResourceGroupName)
-  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
 }
 
 // Get existing subnet.
 resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVersionForVirtualNetworks}' existing = if (virtualNetworkNewOrExisting != 'new') {
   name: subnetForAppGateway
   parent: existingVnet
-  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
 }
 
 module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
@@ -383,7 +381,7 @@ module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
     _pidAppgwEnd: pids.outputs.appgwEnd
     keyVaultName: name_keyVaultName
     enableCookieBasedAffinity: enableCookieBasedAffinity
-    tags: _objTagsByResource['${identifier.networkSecurityGroups}']
+    tags: _objTagsByResource
   }
   dependsOn: [
     appgwSecretDeployment
@@ -400,12 +398,14 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionFo
   }
   kind: storageAccountKind
   tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
+
   }
+  tags: union(tagsByResource['${identifier.storageAccounts}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+      })
   dependsOn: [
     failFastDeployment
   ]
-  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 resource eapStorageAccount 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = {
@@ -434,12 +434,14 @@ resource eapStorageAccount 'Microsoft.Storage/storageAccounts@${azure.apiVersion
     accessTier: 'Hot'
   }
   tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
+
   }
+  tags: union(tagsByResource['${identifier.storageAccounts}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+  })
   dependsOn: [
     failFastDeployment
   ]
-  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 resource eapStorageAccountNameContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@${azure.apiVersionForStorageBlobService}' = {
@@ -537,15 +539,16 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.
   name: virtualNetworkName_var
   location: location
   tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
   }
+  tags: union(tagsByResource['${identifier.virtualNetworks}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+  })
   properties: {
     addressSpace: {
       addressPrefixes: addressPrefixes
     }
     subnets: enableAppGWIngress ? property_subnet_with_app_gateway : property_subnet_without_app_gateway
   }
-  tags: _objTagsByResource['${identifier.virtualNetworks}']
 }
 
 resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPublicIPAddresses}' = [for i in range(0, numberOfInstances): if (enableAppGWIngress) {
@@ -567,8 +570,11 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
   name: '${nicName_var}${i}'
   location: location
   tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
+
   }
+  tags: union(tagsByResource['${identifier.networkInterfaces}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+  })
   properties: {
     ipConfigurations: [
       {
@@ -599,7 +605,6 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
     appgwDeployment
     publicIp
   ]
-  tags: _objTagsByResource['${identifier.networkInterfaces}']
 }]
 
 resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionForVirtualMachines}' = [for i in range(0, numberOfInstances): {
