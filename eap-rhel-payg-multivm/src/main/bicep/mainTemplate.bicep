@@ -275,6 +275,7 @@ var plan = {
 
 
 var _objTagsByResource = {
+  '${identifier.applicationGateways}': contains(tagsByResource, '${identifier.applicationGateways}') ? tagsByResource['${identifier.applicationGateways}'] : json('{}')
   '${identifier.availabilitySets}': contains(tagsByResource, '${identifier.availabilitySets}') ? tagsByResource['${identifier.availabilitySets}'] : json('{}')
   '${identifier.privateEndpoints}': contains(tagsByResource, '${identifier.privateEndpoints}') ? tagsByResource['${identifier.privateEndpoints}'] : json('{}')
   '${identifier.vaults}': contains(tagsByResource, '${identifier.vaults}') ? tagsByResource['${identifier.vaults}'] : json('{}')

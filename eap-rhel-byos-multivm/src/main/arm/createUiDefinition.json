@@ -904,6 +904,7 @@
                         "name": "tagsByResource",
                         "type": "Microsoft.Common.TagsByResource",
                         "resources": [
+                            "${identifier.applicationGateways}",
                             "${identifier.availabilitySets}",
                             "${identifier.privateEndpoints}",
                             "${identifier.vaults}",
