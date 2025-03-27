@@ -13,6 +13,8 @@ param keyVaultName string = 'keyVaultName'
 param sslCertDataSecretName string = 'sslCertDataSecretName'
 param enableCookieBasedAffinity bool = false
 param guidValue string = ''
+@description('${label.tagsLabel}')
+param tagsByResource object
 
 var appgwDeploymentName = 'app-gateway-deployment-with-self-signed-cert-${guidValue}'
 
@@ -36,6 +38,7 @@ module appgwDeployment1 './_azure-resources/_appGateway.bicep' = {
     _pidAppgwStart: _pidAppgwStart
     _pidAppgwEnd: _pidAppgwEnd
     enableCookieBasedAffinity: enableCookieBasedAffinity
+    tagsByResource: tagsByResource
   }
   dependsOn: [
     existingKeyvault

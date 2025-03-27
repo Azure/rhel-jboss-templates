@@ -183,6 +183,9 @@ param dbUser string = 'contosoDbUser'
 @description('Password for Database')
 param dbPassword string = newGuid()
 
+@description('${label.tagsLabel}')
+param tagsByResource object = {}
+
 var name_managedDomain = 'managed-domain'
 var name_fileshare = 'jbossshare'
 var skuName = 'Aligned'
@@ -274,6 +277,20 @@ var dnsNameforManagedVm = 'jboss-managed${guidValue}'
 var name_networkSecurityGroup = 'jboss-nsg-${guidValue}'
 var name_appGatewayPublicIPAddress = 'gwip-${guidValue}'
 
+var _objTagsByResource = {
+  '${identifier.applicationGateways}': contains(tagsByResource, '${identifier.applicationGateways}') ? tagsByResource['${identifier.applicationGateways}'] : json('{}')
+  '${identifier.availabilitySets}': contains(tagsByResource, '${identifier.availabilitySets}') ? tagsByResource['${identifier.availabilitySets}'] : json('{}')
+  '${identifier.privateEndpoints}': contains(tagsByResource, '${identifier.privateEndpoints}') ? tagsByResource['${identifier.privateEndpoints}'] : json('{}')
+  '${identifier.vaults}': contains(tagsByResource, '${identifier.vaults}') ? tagsByResource['${identifier.vaults}'] : json('{}')
+  '${identifier.virtualMachines}': contains(tagsByResource, '${identifier.virtualMachines}') ? tagsByResource['${identifier.virtualMachines}'] : json('{}')
+  '${identifier.virtualNetworks}': contains(tagsByResource, '${identifier.virtualNetworks}') ? tagsByResource['${identifier.virtualNetworks}'] : json('{}')
+  '${identifier.networkInterfaces}': contains(tagsByResource, '${identifier.networkInterfaces}') ? tagsByResource['${identifier.networkInterfaces}'] : json('{}')
+  '${identifier.networkSecurityGroups}': contains(tagsByResource, '${identifier.networkSecurityGroups}') ? tagsByResource['${identifier.networkSecurityGroups}'] : json('{}')
+  '${identifier.publicIPAddresses}': contains(tagsByResource, '${identifier.publicIPAddresses}') ? tagsByResource['${identifier.publicIPAddresses}'] : json('{}')
+  '${identifier.storageAccounts}': contains(tagsByResource, '${identifier.storageAccounts}') ? tagsByResource['${identifier.storageAccounts}'] : json('{}')
+  '${identifier.userAssignedIdentities}': contains(tagsByResource, '${identifier.userAssignedIdentities}') ? tagsByResource['${identifier.userAssignedIdentities}'] : json('{}')
+  '${identifier.deploymentScripts}': contains(tagsByResource, '${identifier.deploymentScripts}') ? tagsByResource['${identifier.deploymentScripts}'] : json('{}')
+}
 /*
 * Beginning of the offer deployment
 */
@@ -283,7 +300,6 @@ module pids './modules/_pids/_pid.bicep' = {
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-1879addb-1fa9-4225-8bd2-6d0a1ffc5dc0-partnercenter'
-  params: {}
 }
 
 module byosMultivmStartPid './modules/_pids/_pid.bicep' = {
@@ -301,6 +317,7 @@ module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
   params: {
     guidValue: guidValue
     location: location
+    tagsByResource: _objTagsByResource
   }
 }
 
@@ -316,6 +333,7 @@ module failFastDeployment 'modules/_deployment-scripts/_ds-failfast.bicep' = {
     numberOfInstances: numberOfInstances
     connectSatellite: connectSatellite
     satelliteFqdn: satelliteFqdn
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     uamiDeployment
@@ -331,6 +349,7 @@ module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep
     sku: keyVaultSku
     subjectName: format('CN={0}', const_azureSubjectName)
     keyVaultName: name_keyVaultName
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     failFastDeployment
@@ -364,6 +383,7 @@ module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
     _pidAppgwEnd: pids.outputs.appgwEnd
     keyVaultName: name_keyVaultName
     enableCookieBasedAffinity: enableCookieBasedAffinity
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     appgwSecretDeployment
@@ -379,9 +399,9 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionFo
     name: bootStorageReplication
   }
   kind: storageAccountKind
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-  }
+  tags: union(_objTagsByResource['${identifier.storageAccounts}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+      })
   dependsOn: [
     failFastDeployment
   ]
@@ -412,9 +432,9 @@ resource eapStorageAccount 'Microsoft.Storage/storageAccounts@${azure.apiVersion
     }
     accessTier: 'Hot'
   }
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-  }
+  tags: union(_objTagsByResource['${identifier.storageAccounts}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+  })
   dependsOn: [
     failFastDeployment
   ]
@@ -429,6 +449,7 @@ resource eapStorageAccountNameContainer 'Microsoft.Storage/storageAccounts/blobS
     eapStorageAccount
     failFastDeployment
   ]
+  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 resource fileService 'Microsoft.Storage/storageAccounts/fileServices/shares@${azure.apiVersionForStorageFileService}' = if (operatingMode == name_managedDomain) {
@@ -441,6 +462,7 @@ resource fileService 'Microsoft.Storage/storageAccounts/fileServices/shares@${az
   dependsOn: [
     eapStorageAccount
   ]
+  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 resource symbolicname 'Microsoft.Network/privateEndpoints@${azure.apiVersionForPrivateEndpoint}' = if (operatingMode == name_managedDomain) {
@@ -465,6 +487,7 @@ resource symbolicname 'Microsoft.Network/privateEndpoints@${azure.apiVersionForP
   dependsOn: [
     eapStorageAccount
   ]
+  tags: _objTagsByResource['${identifier.privateEndpoints}']
 }
 
 // Create new network security group.
@@ -505,14 +528,15 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@${azure.apiVersionForNetwo
       }
     ]
   }
+  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
 }
 
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
   name: virtualNetworkName_var
   location: location
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-  }
+  tags: union(_objTagsByResource['${identifier.virtualNetworks}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+  })
   properties: {
     addressSpace: {
       addressPrefixes: addressPrefixes
@@ -533,14 +557,15 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPubl
       domainNameLabel: (operatingMode == name_managedDomain) ? ((i == 0) ? '${dnsNameforAdminVm}' : '${dnsNameforManagedVm}${i}') : '${dnsNameforManagedVm}${i}'
     }
   }
+  tags: _objTagsByResource['${identifier.publicIPAddresses}']
 }]
 
 resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetworkInterfaces}' = [for i in range(0, numberOfInstances): {
   name: '${nicName_var}${i}'
   location: location
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-  }
+  tags: union(_objTagsByResource['${identifier.networkInterfaces}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+  })
   properties: {
     ipConfigurations: [
       {
@@ -577,9 +602,9 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
   name: (operatingMode == name_managedDomain) ? (i == 0 ? '${vmName_var}${name_adminVmName}' : '${vmName_var}${i}') : '${vmName_var}${i}'
   location: location
   plan: plan
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-  }
+  tags: union(_objTagsByResource['${identifier.virtualMachines}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+  })
   properties: {
     availabilitySet: {
       id: asName_resource.id
@@ -663,6 +688,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
     dsConnectionURL: dsConnectionURL
     dbUser: dbUser
     dbPassword: dbPassword
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     vmName_resource
@@ -687,9 +713,9 @@ resource asName_resource 'Microsoft.Compute/availabilitySets@${azure.apiVersionF
   sku: {
     name: skuName
   }
-  tags: {
-    QuickstartName: 'JBoss EAP on RHEL (clustered, multi-VM)'
-  }
+  tags: union(_objTagsByResource['${identifier.availabilitySets}'], {
+        'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
+    })
   properties: {
     platformUpdateDomainCount: 2
     platformFaultDomainCount: 2
