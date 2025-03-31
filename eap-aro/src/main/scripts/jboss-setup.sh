@@ -337,6 +337,12 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
         exit 1
     fi
 
+    # Create helm install value deployment YAML file
+    echo "Create helm install value deployment YAML file" >> $logFile
+    helmDeploymentTemplate=helm.yaml.template >> $logFile
+    helmDeploymentFile=helm.yaml >> $logFile
+    envsubst < "$helmDeploymentTemplate" > "$helmDeploymentFile"
+
     helm install ${APPLICATION_NAME} -f helm.yaml jboss-eap/eap8
 
     # Get the route of the application

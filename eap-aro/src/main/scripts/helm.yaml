@@ -1,5 +1,0 @@
-build:
-  uri: https://github.com/backwind1233/eap-on-aro-helloworld
-  ref: main
-deploy:
-  replicas: 1
