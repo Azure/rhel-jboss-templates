@@ -18,7 +18,7 @@ param domain string = 'domain'
 param pullSecret string = ''
 
 @description('Name of ARO vNet')
-param clusterVnetName string = 'aro-vnet'
+param clusterVnetName string = 'aro-vnet-${guidValue}'
 
 @description('ARO vNet Address Space')
 param clusterVnetCidr string = '10.100.0.0/15'
@@ -55,7 +55,7 @@ param serviceCidr string = '172.30.0.0/16'
 param createCluster bool = true
 
 @description('Unique name for the cluster')
-param clusterName string = 'aro-cluster'
+param clusterName string = 'aro-cluster-${guidValue}'
 
 @description('Name for the resource group of the existing cluster')
 param clusterRGName string = ''
@@ -136,7 +136,7 @@ var const_cmdToGetApiServer = 'az aro show -g ${const_clusterRGName} -n ${const_
 * Beginning of the offer deployment
 */
 module pids './modules/_pids/_pid.bicep' = {
-  name: 'initialization'
+  name: 'initialization-${guidValue}'
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -250,7 +250,7 @@ resource clusterName_resource 'Microsoft.RedHatOpenShift/openShiftClusters@${azu
   tags: tags
   properties: {
     clusterProfile: {
-      domain: '${domain}${guidValue}'
+      domain: '${domain}-${guidValue}'
       resourceGroupId: subscriptionResourceId('Microsoft.Resources/resourceGroups', 'MC_${resourceGroup().name}_${const_clusterName}_${location}')
       pullSecret: pullSecret
       fipsValidatedModules: 'Disabled'
@@ -296,7 +296,7 @@ resource clusterName_resource 'Microsoft.RedHatOpenShift/openShiftClusters@${azu
 }
 
 module deployApplicationStartPid './modules/_pids/_pid.bicep' = if (deployApplication) {
-  name: 'deployApplicationStartPid'
+  name: 'deployApplicationStartPid-${guidValue}'
   params: {
     name: pids.outputs.appDeployStart
   }
@@ -307,7 +307,7 @@ module deployApplicationStartPid './modules/_pids/_pid.bicep' = if (deployApplic
 }
 
 module jbossPreflightDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' = {
-  name: 'jboss-preflight'
+  name: 'jboss-preflight-${guidValue}'
   params: {
     artifactsLocation: artifactsLocation
     artifactsLocationSasToken: artifactsLocationSasToken
@@ -328,7 +328,7 @@ module jbossPreflightDeployment 'modules/_deployment-scripts/_ds-preflight.bicep
 }
 
 module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
-  name: 'jboss-setup'
+  name: 'jboss-setup-${guidValue}'
   params: {
     artifactsLocation: artifactsLocation
     artifactsLocationSasToken: artifactsLocationSasToken
@@ -358,7 +358,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
 }
 
 module deployApplicationEndPid './modules/_pids/_pid.bicep' = if (deployApplication) {
-  name: 'deployApplicationEndPid'
+  name: 'deployApplicationEndPid-${guidValue}'
   params: {
     name: pids.outputs.appDeployEnd
   }
