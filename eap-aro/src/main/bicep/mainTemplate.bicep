@@ -121,8 +121,6 @@ param applicationName string = 'eap-app'
 @description('The number of application replicas to deploy')
 param appReplicas int = 2
 
-param guidValue string = take(replace(newGuid(), '-', ''), 6) 
-
 var const_clusterRGName = createCluster ? resourceGroup().name: clusterRGName
 var name_clusterName = createCluster ? 'aro-cluster-${guidValue}' : clusterName
 
