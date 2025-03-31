@@ -1,3 +1,5 @@
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
+
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
 param artifactsLocation string = deployment().properties.templateLink.uri
 
@@ -16,7 +18,7 @@ param domain string = 'domain'
 param pullSecret string = ''
 
 @description('Name of ARO vNet')
-param clusterVnetName string = 'aro-vnet'
+param clusterVnetName string = 'aro-vnet-${guidValue}'
 
 @description('ARO vNet Address Space')
 param clusterVnetCidr string = '10.100.0.0/15'
@@ -53,7 +55,7 @@ param serviceCidr string = '172.30.0.0/16'
 param createCluster bool = true
 
 @description('Unique name for the cluster')
-param clusterName string = 'aro-cluster'
+param clusterName string = 'aro-cluster-${guidValue}'
 
 @description('Name for the resource group of the existing cluster')
 param clusterRGName string = ''
@@ -122,11 +124,11 @@ param appReplicas int = 2
 param guidValue string = take(replace(newGuid(), '-', ''), 6) 
 
 var const_clusterRGName = createCluster ? resourceGroup().name: clusterRGName
-var name_clusterName = createCluster ? 'aro-cluster' : clusterName
-var const_suffix = take(replace(guidValue, '-', ''), 6)
-var const_identityName = 'uami${const_suffix}'
+var name_clusterName = createCluster ? 'aro-cluster-${guidValue}' : clusterName
+
+var const_identityName = 'uami-${guidValue}'
 var const_contribRole = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
-var name_roleAssignmentName = guid(format('{0}{1}Role assignment in group{0}', resourceGroup().id, ref_identityId))
+var name_roleAssignmentName = 'roleassignment-${guidValue}'
 var ref_identityId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', const_identityName)
 var const_cmdToGetKubeadminCredentials = 'az aro list-credentials -g ${const_clusterRGName} -n ${name_clusterName}'
 var const_cmdToGetKubeadminUsername = '${const_cmdToGetKubeadminCredentials} --query kubeadminUsername -o tsv'
@@ -137,7 +139,7 @@ var const_cmdToGetApiServer = 'az aro show -g ${const_clusterRGName} -n ${name_c
 * Beginning of the offer deployment
 */
 module pids './modules/_pids/_pid.bicep' = {
-  name: 'initialization'
+  name: 'initialization-${guidValue}'
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -216,8 +218,8 @@ resource roleResourceDefinition 'Microsoft.Authorization/roleDefinitions@${azure
   name: const_contribRole
 }
 
-resource assignRoleAppSp 'Microsoft.Authorization/roleAssignments@${azure.apiVersionForRoleAssignment}' = if(createCluster) {
-  name: guid(resourceGroup().id, deployment().name, vnetRef.id, 'assignRoleAppSp')
+resource assignRoleSpApp 'Microsoft.Authorization/roleAssignments@${azure.apiVersionForRoleAssignment}' = if(createCluster) {
+  name: 'assignrole-sp-app-${guidValue}'
   scope: vnetRef
   properties: {
     principalId: aadObjectId
@@ -231,8 +233,8 @@ resource assignRoleAppSp 'Microsoft.Authorization/roleAssignments@${azure.apiVer
   ]
 }
 
-resource assignRoleRpSp 'Microsoft.Authorization/roleAssignments@${azure.apiVersionForRoleAssignment}' = if(createCluster) {
-  name: guid(resourceGroup().id, deployment().name, vnetRef.id, 'assignRoleRpSp')
+resource assignRoleSpRp 'Microsoft.Authorization/roleAssignments@${azure.apiVersionForRoleAssignment}' = if(createCluster) {
+  name: 'assignrole-sp-rp-${guidValue}'
   scope: vnetRef
   properties: {
     principalId: rpObjectId
@@ -251,7 +253,7 @@ resource clusterName_resource 'Microsoft.RedHatOpenShift/openShiftClusters@${azu
   tags: tags
   properties: {
     clusterProfile: {
-      domain: '${domain}${const_suffix}'
+      domain: '${domain}-${guidValue}'
       resourceGroupId: subscriptionResourceId('Microsoft.Resources/resourceGroups', 'MC_${resourceGroup().name}_${clusterName}_${location}')
       pullSecret: pullSecret
       fipsValidatedModules: 'Disabled'
@@ -297,7 +299,7 @@ resource clusterName_resource 'Microsoft.RedHatOpenShift/openShiftClusters@${azu
 }
 
 module deployApplicationStartPid './modules/_pids/_pid.bicep' = if (deployApplication) {
-  name: 'deployApplicationStartPid'
+  name: 'deployApplicationStartPid-${guidValue}'
   params: {
     name: pids.outputs.appDeployStart
   }
@@ -308,7 +310,7 @@ module deployApplicationStartPid './modules/_pids/_pid.bicep' = if (deployApplic
 }
 
 module jbossPreflightDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' = {
-  name: 'jboss-preflight'
+  name: 'jboss-preflight-${guidValue}'
   params: {
     artifactsLocation: artifactsLocation
     artifactsLocationSasToken: artifactsLocationSasToken
@@ -329,7 +331,7 @@ module jbossPreflightDeployment 'modules/_deployment-scripts/_ds-preflight.bicep
 }
 
 module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
-  name: 'jboss-setup'
+  name: 'jboss-setup-${guidValue}'
   params: {
     artifactsLocation: artifactsLocation
     artifactsLocationSasToken: artifactsLocationSasToken
@@ -358,7 +360,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
 }
 
 module deployApplicationEndPid './modules/_pids/_pid.bicep' = if (deployApplication) {
-  name: 'deployApplicationEndPid'
+  name: 'deployApplicationEndPid-${guidValue}'
   params: {
     name: pids.outputs.appDeployEnd
   }
