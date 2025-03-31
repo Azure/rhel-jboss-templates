@@ -127,7 +127,6 @@ var name_clusterName = createCluster ? 'aro-cluster-${guidValue}' : clusterName
 var const_identityName = 'uami-${guidValue}'
 var const_contribRole = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
 var name_roleAssignmentName = 'roleassignment-${guidValue}'
-var ref_identityId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', const_identityName)
 var const_cmdToGetKubeadminCredentials = 'az aro list-credentials -g ${const_clusterRGName} -n ${name_clusterName}'
 var const_cmdToGetKubeadminUsername = '${const_cmdToGetKubeadminCredentials} --query kubeadminUsername -o tsv'
 var const_cmdToGetKubeadminPassword = '${const_cmdToGetKubeadminCredentials} --query kubeadminPassword -o tsv'
