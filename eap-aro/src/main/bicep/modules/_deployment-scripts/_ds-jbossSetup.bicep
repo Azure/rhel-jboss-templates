@@ -48,7 +48,7 @@ param appReplicas int = 2
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jboss-setup.sh'
 var const_rhContainerRegistryPullSecretYaml = 'red-hat-container-registry-pull-secret.yaml.template'
-var const_appDeploymentYaml = 'app-deployment.yaml.template'
+var const_helmYaml = 'helm.yaml.template'
 var const_azcliVersion = '2.53.0'
 
 resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
