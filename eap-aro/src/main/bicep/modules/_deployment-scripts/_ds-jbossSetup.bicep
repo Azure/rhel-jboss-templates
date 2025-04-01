@@ -111,7 +111,7 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
     primaryScriptUri: uri(const_scriptLocation, '${const_setupJBossScript}${artifactsLocationSasToken}')
     supportingScriptUris: [
       uri(const_scriptLocation, '${const_rhContainerRegistryPullSecretYaml}${artifactsLocationSasToken}')
-      uri(const_scriptLocation, '${const_appDeploymentYaml}${artifactsLocationSasToken}')
+      uri(const_scriptLocation, '${const_helmYaml}${artifactsLocationSasToken}')
     ]
     cleanupPreference:'OnSuccess'
     retentionInterval: 'P1D'
