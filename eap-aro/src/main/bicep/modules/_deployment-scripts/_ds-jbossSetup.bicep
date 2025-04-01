@@ -44,6 +44,7 @@ param applicationName string = 'eap-app'
 
 @description('The number of application replicas to deploy')
 param appReplicas int = 2
+param guidValue string = ''
 
 @secure()
 @description('The pull secret to use for the deployment')
@@ -55,7 +56,7 @@ var const_helmYaml = 'helm.yaml.template'
 var const_azcliVersion = '2.53.0'
 
 resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
-  name: 'jboss-setup'
+  name: 'jboss-setup-${guidValue}'
   location: location
   kind: 'AzureCLI'
   identity: identity

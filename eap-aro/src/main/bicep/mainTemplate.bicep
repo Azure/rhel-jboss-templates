@@ -307,11 +307,12 @@ module deployApplicationStartPid './modules/_pids/_pid.bicep' = if (deployApplic
 }
 
 module jbossPreflightDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' = {
-  name: 'jboss-preflight-${guidValue}'
+  name: 'jboss-preflight-deployment-${guidValue}'
   params: {
     artifactsLocation: artifactsLocation
     artifactsLocationSasToken: artifactsLocationSasToken
     location: location
+    guidValue: guidValue
     identity: {
       type: 'UserAssigned'
       userAssignedIdentities: {
