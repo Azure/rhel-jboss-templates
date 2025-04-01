@@ -26,59 +26,6 @@ wait_login_complete() {
     done
 }
 
-wait_subscription_created() {
-    subscriptionName=$1
-    namespaceName=$2
-    deploymentYaml=$3
-    logFile=$4
-
-    cnt=0
-    oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
-    while [ $? -ne 0 ]
-    do
-        if [ $cnt -eq $MAX_RETRIES ]; then
-            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
-            return 1
-        fi
-        cnt=$((cnt+1))
-
-        echo "Unable to get the operator package manifest ${subscriptionName} from OperatorHub, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
-        sleep 5
-        oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
-    done
-
-    cnt=0
-    oc apply -f ${deploymentYaml} >> $logFile
-    while [ $? -ne 0 ]
-    do
-        if [ $cnt -eq $MAX_RETRIES ]; then
-            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
-            return 1
-        fi
-        cnt=$((cnt+1))
-
-        echo "Failed to create the operator subscription ${subscriptionName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
-        sleep 5
-        oc apply -f ${deploymentYaml} >> $logFile
-    done
-
-    cnt=0
-    oc get subscription ${subscriptionName} -n ${namespaceName} 2>/dev/null
-    while [ $? -ne 0 ]
-    do
-        if [ $cnt -eq $MAX_RETRIES ]; then
-            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
-            return 1
-        fi
-        cnt=$((cnt+1))
-
-        echo "Unable to get the operator subscription ${subscriptionName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
-        sleep 5
-        oc get subscription ${subscriptionName} -n ${namespaceName} 2>/dev/null
-    done
-    echo "Subscription ${subscriptionName} created." >> $logFile
-}
-
 wait_deployment_complete() {
     deploymentName=$1
     namespaceName=$2
@@ -265,14 +212,6 @@ echo 'export PATH=$PATH:~/openshift' >> ~/.bash_profile && source ~/.bash_profil
 wait_login_complete $kubeadminUsername $kubeadminPassword "$apiServerUrl" $logFile
 if [[ $? -ne 0 ]]; then
   echo "Failed to sign into the cluster with ${kubeadminUsername}." >&2
-  exit 1
-fi
-
-# Create subscption and install operator
-wait_subscription_created eap openshift-operators eap-operator-sub.yaml ${logFile}
-
-if [[ $? -ne 0 ]]; then
-  echo "Failed to install the JBoss EAP Operator from the OperatorHub." >&2
   exit 1
 fi
 

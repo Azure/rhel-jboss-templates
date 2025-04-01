@@ -3,4 +3,4 @@ build:
   ref: ${SRC_REPO_REF}
   contextDir: ${SRC_REPO_DIR}
 deploy:
-  replicas: 1
+  replicas: ${APP_REPLICAS}
