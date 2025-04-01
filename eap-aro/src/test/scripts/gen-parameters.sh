@@ -54,10 +54,10 @@ cat <<EOF > ${parametersPath}
         },
         "srcRepoDir": {
             "value": "/"
-        }
+        },
         "appReplicas": {
             "value": 1
-        },
+        }
     }
 }
 EOF
