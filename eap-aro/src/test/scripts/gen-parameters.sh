@@ -34,9 +34,6 @@ cat <<EOF > ${parametersPath}
         "rpObjectId": {
             "value": "${rpObjectId}"
         },
-        "deployApplication": {
-            "value": false
-        },
         "vmSize": {
             "value": "${vmSize}"
         },
@@ -45,7 +42,22 @@ cat <<EOF > ${parametersPath}
         },
         "workerCount": {
             "value": ${workerCount}
+        },
+        "deployApplication": {
+            "value": true
+        },
+        "srcRepoUrl": {
+            "value": "https://github.com/redhat-mw-demos/eap-on-aro-helloworld"
+        },
+        "srcRepoRef": {
+            "value": "main"
+        },
+        "srcRepoDir": {
+            "value": "/"
         }
+        "appReplicas": {
+            "value": 1
+        },
     }
 }
 EOF
