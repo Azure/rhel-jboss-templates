@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 #read arguments from stdin
-read parametersPath gitUserName testbranchName location pullSecret aadClientId aadClientSecret aadObjectId rpObjectId vmSize workerVmSize workerCount
+read parametersPath gitUserName testbranchName location pullSecret aadClientId aadClientSecret aadObjectId rpObjectId vmSize workerVmSize workerCount conRegAccUserName conRegAccPwd
 pullSecret=${pullSecret//\"/\\\"}
 
 cat <<EOF > ${parametersPath}
@@ -57,6 +57,12 @@ cat <<EOF > ${parametersPath}
         },
         "appReplicas": {
             "value": 1
+        },
+        "conRegAccUserName": {
+            "value": ${conRegAccUserName}
+        },
+        "conRegAccPwd": {
+            "value": ${conRegAccPwd}
         }
     }
 }
