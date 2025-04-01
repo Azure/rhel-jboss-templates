@@ -217,7 +217,7 @@ resource roleResourceDefinition 'Microsoft.Authorization/roleDefinitions@${azure
 }
 
 resource assignRoleSpApp 'Microsoft.Authorization/roleAssignments@${azure.apiVersionForRoleAssignment}' = if(createCluster) {
-  name: 'assignrole-sp-app-${guidValue}'
+  name: guid(resourceGroup().id, deployment().name, vnetRef.id, 'assignRoleSpApp')
   scope: vnetRef
   properties: {
     principalId: aadObjectId
@@ -232,7 +232,7 @@ resource assignRoleSpApp 'Microsoft.Authorization/roleAssignments@${azure.apiVer
 }
 
 resource assignRoleSpRp 'Microsoft.Authorization/roleAssignments@${azure.apiVersionForRoleAssignment}' = if(createCluster) {
-  name: 'assignrole-sp-rp-${guidValue}'
+  name: guid(resourceGroup().id, deployment().name, vnetRef.id, 'assignRoleSpRp')
   scope: vnetRef
   properties: {
     principalId: rpObjectId
