@@ -59,10 +59,10 @@ cat <<EOF > ${parametersPath}
             "value": 1
         },
         "conRegAccUserName": {
-            "value": ${conRegAccUserName}
+            "value": "${conRegAccUserName}"
         },
         "conRegAccPwd": {
-            "value": ${conRegAccPwd}
+            "value": "${conRegAccPwd}"
         }
     }
 }
