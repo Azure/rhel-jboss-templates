@@ -44,6 +44,7 @@ param applicationName string = 'eap-app'
 
 @description('The number of application replicas to deploy')
 param appReplicas int = 2
+param guidValue string = ''
 
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jboss-setup.sh'
@@ -53,7 +54,7 @@ var const_appDeploymentYaml = 'app-deployment.yaml.template'
 var const_azcliVersion = '2.53.0'
 
 resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
-  name: 'jboss-setup'
+  name: 'jboss-setup-${guidValue}'
   location: location
   kind: 'AzureCLI'
   identity: identity
