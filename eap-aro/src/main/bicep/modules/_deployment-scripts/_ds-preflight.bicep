@@ -24,9 +24,10 @@ param guidValue string = ''
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_preflightScript = 'preflight.sh'
 var const_azcliVersion = '2.53.0'
+var jboss_preflight_name = 'jboss-preflight-${guidValue}'
 
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
-  name: 'jboss-preflight-${guidValue}'
+  name: jboss_preflight_name
   location: location
   kind: 'AzureCLI'
   identity: identity
