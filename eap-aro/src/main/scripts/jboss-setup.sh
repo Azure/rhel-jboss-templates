@@ -157,7 +157,7 @@ wait_secret_link() {
 }
 
 # Define variables
-logFile=deployment.log
+logFile=/var/log/eap-aro-deployment.log
 
 # Install utilities
 apk update
@@ -197,7 +197,7 @@ fi
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     # Install the Helm CLI
     curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-    sudo chmod 700 get_helm.sh
+    chmod 700 get_helm.sh
     ./get_helm.sh
 
     # Add the JBoss EAP Helm chart repository
@@ -248,6 +248,7 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     fi
 
     # Create helm install value deployment YAML file
+    echo "Create helm install value deployment YAML file"
     echo "Create helm install value deployment YAML file" >> $logFile
     helmDeploymentTemplate=helm.yaml.template >> $logFile
     helmDeploymentFile=helm.yaml >> $logFile
