@@ -48,7 +48,7 @@ param appReplicas int = 2
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jboss-setup.sh'
 var const_rhContainerRegistryPullSecretYaml = 'red-hat-container-registry-pull-secret.yaml.template'
-var const_appDeploymentYaml = 'app-deployment.yaml.template'
+var const_helmYaml = 'helm.yaml.template'
 var const_azcliVersion = '2.53.0'
 
 resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
@@ -111,7 +111,7 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
     primaryScriptUri: uri(const_scriptLocation, '${const_setupJBossScript}${artifactsLocationSasToken}')
     supportingScriptUris: [
       uri(const_scriptLocation, '${const_rhContainerRegistryPullSecretYaml}${artifactsLocationSasToken}')
-      uri(const_scriptLocation, '${const_appDeploymentYaml}${artifactsLocationSasToken}')
+      uri(const_scriptLocation, '${const_helmYaml}${artifactsLocationSasToken}')
     ]
     cleanupPreference:'OnSuccess'
     retentionInterval: 'P1D'
