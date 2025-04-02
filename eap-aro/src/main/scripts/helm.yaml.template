@@ -2,5 +2,6 @@ build:
   uri: ${SRC_REPO_URL}
   ref: ${SRC_REPO_REF}
   contextDir: ${SRC_REPO_DIR}
+  pullSecret: ${CON_REG_SECRET_NAME}-pull-secret
 deploy:
   replicas: ${APP_REPLICAS}

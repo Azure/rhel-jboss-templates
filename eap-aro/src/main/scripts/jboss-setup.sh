@@ -196,6 +196,7 @@ fi
 
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     # Install the Helm CLI
+    echo "Install the Helm CLI" >> $logFile
     curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
     chmod 700 get_helm.sh
     ./get_helm.sh
@@ -206,13 +207,13 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     # Create a new project for managing workload of the user
     wait_project_created ${PROJECT_NAME} ${logFile}
     if [[ $? -ne 0 ]]; then
-        echo "Failed to create project ${PROJECT_NAME}." >&2
+        echo "Failed to create project ${PROJECT_NAME}." >> $logFile
         exit 1
     fi
 
     wait_add_scc_privileged ${PROJECT_NAME} ${logFile}
     if [[ $? -ne 0 ]]; then
-        echo "Failed to add scc privileged to default service account of ${PROJECT_NAME}." >&2
+        echo "Failed to add scc privileged to default service account of ${PROJECT_NAME}." >> $logFile
         exit 1
     fi
 
@@ -248,17 +249,19 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     fi
 
     # Create helm install value deployment YAML file
-    echo "Create helm install value deployment YAML file"
-    echo "Create helm install value deployment YAML file" >> $logFile
+    echo "Creating helm install value deployment YAML file" >> $logFile
     helmDeploymentTemplate=helm.yaml.template >> $logFile
     helmDeploymentFile=helm.yaml >> $logFile
     envsubst < "$helmDeploymentTemplate" > "$helmDeploymentFile"
 
-    helm install ${APPLICATION_NAME} -f helm.yaml jboss-eap/eap8
+    echo "Using helm chart to deploy JBoss EAP" >> $logFile
+    helm install ${APPLICATION_NAME} -f helm.yaml jboss-eap/eap8 --namespace ${PROJECT_NAME}
 
     # Get the route of the application
     echo "Get the route of the application" >> $logFile
     oc expose svc/${APPLICATION_NAME}-loadbalancer
+
+
     appEndpoint=
     wait_route_available ${APPLICATION_NAME}-loadbalancer ${PROJECT_NAME} $logFile
     if [[ $? -ne 0 ]]; then
