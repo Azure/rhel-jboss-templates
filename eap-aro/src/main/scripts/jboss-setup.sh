@@ -26,27 +26,6 @@ wait_login_complete() {
     done
 }
 
-wait_deployment_complete() {
-    deploymentName=$1
-    namespaceName=$2
-    logFile=$3
-
-    cnt=0
-    oc get deployment ${deploymentName} -n ${namespaceName} 2>/dev/null
-    while [ $? -ne 0 ]
-    do
-        if [ $cnt -eq $MAX_RETRIES ]; then
-            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
-            return 1
-        fi
-        cnt=$((cnt+1))
-
-        echo "Unable to get the deployment ${deploymentName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
-        sleep 5
-        oc get deployment ${deploymentName} -n ${namespaceName} 2>/dev/null
-    done
-}
-
 wait_route_available() {
     routeName=$1
     namespaceName=$2
@@ -215,13 +194,6 @@ if [[ $? -ne 0 ]]; then
   exit 1
 fi
 
-# Check deployment is succeed
-wait_deployment_complete eap-operator openshift-operators ${logFile}
-if [[ $? -ne 0 ]]; then
-  echo "The JBoss EAP Operator is not available." >&2
-  exit 1
-fi
-
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     # Install the Helm CLI
     curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
@@ -238,7 +210,6 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
         exit 1
     fi
 
-    # Enable the privileged containers created by EAP Operator to be successfully deployed
     wait_add_scc_privileged ${PROJECT_NAME} ${logFile}
     if [[ $? -ne 0 ]]; then
         echo "Failed to add scc privileged to default service account of ${PROJECT_NAME}." >&2
