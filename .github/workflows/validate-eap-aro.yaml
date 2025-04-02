@@ -26,6 +26,8 @@ env:
   # To get pull secret text, see Get a Red Hat pull secret.
   # https://learn.microsoft.com/en-us/azure/openshift/tutorial-create-cluster?WT.mc_id=Portal-fx#get-a-red-hat-pull-secret-optional
   pullSecret: ${{ secrets.PULL_SECRET }}
+  conRegAccUserName: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+  conRegAccPwd: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
 
   offerName: "eap-aro"
 
@@ -103,7 +105,9 @@ jobs:
           ${rpObjectId} \
           "Standard_D8s_v3" \
           "Standard_D4s_v3" \
-          3
+          3 \
+          ${conRegAccUserName} \
+          ${conRegAccPwd}
           "
           echo $params |bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh 
 
@@ -137,12 +141,26 @@ jobs:
 
       - name: Verify the deployment
         run: |
-          appEndpoint=$(az resource show -n jboss-setup -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "properties.outputs.appEndpoint" -o tsv)
+          # Get the resource name dynamically based on the pattern
+          resourceName=$(az resource list -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "[?starts_with(name, 'jboss-setup')].name" -o tsv)
+          
+          # Use the retrieved resource name to get the appEndpoint
+          appEndpoint=$(az resource show -n $resourceName -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "properties.outputs.appEndpoint" -o tsv)
+
           echo "appEndpoint: ${appEndpoint}"
-          if [[ -n "$appEndpoint" ]]; then
-            echo "Invalid value of appEndpoint: ${appEndpoint}"
+          
+          echo "Verifying appEndpoint is accessible"
+          curl --verbose ${appEndpoint}
+          CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
+          response=$(curl ${CURL_RETRY_PARMS}  --write-out '%{http_code}' --silent --output /dev/null ${appEndpoint})
+          echo "$response"
+          if [ "$response" -ne 200 ]; then
+            echo "appEndpoint is not accessible"
             exit 1
+          else
+            echo "appEndpoint is accessible"
           fi
+          exit 0
 
       # - name: Setup tmate session
       #   if: ${{ failure() }}
