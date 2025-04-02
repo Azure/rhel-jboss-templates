@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 #read arguments from stdin
-read parametersPath gitUserName testbranchName location pullSecret aadClientId aadClientSecret aadObjectId rpObjectId vmSize workerVmSize workerCount
+read parametersPath gitUserName testbranchName location pullSecret aadClientId aadClientSecret aadObjectId rpObjectId vmSize workerVmSize workerCount createCluster clusterName clusterRGName
 pullSecret=${pullSecret//\"/\\\"}
 
 cat <<EOF > ${parametersPath}
@@ -45,6 +45,15 @@ cat <<EOF > ${parametersPath}
         },
         "workerCount": {
             "value": ${workerCount}
+        },
+        "createCluster": {
+            "value": ${createCluster}
+        },
+        "clusterName": {
+            "value": "${clusterName}"
+        },
+        "clusterRGName": {
+            "value": "${clusterRGName}"
         }
     }
 }

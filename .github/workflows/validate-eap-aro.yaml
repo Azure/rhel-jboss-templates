@@ -3,6 +3,21 @@ name: Validate eap-aro offer
 on:
   workflow_dispatch:
     inputs:
+      createCluster:
+        description: 'Use existing ARO cluster?'
+        required: true
+        type: boolean
+        default: false
+      clusterName:
+        description: 'Name of existing ARO cluster'
+        required: false
+        type: string
+        default: ''
+      clusterRGName:
+        description: 'Name of existing ARO cluster resource group'
+        required: false
+        type: string
+        default: ''
       timeWaitBeforeDelete:
         description: 'Choose the wait time before deleting resources: 30m (30 minutes), 2h (2 hours), 5h (5 hours), 0 (immediately)'
         required: true
@@ -103,7 +118,10 @@ jobs:
           ${rpObjectId} \
           "Standard_D8s_v3" \
           "Standard_D4s_v3" \
-          3
+          3 \
+          ${{ github.event.inputs.createCluster }} \
+          ${{ github.event.inputs.timeWaitBeforeDelete }} \
+          ${{ github.event.inputs.timeWaitBeforeDelete }}
           "
           echo $params |bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh 
 
