@@ -16,9 +16,6 @@ cat <<EOF > ${parametersPath}
         "location": {
             "value": "${location}"
         },
-        "createCluster": {
-            "value": true
-        },
         "pullSecret": {
             "value": "${pullSecret}"
         },
