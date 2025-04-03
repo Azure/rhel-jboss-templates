@@ -126,8 +126,8 @@ jobs:
           "Standard_D4s_v3" \
           3 \
           ${{ createCluster }} \
-          ${{ github.event.inputs.timeWaitBeforeDelete }} \
-          ${{ github.event.inputs.timeWaitBeforeDelete }}
+          ${{ github.event.inputs.clusterName }} \
+          ${{ github.event.inputs.clusterRGName }}
           "
           echo $params |bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh 
 
