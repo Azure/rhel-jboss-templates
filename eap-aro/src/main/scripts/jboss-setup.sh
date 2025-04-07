@@ -366,7 +366,7 @@ wait_secret_link() {
 }
 
 # Define variables
-logFile=deployment.log
+logFile=/var/log/eap-aro-deployment.log
 
 # Install utilities
 apk update
