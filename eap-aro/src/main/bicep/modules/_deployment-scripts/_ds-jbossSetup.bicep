@@ -107,6 +107,10 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
         name: 'APP_REPLICAS'
         value: string(appReplicas)
       }
+      {
+        name: 'PULL_SECRET'
+        value: string(pullSecret)
+      }
     ]
     primaryScriptUri: uri(const_scriptLocation, '${const_setupJBossScript}${artifactsLocationSasToken}')
     supportingScriptUris: [

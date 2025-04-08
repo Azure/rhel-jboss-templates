@@ -351,6 +351,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
     appReplicas: appReplicas
     projectName: projectName
     applicationName: applicationName
+    pullSecret: pullSecret
   }
   dependsOn: [
     clusterName_resource
