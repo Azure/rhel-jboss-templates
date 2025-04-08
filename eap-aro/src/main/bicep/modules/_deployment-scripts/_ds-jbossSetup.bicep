@@ -45,6 +45,9 @@ param applicationName string = 'eap-app'
 @description('The number of application replicas to deploy')
 param appReplicas int = 2
 
+@description('The pull secret to use for the deployment')
+param pullSecret string = ''
+
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jboss-setup.sh'
 var const_rhContainerRegistryPullSecretYaml = 'red-hat-container-registry-pull-secret.yaml.template'
