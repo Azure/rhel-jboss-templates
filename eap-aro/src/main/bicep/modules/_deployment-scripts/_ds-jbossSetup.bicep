@@ -45,6 +45,7 @@ param applicationName string = 'eap-app'
 @description('The number of application replicas to deploy')
 param appReplicas int = 2
 
+@secure()
 @description('The pull secret to use for the deployment')
 param pullSecret string = ''
 
@@ -112,7 +113,7 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
       }
       {
         name: 'PULL_SECRET'
-        value: string(pullSecret)
+        value: base64(pullSecret)
       }
     ]
     primaryScriptUri: uri(const_scriptLocation, '${const_setupJBossScript}${artifactsLocationSasToken}')
