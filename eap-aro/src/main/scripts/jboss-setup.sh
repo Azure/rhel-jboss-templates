@@ -2,7 +2,7 @@
 
 # See https://github.com/WASdev/azure.liberty.aro/issues/60
 MAX_RETRIES=99
-SUFFIX=$(date +%s)
+export SUFFIX=$(date +%s)
 
 # Define functions
 wait_login_complete() {
