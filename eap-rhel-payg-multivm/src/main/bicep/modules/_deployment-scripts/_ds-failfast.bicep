@@ -23,6 +23,8 @@ param connectSatellite bool = false
 @description('Red Hat Satellite Server VM FQDN name.')
 param satelliteFqdn string = ''
 param guidValue string = ''
+@description('${label.tagsLabel}')
+param tagsByResource object
 
 var const_validateParameterScript = 'validate-parameters.sh'
 var const_azcliVersion = '2.15.0'
@@ -41,4 +43,5 @@ resource validateParameters 'Microsoft.Resources/deploymentScripts@${azure.apiVe
     cleanupPreference: 'OnExpiration'
     retentionInterval: 'P1D'
   }
+  tags: tagsByResource['${identifier.deploymentScripts}']
 }

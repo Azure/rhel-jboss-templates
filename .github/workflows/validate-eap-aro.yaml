@@ -3,6 +3,21 @@ name: Validate eap-aro offer
 on:
   workflow_dispatch:
     inputs:
+      useExistingCluster:
+        description: 'Use existing ARO cluster?'
+        required: true
+        type: boolean
+        default: false
+      clusterName:
+        description: 'Name of existing ARO cluster'
+        required: false
+        type: string
+        default: ''
+      clusterRGName:
+        description: 'Resource group Name of existing ARO cluster'
+        required: false
+        type: string
+        default: ''
       timeWaitBeforeDelete:
         description: 'Choose the wait time before deleting resources: 30m (30 minutes), 2h (2 hours), 5h (5 hours), 0 (immediately)'
         required: true
@@ -91,6 +106,12 @@ jobs:
           # rpObjectId=$(az ad sp list --display-name "Azure Red Hat OpenShift RP" --query "[0].id" -o tsv)
           rpObjectId="ebeeb6e8-af58-4204-9e58-efca7922a3cc"
           
+          if [ "${{ github.event.inputs.useExistingCluster }}" == "true" ]; then
+            createCluster=false
+          else
+            createCluster=true
+          fi
+          
           echo "generate parameter file for eap-aro"
           params="rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json  \
           ${gitUserName} \
@@ -103,7 +124,10 @@ jobs:
           ${rpObjectId} \
           "Standard_D8s_v3" \
           "Standard_D4s_v3" \
-          3
+          3 \
+          ${createCluster} \
+          ${{ github.event.inputs.clusterName }} \
+          ${{ github.event.inputs.clusterRGName }}
           "
           echo $params |bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh 
 

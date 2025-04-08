@@ -126,6 +126,9 @@ param dbUser string = 'contosoDbUser'
 @description('Password for Database')
 param dbPassword string = newGuid()
 
+@description('${label.tagsLabel}')
+param tagsByResource object = {}
+
 var vmName_var = '${vmName}-${guidValue}'
 var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
 var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
@@ -162,6 +165,17 @@ var plan = {
       */(jdkVersion == 'eap8-openjdk17') ? 'rh-jboss-eap8-jdk17-rhel9' :  null
 }
 
+var _objTagsByResource = {
+  '${identifier.virtualMachines}': contains(tagsByResource, '${identifier.virtualMachines}') ? tagsByResource['${identifier.virtualMachines}'] : json('{}')
+  '${identifier.virtualMachinesExtensions}': contains(tagsByResource, '${identifier.virtualMachinesExtensions}') ? tagsByResource['${identifier.virtualMachinesExtensions}'] : json('{}')
+  '${identifier.virtualNetworks}': contains(tagsByResource, '${identifier.virtualNetworks}') ? tagsByResource['${identifier.virtualNetworks}'] : json('{}')
+  '${identifier.networkInterfaces}': contains(tagsByResource, '${identifier.networkInterfaces}') ? tagsByResource['${identifier.networkInterfaces}'] : json('{}')
+  '${identifier.networkSecurityGroups}': contains(tagsByResource, '${identifier.networkSecurityGroups}') ? tagsByResource['${identifier.networkSecurityGroups}'] : json('{}')
+  '${identifier.publicIPAddresses}': contains(tagsByResource, '${identifier.publicIPAddresses}') ? tagsByResource['${identifier.publicIPAddresses}'] : json('{}')
+  '${identifier.storageAccounts}': contains(tagsByResource, '${identifier.storageAccounts}') ? tagsByResource['${identifier.storageAccounts}'] : json('{}')
+  '${identifier.userAssignedIdentities}': contains(tagsByResource, '${identifier.userAssignedIdentities}') ? tagsByResource['${identifier.userAssignedIdentities}'] : json('{}')
+  '${identifier.deploymentScripts}': contains(tagsByResource, '${identifier.deploymentScripts}') ? tagsByResource['${identifier.deploymentScripts}'] : json('{}')
+}
 /*
 * Beginning of the offer deployment
 */
@@ -179,6 +193,7 @@ module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
   params: {
     guidValue: guidValue
     location: location
+    tagsByResource: _objTagsByResource
   }
 }
 
@@ -199,6 +214,7 @@ resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionFo
     name: storageAccountType
   }
   kind: storageAccountKind
+  tags: _objTagsByResource['${identifier.storageAccounts}']
 }
 
 resource networkSecurityGroupName 'Microsoft.Network/networkSecurityGroups@${azure.apiVersionForNetworkSecurityGroups}' = {
@@ -226,6 +242,7 @@ resource networkSecurityGroupName 'Microsoft.Network/networkSecurityGroups@${azu
       }
     ]
   }
+  tags: _objTagsByResource['${identifier.networkSecurityGroups}']
 }
 
 resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if (virtualNetworkNewOrExisting == 'new') {
@@ -247,6 +264,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.
       }
     ]
   }
+  tags: _objTagsByResource['${identifier.virtualNetworks}']
 }
 
 resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetworkInterfaces}' = {
@@ -274,6 +292,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
   dependsOn: [
     virtualNetworkName_resource
   ]
+  tags: _objTagsByResource['${identifier.networkInterfaces}']
 }
 
 module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' =  {
@@ -285,6 +304,7 @@ module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' =  {
     _artifactsLocationSasToken: artifactsLocationSasToken
     identity: obj_uamiForDeploymentScript
     plan: plan
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     nicName
@@ -336,6 +356,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionFo
     networkSecurityGroupName
     vmPublicIP
   ]
+  tags: _objTagsByResource['${identifier.virtualMachines}']
 }
 
 module baseImageSelected './modules/_pids/_empty.bicep' = {
@@ -360,6 +381,7 @@ resource vmPublicIP 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPu
       domainNameLabel: dnsNameforVM
     }
   }
+  tags: _objTagsByResource['${identifier.publicIPAddresses}']
 }
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
@@ -395,6 +417,7 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
       commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\' \'${gracefulShutdownTimeout}\''
     }
   }
+  tags: _objTagsByResource['${identifier.virtualMachinesExtensions}']
 }
 
 module updateNicPrivateIpStatic 'modules/_deployment-scripts/_dsPostDeployment.bicep' = {
@@ -407,6 +430,7 @@ module updateNicPrivateIpStatic 'modules/_deployment-scripts/_dsPostDeployment.b
     identity: obj_uamiForDeploymentScript
     resourceGroupName: resourceGroup().name
     nicName: nicName_var
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     nicName

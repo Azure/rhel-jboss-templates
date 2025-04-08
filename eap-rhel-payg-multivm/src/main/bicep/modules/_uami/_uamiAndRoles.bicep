@@ -16,6 +16,8 @@
 
 param location string
 param guidValue string = ''
+@description('${label.tagsLabel}')
+param tagsByResource object
 
 // https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
 var const_roleDefinitionIdOfContributor = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
@@ -25,6 +27,7 @@ var name_deploymentScriptUserDefinedManagedIdentity = 'jboss-eap-vm-deployment-s
 resource uamiForDeploymentScript 'Microsoft.ManagedIdentity/userAssignedIdentities@${azure.apiVersionForIdentity}' = {
   name: name_deploymentScriptUserDefinedManagedIdentity
   location: location
+  tags: tagsByResource['${identifier.userAssignedIdentities}']
 }
 
 // Assign Contributor role in subscription scope, we need the permission to get/update resource cross resource groups.

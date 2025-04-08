@@ -26,6 +26,8 @@ param sku string = 'Standard'
 param subjectName string = 'contoso.xyz'
 param utcValue string = utcNow()
 param guidValue string = ''
+@description('${label.tagsLabel}')
+param tagsByResource object
 
 var const_identityId = substring(string(identity.userAssignedIdentities), indexOf(string(identity.userAssignedIdentities), '"') + 1, lastIndexOf(string(identity.userAssignedIdentities), '"') - (indexOf(string(identity.userAssignedIdentities), '"') + 1))
 
@@ -52,9 +54,9 @@ resource keyvault 'Microsoft.KeyVault/vaults@${azure.apiVersionForKeyVault}' = {
     enableRbacAuthorization: false
     enableSoftDelete: true
   }
-  tags:{
-    'managed-by-azure-jboss': utcValue
-  }
+  tags: union(tagsByResource['${identifier.vaults}'], {
+        'managed-by-azure-jboss': utcValue
+  })
 }
 
 resource createAddCertificate 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
@@ -74,6 +76,7 @@ resource createAddCertificate 'Microsoft.Resources/deploymentScripts@${azure.api
   dependsOn: [
     keyvault
   ]
+  tags: tagsByResource['${identifier.deploymentScripts}']
 }
 
 output keyVaultName string = keyVaultName
