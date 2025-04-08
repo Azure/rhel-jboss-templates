@@ -41,6 +41,8 @@ env:
   # To get pull secret text, see Get a Red Hat pull secret.
   # https://learn.microsoft.com/en-us/azure/openshift/tutorial-create-cluster?WT.mc_id=Portal-fx#get-a-red-hat-pull-secret-optional
   pullSecret: ${{ secrets.PULL_SECRET }}
+  conRegAccUserName: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+  conRegAccPwd: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
 
   offerName: "eap-aro"
 
@@ -125,6 +127,8 @@ jobs:
           "Standard_D8s_v3" \
           "Standard_D4s_v3" \
           3 \
+          ${conRegAccUserName} \
+          ${conRegAccPwd} \
           ${createCluster} \
           ${{ github.event.inputs.clusterName }} \
           ${{ github.event.inputs.clusterRGName }}
