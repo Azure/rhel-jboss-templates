@@ -161,12 +161,26 @@ jobs:
 
       - name: Verify the deployment
         run: |
-          appEndpoint=$(az resource show -n jboss-setup -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "properties.outputs.appEndpoint" -o tsv)
+          # Get the resource name dynamically based on the pattern
+          resourceName=$(az resource list -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "[?starts_with(name, 'jboss-setup')].name" -o tsv)
+          
+          # Use the retrieved resource name to get the appEndpoint
+          appEndpoint=$(az resource show -n $resourceName -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "properties.outputs.appEndpoint" -o tsv)
+
           echo "appEndpoint: ${appEndpoint}"
-          if [[ -n "$appEndpoint" ]]; then
-            echo "Invalid value of appEndpoint: ${appEndpoint}"
+          
+          echo "Verifying appEndpoint is accessible"
+          curl --verbose ${appEndpoint}
+          CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
+          response=$(curl ${CURL_RETRY_PARMS}  --write-out '%{http_code}' --silent --output /dev/null ${appEndpoint})
+          echo "$response"
+          if [ "$response" -ne 200 ]; then
+            echo "appEndpoint is not accessible"
             exit 1
+          else
+            echo "appEndpoint is accessible"
           fi
+          exit 0
 
       # - name: Setup tmate session
       #   if: ${{ failure() }}
