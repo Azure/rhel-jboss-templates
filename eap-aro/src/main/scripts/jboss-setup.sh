@@ -252,11 +252,11 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
     # Create helm install value deployment YAML file
     echo "Creating helm install value deployment YAML file" >> $logFile
-    helmDeploymentTemplate=helm.yaml.template >> $logFile
-    helmDeploymentFile=helm.yaml >> $logFile
+    helmDeploymentTemplate=helm.yaml.template
+    helmDeploymentFile=helm.yaml
     envsubst < "$helmDeploymentTemplate" > "$helmDeploymentFile"
 
-    echo "Using helm chart to deploy JBoss EAP, APPLICATION_NAME=${APPLICATION_NAME}" >> $logFile
+    echo "Using helm chart to deploy JBoss EAP, APPLICATION_NAME=${APPLICATION_NAME}, PROJECT_NAME=${PROJECT_NAME}" >> $logFile
     helm install ${APPLICATION_NAME} -f helm.yaml jboss-eap/eap8 --namespace ${PROJECT_NAME} >> $logFile
 
     # Get the route of the application

@@ -110,16 +110,16 @@ param conRegAccUserName string = ''
 @description('Red Hat Container Registry Service account password')
 param conRegAccPwd string = ''
 
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
+
 @description('The name of the project')
-param projectName string = 'eap-demo'
+param projectName string = 'eap-demo-${guidValue}'
 
 @description('The name of the application')
-param applicationName string = 'eap-app'
+param applicationName string = 'eap-app-${guidValue}'
 
 @description('The number of application replicas to deploy')
 param appReplicas int = 2
-
-param guidValue string = take(replace(newGuid(), '-', ''), 6) 
 
 var const_clusterRGName = createCluster ? resourceGroup().name: clusterRGName
 var name_clusterName = createCluster ? 'aro-cluster' : clusterName
