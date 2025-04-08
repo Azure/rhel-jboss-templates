@@ -31,7 +31,7 @@ wait_route_available() {
     namespaceName=$2
     logFile=$3
     cnt=0
-    oc get route ${routeName} -n ${namespaceName} 2>/dev/null
+    oc get route ${routeName} -n ${namespaceName} >> $logFile 2>&1
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -41,7 +41,7 @@ wait_route_available() {
         cnt=$((cnt+1))
         echo "Unable to get the route ${routeName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc get route ${routeName} -n ${namespaceName} 2>/dev/null
+        oc get route ${routeName} -n ${namespaceName} >> $logFile 2>&1
     done
     cnt=0
     appEndpoint=$(oc get route ${routeName} -n ${namespaceName} -o=jsonpath='{.spec.host}')
@@ -64,8 +64,8 @@ wait_project_created() {
     namespaceName=$1
     logFile=$2
     cnt=0
-    oc new-project ${namespaceName} 2>/dev/null
-    oc get project ${namespaceName} 2>/dev/null
+    oc new-project ${namespaceName} >> $logFile 2>&1
+    oc get project ${namespaceName} >> $logFile 2>&1
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -75,8 +75,8 @@ wait_project_created() {
         cnt=$((cnt+1))
         echo "Unable to create the project ${namespaceName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc new-project ${namespaceName} 2>/dev/null
-        oc get project ${namespaceName} 2>/dev/null
+        oc new-project ${namespaceName} >> $logFile 2>&1
+        oc get project ${namespaceName} >> $logFile 2>&1
     done
 }
 
@@ -84,7 +84,7 @@ wait_add_view_role() {
     namespaceName=$1
     logFile=$2
     cnt=0
-    oc policy add-role-to-user view system:serviceaccount:${namespaceName}:default -n ${namespaceName} 2>/dev/null
+    oc policy add-role-to-user view system:serviceaccount:${namespaceName}:default -n ${namespaceName} >> $logFile 2>&1
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -94,7 +94,7 @@ wait_add_view_role() {
         cnt=$((cnt+1))
         echo "Unable to add view role to project ${namespaceName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc policy add-role-to-user view system:serviceaccount:${namespaceName}:default -n ${namespaceName} 2>/dev/null
+        oc policy add-role-to-user view system:serviceaccount:${namespaceName}:default -n ${namespaceName} >> $logFile 2>&1
     done
 }
 
@@ -102,7 +102,7 @@ wait_add_scc_privileged() {
     namespaceName=$1
     logFile=$2
     cnt=0
-    oc adm policy add-scc-to-user privileged -z default --namespace ${namespaceName} 2>/dev/null
+    oc adm policy add-scc-to-user privileged -z default --namespace ${namespaceName} >> $logFile 2>&1
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -112,17 +112,16 @@ wait_add_scc_privileged() {
         cnt=$((cnt+1))
         echo "Unable to add scc privileged to project default service account of ${namespaceName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc adm policy add-scc-to-user privileged -z default --namespace ${namespaceName} 2>/dev/null
+        oc adm policy add-scc-to-user privileged -z default --namespace ${namespaceName} >> $logFile 2>&1
     done
 }
-
-
 
 wait_file_based_creation() {
     deploymentFile=$1
     logFile=$2
     cnt=0
-    oc apply -f ${deploymentFile} 2>/dev/null
+    echo "Applying ${deploymentFile} ..." >> $logFile
+    oc apply -f ${deploymentFile} >> $logFile
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -132,7 +131,7 @@ wait_file_based_creation() {
         cnt=$((cnt+1))
         echo "Unable to apply file, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc apply -f ${deploymentFile} 2>/dev/null
+        oc apply -f ${deploymentFile} >> $logFile 2>&1
     done
 }
 
@@ -140,8 +139,8 @@ wait_secret_link() {
     secretName=$1
     logFile=$2
     cnt=0
-    oc secrets link default ${secretName} --for=pull 2>/dev/null
-    oc secrets link builder ${secretName} --for=pull 2>/dev/null
+    oc secrets link default ${secretName} --for=pull >> $logFile 2>&1
+    oc secrets link builder ${secretName} --for=pull >> $logFile 2>&1
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -151,8 +150,8 @@ wait_secret_link() {
         cnt=$((cnt+1))
         echo "Unable to secret link, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc secrets link default ${secretName} --for=pull 2>/dev/null
-        oc secrets link builder ${secretName} --for=pull 2>/dev/null
+        oc secrets link default ${secretName} --for=pull >> $logFile 2>&1
+        oc secrets link builder ${secretName} --for=pull >> $logFile 2>&1
     done
 }
 
@@ -228,17 +227,18 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
     # Create secret YAML file
     echo "Create secret YAML file" >> $logFile
-    secretDeploymentTemplate=red-hat-container-registry-pull-secret.yaml.template >> $logFile 
-    secretDeploymentFile=red-hat-container-registry-pull-secret.yaml >> $logFile 
+    secretDeploymentTemplate=red-hat-container-registry-pull-secret.yaml.template
+    secretDeploymentFile=red-hat-container-registry-pull-secret.yaml
     envsubst < "$secretDeploymentTemplate" > "$secretDeploymentFile"
 
     # Create secret
-    echo "Create secret" >> $logFile
+    echo "Creating secret start ..." >> $logFile
     wait_file_based_creation ${secretDeploymentFile} $logFile
     if [[ $? != 0 ]]; then
         echo "Failed to complete secret creation progress." >&2
         exit 1
     fi
+    echo "Creating secret end ..." >> $logFile
 
     # Configure the secret for project
     echo "Configure the secret for project" >> $logFile
