@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # See https://github.com/WASdev/azure.liberty.aro/issues/60
-MAX_RETRIES=299
+MAX_RETRIES=99
 
 # Define functions
 wait_login_complete() {
