@@ -244,7 +244,7 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
     # Configure the secret for project
     echo "Configure the secret for project" >> $logFile
-    wait_secret_link ${CON_REG_SECRET_NAME}-pull-secret $logFile
+    wait_secret_link pull-secret-${SUFFIX} $logFile
     if [[ $? != 0 ]]; then
         echo "Failed to configure the secret for project." >&2
         exit 1
