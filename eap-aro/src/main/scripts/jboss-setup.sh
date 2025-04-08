@@ -205,6 +205,7 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     helm repo add jboss-eap https://jbossas.github.io/eap-charts/
 
     # Create a new project for managing workload of the user
+    echo "Creating Project ${PROJECT_NAME}" >> $logFile
     wait_project_created ${PROJECT_NAME} ${logFile}
     if [[ $? -ne 0 ]]; then
         echo "Failed to create project ${PROJECT_NAME}." >> $logFile
@@ -255,14 +256,12 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     helmDeploymentFile=helm.yaml >> $logFile
     envsubst < "$helmDeploymentTemplate" > "$helmDeploymentFile"
 
-    echo "Using helm chart to deploy JBoss EAP" >> $logFile
-    helm install ${APPLICATION_NAME} -f helm.yaml jboss-eap/eap8 --namespace ${PROJECT_NAME}
+    echo "Using helm chart to deploy JBoss EAP, APPLICATION_NAME=${APPLICATION_NAME}" >> $logFile
+    helm install ${APPLICATION_NAME} -f helm.yaml jboss-eap/eap8 --namespace ${PROJECT_NAME} >> $logFile
 
     # Get the route of the application
     echo "Get the route of the application" >> $logFile
     oc expose svc/${APPLICATION_NAME}-loadbalancer
-
-
     appEndpoint=
     wait_route_available ${APPLICATION_NAME}-loadbalancer ${PROJECT_NAME} $logFile
     if [[ $? -ne 0 ]]; then
