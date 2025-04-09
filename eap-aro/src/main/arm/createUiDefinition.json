@@ -476,7 +476,7 @@
                                 "name": "appOption",
                                 "type": "Microsoft.Common.OptionsGroup",
                                 "label": "Deploy your own application or a sample application?",
-                                "defaultValue": "Sample application (https://github.com/redhat-mw-demos/eap-on-aro-helloworld)",
+                                "defaultValue": "Sample application (https://github.com/azure-javaee/eap-on-aro-helloworld)",
                                 "toolTip": "Depoly an application",
                                 "constraints": {
                                     "allowedValues": [
@@ -485,7 +485,7 @@
                                             "value": "1"
                                         },
                                         {
-                                            "label": "Sample application (https://github.com/redhat-mw-demos/eap-on-aro-helloworld)",
+                                            "label": "Sample application (https://github.com/azure-javaee/eap-on-aro-helloworld)",
                                             "value": "2"
                                         }
                                     ],
@@ -691,8 +691,8 @@
             "clusterName": "[last(split(steps('Cluster').clusterInfo.clusterSelector.id, '/'))]",
             "clusterRGName": "[last(take(split(steps('Cluster').clusterInfo.clusterSelector.id, '/'), 5))]",
             "deployApplication": "[bool(steps('Application').deployApplication)]",
-            "srcRepoUrl": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').appSrcInfo.srcRepoUrl, 'https://github.com/redhat-mw-demos/eap-on-aro-helloworld')]",
-            "srcRepoRef": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), if(equals(length(steps('Application').appSrcInfo.srcRepoRef),0), 'main', steps('Application').appSrcInfo.srcRepoRef), 'main')]",
+            "srcRepoUrl": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').appSrcInfo.srcRepoUrl, 'https://github.com/azure-javaee/eap-on-aro-helloworld')]",
+            "srcRepoRef": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), if(equals(length(steps('Application').appSrcInfo.srcRepoRef),0), 'main', steps('Application').appSrcInfo.srcRepoRef), 'eap-8.0.x')]",
             "srcRepoDir": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), if(equals(length(steps('Application').appSrcInfo.srcRepoDir),0), '/', steps('Application').appSrcInfo.srcRepoDir), '/')]",
             "conRegAccUserName": "[steps('Application').rhContainerRegistryAccountInfo.conRegAccUserName]",
             "conRegAccPwd": "[steps('Application').rhContainerRegistryAccountInfo.conRegAccPwd]",
