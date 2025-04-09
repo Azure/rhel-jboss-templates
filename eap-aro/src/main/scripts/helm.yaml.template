@@ -1,7 +1,7 @@
 build:
-  uri: https://github.com/jboss-developer/jboss-eap-quickstarts.git
-  ref: 8.0.x
-  contextDir: helloworld
+  uri: https://github.com/azure-javaee/eap-on-aro-helloworld.git
+  ref: eap-8.0.x
+  contextDir: /
   pullSecret: pull-secret-${SUFFIX}
 deploy:
   replicas: 1
