@@ -89,11 +89,11 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
       }
       {
         name: 'CON_REG_ACC_USER_NAME'
-        value: base64(conRegAccUserName)
+        value: conRegAccUserName
       }
       {
         name: 'CON_REG_ACC_PWD'
-        value: base64(conRegAccPwd)
+        value: conRegAccPwd
       }
       {
         name: 'CON_REG_SECRET_NAME'

@@ -230,7 +230,7 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     oc create secret docker-registry pull-secret-${SUFFIX} \
     	--docker-server=registry.redhat.io \
     	--docker-username=${CON_REG_ACC_USER_NAME} \
-    	--docker-password=${CON_REG_ACC_PWD} \
+    	--docker-password=${CON_REG_ACC_PWD}
 
     # Create helm install value deployment YAML file
     echo "Creating helm install value deployment YAML file" >> $logFile
