@@ -243,15 +243,15 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
     # Get the route of the application
     echo "Get the route of the application" >> $logFile
-    oc expose svc/${APPLICATION_NAME}-loadbalancer
-    appEndpoint=
-    wait_route_available ${APPLICATION_NAME}-loadbalancer ${PROJECT_NAME} $logFile
+    oc expose svc/${APPLICATION_NAME}
+    wait_route_available ${APPLICATION_NAME} ${PROJECT_NAME} $logFile
     if [[ $? -ne 0 ]]; then
         echo "The route ${APPLICATION_NAME} is not available." >> $logFile
         exit 1
     fi
-    echo "appEndpoint is ${appEndpoint}"
 fi
+
+appEndpoint=$(oc get route ${APPLICATION_NAME} -n ${PROJECT_NAME} -o=jsonpath='{.spec.host}')
 
 # Write outputs to deployment script output path
 result=$(jq -n -c --arg consoleUrl $consoleUrl '{consoleUrl: $consoleUrl}')
