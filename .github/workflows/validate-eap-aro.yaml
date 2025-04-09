@@ -177,7 +177,7 @@ jobs:
           curl --verbose ${appEndpoint}
           CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
           
-          max_retries=10
+          max_retries=20
           retry_interval=30
           attempt=1
           
