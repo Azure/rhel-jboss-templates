@@ -176,19 +176,27 @@ jobs:
           echo "Verifying appEndpoint is accessible"
           curl --verbose ${appEndpoint}
           CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
-          response=$(curl ${CURL_RETRY_PARMS}  --write-out '%{http_code}' --silent --output /dev/null ${appEndpoint})
-          echo "$response"
-          if [ "$response" -ne 200 ]; then
-            echo "appEndpoint is not accessible"
-            exit 1
-          else
-            echo "appEndpoint is accessible"
-          fi
-          exit 0
-
-      # - name: Setup tmate session
-      #   if: ${{ failure() }}
-      #   uses: mxschmitt/action-tmate@v3
+          
+          max_retries=10
+          retry_interval=30
+          attempt=1
+          
+          while [ $attempt -le $max_retries ]; do
+            response=$(curl ${CURL_RETRY_PARMS} --write-out '%{http_code}' --silent --output /dev/null ${appEndpoint})
+          echo "Attempt $attempt: HTTP response code $response"
+          
+            if [ "$response" -eq 200 ]; then
+              echo "appEndpoint is accessible"
+              exit 0
+            fi
+          
+            echo "appEndpoint is not accessible. Retrying in $retry_interval seconds..."
+            attempt=$((attempt + 1))
+            sleep $retry_interval
+          done
+          
+          echo "appEndpoint is not accessible after $max_retries attempts"
+          exit 1
 
   resources-cleanup:
     name: resources-cleanup after ${{ github.event.inputs.timeWaitBeforeDelete }}
