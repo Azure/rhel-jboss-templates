@@ -174,15 +174,13 @@ jobs:
           echo "appEndpoint: ${appEndpoint}"
           
           echo "Verifying appEndpoint is accessible"
-          curl --verbose ${appEndpoint}
-          CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
           
           max_retries=20
           retry_interval=30
           attempt=1
           
           while [ $attempt -le $max_retries ]; do
-            response=$(curl ${CURL_RETRY_PARMS} --write-out '%{http_code}' --silent --output /dev/null ${appEndpoint})
+            response=$(curl -s -o /dev/null -w "%{http_code}" ${appEndpoint}/services/javadetails)
           echo "Attempt $attempt: HTTP response code $response"
           
             if [ "$response" -eq 200 ]; then
