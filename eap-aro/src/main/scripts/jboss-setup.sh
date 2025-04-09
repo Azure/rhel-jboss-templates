@@ -227,28 +227,10 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     
     oc project ${PROJECT_NAME}
 
-    # Create secret YAML file
-    echo "Create secret YAML file" >> $logFile
-    secretDeploymentTemplate=red-hat-container-registry-pull-secret.yaml.template
-    secretDeploymentFile=red-hat-container-registry-pull-secret.yaml
-    envsubst < "$secretDeploymentTemplate" > "$secretDeploymentFile"
-
-    # Create secret
-    echo "Creating secret start ..." >> $logFile
-    wait_file_based_creation ${secretDeploymentFile} $logFile
-    if [[ $? != 0 ]]; then
-        echo "Failed to complete secret creation progress." >&2
-        exit 1
-    fi
-    echo "Creating secret end ..." >> $logFile
-
-    # Configure the secret for project
-    echo "Configure the secret for project" >> $logFile
-    wait_secret_link pull-secret-${SUFFIX} $logFile
-    if [[ $? != 0 ]]; then
-        echo "Failed to configure the secret for project." >&2
-        exit 1
-    fi
+    oc create secret docker-registry pull-secret-${SUFFIX} \
+    	--docker-server=registry.redhat.io \
+    	--docker-username=${CON_REG_ACC_USER_NAME} \
+    	--docker-password=${CON_REG_ACC_PWD} \
 
     # Create helm install value deployment YAML file
     echo "Creating helm install value deployment YAML file" >> $logFile
