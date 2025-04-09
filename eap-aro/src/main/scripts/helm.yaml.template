@@ -1,7 +1,7 @@
 build:
-  uri: https://github.com/azure-javaee/eap-on-aro-helloworld.git
-  ref: eap-8.0.x
-  contextDir: /
+  uri: ${SRC_REPO_URL}
+  ref: ${SRC_REPO_REF}
+  contextDir: ${SRC_REPO_DIR}
   pullSecret: pull-secret-${SUFFIX}
 deploy:
-  replicas: 1
+  replicas: ${APP_REPLICAS}

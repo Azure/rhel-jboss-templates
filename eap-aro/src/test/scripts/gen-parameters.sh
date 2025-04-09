@@ -44,10 +44,10 @@ cat <<EOF > ${parametersPath}
             "value": true
         },
         "srcRepoUrl": {
-            "value": "https://github.com/redhat-mw-demos/eap-on-aro-helloworld"
+            "value": "https://github.com/azure-javaee/eap-on-aro-helloworld.git"
         },
         "srcRepoRef": {
-            "value": "main"
+            "value": "eap-8.0.x"
         },
         "srcRepoDir": {
             "value": "/"
