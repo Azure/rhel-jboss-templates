@@ -180,14 +180,8 @@ jobs:
           attempt=1
           
           while [ $attempt -le $max_retries ]; do
-            response=$(curl -s -o /dev/null -w "%{http_code}" \
-              -H "Cache-Control: no-cache, no-store, must-revalidate" \
-              -H "Pragma: no-cache" \
-              -H "Expires: 0" \
-              --max-time 30 \
-              --connect-timeout 10 \
-              ${appEndpoint}/services/javadetails)
-            echo "Attempt $attempt: HTTP response code $response"
+            response=$(curl -s -o /dev/null -w "%{http_code}" ${appEndpoint}/services/javadetails)
+            echo "Response code: $response, Attempt: $attempt"
           
             if [ "$response" -eq 200 ]; then
               echo "appEndpoint is accessible"
@@ -197,6 +191,7 @@ jobs:
             echo "appEndpoint is not accessible. Retrying in $retry_interval seconds..."
             attempt=$((attempt + 1))
             sleep $retry_interval
+            unset response
           done
           
           echo "appEndpoint is not accessible after $max_retries attempts"
