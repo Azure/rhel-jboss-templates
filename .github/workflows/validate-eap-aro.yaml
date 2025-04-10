@@ -114,6 +114,19 @@ jobs:
             createCluster=true
           fi
           
+          # if ${{ github.event.inputs.clusterName }} is empty, then set it to the default name
+          if [ -z "${{ github.event.inputs.clusterName }}" ]; then
+              clusterName="aro-cluster-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}"
+          else
+              clusterName="${{ github.event.inputs.clusterName }}"
+          fi
+          # if ${{ github.event.inputs.clusterRGName }} is empty, then set it to the default name
+          if [ -z "${{ github.event.inputs.clusterRGName }}" ]; then
+              clusterRGName="aro-rg-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}"
+          else
+              clusterRGName="${{ github.event.inputs.clusterRGName }}"
+          fi
+          
           echo "generate parameter file for eap-aro"
           params="rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json  \
           ${gitUserName} \
@@ -130,8 +143,8 @@ jobs:
           ${conRegAccUserName} \
           ${conRegAccPwd} \
           ${createCluster} \
-          ${{ github.event.inputs.clusterName }} \
-          ${{ github.event.inputs.clusterRGName }}
+          ${clusterName} \
+          ${clusterRGName}
           "
           echo $params |bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh 
 
