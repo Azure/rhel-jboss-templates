@@ -250,7 +250,7 @@ resource clusterName_resource 'Microsoft.RedHatOpenShift/openShiftClusters@${azu
   tags: tags
   properties: {
     clusterProfile: {
-      domain: '${domain}${const_suffix}'
+      domain: '${domain}${guidValue}'
       resourceGroupId: subscriptionResourceId('Microsoft.Resources/resourceGroups', 'MC_${resourceGroup().name}_${clusterName}_${location}')
       pullSecret: pullSecret
       fipsValidatedModules: 'Disabled'
