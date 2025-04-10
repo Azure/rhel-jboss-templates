@@ -180,8 +180,8 @@ jobs:
           attempt=1
           
           while [ $attempt -le $max_retries ]; do
-            response=$(curl -s -o /dev/null -w "%{http_code}" ${appEndpoint}/services/javadetails)
-          echo "Attempt $attempt: HTTP response code $response"
+            response=$(curl -s -o /dev/null -w "%{http_code}" -H "Cache-Control: no-cache" ${appEndpoint}/services/javadetails)
+            echo "Attempt $attempt: HTTP response code $response"
           
             if [ "$response" -eq 200 ]; then
               echo "appEndpoint is accessible"
