@@ -180,9 +180,12 @@ jobs:
 
       - name: Verify the deployment
         run: |
-          appEndpoint=$(az resource show -n jboss-setup -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "properties.outputs.appEndpoint" -o tsv)
-          echo "appEndpoint: ${appEndpoint}"
+          resourceName=$(az resource list -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "[?starts_with(name, 'jboss-setup')].name" -o tsv)
           
+          # Use the retrieved resource name to get the appEndpoint
+          appEndpoint=$(az resource show -n $resourceName -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "properties.outputs.appEndpoint" -o tsv)
+
+          echo "appEndpoint: ${appEndpoint}"
           echo "Verifying appEndpoint is accessible"
           
           max_retries=20
