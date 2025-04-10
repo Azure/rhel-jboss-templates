@@ -109,8 +109,10 @@ jobs:
           rpObjectId="ebeeb6e8-af58-4204-9e58-efca7922a3cc"
           
           if [ "${{ github.event.inputs.useExistingCluster }}" == "true" ]; then
+            echo "Using existing ARO cluster"
             createCluster=false
           else
+            echo "Creating new ARO cluster"
             createCluster=true
           fi
           
