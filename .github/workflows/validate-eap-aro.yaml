@@ -116,13 +116,13 @@ jobs:
           
           # if ${{ github.event.inputs.clusterName }} is empty, then set it to the default name
           if [ -z "${{ github.event.inputs.clusterName }}" ]; then
-              clusterName="aro-cluster-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}"
+              clusterName="aro-cluster-${{ github.repository_owner }}"
           else
               clusterName="${{ github.event.inputs.clusterName }}"
           fi
           # if ${{ github.event.inputs.clusterRGName }} is empty, then set it to the default name
           if [ -z "${{ github.event.inputs.clusterRGName }}" ]; then
-              clusterRGName="aro-rg-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}"
+              clusterRGName="aro-rg-${{ github.repository_owner }}"
           else
               clusterRGName="${{ github.event.inputs.clusterRGName }}"
           fi
