@@ -245,13 +245,13 @@ resource assignRoleRpSp 'Microsoft.Authorization/roleAssignments@${azure.apiVers
 }
 
 resource clusterName_resource 'Microsoft.RedHatOpenShift/openShiftClusters@${azure.apiVersionForOpenShiftClusters}' = if(createCluster) {
-  name: clusterName
+  name: const_clusterName
   location: location
   tags: tags
   properties: {
     clusterProfile: {
       domain: '${domain}${guidValue}'
-      resourceGroupId: subscriptionResourceId('Microsoft.Resources/resourceGroups', 'MC_${resourceGroup().name}_${clusterName}_${location}')
+      resourceGroupId: subscriptionResourceId('Microsoft.Resources/resourceGroups', 'MC_${resourceGroup().name}_${const_clusterName}_${location}')
       pullSecret: pullSecret
       fipsValidatedModules: 'Disabled'
     }
