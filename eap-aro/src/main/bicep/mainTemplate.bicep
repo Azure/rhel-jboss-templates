@@ -289,8 +289,8 @@ resource clusterName_resource 'Microsoft.RedHatOpenShift/openShiftClusters@${azu
     ]
   }
   dependsOn: [
-    assignRoleSpApp
-    assignRoleSpRp
+    assignRoleAppSp
+    assignRoleRpSp
     jbossPreflightDeployment
   ]
 }
