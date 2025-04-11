@@ -476,7 +476,7 @@
                                 "name": "appOption",
                                 "type": "Microsoft.Common.OptionsGroup",
                                 "label": "Deploy your own application or a sample application?",
-                                "defaultValue": "Sample application (https://github.com/redhat-mw-demos/eap-on-aro-helloworld)",
+                                "defaultValue": "Sample application (https://github.com/azure-javaee/eap-on-aro-helloworld)",
                                 "toolTip": "Depoly an application",
                                 "constraints": {
                                     "allowedValues": [
@@ -485,7 +485,7 @@
                                             "value": "1"
                                         },
                                         {
-                                            "label": "Sample application (https://github.com/redhat-mw-demos/eap-on-aro-helloworld)",
+                                            "label": "Sample application (https://github.com/azure-javaee/eap-on-aro-helloworld)",
                                             "value": "2"
                                         }
                                     ],
@@ -523,7 +523,7 @@
                                 "constraints": {
                                     "required": false,
                                     "regex": "[\\w\\d\\W]{1,250}",
-                                    "validationMessage": "The value must be a valid source code repository reference. For example, 7.4.x"
+                                    "validationMessage": "The value must be a valid source code repository reference."
                                 },
                                 "visible": "[equals(steps('Application').appSrcInfo.appOption, '1')]"
                             },
@@ -600,7 +600,7 @@
                                 "type": "Microsoft.Common.InfoBox",
                                 "options": {
                                     "icon": "Warning",
-                                    "text": "This offer uses the <b>eap74-openjdk11-image-stream</b> and related templates. If you need another image stream,<br>deploy the application separately."
+                                    "text": "This offer uses the <b>jboss-eap-8-openshift-image</b> and related templates. If you need another image stream,<br>deploy the application separately."
                                 }
                             }
                         ],
@@ -675,6 +675,24 @@
                         "visible": "[and(bool(steps('Application').deployApplication), equals(steps('Application').appSrcInfo.appOption, '1'))]"
                     }
                 ]
+            },
+            {
+                "name": "tags",
+                "label": "Tags",
+                "elements": [
+                    {
+                        "name": "tagsByResource",
+                        "type": "Microsoft.Common.TagsByResource",
+                        "resources": [
+                            "${identifier.openShiftClusters}",
+                            "${identifier.roleAssignments}",
+                            "${identifier.virtualNetworks}",
+                            "${identifier.userAssignedIdentities}",
+                            "${identifier.deploymentScripts}"
+                        ],
+                        "toolTip": "Tags help you organize your resources and categorize them for billing or management purposes. You can apply tags to resources deployed by the offer."
+                    }
+                ]
             }
         ],
         "outputs": {
@@ -691,14 +709,15 @@
             "clusterName": "[last(split(steps('Cluster').clusterInfo.clusterSelector.id, '/'))]",
             "clusterRGName": "[last(take(split(steps('Cluster').clusterInfo.clusterSelector.id, '/'), 5))]",
             "deployApplication": "[bool(steps('Application').deployApplication)]",
-            "srcRepoUrl": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').appSrcInfo.srcRepoUrl, 'https://github.com/redhat-mw-demos/eap-on-aro-helloworld')]",
-            "srcRepoRef": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), if(equals(length(steps('Application').appSrcInfo.srcRepoRef),0), 'main', steps('Application').appSrcInfo.srcRepoRef), 'main')]",
+            "srcRepoUrl": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').appSrcInfo.srcRepoUrl, 'https://github.com/azure-javaee/eap-on-aro-helloworld')]",
+            "srcRepoRef": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), if(equals(length(steps('Application').appSrcInfo.srcRepoRef),0), 'main', steps('Application').appSrcInfo.srcRepoRef), 'eap-8.0.x')]",
             "srcRepoDir": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), if(equals(length(steps('Application').appSrcInfo.srcRepoDir),0), '/', steps('Application').appSrcInfo.srcRepoDir), '/')]",
             "conRegAccUserName": "[steps('Application').rhContainerRegistryAccountInfo.conRegAccUserName]",
             "conRegAccPwd": "[steps('Application').rhContainerRegistryAccountInfo.conRegAccPwd]",
             "appReplicas": "[int(steps('Application').appReplicas)]",
             "projectName": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').applicationOptional.projectName, 'sample-jboss-eap')]",
-            "applicationName": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').applicationOptional.applicationName, 'helloworld')]"
+            "applicationName": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').applicationOptional.applicationName, 'helloworld')]",
+            "tagsByResource": "[steps('tags').tagsByResource]"
         }
     }
 }
