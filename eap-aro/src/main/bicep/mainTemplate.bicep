@@ -122,8 +122,8 @@ param applicationName string = 'eap-app-${guidValue}'
 param appReplicas int = 2
 
 var const_clusterRGName = createCluster ? resourceGroup().name: clusterRGName
-var const_clusterName = createCluster ? 'aro-cluster' : clusterName
-var const_identityName = 'uami${guidValue}'
+var const_clusterName = createCluster ? 'aro-cluster-${guidValue}' : clusterName
+var const_identityName = 'uami-${guidValue}'
 var const_contribRole = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
 var const_roleAssignmentName = guid(format('{0}{1}Role assignment in group{0}', resourceGroup().id, ref_identityId))
 var ref_identityId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', const_identityName)
