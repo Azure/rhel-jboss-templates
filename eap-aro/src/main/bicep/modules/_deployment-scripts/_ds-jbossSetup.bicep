@@ -45,11 +45,13 @@ param applicationName string = 'eap-app'
 @description('The number of application replicas to deploy')
 param appReplicas int = 2
 
+@secure()
+@description('The pull secret to use for the deployment')
+param pullSecret string = ''
+
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jboss-setup.sh'
-var const_eapOperatorSubscriptionYaml = 'eap-operator-sub.yaml'
-var const_rhContainerRegistryPullSecretYaml = 'red-hat-container-registry-pull-secret.yaml.template'
-var const_appDeploymentYaml = 'app-deployment.yaml.template'
+var const_helmYaml = 'helm.yaml.template'
 var const_azcliVersion = '2.53.0'
 
 resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
@@ -86,11 +88,11 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
       }
       {
         name: 'CON_REG_ACC_USER_NAME'
-        value: base64(conRegAccUserName)
+        value: conRegAccUserName
       }
       {
         name: 'CON_REG_ACC_PWD'
-        value: base64(conRegAccPwd)
+        value: conRegAccPwd
       }
       {
         name: 'CON_REG_SECRET_NAME'
@@ -108,12 +110,14 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
         name: 'APP_REPLICAS'
         value: string(appReplicas)
       }
+      {
+        name: 'PULL_SECRET'
+        value: base64(pullSecret)
+      }
     ]
     primaryScriptUri: uri(const_scriptLocation, '${const_setupJBossScript}${artifactsLocationSasToken}')
     supportingScriptUris: [
-      uri(const_scriptLocation, '${const_eapOperatorSubscriptionYaml}${artifactsLocationSasToken}')
-      uri(const_scriptLocation, '${const_rhContainerRegistryPullSecretYaml}${artifactsLocationSasToken}')
-      uri(const_scriptLocation, '${const_appDeploymentYaml}${artifactsLocationSasToken}')
+      uri(const_scriptLocation, '${const_helmYaml}${artifactsLocationSasToken}')
     ]
     cleanupPreference:'OnSuccess'
     retentionInterval: 'P1D'
