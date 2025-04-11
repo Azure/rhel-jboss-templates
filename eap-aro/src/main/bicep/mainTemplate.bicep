@@ -125,8 +125,8 @@ var const_clusterRGName = createCluster ? resourceGroup().name: clusterRGName
 var const_clusterName = createCluster ? 'aro-cluster-${guidValue}' : clusterName
 var const_identityName = 'uami-${guidValue}'
 var const_contribRole = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
-var const_roleAssignmentName = guid(format('{0}{1}Role assignment in group{0}', resourceGroup().id, ref_identityId))
-var ref_identityId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', const_identityName)
+var name_roleAssignmentName = 'roleassignment-${guidValue}'
+var name_jbossEAPDsName = 'jbosseap-setup-${guidValue}'
 var const_cmdToGetKubeadminCredentials = 'az aro list-credentials -g ${const_clusterRGName} -n ${const_clusterName}'
 var const_cmdToGetKubeadminUsername = '${const_cmdToGetKubeadminCredentials} --query kubeadminUsername -o tsv'
 var const_cmdToGetKubeadminPassword = '${const_cmdToGetKubeadminCredentials} --query kubeadminPassword -o tsv'
@@ -156,7 +156,7 @@ resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@${azure.apiVersi
 
 // Assign Contributor role in subscription scope since we need the permission to get/update resource cross resource group.
 module deploymentScriptUAMICotibutorRoleAssignment 'modules/_rolesAssignment/_roleAssignmentinSubscription.bicep' = {
-  name: const_roleAssignmentName
+  name: name_roleAssignmentName
   scope: subscription()
   dependsOn:[
     uami_resource
@@ -329,7 +329,7 @@ module jbossPreflightDeployment 'modules/_deployment-scripts/_ds-preflight.bicep
 }
 
 module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
-  name: 'jboss-setup-${guidValue}'
+  name: name_jbossEAPDsName
   params: {
     artifactsLocation: artifactsLocation
     artifactsLocationSasToken: artifactsLocationSasToken
