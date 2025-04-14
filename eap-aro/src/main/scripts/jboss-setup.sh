@@ -157,7 +157,7 @@ wait_secret_link() {
 }
 
 # Define variables
-logFile=/var/log/eap-aro-deployment.log
+logFile=/var/log/eap-aro-deployment-${SUFFIX}.log
 
 # Install utilities
 apk update
