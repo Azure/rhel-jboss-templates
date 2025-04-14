@@ -23,6 +23,9 @@ param deployApplication bool = true
 @description('URL to the repository containing the application source code.')
 param srcRepoUrl string = ''
 
+@description('Flag indicating whether to create a new cluster or not')
+param createCluster bool = true
+
 @description('The Git repository reference to use for the source code. This can be a Git branch or tag reference.')
 param srcRepoRef string = ''
 
@@ -64,6 +67,10 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
   properties: {
     azCliVersion: const_azcliVersion
     environmentVariables: [
+      {
+        name: 'CREATE_CLUSTER'
+        value: createCluster
+      }
       {
         name: 'RESOURCE_GROUP'
         value: clusterRGName
