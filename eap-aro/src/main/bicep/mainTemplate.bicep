@@ -352,6 +352,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
       }
     }
     deployApplication: deployApplication
+    createCluster: createCluster
     srcRepoUrl: srcRepoUrl
     srcRepoRef: srcRepoRef
     srcRepoDir: srcRepoDir
