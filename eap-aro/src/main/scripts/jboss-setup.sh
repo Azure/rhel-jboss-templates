@@ -164,6 +164,10 @@ apk update
 apk add gettext
 apk add apache2-utils
 
+# wait 10 minuts for the cluster to be ready
+echo "Waiting for 10 minutes for the new created cluster to be ready" >> $logFile
+sleep 600
+
 # Check if /usr/lib/libresolv.so.2 exists that is required by the OpenShift CLI
 if [ ! -f /usr/lib/libresolv.so.2 ]; then
     echo "Install gcompat package which provides /usr/lib/libresolv.so.2"
