@@ -156,6 +156,17 @@ wait_secret_link() {
     done
 }
 
+install_and_config_helm() {
+    # Install the Helm CLI
+    echo "Install the Helm CLI" >> $logFile
+    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    chmod 700 get_helm.sh
+    ./get_helm.sh
+
+    # Add the JBoss EAP Helm chart repository
+    helm repo add jboss-eap https://jbossas.github.io/eap-charts/
+}
+
 # Define variables
 logFile=/var/log/eap-aro-deployment-${SUFFIX}.log
 
@@ -200,15 +211,9 @@ if [[ $? -ne 0 ]]; then
   exit 1
 fi
 
-if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
-    # Install the Helm CLI
-    echo "Install the Helm CLI" >> $logFile
-    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-    chmod 700 get_helm.sh
-    ./get_helm.sh
+install_and_config_helm
 
-    # Add the JBoss EAP Helm chart repository
-    helm repo add jboss-eap https://jbossas.github.io/eap-charts/
+if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
     # Create a new project for managing workload of the user
     echo "Creating Project ${PROJECT_NAME}" >> $logFile
