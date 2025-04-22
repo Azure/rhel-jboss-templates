@@ -81,6 +81,27 @@ wait_project_created() {
     done
 }
 
+wait_resource_applied() {
+    resourceYamlName=$1
+    logFile=$2
+
+    cnt=0
+    oc apply -f $resourceYamlName >> $logFile
+    while [ $? -ne 0 ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile
+            return 1
+        fi
+        cnt=$((cnt+1))
+
+        echo "Failed to apply the resource YAML file ${resourceYamlName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        sleep 5
+        oc apply -f $resourceYamlName >> $logFile
+    done
+    echo "Successfully applied the resource YAML file ${resourceYamlName}"
+}
+
 wait_add_view_role() {
     namespaceName=$1
     logFile=$2
@@ -212,6 +233,8 @@ if [[ $? -ne 0 ]]; then
 fi
 
 install_and_config_helm
+
+wait_resource_applied redhat-catalog.yaml $logFile
 
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
