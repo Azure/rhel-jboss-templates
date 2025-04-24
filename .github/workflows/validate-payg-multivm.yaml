@@ -300,7 +300,7 @@ jobs:
                 ${{ env.gracefulShutdownTimeout }}"
 
             - name: Archive parameters-test-domain.json
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
               if: success()
               with:
                 name: parameters-test-domain
@@ -546,7 +546,7 @@ jobs:
                 ${{ env.gracefulShutdownTimeout }}"
 
             - name: Archive parameters-test-standalone.json
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
               if: success()
               with:
                 name: parameters-test-standalone
