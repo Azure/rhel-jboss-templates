@@ -1,3 +1,5 @@
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
+
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
 param artifactsLocation string = deployment().properties.templateLink.uri
 
@@ -58,12 +60,6 @@ param clusterName string = 'aro-cluster'
 @description('Name for the resource group of the existing cluster')
 param clusterRGName string = ''
 
-@description('Tags for resources')
-param tags object = {
-  env: 'Dev'
-  dept: 'Ops'
-}
-
 @description('Api Server Visibility')
 @allowed([
   'Private'
@@ -111,27 +107,35 @@ param conRegAccUserName string = ''
 param conRegAccPwd string = ''
 
 @description('The name of the project')
-param projectName string = 'eap-demo'
+param projectName string = 'eap-demo-${guidValue}'
 
 @description('The name of the application')
-param applicationName string = 'eap-app'
+param applicationName string = 'eap-app-${guidValue}'
 
 @description('The number of application replicas to deploy')
 param appReplicas int = 2
 
-param guidValue string = take(replace(newGuid(), '-', ''), 6) 
+@description('${label.tagsLabel}')
+param tagsByResource object = {}
 
 var const_clusterRGName = createCluster ? resourceGroup().name: clusterRGName
-var name_clusterName = createCluster ? 'aro-cluster' : clusterName
-var const_suffix = take(replace(guidValue, '-', ''), 6)
-var const_identityName = 'uami${const_suffix}'
+var const_clusterName = createCluster ? 'aro-cluster' : clusterName
+var const_identityName = 'uami${guidValue}'
 var const_contribRole = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
-var name_roleAssignmentName = guid(format('{0}{1}Role assignment in group{0}', resourceGroup().id, ref_identityId))
+var const_roleAssignmentName = guid(format('{0}{1}Role assignment in group{0}', resourceGroup().id, ref_identityId))
 var ref_identityId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', const_identityName)
-var const_cmdToGetKubeadminCredentials = 'az aro list-credentials -g ${const_clusterRGName} -n ${name_clusterName}'
+var const_cmdToGetKubeadminCredentials = 'az aro list-credentials -g ${const_clusterRGName} -n ${const_clusterName}'
 var const_cmdToGetKubeadminUsername = '${const_cmdToGetKubeadminCredentials} --query kubeadminUsername -o tsv'
 var const_cmdToGetKubeadminPassword = '${const_cmdToGetKubeadminCredentials} --query kubeadminPassword -o tsv'
-var const_cmdToGetApiServer = 'az aro show -g ${const_clusterRGName} -n ${name_clusterName} --query apiserverProfile.url -o tsv'
+var const_cmdToGetApiServer = 'az aro show -g ${const_clusterRGName} -n ${const_clusterName} --query apiserverProfile.url -o tsv'
+
+var _objTagsByResource = {
+  '${identifier.openShiftClusters}': contains(tagsByResource, '${identifier.openShiftClusters}') ? tagsByResource['${identifier.openShiftClusters}'] : json('{}')
+  '${identifier.roleAssignments}': contains(tagsByResource, '${identifier.roleAssignments}') ? tagsByResource['${identifier.roleAssignments}'] : json('{}')
+  '${identifier.virtualNetworks}': contains(tagsByResource, '${identifier.virtualNetworks}') ? tagsByResource['${identifier.virtualNetworks}'] : json('{}')
+  '${identifier.userAssignedIdentities}': contains(tagsByResource, '${identifier.userAssignedIdentities}') ? tagsByResource['${identifier.userAssignedIdentities}'] : json('{}')
+  '${identifier.deploymentScripts}': contains(tagsByResource, '${identifier.deploymentScripts}') ? tagsByResource['${identifier.deploymentScripts}'] : json('{}')
+}
 
 /*
 * Beginning of the offer deployment
@@ -148,6 +152,7 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
 resource uami_resource 'Microsoft.ManagedIdentity/userAssignedIdentities@${azure.apiVersionForIdentity}' = {
   name: const_identityName
   location: location
+  tags: _objTagsByResource['${identifier.userAssignedIdentities}']
 }
 
 resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@${azure.apiVersionForIdentity}' existing = {
@@ -157,7 +162,7 @@ resource uami 'Microsoft.ManagedIdentity/userAssignedIdentities@${azure.apiVersi
 
 // Assign Contributor role in subscription scope since we need the permission to get/update resource cross resource group.
 module deploymentScriptUAMICotibutorRoleAssignment 'modules/_rolesAssignment/_roleAssignmentinSubscription.bicep' = {
-  name: name_roleAssignmentName
+  name: const_roleAssignmentName
   scope: subscription()
   dependsOn:[
     uami_resource
@@ -166,13 +171,14 @@ module deploymentScriptUAMICotibutorRoleAssignment 'modules/_rolesAssignment/_ro
   params: {
     roleDefinitionId: const_contribRole
     principalId: uami.properties.principalId
+    tagsByResource: _objTagsByResource
   }
 }
 
 resource clusterVnetName_resource 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' = if(createCluster) {
   name: clusterVnetName
   location: location
-  tags: tags
+  tags: _objTagsByResource['${identifier.virtualNetworks}']
   properties: {
     addressSpace: {
       addressPrefixes: [
@@ -218,6 +224,7 @@ resource roleResourceDefinition 'Microsoft.Authorization/roleDefinitions@${azure
 
 resource assignRoleAppSp 'Microsoft.Authorization/roleAssignments@${azure.apiVersionForRoleAssignment}' = if(createCluster) {
   name: guid(resourceGroup().id, deployment().name, vnetRef.id, 'assignRoleAppSp')
+  tags: _objTagsByResource['${identifier.roleAssignments}']
   scope: vnetRef
   properties: {
     principalId: aadObjectId
@@ -233,6 +240,7 @@ resource assignRoleAppSp 'Microsoft.Authorization/roleAssignments@${azure.apiVer
 
 resource assignRoleRpSp 'Microsoft.Authorization/roleAssignments@${azure.apiVersionForRoleAssignment}' = if(createCluster) {
   name: guid(resourceGroup().id, deployment().name, vnetRef.id, 'assignRoleRpSp')
+  tags: _objTagsByResource['${identifier.roleAssignments}']
   scope: vnetRef
   properties: {
     principalId: rpObjectId
@@ -246,13 +254,13 @@ resource assignRoleRpSp 'Microsoft.Authorization/roleAssignments@${azure.apiVers
 }
 
 resource clusterName_resource 'Microsoft.RedHatOpenShift/openShiftClusters@${azure.apiVersionForOpenShiftClusters}' = if(createCluster) {
-  name: clusterName
+  name: const_clusterName
   location: location
-  tags: tags
+  tags: _objTagsByResource['${identifier.openShiftClusters}']
   properties: {
     clusterProfile: {
-      domain: '${domain}${const_suffix}'
-      resourceGroupId: subscriptionResourceId('Microsoft.Resources/resourceGroups', 'MC_${resourceGroup().name}_${clusterName}_${location}')
+      domain: '${domain}${guidValue}'
+      resourceGroupId: subscriptionResourceId('Microsoft.Resources/resourceGroups', 'MC_${resourceGroup().name}_${const_clusterName}_${location}')
       pullSecret: pullSecret
       fipsValidatedModules: 'Disabled'
     }
@@ -322,6 +330,7 @@ module jbossPreflightDeployment 'modules/_deployment-scripts/_ds-preflight.bicep
     createCluster: createCluster
     aadClientId: aadClientId
     aadObjectId: aadObjectId
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
       deploymentScriptUAMICotibutorRoleAssignment
@@ -334,7 +343,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
     artifactsLocation: artifactsLocation
     artifactsLocationSasToken: artifactsLocationSasToken
     location: location
-    clusterName: name_clusterName
+    clusterName: const_clusterName
     clusterRGName: const_clusterRGName 
     identity: {
       type: 'UserAssigned'
@@ -343,6 +352,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
       }
     }
     deployApplication: deployApplication
+    createCluster: createCluster
     srcRepoUrl: srcRepoUrl
     srcRepoRef: srcRepoRef
     srcRepoDir: srcRepoDir
@@ -351,6 +361,8 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossSetup.bicep' = {
     appReplicas: appReplicas
     projectName: projectName
     applicationName: applicationName
+    tagsByResource: _objTagsByResource
+    pullSecret: pullSecret
   }
   dependsOn: [
     clusterName_resource
