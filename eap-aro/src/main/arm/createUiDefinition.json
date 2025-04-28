@@ -523,7 +523,7 @@
                                 "constraints": {
                                     "required": false,
                                     "regex": "[\\w\\d\\W]{1,250}",
-                                    "validationMessage": "The value must be a valid source code repository reference. For example, 7.4.x"
+                                    "validationMessage": "The value must be a valid source code repository reference."
                                 },
                                 "visible": "[equals(steps('Application').appSrcInfo.appOption, '1')]"
                             },
@@ -600,7 +600,7 @@
                                 "type": "Microsoft.Common.InfoBox",
                                 "options": {
                                     "icon": "Warning",
-                                    "text": "This offer uses the <b>eap74-openjdk11-image-stream</b> and related templates. If you need another image stream,<br>deploy the application separately."
+                                    "text": "This offer uses the <b>jboss-eap-8-openshift-image</b> and related templates. If you need another image stream,<br>deploy the application separately."
                                 }
                             }
                         ],
