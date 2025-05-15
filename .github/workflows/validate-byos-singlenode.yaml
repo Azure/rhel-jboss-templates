@@ -211,8 +211,7 @@ jobs:
                 echo "create firewall rule"
                 az postgres flexible-server db create --resource-group ${{ env.singleResourceGroup }} \
                                                       --server-name ${{ env.dbInstanceName }} \
-                                                      --database-name testdb \
-                                                      --yes
+                                                      --database-name testdb
             - name: Prepare parameter file
               run: |
                 enableDB=false
