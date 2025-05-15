@@ -276,7 +276,7 @@ jobs:
                   enableDB=true
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlHost }}:5432/testdb"
-                  dbUser=testuser@${{ env.dbInstanceName }}
+                  dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
                 fi
                 echo "enableDB=${enableDB}" >> "$GITHUB_ENV"
