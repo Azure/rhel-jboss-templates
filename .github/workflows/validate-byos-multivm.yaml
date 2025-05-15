@@ -13,7 +13,7 @@ on:
         - mssqlserver
         - oracle
         - mysql(flexible)
-        - postgresql(single)
+        - postgresql(flexible)
         - none
       jdkVersion:
         description: 'jdkVersion'
@@ -180,7 +180,7 @@ jobs:
                 EOF
             - name: Deploy an instance of Azure Database for PostgreSQL
               id: deploy-postgresql
-              if: ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}
+              if: ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}
               run: |
                 az postgres flexible-server create \
                   --resource-group ${{ env.dependencyResourceGroup}} --name ${{ env.dbInstanceName }} \
@@ -268,7 +268,7 @@ jobs:
                   fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
+                elif ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}; then
                   enableDB=true
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlHost }}:5432/testdb"
@@ -523,7 +523,7 @@ jobs:
                   fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
+                elif ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}; then
                   enableDB=true
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlHost }}:5432/testdb"
