@@ -191,8 +191,12 @@ jobs:
                 host=$(az postgres flexible-server show \
                   --resource-group ${{ env.dependencyResourceGroup}} --name ${{ env.dbInstanceName }} \
                   --query "fullyQualifiedDomainName" -o tsv)
-                az postgres flexible-server db create --resource-group ${{ env.dependencyResourceGroup}} --server-name ${{ env.dbInstanceName }} --database-name testdb
+                az postgres flexible-server db create --resource-group ${{ env.dependencyResourceGroup}} \
+                                                      --server-name ${{ env.dbInstanceName }} \
+                                                      --database-name testdb
+                
                 echo "postgresqlHost=${host}" >> "$GITHUB_OUTPUT"
+
     deploy-multivm-domain:
         needs: 
           - preflight
