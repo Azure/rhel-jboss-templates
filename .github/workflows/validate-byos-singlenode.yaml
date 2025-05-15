@@ -208,7 +208,8 @@ jobs:
                 echo "postgresqlHost=${host}" >> "$GITHUB_ENV"
                 az postgres flexible-server db create --resource-group ${{ env.singleResourceGroup }} \
                                                       --server-name ${{ env.dbInstanceName }} \
-                                                      --database-name testdb
+                                                      --database-name testdb \
+                                                      --yes
             - name: Prepare parameter file
               run: |
                 enableDB=false
