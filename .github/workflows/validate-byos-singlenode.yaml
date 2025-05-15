@@ -196,7 +196,7 @@ jobs:
                 az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
                 echo "create postgresql server"
                 az postgres flexible-server create \
-                  --resource-group ${{ env.singleResourceGroup }} \ 
+                  --resource-group ${{ env.singleResourceGroup }} \
                   --name ${{ env.dbInstanceName }} \
                   --admin-user testuser \
                   --admin-password ${{ env.dbPassword }} \
