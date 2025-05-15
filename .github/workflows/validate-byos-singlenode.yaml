@@ -194,18 +194,21 @@ jobs:
               if: ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}
               run: |
                 az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
+                echo "create postgresql server"
                 az postgres flexible-server create \
-                  --resource-group ${{ env.singleResourceGroup }} 
+                  --resource-group ${{ env.singleResourceGroup }} \ 
                   --name ${{ env.dbInstanceName }} \
                   --admin-user testuser 
                   --admin-password ${{ env.dbPassword }} \
                   --public-access 0.0.0.0 \
                   --location ${{ env.location }} \
                   --yes
+                echo "get host name"
                 host=$(az postgres flexible-server show \
                   --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --query "fullyQualifiedDomainName" -o tsv)
                 echo "postgresqlHost=${host}" >> "$GITHUB_ENV"
+                echo "create firewall rule"
                 az postgres flexible-server db create --resource-group ${{ env.singleResourceGroup }} \
                                                       --server-name ${{ env.dbInstanceName }} \
                                                       --database-name testdb \
