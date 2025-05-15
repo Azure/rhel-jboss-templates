@@ -203,8 +203,8 @@ jobs:
                   --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
                   --query "fullyQualifiedDomainName" -o tsv)
                 az postgres flexible-server db create --resource-group ${{ env.singleResourceGroup }} \
-                                                      --server ${{ env.dbInstanceName }} \
-                                                      --name testdb
+                                                      --server-name ${{ env.dbInstanceName }} \
+                                                      --database-name testdb
                 
                 echo "postgresqlHost=${host}" >> "$GITHUB_ENV"
 
