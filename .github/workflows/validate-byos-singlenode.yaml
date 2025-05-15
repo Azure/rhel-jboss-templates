@@ -198,7 +198,7 @@ jobs:
                 az postgres flexible-server create \
                   --resource-group ${{ env.singleResourceGroup }} \ 
                   --name ${{ env.dbInstanceName }} \
-                  --admin-user testuser 
+                  --admin-user testuser \
                   --admin-password ${{ env.dbPassword }} \
                   --public-access 0.0.0.0 \
                   --location ${{ env.location }} \
