@@ -13,7 +13,7 @@ on:
         - mssqlserver
         - oracle
         - mysql(flexible)
-        - postgresql(single)
+        - postgresql(flexible)
         - none
       jdkVersion:
         description: 'jdkVersion'
@@ -188,7 +188,7 @@ jobs:
                 FLUSH PRIVILEGES;
                 EOF
             - name: Deploy an instance of Azure Database for PostgreSQL
-              if: ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}
+              if: ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}
               run: |
                 az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
                 az postgres server create \
@@ -234,7 +234,7 @@ jobs:
                   fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
+                elif ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}; then
                   enableDB=true
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ env.postgresqlHost }}:5432/testdb"
