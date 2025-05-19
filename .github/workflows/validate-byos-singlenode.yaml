@@ -38,7 +38,7 @@ on:
           - 0
 
 env:
-    azCliVersion: 2.30.0
+    azCliVersion: 2.72.0
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
     location: eastus
     singleResourceGroup: single-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
