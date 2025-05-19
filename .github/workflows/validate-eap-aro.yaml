@@ -115,7 +115,7 @@ jobs:
           path: rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json
 
       - name: Create Resource Group
-        uses: azure/CLI@v1
+        uses: azure/cli@v2
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
@@ -124,7 +124,7 @@ jobs:
 
       - name: Deploy JBoss EAP on ARO
         id: deploy-eap-aro
-        uses: azure/CLI@v1
+        uses: azure/cli@v2
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
