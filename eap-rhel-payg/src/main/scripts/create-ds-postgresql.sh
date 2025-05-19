@@ -14,40 +14,102 @@ jdbcDSJNDIName=$(echo "${3}" | base64 -d)           # JDBC Datasource JNDI name
 dsConnectionString=$(echo "${4}" | base64 -d)       # JDBC Datasource connection String
 databaseUser=$(echo "${5}" | base64 -d)             # Database username
 databasePassword=$(echo "${6}" | base64 -d)         # Database user password
+enablePswlessConnection=$(echo "${7}" | base64 -d)  # Enable passwordless connection
+uamiClientId=$(echo "${8}" | base64 -d)             # UAMI client ID
 
-# Create JDBC driver and module directory
-jdbcDriverModuleDirectory="$eapRootPath"/modules/com/postgresql/main
-mkdir -p "$jdbcDriverModuleDirectory"
+if [ "$enablePswlessConnection" = "true" ]; then
+    # Create JDBC driver and module directory
+    jdbcDriverModuleDirectory="$eapRootPath"/modules/com/postgresql/main
+    mkdir -p "$jdbcDriverModuleDirectory"
 
-# Download JDBC driver
-jdbcDriverName=postgresql-42.5.2.jar
-curl --retry 5 -Lo ${jdbcDriverModuleDirectory}/${jdbcDriverName} https://jdbc.postgresql.org/download/${jdbcDriverName}
+    # Download JDBC driver and passwordless extensions
+    extensionJarName=azure-identity-extensions-1.1.20.jar
+    extensionPomName=azure-identity-extensions-1.1.20.pom
+    sudo curl --retry 5 -Lo ${jdbcDriverModuleDirectory}/${extensionJarName} https://repo1.maven.org/maven2/com/azure/azure-identity-extensions/1.1.20/$extensionJarName
+    sudo curl --retry 5 -Lo ${jdbcDriverModuleDirectory}/${extensionPomName} https://repo1.maven.org/maven2/com/azure/azure-identity-extensions/1.1.20/$extensionPomName
 
-# Create module for JDBC driver
-jdbcDriverModule=module.xml
-cat <<EOF >${jdbcDriverModule}
-<?xml version="1.0" ?>
-<module xmlns="urn:jboss:module:1.1" name="com.postgresql">
-  <resources>
-    <resource-root path="${jdbcDriverName}"/>
-  </resources>
-  <dependencies>
+    sudo yum install maven -y
+    sudo mvn dependency:copy-dependencies  -f ${jdbcDriverModuleDirectory}/${extensionPomName} -Ddest=${jdbcDriverModuleDirectory}
+
+    # Create module for JDBC driver
+    jdbcDriverModule=module.xml
+    sudo cat <<EOF >${jdbcDriverModule}
+    <?xml version="1.0" ?>
+    <module xmlns="urn:jboss:module:1.1" name="com.postgresql">
+      <resources>
+        <resource-root path="${extensionJarName}"/>
+    EOF
+
+    # Add all jars from target/dependency
+    for jar in ${jdbcDriverModuleDirectory}/target/dependency/*.jar; do
+    if [ -f "$jar" ]; then
+    # Extract just the filename from the path
+    jarname=$(basename "$jar")
+    echo "    <resource-root path=\"target/dependency/${jarname}\"/>" >> ${jdbcDriverModule}
+    fi
+    done
+
+    # Add the closing tags
+    cat <<EOF >> ${jdbcDriverModule}
+    </resources>
+    <dependencies>
     <module name="javaee.api"/>
     <module name="sun.jdk"/>
     <module name="ibm.jdk"/>
     <module name="javax.api"/>
     <module name="javax.transaction.api"/>
-  </dependencies>
-</module>
-EOF
-chmod 644 $jdbcDriverModule
-mv $jdbcDriverModule $jdbcDriverModuleDirectory/$jdbcDriverModule
+    </dependencies>
+    </module>
+    EOF
 
-# Register JDBC driver
-sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
-"/subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql,driver-module-name=com.postgresql,driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource)" | log
+    chmod 644 $jdbcDriverModule
+    mv $jdbcDriverModule $jdbcDriverModuleDirectory/$jdbcDriverModule
 
-# Create data source
-echo "data-source add --driver-name=postgresql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=*** --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter" | log
-sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
-"data-source add --driver-name=postgresql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=${databasePassword} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter"
+    export passwordlessConnectionString="$dsConnectionString?sslmode=require&user=$uamiClientId&authenticationPluginClassName=com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin"
+
+    # Register JDBC driver
+    sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
+    "/subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql,driver-module-name=com.postgresql,driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource,driver-class-name=org.postgresql.Driver)" | log
+
+    # Create data source
+    echo "data-source add --driver-name=postgresql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${passwordlessConnectionString} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter" | log
+    sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
+    "data-source add --driver-name=postgresql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${passwordlessConnectionString} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter"
+else
+    # Create JDBC driver and module directory
+    jdbcDriverModuleDirectory="$eapRootPath"/modules/com/postgresql/main
+    mkdir -p "$jdbcDriverModuleDirectory"
+
+    # Download JDBC driver
+    jdbcDriverName=postgresql-42.5.2.jar
+    curl --retry 5 -Lo ${jdbcDriverModuleDirectory}/${jdbcDriverName} https://jdbc.postgresql.org/download/${jdbcDriverName}
+
+    # Create module for JDBC driver
+    jdbcDriverModule=module.xml
+    cat <<EOF >${jdbcDriverModule}
+    <?xml version="1.0" ?>
+    <module xmlns="urn:jboss:module:1.1" name="com.postgresql">
+      <resources>
+        <resource-root path="${jdbcDriverName}"/>
+      </resources>
+      <dependencies>
+        <module name="javaee.api"/>
+        <module name="sun.jdk"/>
+        <module name="ibm.jdk"/>
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+      </dependencies>
+    </module>
+    EOF
+    chmod 644 $jdbcDriverModule
+    mv $jdbcDriverModule $jdbcDriverModuleDirectory/$jdbcDriverModule
+
+    # Register JDBC driver
+    sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
+    "/subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql,driver-module-name=com.postgresql,driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource)" | log
+
+    # Create data source
+    echo "data-source add --driver-name=postgresql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=*** --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter" | log
+    sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
+    "data-source add --driver-name=postgresql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=${databasePassword} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter"
+fi
