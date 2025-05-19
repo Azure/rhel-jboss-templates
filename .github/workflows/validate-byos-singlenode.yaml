@@ -14,6 +14,7 @@ on:
         - oracle
         - mysql(flexible)
         - postgresql(flexible)
+        - postgresql-passwordless(flexible)
         - none
       jdkVersion:
         description: 'jdkVersion'
