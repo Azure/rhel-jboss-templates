@@ -123,7 +123,7 @@ runs:
         fi
 
     - name: Archive ${{ inputs.offerName }} template
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v4.6.2
       if: success()
       with:
         name: ${{steps.artifact_file.outputs.artifactName}}
