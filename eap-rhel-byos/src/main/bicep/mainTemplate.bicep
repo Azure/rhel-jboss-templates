@@ -150,6 +150,7 @@ param dbIdentity object = {}
 param tagsByResource object = {}
 
 var uamiClientId = enablePswlessConnection ? reference(items(dbIdentity.userAssignedIdentities)[0].key, '${azure.apiVersionForIdentity}', 'full').properties.clientId : 'NA'
+var const_arguments = format(' {0} {1} {2} {3} {4} {5} {6} {7} {8} {9}', jbossEAPUserName, base64(jbossEAPPassword), rhsmUserName, base64(rhsmPassword), rhsmPoolEAP, rhsmPoolRHEL, connectSatellite, base64(satelliteActivationKey), ${base64(satelliteOrgName), satelliteFqdn, jdkVersion, enableDB, databaseType, base64(jdbcDataSourceJNDIName), base64(dsConnectionURL), base64(dbUser), base64(dbPassword), gracefulShutdownTimeout, enablePswlessConnection, uamiClientId)
 var vmName_var = '${vmName}-${guidValue}'
 var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
 var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
@@ -403,7 +404,7 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
       ]
     }
     protectedSettings: {
-      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${rhsmPoolRHEL}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\' \'${gracefulShutdownTimeout}\' \'${enablePswlessConnection}\' \'${uamiClientId}\''
+      commandToExecute: 'sh jbosseap-setup-redhat.sh ${const_arguments}'
     }
   }
   tags: _objTagsByResource['${identifier.virtualMachinesExtensions}']
