@@ -108,7 +108,7 @@ cat <<EOF > ${parametersPath}
             "value": "${gracefulShutdownTimeout}"
         },
         "enablePswlessConnection": {
-            "value": "${enablePswlessConnection}"
+            "value": ${enablePswlessConnection}
         },
         "dbIdentity": {
             "value": "${dbIdentity}"
