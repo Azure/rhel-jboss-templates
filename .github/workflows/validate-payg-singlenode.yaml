@@ -14,6 +14,7 @@ on:
         - oracle
         - mysql(flexible)
         - postgresql(flexible)
+        - postgresql-passwordless(flexible)
         - none
       jdkVersion:
         description: 'jdkVersion'
@@ -267,7 +268,9 @@ jobs:
                 ${dbUser} \
                 ${dbPassword} \
                 ${{ inputs.jdkVersion }} \
-                ${{ env.gracefulShutdownTimeout }} "
+                ${{ env.gracefulShutdownTimeout }} \
+                false \
+                {}"
 
             - name: Archive parameters-test-single.json
               uses: actions/upload-artifact@v4.6.2
