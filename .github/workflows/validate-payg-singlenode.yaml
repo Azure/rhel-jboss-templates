@@ -38,7 +38,7 @@ on:
           - 0
 
 env:
-    azCliVersion: 2.30.0
+    azCliVersion: 2.72.0
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS_PAYG }}
     location: eastus
     singleResourceGroup: single-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
@@ -277,7 +277,7 @@ jobs:
                 path: rhel-jboss-templates/eap-rhel-payg/src/test/parameters-test-single.json
             - name: Create Resource Group if needed
               if: ${{ inputs.databaseType == 'none' || github.event.client_payload.databaseType == 'none' }}
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -285,7 +285,7 @@ jobs:
                     az group create --verbose --name ${{ env.singleResourceGroup }} --location ${{ env.location }}
             - name: Deploy JBoss EAP single
               id: deploy-single
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -297,7 +297,7 @@ jobs:
                     --template-file rhel-jboss-templates/eap-rhel-payg/mainTemplate.json
             - name: Get public IP
               id: get_public_ip
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
