@@ -14,10 +14,10 @@ jdbcDSJNDIName=$(echo "${3}" | base64 -d)           # JDBC Datasource JNDI name
 dsConnectionString=$(echo "${4}" | base64 -d)       # JDBC Datasource connection String
 databaseUser=$(echo "${5}" | base64 -d)             # Database username
 databasePassword=$(echo "${6}" | base64 -d)         # Database user password
-passwordlessEnabled=$(echo "${7}" | base64 -d)      # Passwordless enabled
-managedIdentity=$(echo "${8}" | base64 -d)          # Managed identity
+enablePswlessConnection=$(echo "${7}" | base64 -d)      # Passwordless enabled
+uamiClientId=$(echo "${8}" | base64 -d)          # Managed identity
 
-if [ "$passwordlessEnabled" = "true" ]; then
+if [ "$enablePswlessConnection" = "true" ]; then
     # Create JDBC driver and module directory
     jdbcDriverModuleDirectory="$eapRootPath"/modules/com/postgresql/main
     mkdir -p "$jdbcDriverModuleDirectory"
@@ -65,7 +65,7 @@ if [ "$passwordlessEnabled" = "true" ]; then
     chmod 644 $jdbcDriverModule
     mv $jdbcDriverModule $jdbcDriverModuleDirectory/$jdbcDriverModule
 
-    export passwordlessConnectionString="$dsConnectionString?sslmode=require&user=$managedIdentity&authenticationPluginClassName=com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin"
+    export passwordlessConnectionString="$dsConnectionString?sslmode=require&user=$uamiClientId&authenticationPluginClassName=com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin"
 
     # Register JDBC driver
     sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \

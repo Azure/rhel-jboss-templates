@@ -106,6 +106,12 @@ cat <<EOF > ${parametersPath}
         },
         "gracefulShutdownTimeout": {
             "value": "${gracefulShutdownTimeout}"
+        },
+        "enablePswlessConnection": {
+            "value": "${enablePswlessConnection}"
+        },
+        "uamiClientId": {
+            "value": "${uamiClientId}"
         }
     }
 }
