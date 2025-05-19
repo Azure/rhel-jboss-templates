@@ -277,7 +277,7 @@ jobs:
                 ${{ inputs.jdkVersion }} \
                 ${{ env.gracefulShutdownTimeout }} \
                 false \
-                NA"
+                {}"
 
             - name: Archive parameters-test-single.json
               uses: actions/upload-artifact@v4.6.2
