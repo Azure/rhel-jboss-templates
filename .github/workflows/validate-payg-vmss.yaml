@@ -38,7 +38,7 @@ on:
           - 0
 
 env:
-    azCliVersion: 2.41.0
+    azCliVersion: 2.30.0
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS_PAYG }}
     location: eastus
     vmssResourceGroup: vmss-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
