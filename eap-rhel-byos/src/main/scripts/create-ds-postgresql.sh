@@ -14,8 +14,8 @@ jdbcDSJNDIName=$(echo "${3}" | base64 -d)           # JDBC Datasource JNDI name
 dsConnectionString=$(echo "${4}" | base64 -d)       # JDBC Datasource connection String
 databaseUser=$(echo "${5}" | base64 -d)             # Database username
 databasePassword=$(echo "${6}" | base64 -d)         # Database user password
-enablePswlessConnection=$(echo "${7}" | base64 -d)      # Passwordless enabled
-uamiClientId=$(echo "${8}" | base64 -d)          # Managed identity
+enablePswlessConnection=$(echo "${7}" | base64 -d)  # Enable passwordless connection
+uamiClientId=$(echo "${8}" | base64 -d)             # UAMI client ID
 
 if [ "$enablePswlessConnection" = "true" ]; then
     # Create JDBC driver and module directory
