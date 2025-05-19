@@ -38,6 +38,7 @@ on:
           - 0
 
 env:
+    azCliVersion: 2.41.0
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS_PAYG }}
     location: eastus
     domainResourceGroup: multivm-domain-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
@@ -199,12 +200,6 @@ jobs:
           - deploy-dependent-resources
         runs-on: ubuntu-latest
         steps:
-            - name: Get versions of external dependencies
-              run: |
-                curl -Lo external-deps-versions.properties https://raw.githubusercontent.com/Azure/azure-javaee-iaas/main/external-deps-versions.properties
-                source external-deps-versions.properties
-                echo "azCliVersion=${AZ_CLI_VERSION}" >> "$GITHUB_ENV"
-                echo "bicepVersion=${BICEP_VERSION}" >> "$GITHUB_ENV"
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
               with:
@@ -444,12 +439,6 @@ jobs:
         steps:
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
-            - name: Get versions of external dependencies
-              run: |
-                curl -Lo external-deps-versions.properties https://raw.githubusercontent.com/Azure/azure-javaee-iaas/main/external-deps-versions.properties
-                source external-deps-versions.properties
-                echo "azCliVersion=${AZ_CLI_VERSION}" >> "$GITHUB_ENV"
-                echo "bicepVersion=${BICEP_VERSION}" >> "$GITHUB_ENV"
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
               with:
