@@ -18,6 +18,7 @@ enablePswlessConnection=$(echo "${7}" | base64 -d)  # Enable passwordless connec
 uamiClientId=$(echo "${8}" | base64 -d)             # UAMI client ID
 
 if [ "$enablePswlessConnection" = "true" ]; then
+    echo "enablePswlessConnection=true, creating passwordless connection" | log
     # Create JDBC driver and module directory
     jdbcDriverModuleDirectory="$eapRootPath"/modules/com/postgresql/main
     mkdir -p "$jdbcDriverModuleDirectory"
@@ -76,6 +77,7 @@ if [ "$enablePswlessConnection" = "true" ]; then
     sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
     "data-source add --driver-name=postgresql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${passwordlessConnectionString} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter"
 else
+    echo "enablePswlessConnection!=true, creating password-based connection" | log
     # Create JDBC driver and module directory
     jdbcDriverModuleDirectory="$eapRootPath"/modules/com/postgresql/main
     mkdir -p "$jdbcDriverModuleDirectory"
