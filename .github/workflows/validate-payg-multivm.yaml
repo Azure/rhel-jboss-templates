@@ -39,7 +39,7 @@ on:
 
 env:
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS_PAYG }}
-    location: eastus
+    location: eastus2
     domainResourceGroup: multivm-domain-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
     standaloneResourceGroup: multivm-standalone-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
     dependencyResourceGroup: multivm-dep-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}

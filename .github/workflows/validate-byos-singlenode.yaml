@@ -40,7 +40,7 @@ on:
 env:
     azCliVersion: 2.30.0
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
-    location: eastus
+    location: eastus2
     singleResourceGroup: single-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
     vmName: ${{ github.run_id }}${{ github.run_number }}vm
     adminUsername: azureadmin
