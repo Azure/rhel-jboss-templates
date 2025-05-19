@@ -218,7 +218,7 @@ sleep 20
 # Configure JDBC driver and data source
 if [ "$enableDB" == "True" ]; then
     jdbcDataSourceName=dataSource-$dbType
-    ./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword"
+    ./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" $enablePswlessConnection "$uamiClientId"
 
     # Test connection for the created data source
     sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --connect "/subsystem=datasources/data-source=$jdbcDataSourceName:test-connection-in-pool" | log; flag=${PIPESTATUS[0]}
