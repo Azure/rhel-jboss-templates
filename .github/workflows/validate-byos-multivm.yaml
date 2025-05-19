@@ -38,6 +38,7 @@ on:
           - 0
 
 env:
+    azCliVersion: 2.72.0
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
     location: eastus
     domainResourceGroup: multivm-domain-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
@@ -202,12 +203,6 @@ jobs:
           - deploy-dependent-resources
         runs-on: ubuntu-latest
         steps:
-            - name: Get versions of external dependencies
-              run: |
-                curl -Lo external-deps-versions.properties https://raw.githubusercontent.com/Azure/azure-javaee-iaas/main/external-deps-versions.properties
-                source external-deps-versions.properties
-                echo "azCliVersion=${AZ_CLI_VERSION}" >> "$GITHUB_ENV"
-                echo "bicepVersion=${BICEP_VERSION}" >> "$GITHUB_ENV"
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
               with:
@@ -318,7 +313,7 @@ jobs:
                 name: parameters-test-domain
                 path: rhel-jboss-templates/eap-rhel-byos-multivm/src/test/parameters-test-domain.json
             - name: Create Resource Group
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -326,7 +321,7 @@ jobs:
                     az group create --verbose --name ${{ env.domainResourceGroup }} --location ${{ env.location }}
             - name: Deploy JBoss EAP domain cluster
               id: deploy-multivm-managed-domain
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -350,7 +345,7 @@ jobs:
 
             - name: Create a container and uploading cafe app
               id: upload_cafe_app
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -387,7 +382,7 @@ jobs:
 
             - name: Query public ip of admin VM
               id: query_admin_public_ip
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -408,7 +403,7 @@ jobs:
                 curl --digest -L -D - http://${publicip}:9990/management --header "Content-Type: application/json" -u ${jbossEAPUserName}:${jbossEAPPassword} -d "{\"operation\" : \"deploy\", \"address\" : {\"server-group\" : \"main-server-group\",\"deployment\":\"javaee-cafe.war\"},\"json.pretty\":1}"
             - name: Query public ip of Application Gateway
               id: query_app_gateway_public_ip
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -457,12 +452,6 @@ jobs:
           - deploy-dependent-resources
         runs-on: ubuntu-latest
         steps:
-            - name: Get versions of external dependencies
-              run: |
-                curl -Lo external-deps-versions.properties https://raw.githubusercontent.com/Azure/azure-javaee-iaas/main/external-deps-versions.properties
-                source external-deps-versions.properties
-                echo "azCliVersion=${AZ_CLI_VERSION}" >> "$GITHUB_ENV"
-                echo "bicepVersion=${BICEP_VERSION}" >> "$GITHUB_ENV"
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
               with:
@@ -571,7 +560,7 @@ jobs:
                 name: parameters-test-standalone
                 path: rhel-jboss-templates/eap-rhel-byos-multivm/src/test/parameters-test-standalone.json
             - name: Create Resource Group
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -579,7 +568,7 @@ jobs:
                     az group create --verbose --name ${{ env.standaloneResourceGroup }} --location ${{ env.location }}
             - name: Deploy JBoss EAP standalone cluster
               id: deploy-multivm-managed-standalone
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -591,7 +580,7 @@ jobs:
                     --template-file rhel-jboss-templates/eap-rhel-byos-multivm/mainTemplate.json
             - name: Query public ip of Application Gateway
               id: query_app_gateway_public_ip
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
