@@ -14,8 +14,8 @@ jdbcDSJNDIName=$(echo "${3}" | base64 -d)           # JDBC Datasource JNDI name
 dsConnectionString=$(echo "${4}" | base64 -d)       # JDBC Datasource connection String
 databaseUser=$(echo "${5}" | base64 -d)             # Database username
 databasePassword=$(echo "${6}" | base64 -d)         # Database user password
-enablePswlessConnection=$(echo "${7}" | base64 -d)  # Enable passwordless connection
-uamiClientId=$(echo "${8}" | base64 -d)             # UAMI client ID
+enablePswlessConnection=${7}                        # Enable passwordless connection
+uamiClientId=${8}                                   # UAMI client ID
 
 if [ "$enablePswlessConnection" = "true" ]; then
     echo "enablePswlessConnection=true, creating passwordless connection" | log
@@ -35,11 +35,11 @@ if [ "$enablePswlessConnection" = "true" ]; then
     # Create module for JDBC driver
     jdbcDriverModule=module.xml
     sudo cat <<EOF >${jdbcDriverModule}
-    <?xml version="1.0" ?>
-    <module xmlns="urn:jboss:module:1.1" name="com.postgresql">
-      <resources>
-        <resource-root path="${extensionJarName}"/>
-    EOF
+<?xml version="1.0" ?>
+<module xmlns="urn:jboss:module:1.1" name="com.postgresql">
+  <resources>
+    <resource-root path="${extensionJarName}"/>
+EOF
 
     # Add all jars from target/dependency
     for jar in ${jdbcDriverModuleDirectory}/target/dependency/*.jar; do
@@ -52,16 +52,16 @@ if [ "$enablePswlessConnection" = "true" ]; then
 
     # Add the closing tags
     cat <<EOF >> ${jdbcDriverModule}
-    </resources>
-    <dependencies>
+  </resources>
+  <dependencies>
     <module name="javaee.api"/>
     <module name="sun.jdk"/>
     <module name="ibm.jdk"/>
     <module name="javax.api"/>
     <module name="javax.transaction.api"/>
-    </dependencies>
-    </module>
-    EOF
+  </dependencies>
+</module>
+EOF
 
     chmod 644 $jdbcDriverModule
     mv $jdbcDriverModule $jdbcDriverModuleDirectory/$jdbcDriverModule
@@ -89,20 +89,20 @@ else
     # Create module for JDBC driver
     jdbcDriverModule=module.xml
     cat <<EOF >${jdbcDriverModule}
-    <?xml version="1.0" ?>
-    <module xmlns="urn:jboss:module:1.1" name="com.postgresql">
-      <resources>
-        <resource-root path="${jdbcDriverName}"/>
-      </resources>
-      <dependencies>
-        <module name="javaee.api"/>
-        <module name="sun.jdk"/>
-        <module name="ibm.jdk"/>
-        <module name="javax.api"/>
-        <module name="javax.transaction.api"/>
-      </dependencies>
-    </module>
-    EOF
+<?xml version="1.0" ?>
+<module xmlns="urn:jboss:module:1.1" name="com.postgresql">
+  <resources>
+    <resource-root path="${jdbcDriverName}"/>
+  </resources>
+  <dependencies>
+    <module name="javaee.api"/>
+    <module name="sun.jdk"/>
+    <module name="ibm.jdk"/>
+    <module name="javax.api"/>
+    <module name="javax.transaction.api"/>
+  </dependencies>
+</module>
+EOF
     chmod 644 $jdbcDriverModule
     mv $jdbcDriverModule $jdbcDriverModuleDirectory/$jdbcDriverModule
 
