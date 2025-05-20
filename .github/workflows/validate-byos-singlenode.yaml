@@ -217,14 +217,10 @@ jobs:
                 az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
                 # Extract service principal details from the credentials
                 
-                az identity create \
-                  --name "passwordless-managed-identity" \
-                  --resource-group ${{ env.singleResourceGroup }} \
-                  --location ${{ env.location }}
                 
-                dbIdentity=$(az identity show --name passwordless-managed-identity --resource-group ${{ env.singleResourceGroup }} -o json)
+                dbIdentity=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity -o json)
                 
-                objectId=$(az identity show --name passwordless-managed-identity --resource-group ${{ env.singleResourceGroup }} --query principalId -o tsv)
+                objectId=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity --query principalId -o tsv)
                 
                 az postgres flexible-server create \
                   --resource-group ${{ env.singleResourceGroup }} \
@@ -296,7 +292,6 @@ jobs:
                   dbIdentity=${{ env.dbIdentity }}
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ env.postgresqlHost }}:5432/testdb"
-                  
                 fi
 
                 echo "generate parameter file for single"
