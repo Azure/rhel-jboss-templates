@@ -271,7 +271,10 @@ sleep 20
 
 # Configure JDBC driver and data source
 if [ "$enableDB" == "True" ]; then
+    echo "pwd=$PWD" | log; flag=${PIPESTATUS[0]}
+    echo "jdbcDataSourceName=dataSource-$dbType" | log; flag=${PIPESTATUS[0]}
     jdbcDataSourceName=dataSource-$dbType
+    echo "./create-ds-${dbType}.sh $EAP_HOME $jdbcDataSourceName $jdbcDSJNDIName $dsConnectionString $databaseUser $databasePassword $enablePswlessConnection $uamiClientId" | log; flag=${PIPESTATUS[0]}
     ./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" $enablePswlessConnection "$uamiClientId"
 
     # Test connection for the created data source
