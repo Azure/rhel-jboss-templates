@@ -223,10 +223,9 @@ jobs:
                 objectId=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity --query principalId -o tsv)
                 
                 az postgres flexible-server create \
+                  --active-directory-auth Enabled \
                   --resource-group ${{ env.singleResourceGroup }} \
                   --name ${{ env.dbInstanceName }} \
-                  --admin-user testuser \
-                  --admin-password ${{ env.dbPassword }} \
                   --public-access 0.0.0.0 \
                   --location ${{ env.location }} \
                   --yes
