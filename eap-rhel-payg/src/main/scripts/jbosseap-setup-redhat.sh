@@ -40,6 +40,8 @@ dsConnectionString=${11}
 databaseUser=${12}
 databasePassword=${13}
 gracefulShutdownTimeout=${14}
+enablePswlessConnection=${15}
+uamiClientId=${16}
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
 if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
