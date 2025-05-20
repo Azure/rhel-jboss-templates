@@ -217,7 +217,6 @@ jobs:
                 az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
                 # Extract service principal details from the credentials
                 
-                
                 dbIdentity=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity -o json)
                 
                 objectId=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity --query principalId -o tsv)
@@ -245,7 +244,8 @@ jobs:
                                                       --database-name testdb
                 
                 echo "postgresqlHost=${host}" >> "$GITHUB_ENV"
-                echo "dbIdentity=${dbIdentity}" >> "$GITHUB_ENV"
+                # Store JSON as base64 encoded string
+                echo "dbIdentity=$(echo $dbIdentity | base64)" >> "$GITHUB_ENV"
 
             - name: Prepare parameter file
               run: |
