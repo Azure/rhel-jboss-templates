@@ -288,6 +288,7 @@ jobs:
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
                 elif ${{ inputs.databaseType == 'postgresql-passwordless(flexible)' || github.event.client_payload.databaseType == 'postgresql-passwordless(flexible)' }}; then
+                  echo "set parameter for passwordless postgresql"
                   enableDB=true
                   enablePasswordless=true
                   dbIdentity=${{ env.dbIdentity }}
