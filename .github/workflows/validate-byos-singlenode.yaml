@@ -288,14 +288,14 @@ jobs:
                   enableDB=true
                   enablePasswordless=true
                   uamiId=${{ env.uamiId }}
-                  dbIdentity=$(jq -c '.' -n \
+                  dbIdentity=$(jq -n \
                                 --arg uamiId "$uamiId" \
                                 '{
                                       "type": "UserAssigned",
                                       "userAssignedIdentities": {
                                           ($uamiId): {}
                                       }
-                                  }')
+                                  }'| jq -c '.')  
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ env.postgresqlHost }}:5432/testdb"
                 fi
