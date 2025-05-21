@@ -13,6 +13,7 @@ on:
         - mssqlserver
         - oracle
         - mysql(flexible)
+        - mysql-passwordless(flexible)
         - postgresql(flexible)
         - postgresql-passwordless(flexible)
         - none
@@ -191,6 +192,57 @@ jobs:
                 GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
                 FLUSH PRIVILEGES;
                 EOF
+            - name: Deploy an instance of Azure Database for MySQL
+              if: ${{ inputs.databaseType == 'mysql-passwordless(flexible)' || github.event.client_payload.databaseType == 'mysql-passwordless(flexible)' }}
+              run: |
+                az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
+                az mysql flexible-server create \
+                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --admin-user myadmin --admin-password ${{ env.dbPassword }} \
+                  --sku-name Standard_B1ms --location ${{ env.location }} \
+                  --version 8.0.21 \
+                  --yes
+                # https://github.com/azure-javaee/rhel-jboss-templates/issues/2                
+                if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
+                    az mysql flexible-server parameter set --resource-group ${{ env.singleResourceGroup }} \
+                    --server-name ${{ env.dbInstanceName }} \
+                    --name require_secure_transport \
+                    --value OFF       
+                fi
+                # Allow Azure services to access
+                az mysql flexible-server firewall-rule create \
+                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --rule-name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+                # Allow current IP to access MySQL server
+                currentIp=$(curl -s https://icanhazip.com)
+                az mysql flexible-server firewall-rule create \
+                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --rule-name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
+                host=$(az mysql flexible-server show \
+                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --query "fullyQualifiedDomainName" -o tsv)
+                
+                wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
+                mysql -h $host -u myadmin -p${{ env.dbPassword }} --ssl-ca=DigiCertGlobalRootCA.crt.pem << EOF
+                CREATE DATABASE testdb;
+                CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ env.dbPassword }}';
+                GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
+                FLUSH PRIVILEGES;
+                EOF
+                
+                uamiId=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity --query id -o tsv)
+                objectId=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity --query principalId -o tsv)
+                
+                az mysql flexible-server identity assign --resource-group ${{ env.singleResourceGroup }} \
+                  --server-name ${{ env.dbInstanceName }} --identity "passwordless-managed-identity"
+                
+                az mysql flexible-server ad-admin create --resource-group  ${{ env.singleResourceGroup }} \
+                  --server-name ${{ env.dbInstanceName }} --display-name "passwordless-managed-identity" \
+                  --object-id $objectId \
+                  --identity "passwordless-managed-identity"
+                
+                echo "mysqlHost=${host}" >> "$GITHUB_ENV"     
+                echo "uamiId=${uamiId}" >> $GITHUB_ENV
             - name: Deploy an instance of Azure Database for PostgreSQL
               if: ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}
               run: |
