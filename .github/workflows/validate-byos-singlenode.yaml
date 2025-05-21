@@ -217,8 +217,7 @@ jobs:
                 az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
                 # Extract service principal details from the credentials
                 
-                dbIdentity=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity -o json)
-                
+                uamiId=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity --query id -o tsv)
                 objectId=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity --query principalId -o tsv)
                 
                 az postgres flexible-server create \
@@ -244,7 +243,7 @@ jobs:
                                                       --database-name testdb
                 
                 echo "postgresqlHost=${host}" >> "$GITHUB_ENV"
-                echo "dbIdentity=$(echo $dbIdentity| base64 -w0)" >> $GITHUB_ENV
+                echo "uamiId=${uamiId}" >> $GITHUB_ENV
 
             - name: Prepare parameter file
               run: |
@@ -288,8 +287,15 @@ jobs:
                   echo "set parameter for passwordless postgresql"
                   enableDB=true
                   enablePasswordless=true
-                  dbIdentityEncoded=${{ env.dbIdentity }}
-                  dbIdentity=$( echo $dbIdentityEncoded | base64 -d | jq -c '.' )
+                  uamiId=${{ env.uamiId }}
+                  dbIdentity=$(jq -c '.' -n \
+                                --arg uamiId "$uamiId" \
+                                '{
+                                      "type": "UserAssigned",
+                                      "userAssignedIdentities": {
+                                          ($uamiId): {}
+                                      }
+                                  }')
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ env.postgresqlHost }}:5432/testdb"
                 fi
