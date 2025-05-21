@@ -245,9 +245,7 @@ jobs:
                 
                 echo "postgresqlHost=${host}" >> "$GITHUB_ENV"
                 # Store JSON using multi-line syntax
-                echo "dbIdentity<<EOF" >> $GITHUB_ENV
-                echo "$dbIdentity" >> $GITHUB_ENV
-                echo "EOF" >> $GITHUB_ENV
+                echo "dbIdentity=$( echo $dbIdentity | base64 -d | jq -c '.' )" >> $GITHUB_ENV
 
             - name: Prepare parameter file
               run: |
