@@ -67,16 +67,16 @@ if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" 
       chmod 644 $jdbcDriverModule
       mv $jdbcDriverModule $jdbcDriverModuleDirectory/$jdbcDriverModule
 
-      export passwordlessConnectionString="$dsConnectionString?sslmode=require&user=$uamiDisplayname&authenticationPluginClassName=com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin"
+      export passwordlessConnectionString="$dsConnectionString?sslMode=REQUIRED&user=$uamiDisplayname&authenticationPlugins=com.azure.identity.extensions.jdbc.mysql.AzureMysqlAuthenticationPlugin"
 
       # Register JDBC driver
-        sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
-        "/subsystem=datasources/jdbc-driver=mysql:add(driver-name=mysql,driver-module-name=com.mysql,driver-xa-datasource-class-name=com.mysql.cj.jdbc.MysqlXADataSource, driver-class-name=com.mysql.cj.jdbc.Driver)" | log
+      sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
+      "/subsystem=datasources/jdbc-driver=mysql:add(driver-name=mysql,driver-module-name=com.mysql,driver-xa-datasource-class-name=com.mysql.cj.jdbc.MysqlXADataSource, driver-class-name=com.mysql.cj.jdbc.Driver)" | log
 
-        # Create data source
-        echo "data-source add --driver-name=mysql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=*** --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mysql.MySQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mysql.MySQLExceptionSorter" | log
-        sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
-        "data-source add --driver-name=mysql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=${databasePassword} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mysql.MySQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mysql.MySQLExceptionSorter"
+      # Create data source
+      echo "data-source add --driver-name=mysql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${passwordlessConnectionString} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mysql.MySQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mysql.MySQLExceptionSorter" | log
+      sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
+           "data-source add --driver-name=mysql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${passwordlessConnectionString} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mysql.MySQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mysql.MySQLExceptionSorter"
 
 else
   # Create JDBC driver and module directory
