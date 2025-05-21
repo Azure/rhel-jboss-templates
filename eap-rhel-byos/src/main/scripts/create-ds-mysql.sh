@@ -15,11 +15,11 @@ dsConnectionString=$(echo "${4}" | base64 -d)       # JDBC Datasource connection
 databaseUser=$(echo "${5}" | base64 -d)             # Database username
 databasePassword=$(echo "${6}" | base64 -d)         # Database user password
 enablePswlessConnection=${7}                        # Enable passwordless connection
-uamiClientId=${8}                                # UAMI display name
+uamiClientId=${8}                                   # UAMI display name
 
 
 if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" ]; then
-  echo "enablePswlessConnection=true, creating passwordless connection" | log
+  echo "enablePswlessConnection=true, creating passwordless connection" | log; flag=${PIPESTATUS[0]}
       # Create JDBC driver and module directory
       jdbcDriverModuleDirectory="$eapRootPath"/modules/com/mysql/main
       mkdir -p "$jdbcDriverModuleDirectory"
@@ -79,6 +79,7 @@ if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" 
            "data-source add --driver-name=mysql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${passwordlessConnectionString} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mysql.MySQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mysql.MySQLExceptionSorter"
 
 else
+  echo "enablePswlessConnection!=true, creating password connection" | log; flag=${PIPESTATUS[0]}
   # Create JDBC driver and module directory
   jdbcDriverModuleDirectory="$eapRootPath"/modules/com/mysql/main
   mkdir -p "$jdbcDriverModuleDirectory"
