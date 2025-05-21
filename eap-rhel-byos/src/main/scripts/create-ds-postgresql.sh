@@ -15,7 +15,7 @@ dsConnectionString=$(echo "${4}" | base64 -d)       # JDBC Datasource connection
 databaseUser=$(echo "${5}" | base64 -d)             # Database username
 databasePassword=$(echo "${6}" | base64 -d)         # Database user password
 enablePswlessConnection=${7}                        # Enable passwordless connection
-uamiDisplayname=${8}                                # UAMI display name
+uamiClientId=${8}                                # UAMI display name
 
 if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" ]; then
     echo "enablePswlessConnection=true, creating passwordless connection" | log
@@ -66,7 +66,7 @@ EOF
     chmod 644 $jdbcDriverModule
     mv $jdbcDriverModule $jdbcDriverModuleDirectory/$jdbcDriverModule
 
-    export passwordlessConnectionString="$dsConnectionString?sslmode=require&user=$uamiDisplayname&authenticationPluginClassName=com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin"
+    export passwordlessConnectionString="$dsConnectionString?sslmode=require&azure.clientId=$uamiClientId&authenticationPluginClassName=com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin"
 
     # Register JDBC driver
     sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
