@@ -41,7 +41,7 @@ databaseUser=${12}
 databasePassword=${13}
 gracefulShutdownTimeout=${14}
 enablePswlessConnection=${15}
-uamiDisplayname=${16}
+uamiClientId=${16}
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
 if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
@@ -220,7 +220,7 @@ sleep 20
 # Configure JDBC driver and data source
 if [ "$enableDB" == "True" ]; then
     jdbcDataSourceName=dataSource-$dbType
-    ./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" $enablePswlessConnection "$uamiDisplayname"
+    ./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" $enablePswlessConnection "$uamiClientId"
 
     # Test connection for the created data source
     sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --connect "/subsystem=datasources/data-source=$jdbcDataSourceName:test-connection-in-pool" | log; flag=${PIPESTATUS[0]}
