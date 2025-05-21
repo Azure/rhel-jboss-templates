@@ -17,7 +17,7 @@ databasePassword=$(echo "${6}" | base64 -d)         # Database user password
 enablePswlessConnection=${7}                        # Enable passwordless connection
 uamiClientId=${8}                                   # UAMI client ID
 
-if [ "$enablePswlessConnection" = "true" ]; then
+if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" ]; then
     echo "enablePswlessConnection=true, creating passwordless connection" | log
     # Create JDBC driver and module directory
     jdbcDriverModuleDirectory="$eapRootPath"/modules/com/postgresql/main
