@@ -192,7 +192,7 @@ jobs:
                 GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
                 FLUSH PRIVILEGES;
                 EOF
-            - name: Deploy an instance of Azure Database for MySQL
+            - name: Deploy an instance of Azure Database for MySQL passwordless
               if: ${{ inputs.databaseType == 'mysql-passwordless(flexible)' || github.event.client_payload.databaseType == 'mysql-passwordless(flexible)' }}
               run: |
                 az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
