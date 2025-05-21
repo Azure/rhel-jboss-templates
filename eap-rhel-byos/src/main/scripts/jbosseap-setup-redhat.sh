@@ -35,7 +35,7 @@ databaseUser=${16}
 databasePassword=${17}
 gracefulShutdownTimeout=${18}
 enablePswlessConnection=${19}
-uamiClientId=${20}
+uamiDisplayname=${20}
 NODE_ID=$(uuidgen | sed 's/-//g' | cut -c 1-23)
 
 if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
@@ -274,8 +274,8 @@ if [ "$enableDB" == "True" ]; then
     echo "pwd=$PWD" | log; flag=${PIPESTATUS[0]}
     echo "jdbcDataSourceName=dataSource-$dbType" | log; flag=${PIPESTATUS[0]}
     jdbcDataSourceName=dataSource-$dbType
-    echo "./create-ds-${dbType}.sh $EAP_HOME $jdbcDataSourceName $jdbcDSJNDIName $dsConnectionString $databaseUser $databasePassword $enablePswlessConnection $uamiClientId" | log; flag=${PIPESTATUS[0]}
-    ./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" $enablePswlessConnection "$uamiClientId"
+    echo "./create-ds-${dbType}.sh $EAP_HOME $jdbcDataSourceName $jdbcDSJNDIName $dsConnectionString $databaseUser $databasePassword $enablePswlessConnection $uamiDisplayname" | log; flag=${PIPESTATUS[0]}
+    ./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" $enablePswlessConnection "$uamiDisplayname"
 
     # Test connection for the created data source
     sudo -u jboss $EAP_HOME/bin/jboss-cli.sh --connect "/subsystem=datasources/data-source=$jdbcDataSourceName:test-connection-in-pool" | log; flag=${PIPESTATUS[0]}
