@@ -15,7 +15,7 @@ dsConnectionString=$(echo "${4}" | base64 -d)       # JDBC Datasource connection
 databaseUser=$(echo "${5}" | base64 -d)             # Database username
 databasePassword=$(echo "${6}" | base64 -d)         # Database user password
 enablePswlessConnection=${7}                        # Enable passwordless connection
-uamiDisplayname=${8}                                   # UAMI client ID
+uamiDisplayname=${8}                                # UAMI display name
 
 if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" ]; then
     echo "enablePswlessConnection=true, creating passwordless connection" | log
