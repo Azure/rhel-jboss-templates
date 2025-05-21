@@ -329,6 +329,20 @@ jobs:
                   fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
+                elif ${{ inputs.databaseType == 'mysql-passwordless(flexible)' || github.event.client_payload.databaseType == 'mysql-passwordless(flexible)' }}; then
+                  enableDB=true
+                  enablePasswordless=true
+                  uamiId=${{ env.uamiId }}
+                  dbIdentity=$(jq -n \
+                                --arg uamiId "$uamiId" \
+                                '{
+                                      "type": "UserAssigned",
+                                      "userAssignedIdentities": {
+                                          ($uamiId): {}
+                                      }
+                                  }'| jq -c '.')
+                  databaseType=mysql
+                  dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb
                 elif ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}; then
                   enableDB=true
                   databaseType=postgresql
