@@ -710,7 +710,7 @@
                                 "type": "Microsoft.Common.CheckBox",
                                 "label": "Use passwordless datasource connection",
                                 "toolTip": "Use passwordless datasource connection.",
-                                "visible": "[equals(steps('section_database').databaseConnectionInfo.databaseType, 'sqlserver')]"
+                                "visible": "[equals(steps('section_database').databaseConnectionInfo.databaseType, 'postgresql')]"
                             },
                             {
                                 "name": "dbUser",
