@@ -289,7 +289,8 @@ jobs:
                   echo "set parameter for passwordless postgresql"
                   enableDB=true
                   enablePasswordless=true
-                  dbIdentity=${{ env.dbIdentity }}
+                  dbIdentityEncoded=${{ env.dbIdentity }}
+                  dbIdentity=$( echo $dbIdentityEncoded | base64 -d | jq -c '.' )
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ env.postgresqlHost }}:5432/testdb"
                 fi
