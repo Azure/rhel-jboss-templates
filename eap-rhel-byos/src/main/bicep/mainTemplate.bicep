@@ -150,12 +150,12 @@ param dbIdentity object = {}
 param tagsByResource object = {}
 
 var uamiId=items(dbIdentity.userAssignedIdentities)[0].key
-dbUser = enablePswlessConnection ? last(split(uamiId, '/')) : dbUser
+var dbUser_var = enablePswlessConnection ? last(split(uamiId, '/')) : dbUser
 var uamiClientId = enablePswlessConnection ? reference(uamiId, '${azure.apiVersionForIdentity}', 'full').properties.clientId : 'NA'
 var const_arguments = format(' {0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17} {18} {19}',       /*
 */ jbossEAPUserName, base64(jbossEAPPassword), rhsmUserName, base64(rhsmPassword), rhsmPoolEAP, rhsmPoolRHEL, connectSatellite,  /*
 */ base64(satelliteActivationKey), base64(satelliteOrgName), satelliteFqdn, jdkVersion, enableDB, databaseType,                  /*
-*/ base64(jdbcDataSourceJNDIName), base64(dsConnectionURL), base64(dbUser), base64(dbPassword), gracefulShutdownTimeout,         /*
+*/ base64(jdbcDataSourceJNDIName), base64(dsConnectionURL), base64(dbUser_var), base64(dbPassword), gracefulShutdownTimeout,         /*
 */ enablePswlessConnection, uamiClientId)
 var vmName_var = '${vmName}-${guidValue}'
 var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
