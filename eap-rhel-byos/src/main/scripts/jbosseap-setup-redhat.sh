@@ -104,6 +104,9 @@ echo "Install curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
 echo "sudo yum install curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
 sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}
 
+# workaround to this issue:https://github.com/azure-javaee/rhel-jboss-templates/issues/2
+sudo update-crypto-policies --set DEFAULT:SHA1 | log; flag=${PIPESTATUS[0]}
+
 ####################### 
 
 if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
