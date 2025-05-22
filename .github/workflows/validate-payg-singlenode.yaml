@@ -233,7 +233,7 @@ jobs:
                 az mysql flexible-server ad-admin create --resource-group  ${{ env.singleResourceGroup }} \
                   --server-name ${{ env.dbInstanceName }} --display-name "passwordless-managed-identity" \
                   --object-id $objectId \
-                  --identity uamiId
+                  --identity $uamiId
 
                 echo "mysqlHost=${host}" >> "$GITHUB_ENV"     
                 echo "uamiId=${uamiId}" >> $GITHUB_ENV
