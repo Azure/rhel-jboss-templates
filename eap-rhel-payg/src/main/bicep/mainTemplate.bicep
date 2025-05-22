@@ -132,7 +132,9 @@ param dbIdentity object = {}
 @description('${label.tagsLabel}')
 param tagsByResource object = {}
 
-var uamiClientId = enablePswlessConnection ? reference(items(dbIdentity.userAssignedIdentities)[0].key, '${azure.apiVersionForIdentity}', 'full').properties.clientId : 'NA'
+var uamiId=items(dbIdentity.userAssignedIdentities)[0].key
+dbUser = enablePswlessConnection ? last(split(uamiId, '/')) : dbUser
+var uamiClientId = enablePswlessConnection ? reference(uamiId, '${azure.apiVersionForIdentity}', 'full').properties.clientId : 'NA'
 var const_arguments = format(' {0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15}',                    /*
 */ jbossEAPUserName, base64(jbossEAPPassword), connectSatellite, base64(satelliteActivationKey), base64(satelliteOrgName),     /*
 */ satelliteFqdn, jdkVersion, enableDB, databaseType, base64(jdbcDataSourceJNDIName), base64(dsConnectionURL), base64(dbUser), /*
