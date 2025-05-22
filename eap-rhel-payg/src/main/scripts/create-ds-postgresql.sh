@@ -17,6 +17,8 @@ databasePassword=$(echo "${6}" | base64 -d)         # Database user password
 enablePswlessConnection=${7}                        # Enable passwordless connection
 uamiClientId=${8}                                # UAMI display name
 
+azureIdentityExtensionVersion=1.1.20
+jdbcDriverVersion=42.5.2
 if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" ]; then
     echo "enablePswlessConnection=true, creating passwordless connection" | log
     # Create JDBC driver and module directory
@@ -24,10 +26,10 @@ if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" 
     mkdir -p "$jdbcDriverModuleDirectory"
 
     # Download JDBC driver and passwordless extensions
-    extensionJarName=azure-identity-extensions-1.1.20.jar
-    extensionPomName=azure-identity-extensions-1.1.20.pom
-    sudo curl --retry 5 -Lo ${jdbcDriverModuleDirectory}/${extensionJarName} https://repo1.maven.org/maven2/com/azure/azure-identity-extensions/1.1.20/$extensionJarName
-    sudo curl --retry 5 -Lo ${jdbcDriverModuleDirectory}/${extensionPomName} https://repo1.maven.org/maven2/com/azure/azure-identity-extensions/1.1.20/$extensionPomName
+    extensionJarName=azure-identity-extensions-${azureIdentityExtensionVersion}.jar
+    extensionPomName=azure-identity-extensions-${azureIdentityExtensionVersion}.pom
+    sudo curl --retry 5 -Lo ${jdbcDriverModuleDirectory}/${extensionJarName} https://repo1.maven.org/maven2/com/azure/azure-identity-extensions/${azureIdentityExtensionVersion}/$extensionJarName
+    sudo curl --retry 5 -Lo ${jdbcDriverModuleDirectory}/${extensionPomName} https://repo1.maven.org/maven2/com/azure/azure-identity-extensions/${azureIdentityExtensionVersion}/$extensionPomName
 
     sudo yum install maven -y
     sudo mvn dependency:copy-dependencies  -f ${jdbcDriverModuleDirectory}/${extensionPomName} -Ddest=${jdbcDriverModuleDirectory}
@@ -83,7 +85,7 @@ else
     mkdir -p "$jdbcDriverModuleDirectory"
 
     # Download JDBC driver
-    jdbcDriverName=postgresql-42.5.2.jar
+    jdbcDriverName=postgresql--${jdbcDriverVersion}.jar
     curl --retry 5 -Lo ${jdbcDriverModuleDirectory}/${jdbcDriverName} https://jdbc.postgresql.org/download/${jdbcDriverName}
 
     # Create module for JDBC driver
