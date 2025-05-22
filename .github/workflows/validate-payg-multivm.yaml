@@ -13,7 +13,7 @@ on:
         - mssqlserver
         - oracle
         - mysql(flexible)
-        - postgresql(single)
+        - postgresql(flexible)
         - none
       jdkVersion:
         description: 'jdkVersion'
@@ -178,20 +178,21 @@ jobs:
                 EOF
             - name: Deploy an instance of Azure Database for PostgreSQL
               id: deploy-postgresql
-              if: ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}
+              if: ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}
               run: |
-                az postgres server create \
+                az postgres flexible-server create \
                   --resource-group ${{ env.dependencyResourceGroup}} --name ${{ env.dbInstanceName }} \
                   --admin-user testuser --admin-password ${{ env.dbPassword }} \
-                  --location ${{ env.location }}
-                host=$(az postgres server show \
+                  --public-access 0.0.0.0 \
+                  --location ${{ env.location }} \
+                  --yes
+                host=$(az postgres flexible-server show \
                   --resource-group ${{ env.dependencyResourceGroup}} --name ${{ env.dbInstanceName }} \
                   --query "fullyQualifiedDomainName" -o tsv)
-                # Allow Azure services to access
-                az postgres server firewall-rule create \
-                  --resource-group ${{ env.dependencyResourceGroup}} --server ${{ env.dbInstanceName }} \
-                  --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
-                az postgres db create --resource-group ${{ env.dependencyResourceGroup}} --server ${{ env.dbInstanceName }} --name testdb
+                az postgres flexible-server db create --resource-group ${{ env.dependencyResourceGroup}} \
+                                                      --server-name ${{ env.dbInstanceName }} \
+                                                      --database-name testdb
+                
                 echo "postgresqlHost=${host}" >> "$GITHUB_OUTPUT"
 
     deploy-multivm-domain:
@@ -258,7 +259,7 @@ jobs:
                   fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
+                elif ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}; then
                   enableDB=true
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlHost }}:5432/testdb"
@@ -497,11 +498,11 @@ jobs:
                   fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
+                elif ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}; then
                   enableDB=true
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlHost }}:5432/testdb"
-                  dbUser=testuser@${{ env.dbInstanceName }}
+                  dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
                 fi
 
