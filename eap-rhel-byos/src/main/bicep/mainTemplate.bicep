@@ -149,7 +149,7 @@ param dbIdentity object = {}
 @description('${label.tagsLabel}')
 param tagsByResource object = {}
 
-var uamiId=items(dbIdentity.userAssignedIdentities)[0].key
+var uamiId= enablePswlessConnection ? items(dbIdentity.userAssignedIdentities)[0].key: 'NA'
 var dbUser_var = enablePswlessConnection ? last(split(uamiId, '/')) : dbUser
 var uamiClientId = enablePswlessConnection ? reference(uamiId, '${azure.apiVersionForIdentity}', 'full').properties.clientId : 'NA'
 var const_arguments = format(' {0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17} {18} {19}',       /*
