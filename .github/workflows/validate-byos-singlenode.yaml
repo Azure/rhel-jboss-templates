@@ -233,9 +233,6 @@ jobs:
                 uamiId=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity --query id -o tsv)
                 objectId=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity --query principalId -o tsv)
                 
-                az mysql flexible-server identity assign --resource-group ${{ env.singleResourceGroup }} \
-                  --server-name ${{ env.dbInstanceName }} --identity "passwordless-managed-identity"
-                
                 az mysql flexible-server ad-admin create --resource-group  ${{ env.singleResourceGroup }} \
                   --server-name ${{ env.dbInstanceName }} --display-name "passwordless-managed-identity" \
                   --object-id $objectId \
