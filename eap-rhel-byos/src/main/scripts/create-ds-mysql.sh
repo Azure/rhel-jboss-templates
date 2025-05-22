@@ -36,11 +36,11 @@ if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" 
       # Create module for JDBC driver
       jdbcDriverModule=module.xml
       sudo cat <<EOF >${jdbcDriverModule}
-  <?xml version="1.0" ?>
-  <module xmlns="urn:jboss:module:1.1" name="com.mysql">
-    <resources>
-      <resource-root path="${extensionJarName}"/>
-  EOF
+<?xml version="1.0" ?>
+<module xmlns="urn:jboss:module:1.1" name="com.mysql">
+  <resources>
+    <resource-root path="${extensionJarName}"/>
+EOF
 
       # Add all jars from target/dependency
       for jar in ${jdbcDriverModuleDirectory}/target/dependency/*.jar; do
@@ -61,8 +61,8 @@ if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" 
       <module name="javax.api"/>
       <module name="javax.transaction.api"/>
     </dependencies>
-  </module>
-  EOF
+</module>
+EOF
 
       chmod 644 $jdbcDriverModule
       mv $jdbcDriverModule $jdbcDriverModuleDirectory/$jdbcDriverModule

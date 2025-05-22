@@ -35,11 +35,11 @@ if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" 
       # Create module for JDBC driver
       jdbcDriverModule=module.xml
       sudo cat <<EOF >${jdbcDriverModule}
-  <?xml version="1.0" ?>
-  <module xmlns="urn:jboss:module:1.1" name="com.mysql">
-    <resources>
-      <resource-root path="${extensionJarName}"/>
-  EOF
+<?xml version="1.0" ?>
+<module xmlns="urn:jboss:module:1.1" name="com.mysql">
+  <resources>
+    <resource-root path="${extensionJarName}"/>
+EOF
 
       # Add all jars from target/dependency
       for jar in ${jdbcDriverModuleDirectory}/target/dependency/*.jar; do
@@ -60,8 +60,8 @@ if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" 
       <module name="javax.api"/>
       <module name="javax.transaction.api"/>
     </dependencies>
-  </module>
-  EOF
+</module>
+EOF
 
       chmod 644 $jdbcDriverModule
       mv $jdbcDriverModule $jdbcDriverModuleDirectory/$jdbcDriverModule
@@ -116,5 +116,4 @@ EOF
   echo "data-source add --driver-name=mysql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=*** --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mysql.MySQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mysql.MySQLExceptionSorter" | log
   sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
   "data-source add --driver-name=mysql --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=${databasePassword} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mysql.MySQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mysql.MySQLExceptionSorter"
-
 fi
