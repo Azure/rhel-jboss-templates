@@ -616,11 +616,11 @@
                                             "value": "oracle"
                                         },
                                         {
-                                            "label": "MySQL",
+                                            "label": "MySQL(Supports passwordless connection)",
                                             "value": "mysql"
                                         },
                                         {
-                                            "label": "PostgreSQL (Supports passwordless connection)",
+                                            "label": "PostgreSQL(Supports passwordless connection)",
                                             "value": "postgresql"
                                         }
                                     ],
