@@ -49,6 +49,7 @@ env:
     password: ${{ secrets.VM_PASSWORD }}
     dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
     dbPassword: ${{ secrets.DATABASE_PASSWORD }}
+    uamiName: uami${{ github.run_id }}${{ github.run_number }}
     singleStorageAccountName: singlesa
     jbossEAPUserName: jbossadmin
     jbossEAPPassword: ${{ secrets.JBOSS_EAP_USER_PASSWORD }}
@@ -230,11 +231,14 @@ jobs:
                 FLUSH PRIVILEGES;
                 EOF
                 
-                uamiId=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity --query id -o tsv)
-                objectId=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity --query principalId -o tsv)
+                # Create a user-assigned managed identity
+                az identity create --name ${{ env.uamiName }} --resource-group ${{ env.singleResourceGroup }}
+                # Export the resource ID of the user-assigned managed identity as an environment variable
+                uamiId=$(az identity show --name ${{ env.uamiName }} --resource-group ${{ env.singleResourceGroup }} --query id -o tsv)
+                objectId=$(az identity show --name ${{ env.uamiName }} --resource-group ${{ env.singleResourceGroup }} --query principalId -o tsv)
                 
                 az mysql flexible-server ad-admin create --resource-group  ${{ env.singleResourceGroup }} \
-                  --server-name ${{ env.dbInstanceName }} --display-name "passwordless-managed-identity" \
+                  --server-name ${{ env.dbInstanceName }} --display-name ${{ env.uamiName }} \
                   --object-id $objectId \
                   --identity $uamiId
                 
@@ -264,10 +268,12 @@ jobs:
               if: ${{ inputs.databaseType == 'postgresql-passwordless(flexible)' || github.event.client_payload.databaseType == 'postgresql-passwordless(flexible)' }}
               run: |
                 az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
-                # Extract service principal details from the credentials
                 
-                uamiId=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity --query id -o tsv)
-                objectId=$(az identity show --name passwordless-managed-identity --resource-group test-managed-identity --query principalId -o tsv)
+                # Create a user-assigned managed identity
+                az identity create --name ${{ env.uamiName }} --resource-group ${{ env.singleResourceGroup }}
+                # Export the resource ID of the user-assigned managed identity as an environment variable
+                uamiId=$(az identity show --name ${{ env.uamiName }} --resource-group ${{ env.singleResourceGroup }} --query id -o tsv)
+                objectId=$(az identity show --name ${{ env.uamiName }} --resource-group ${{ env.singleResourceGroup }} --query principalId -o tsv)
                 
                 az postgres flexible-server create \
                   --active-directory-auth Enabled \
@@ -280,7 +286,7 @@ jobs:
                 az postgres flexible-server ad-admin create \
                   --resource-group ${{ env.singleResourceGroup }} \
                   --server-name ${{ env.dbInstanceName }}  \
-                  --display-name "passwordless-managed-identity"  \
+                  --display-name ${{ env.uamiName }}  \
                   --object-id $objectId \
                   --type ServicePrincipal
                       
@@ -330,6 +336,7 @@ jobs:
                   enableDB=true
                   enablePasswordless=true
                   uamiId=${{ env.uamiId }}
+                  dbUser=$(basename "$uamiId")
                   dbIdentity=$(jq -n \
                                 --arg uamiId "$uamiId" \
                                 '{
@@ -351,6 +358,7 @@ jobs:
                   enableDB=true
                   enablePasswordless=true
                   uamiId=${{ env.uamiId }}
+                  dbUser=$(basename "$uamiId")
                   dbIdentity=$(jq -n \
                                 --arg uamiId "$uamiId" \
                                 '{
