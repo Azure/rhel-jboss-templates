@@ -16,7 +16,7 @@ on:
 
 env:
   azCliVersion: 2.72.0
-  location: eastus
+  location: eastus2
   aroResourceGroup: aro-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
   aroTestBranchName: aro-cicd-${{ github.run_id }}-${{ github.run_number }}
 
