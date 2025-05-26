@@ -89,6 +89,8 @@ SATELLITE_ORG_NAME_BASE64=${10}
 SATELLITE_ORG_NAME=$(echo $SATELLITE_ORG_NAME_BASE64 | base64 -d)
 SATELLITE_VM_FQDN=${11}
 gracefulShutdownTimeout=${12}
+enablePswlessConnection=${13}
+uamiClientId=${14}
 
 MOUNT_POINT_PATH=/mnt/jbossshare
 HOST_VM_IP=$(hostname -I)

@@ -16,6 +16,8 @@ databaseUser=$(echo "${5}" | base64 -d)             # Database username
 databasePassword=$(echo "${6}" | base64 -d)         # Database user password
 isManagedDomain=$7                                  # true if the server is in a managed domain, false otherwise
 isSlaveServer=$8                                    # true if it's a slave server of a managed domain, false otherwise
+enablePswlessConnection=$9                          # Enable passwordless connection
+uamiClientId=$10                                    # UAMI display name
 
 # Create JDBC driver and module directory
 jdbcDriverModuleDirectory="$eapRootPath"/modules/com/postgresql/main

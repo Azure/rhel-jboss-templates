@@ -550,6 +550,8 @@ jobs:
                 dsConnectionURL=jdbc:postgresql://contoso.postgres.database:5432/testdb
                 dbUser=contosoDbUser
                 dbPassword=contosoDbPwd
+                enablePasswordless=false
+                dbIdentity={}
                 if ${{ inputs.databaseType == 'mssqlserver' || github.event.client_payload.databaseType == 'mssqlserver' }}; then
                   enableDB=true
                   databaseType=mssqlserver

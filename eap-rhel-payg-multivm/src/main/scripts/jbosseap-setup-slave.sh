@@ -94,6 +94,8 @@ dsConnectionString=${17}
 databaseUser=${18}
 databasePassword=${19}
 gracefulShutdownTimeout=${20}
+enablePswlessConnection=${21}
+uamiClientId=${22}
 
 HOST_VM_NAME=$(hostname)
 HOST_VM_NAME_LOWERCASES=$(echo "${HOST_VM_NAME,,}")
@@ -332,7 +334,7 @@ sleep 20
 if [ "$enableDB" == "True" ]; then
     echo "Start to install JDBC driver module" | log
     jdbcDataSourceName=dataSource-$dbType
-    ./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true true
+    ./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true true $enablePswlessConnection "$uamiClientId"
     echo "Complete to install JDBC driver module" | log
 fi
 
