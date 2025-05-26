@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 #read arguments from stdin
-read parametersPath gitUserName testbranchName location vmName adminUsername password virtualNetworkResourceGroupName storageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword enableDB databaseType jdbcDataSourceJNDIName dsConnectionURL dbUser dbPassword jdkVersion gracefulShutdownTimeout
+read parametersPath gitUserName testbranchName location vmName adminUsername password virtualNetworkResourceGroupName storageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword enableDB databaseType jdbcDataSourceJNDIName dsConnectionURL dbUser dbPassword jdkVersion gracefulShutdownTimeout enablePswlessConnection dbIdentity
  
 cat <<EOF > ${parametersPath}
 {
@@ -94,6 +94,12 @@ cat <<EOF > ${parametersPath}
         },
         "gracefulShutdownTimeout": {
             "value": "${gracefulShutdownTimeout}"
+        },
+        "enablePswlessConnection": {
+            "value": ${enablePswlessConnection}
+        },
+        "dbIdentity": {
+            "value": ${dbIdentity}
         }
     }
 }
