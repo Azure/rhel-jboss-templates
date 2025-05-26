@@ -132,7 +132,7 @@ cat <<EOF > ${parametersPath}
             "value": ${enablePswlessConnection}
         },
         "dbIdentity": {
-            "value": ${dbIdentity}
+            "value": "${dbIdentity}"
         }
     }
 }
