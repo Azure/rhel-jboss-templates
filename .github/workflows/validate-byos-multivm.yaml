@@ -13,6 +13,7 @@ on:
         - mssqlserver
         - oracle
         - mysql(flexible)
+        - mysql-passwordless(flexible)
         - postgresql(flexible)
         - postgresql-passwordless(flexible)
         - none
@@ -96,7 +97,8 @@ jobs:
           oracleHost: ${{ steps.deploy-oracle.outputs.oracleHost }}
           mysqlHost: ${{ steps.deploy-mysql.outputs.mysqlHost }}
           postgresqlHost: ${{ steps.deploy-postgresql.outputs.postgresqlHost }}
-          uamiId: ${{ steps.deploy-postgresql-passwordless.outputs.uamiId }}
+          mysqlUamiId: ${{ steps.deploy-mysql-passwordless.outputs.uamiId }}
+          postgresqlUamiId: ${{ steps.deploy-postgresql-passwordless.outputs.uamiId }}
         steps:
             - uses: azure/login@v1
               id: azure-login
@@ -182,6 +184,60 @@ jobs:
                 GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
                 FLUSH PRIVILEGES;
                 EOF
+
+            - name: Deploy an instance of Azure Database for MySQL passwordless
+              id: deploy-mysql-passwordless
+              if: ${{ inputs.databaseType == 'mysql-passwordless(flexible)' || github.event.client_payload.databaseType == 'mysql-passwordless(flexible)' }}
+              run: |
+                az group create -n ${{ env.dependencyResourceGroup }} -l ${{ env.location }}
+                az mysql flexible-server create \
+                  --resource-group ${{ env.dependencyResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --admin-user myadmin --admin-password ${{ env.dbPassword }} \
+                  --sku-name Standard_B1ms --location ${{ env.location }} \
+                  --version 8.0.21 \
+                  --yes
+                # https://github.com/azure-javaee/rhel-jboss-templates/issues/2                
+                if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
+                    az mysql flexible-server parameter set --resource-group ${{ env.dependencyResourceGroup }} \
+                    --server-name ${{ env.dbInstanceName }} \
+                    --name require_secure_transport \
+                    --value OFF       
+                fi
+                # Allow Azure services to access
+                az mysql flexible-server firewall-rule create \
+                  --resource-group ${{ env.dependencyResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --rule-name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+                # Allow current IP to access MySQL server
+                currentIp=$(curl -s https://icanhazip.com)
+                az mysql flexible-server firewall-rule create \
+                  --resource-group ${{ env.dependencyResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --rule-name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
+                host=$(az mysql flexible-server show \
+                  --resource-group ${{ env.dependencyResourceGroup }} --name ${{ env.dbInstanceName }} \
+                  --query "fullyQualifiedDomainName" -o tsv)
+                
+                wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
+                mysql -h $host -u myadmin -p${{ env.dbPassword }} --ssl-ca=DigiCertGlobalRootCA.crt.pem << EOF
+                CREATE DATABASE testdb;
+                CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ env.dbPassword }}';
+                GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
+                FLUSH PRIVILEGES;
+                EOF
+                
+                # Create a user-assigned managed identity
+                az identity create --name ${{ env.uamiName }} --resource-group ${{ env.dependencyResourceGroup }}
+                # Export the resource ID of the user-assigned managed identity as an environment variable
+                uamiId=$(az identity show --name ${{ env.uamiName }} --resource-group ${{ env.dependencyResourceGroup }} --query id -o tsv)
+                objectId=$(az identity show --name ${{ env.uamiName }} --resource-group ${{ env.dependencyResourceGroup }} --query principalId -o tsv)
+
+                az mysql flexible-server ad-admin create --resource-group  ${{ env.dependencyResourceGroup }} \
+                  --server-name ${{ env.dbInstanceName }} --display-name ${{ env.uamiName }} \
+                  --object-id $objectId \
+                  --identity $uamiId
+
+                echo "mysqlHost=${host}" >> "$GITHUB_OUTPUT"   
+                echo "uamiId=${uamiId}" >> "$GITHUB_OUTPUT"
+
             - name: Deploy an instance of Azure Database for PostgreSQL
               id: deploy-postgresql
               if: ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}
@@ -307,6 +363,21 @@ jobs:
                   fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
+                elif ${{ inputs.databaseType == 'mysql-passwordless(flexible)' || github.event.client_payload.databaseType == 'mysql-passwordless(flexible)' }}; then
+                  enableDB=true
+                  enablePasswordless=true
+                  uamiId=${{ needs.deploy-dependent-resources.outputs.mysqlUamiId }}
+                  dbUser=$(basename "$uamiId")
+                  dbIdentity=$(jq -n \
+                                --arg uamiId "$uamiId" \
+                                '{
+                                      "type": "UserAssigned",
+                                      "userAssignedIdentities": {
+                                          ($uamiId): {}
+                                      }
+                                  }'| jq -c '.')
+                  databaseType=mysql
+                  dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlHost }}:3306/testdb
                 elif ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}; then
                   enableDB=true
                   databaseType=postgresql
@@ -318,7 +389,7 @@ jobs:
                   enableDB=true
                   databaseType=postgresql
                   enablePasswordless=true
-                  uamiId=${{ needs.deploy-dependent-resources.outputs.uamiId }}
+                  uamiId=${{ needs.deploy-dependent-resources.outputs.postgresqlUamiId }}
                   dbUser=$(basename "$uamiId")
                   dbIdentity=$(jq -n \
                                 --arg uamiId "$uamiId" \
@@ -576,6 +647,21 @@ jobs:
                   fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
+                elif ${{ inputs.databaseType == 'mysql-passwordless(flexible)' || github.event.client_payload.databaseType == 'mysql-passwordless(flexible)' }}; then
+                  enableDB=true
+                  enablePasswordless=true
+                  uamiId=${{ needs.deploy-dependent-resources.outputs.mysqlUamiId }}
+                  dbUser=$(basename "$uamiId")
+                  dbIdentity=$(jq -n \
+                                --arg uamiId "$uamiId" \
+                                '{
+                                      "type": "UserAssigned",
+                                      "userAssignedIdentities": {
+                                          ($uamiId): {}
+                                      }
+                                  }'| jq -c '.')
+                  databaseType=mysql
+                  dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlHost }}:3306/testdb
                 elif ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}; then
                   enableDB=true
                   databaseType=postgresql
