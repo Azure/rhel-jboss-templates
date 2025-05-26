@@ -15,7 +15,7 @@ dsConnectionString=$(echo "${4}" | base64 -d)       # JDBC Datasource connection
 databaseUser=$(echo "${5}" | base64 -d)             # Database username
 databasePassword=$(echo "${6}" | base64 -d)         # Database user password
 enablePswlessConnection=${7}                        # Enable passwordless connection
-uamiClientId=${8}                                # UAMI display name
+uamiClientId=${8}                                   # UAMI display name
 
 azureIdentityExtensionVersion=1.1.20
 jdbcDriverVersion=42.5.2

@@ -13,11 +13,13 @@ jdbcDSJNDIName=${3}
 dsConnectionString=${4}
 databaseUser=${5}
 databasePassword=${6}
+enablePswlessConnection=${7}
+uamiClientId=${8}
 
 # Load environment variables where EAP_HOME is defined
 source /etc/profile.d/eap_env.sh
 
 # Configure JDBC driver and data source
 echo "Start to configure JDBC driver and data source" | log
-./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true false
+./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true false  $enablePswlessConnection "$uamiClientId"
 echo "Complete to configure JDBC driver and data source" | log
