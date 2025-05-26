@@ -96,6 +96,7 @@ jobs:
           oracleHost: ${{ steps.deploy-oracle.outputs.oracleHost }}
           mysqlHost: ${{ steps.deploy-mysql.outputs.mysqlHost }}
           postgresqlHost: ${{ steps.deploy-postgresql.outputs.postgresqlHost }}
+          uamiId: ${{ steps.deploy-postgresql-passwordless.outputs.uamiId }}
         steps:
             - uses: azure/login@v1
               id: azure-login
@@ -201,6 +202,7 @@ jobs:
                 echo "postgresqlHost=${host}" >> "$GITHUB_OUTPUT"
             - name: Deploy an instance of Azure Database for PostgreSQL passwordless
               if: ${{ inputs.databaseType == 'postgresql-passwordless(flexible)' || github.event.client_payload.databaseType == 'postgresql-passwordless(flexible)' }}
+              id: deploy-postgresql-passwordless
               run: |
                 
                 # Create a user-assigned managed identity
@@ -231,8 +233,8 @@ jobs:
                                                       --server-name ${{ env.dbInstanceName }} \
                                                       --database-name testdb
                 
-                echo "postgresqlHost=${host}" >> "$GITHUB_ENV"
-                echo "uamiId=${uamiId}" >> $GITHUB_ENV
+                echo "postgresqlHost=${host}" >> "$GITHUB_OUTPUT"
+                echo "uamiId=${uamiId}" >> "$GITHUB_OUTPUT"
 
     deploy-multivm-domain:
         needs: 
@@ -316,7 +318,7 @@ jobs:
                   enableDB=true
                   databaseType=postgresql
                   enablePasswordless=true
-                  uamiId=${{ env.uamiId }}
+                  uamiId=${{ needs.deploy-dependent-resources.outputs.uamiId }}
                   dbUser=$(basename "$uamiId")
                   dbIdentity=$(jq -n \
                                 --arg uamiId "$uamiId" \
@@ -585,7 +587,7 @@ jobs:
                   enableDB=true
                   databaseType=postgresql
                   enablePasswordless=true
-                  uamiId=${{ env.uamiId }}
+                  uamiId=${{ needs.deploy-dependent-resources.outputs.uamiId }}
                   dbUser=$(basename "$uamiId")
                   dbIdentity=$(jq -n \
                                 --arg uamiId "$uamiId" \
