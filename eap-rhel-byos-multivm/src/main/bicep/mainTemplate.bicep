@@ -670,7 +670,7 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
     jbossEAPPassword: jbossEAPPassword
     gracefulShutdownTimeout: gracefulShutdownTimeout
     enablePswlessConnection: enablePswlessConnection
-    uamiId: uamiId
+    uamiClientId: uamiClientId
     rhsmUserName: rhsmUserName
     rhsmPassword: rhsmPassword
     rhsmPoolEAP: rhsmPoolEAP
