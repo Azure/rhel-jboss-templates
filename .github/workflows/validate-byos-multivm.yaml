@@ -673,7 +673,7 @@ jobs:
                   enableDB=true
                   databaseType=postgresql
                   enablePasswordless=true
-                  uamiId=${{ needs.deploy-dependent-resources.outputs.uamiId }}
+                  uamiId=${{ needs.deploy-dependent-resources.outputs.postgresqlUamiId }}
                   dbUser=$(basename "$uamiId")
                   dbIdentity=$(jq -n \
                                 --arg uamiId "$uamiId" \
