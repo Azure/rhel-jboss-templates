@@ -291,7 +291,7 @@ install_and_config_helm
 echo ${PULL_SECRET} | base64 --decode > ./my-pull-secret.json
 oc create secret generic catalog-secret \
   --from-file=.dockerconfigjson=./my-pull-secret.json \
-  --type=kubernetes.io/dockerconfigjson
+  --type=kubernetes.io/dockerconfigjson \
   -n openshift-operators
 
 # Create subscption and install operator
