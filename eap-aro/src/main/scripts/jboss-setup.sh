@@ -157,23 +157,77 @@ wait_file_based_creation() {
     done
 }
 
-wait_secret_link() {
-    secretName=$1
-    logFile=$2
+wait_subscription_created() {
+    subscriptionName=$1
+    namespaceName=$2
+    deploymentYaml=$3
+    logFile=$4
+
     cnt=0
-    oc secrets link default ${secretName} --for=pull >> $logFile 2>&1
-    oc secrets link builder ${secretName} --for=pull >> $logFile 2>&1
+    oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
-            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile
             return 1
         fi
         cnt=$((cnt+1))
-        echo "Unable to secret link, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+
+        echo "Unable to get the operator package manifest ${subscriptionName} from OperatorHub, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc secrets link default ${secretName} --for=pull >> $logFile 2>&1
-        oc secrets link builder ${secretName} --for=pull >> $logFile 2>&1
+        oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
+    done
+
+    cnt=0
+    oc apply -f ${deploymentYaml} >> $logFile
+    while [ $? -ne 0 ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile
+            return 1
+        fi
+        cnt=$((cnt+1))
+
+        echo "Failed to create the operator subscription ${subscriptionName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        sleep 5
+        oc apply -f ${deploymentYaml} >> $logFile
+    done
+
+    cnt=0
+    oc get subscription ${subscriptionName} -n ${namespaceName} 2>/dev/null
+    while [ $? -ne 0 ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile
+            return 1
+        fi
+        cnt=$((cnt+1))
+
+        echo "Unable to get the operator subscription ${subscriptionName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        sleep 5
+        oc get subscription ${subscriptionName} -n ${namespaceName} 2>/dev/null
+    done
+    echo "Subscription ${subscriptionName} created." >> $logFile
+}
+
+wait_deployment_complete() {
+    deploymentName=$1
+    namespaceName=$2
+    logFile=$3
+
+    cnt=0
+    oc get deployment ${deploymentName} -n ${namespaceName} 2>/dev/null
+    while [ $? -ne 0 ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile
+            return 1
+        fi
+        cnt=$((cnt+1))
+
+        echo "Unable to get the deployment ${deploymentName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        sleep 5
+        oc get deployment ${deploymentName} -n ${namespaceName} 2>/dev/null
     done
 }
 
@@ -234,7 +288,21 @@ fi
 
 install_and_config_helm
 
+# Create subscption and install operator
 wait_resource_applied redhat-catalog.yaml $logFile
+
+wait_subscription_created eap openshift-operators eap-operator-sub.yaml ${logFile}
+if [[ $? -ne 0 ]]; then
+  echo "Failed to install the JBoss EAP Operator from the OperatorHub." >&2
+  exit 1
+fi
+
+# Check deployment is succeed
+wait_deployment_complete eap-operator openshift-operators ${logFile}
+if [[ $? -ne 0 ]]; then
+  echo "The JBoss EAP Operator is not available." >&2
+  exit 1
+fi
 
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
@@ -266,14 +334,34 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     	--docker-username=${CON_REG_ACC_USER_NAME} \
     	--docker-password=${CON_REG_ACC_PWD}
 
-    # Create helm install value deployment YAML file
-    echo "Creating helm install value deployment YAML file" >> $logFile
+    echo "${PULL_SECRET}" | oc create secret generic catalog-secret \
+      --from-file=.dockerconfigjson=/dev/stdin \
+      --type=kubernetes.io/dockerconfigjson
+
     helmDeploymentTemplate=helm.yaml.template
     helmDeploymentFile=helm.yaml
     envsubst < "$helmDeploymentTemplate" > "$helmDeploymentFile"
 
-    echo "Using helm chart to deploy JBoss EAP, APPLICATION_NAME=${APPLICATION_NAME}, PROJECT_NAME=${PROJECT_NAME}" >> $logFile
+    echo "Using helm chart to build images, APPLICATION_NAME=${APPLICATION_NAME}, PROJECT_NAME=${PROJECT_NAME}" >> $logFile
     helm install ${APPLICATION_NAME} -f helm.yaml jboss-eap/eap8 --namespace ${PROJECT_NAME} >> $logFile
+
+    # Create image deployment YAML file
+    echo "Create image deployment YAML file" >> $logFile
+    appDeploymentTemplate=app-deployment.yaml.template >> $logFile
+    appDeploymentFile=app-deployment.yaml >> $logFile
+    envsubst < "$appDeploymentTemplate" > "$appDeploymentFile"
+
+    # Apply image deployment file
+    echo "Apply image deployment file" >> $logFile
+    wait_file_based_creation ${appDeploymentFile} ${logFile}
+    if [[ $? != 0 ]]; then
+        echo "Failed to apply image deployment file." >&2
+        exit 1
+    fi
+
+    # Wait image deployment
+    echo "Wait image deployment" >> $logFile
+    wait_image_deployment_complete ${APPLICATION_NAME} ${PROJECT_NAME} $logFile
 
     # Get the route of the application
     echo "Get the route of the application" >> $logFile
