@@ -288,7 +288,7 @@ fi
 
 install_and_config_helm
 
-echo ${PULL_SECRET} | base64 --decode > ./my-pull-secret.json
+echo ${PULL_SECRET} | base64 -d > ./my-pull-secret.json
 echo "Creating catalog secret with pull secret" >> $logFile
 oc create secret generic catalog-secret \
   --from-file=.dockerconfigjson=./my-pull-secret.json \
