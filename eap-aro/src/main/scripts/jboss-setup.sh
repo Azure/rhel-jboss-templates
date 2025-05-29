@@ -293,7 +293,7 @@ echo "Creating catalog secret with pull secret" >> $logFile
 oc create secret generic catalog-secret \
   --from-file=.dockerconfigjson=./my-pull-secret.json \
   --type=kubernetes.io/dockerconfigjson \
-  -n openshift-operators
+  -n openshift-marketplace
 if [[ $? -ne 0 ]]; then
   echo "Failed to create the catalog secret." >> $logFile
   exit 1
