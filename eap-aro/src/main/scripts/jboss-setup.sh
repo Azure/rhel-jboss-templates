@@ -288,6 +288,12 @@ fi
 
 install_and_config_helm
 
+echo ${PULL_SECRET} | base64 --decode > ./my-pull-secret.json
+oc create secret generic catalog-secret \
+  --from-file=.dockerconfigjson=./my-pull-secret.json \
+  --type=kubernetes.io/dockerconfigjson
+  -n openshift-operators
+
 # Create subscption and install operator
 wait_resource_applied redhat-catalog.yaml $logFile
 
@@ -333,11 +339,6 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     	--docker-server=registry.redhat.io \
     	--docker-username=${CON_REG_ACC_USER_NAME} \
     	--docker-password=${CON_REG_ACC_PWD}
-
-    echo ${PULL_SECRET} | base64 --decode > ./my-pull-secret.json
-    oc create secret generic catalog-secret \
-      --from-file=.dockerconfigjson=./my-pull-secret.json \
-      --type=kubernetes.io/dockerconfigjson
 
     helmDeploymentTemplate=helm.yaml.template
     helmDeploymentFile=helm.yaml
