@@ -334,7 +334,7 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     	--docker-username=${CON_REG_ACC_USER_NAME} \
     	--docker-password=${CON_REG_ACC_PWD}
 
-    echo "${PULL_SECRET}" > ./my-pull-secret.json
+    echo ${PULL_SECRET} | base64 --decode > ./my-pull-secret.json
     oc create secret generic catalog-secret \
       --from-file=.dockerconfigjson=./my-pull-secret.json \
       --type=kubernetes.io/dockerconfigjson
