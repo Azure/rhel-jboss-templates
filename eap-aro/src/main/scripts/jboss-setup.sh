@@ -282,31 +282,36 @@ echo 'export PATH=$PATH:~/openshift' >> ~/.bash_profile && source ~/.bash_profil
 # Sign in to cluster
 wait_login_complete $kubeadminUsername $kubeadminPassword "$apiServerUrl" $logFile
 if [[ $? -ne 0 ]]; then
-  echo "Failed to sign into the cluster with ${kubeadminUsername}." >&2
+  echo "Failed to sign into the cluster with ${kubeadminUsername}." >> $logFile
   exit 1
 fi
 
 install_and_config_helm
 
 echo ${PULL_SECRET} | base64 --decode > ./my-pull-secret.json
+echo "Creating catalog secret with pull secret" >> $logFile
 oc create secret generic catalog-secret \
   --from-file=.dockerconfigjson=./my-pull-secret.json \
   --type=kubernetes.io/dockerconfigjson \
   -n openshift-operators
+if [[ $? -ne 0 ]]; then
+  echo "Failed to create the catalog secret." >> $logFile
+  exit 1
+fi
 
 # Create subscption and install operator
 wait_resource_applied redhat-catalog.yaml $logFile
 
 wait_subscription_created eap openshift-operators eap-operator-sub.yaml ${logFile}
 if [[ $? -ne 0 ]]; then
-  echo "Failed to install the JBoss EAP Operator from the OperatorHub." >&2
+  echo "Failed to install the JBoss EAP Operator from the OperatorHub." >> $logFile
   exit 1
 fi
 
 # Check deployment is succeed
 wait_deployment_complete eap-operator openshift-operators ${logFile}
 if [[ $? -ne 0 ]]; then
-  echo "The JBoss EAP Operator is not available." >&2
+  echo "The JBoss EAP Operator is not available." >> $logFile
   exit 1
 fi
 
