@@ -1,0 +1,15 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: redhat-operators
+  namespace: openshift-operators
+spec:
+  sourceType: grpc
+  image: registry.redhat.io/redhat/redhat-operator-index:v4.18
+  displayName: Red Hat Operators
+  publisher: Red Hat
+  secrets:
+    - "catalog-secret"
+  updateStrategy:
+    registryPoll:
+      interval: 30m
