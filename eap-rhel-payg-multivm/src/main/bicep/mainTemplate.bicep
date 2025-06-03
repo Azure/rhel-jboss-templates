@@ -627,6 +627,7 @@ module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = {
 resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionForVirtualMachines}' = [for i in range(0, numberOfInstances): {
   name: (operatingMode == name_managedDomain) ? (i == 0 ? '${vmName_var}${name_adminVmName}' : '${vmName_var}${i}') : '${vmName_var}${i}'
   location: location
+  identity: enablePswlessConnection ? dbIdentity : null
   tags: union(_objTagsByResource['${identifier.virtualMachines}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
       })
