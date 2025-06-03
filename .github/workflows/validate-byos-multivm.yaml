@@ -97,6 +97,8 @@ jobs:
           oracleHost: ${{ steps.deploy-oracle.outputs.oracleHost }}
           mysqlHost: ${{ steps.deploy-mysql.outputs.mysqlHost }}
           postgresqlHost: ${{ steps.deploy-postgresql.outputs.postgresqlHost }}
+          mysqlPasswordlessHost: ${{ steps.deploy-mysql-passwordless.outputs.mysqlHost }}
+          postgresqlPasswordlessHost: ${{ steps.deploy-postgresql-passwordless.outputs.postgresqlHost }}
           mysqlUamiId: ${{ steps.deploy-mysql-passwordless.outputs.uamiId }}
           postgresqlUamiId: ${{ steps.deploy-postgresql-passwordless.outputs.uamiId }}
         steps:
@@ -377,7 +379,7 @@ jobs:
                                       }
                                   }'| jq -c '.')
                   databaseType=mysql
-                  dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlHost }}:3306/testdb
+                  dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlPasswordlessHost }}:3306/testdb
                 elif ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}; then
                   enableDB=true
                   databaseType=postgresql
@@ -399,7 +401,7 @@ jobs:
                                           ($uamiId): {}
                                       }
                                   }'| jq -c '.')  
-                  dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlHost }}:5432/testdb"
+                  dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlPasswordlessHost }}:5432/testdb"
                 fi
                 echo "enableDB=${enableDB}" >> "$GITHUB_ENV"
 
@@ -661,7 +663,7 @@ jobs:
                                       }
                                   }'| jq -c '.')
                   databaseType=mysql
-                  dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlHost }}:3306/testdb
+                  dsConnectionURL=jdbc:mysql://${{ needs.deploy-dependent-resources.outputs.mysqlPasswordlessHost }}:3306/testdb
                 elif ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}; then
                   enableDB=true
                   databaseType=postgresql
@@ -683,7 +685,7 @@ jobs:
                                           ($uamiId): {}
                                       }
                                   }'| jq -c '.')  
-                  dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlHost }}:5432/testdb"
+                  dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlPasswordlessHost }}:5432/testdb"
                 fi
 
                 echo "generate parameter file for standalone mode"
