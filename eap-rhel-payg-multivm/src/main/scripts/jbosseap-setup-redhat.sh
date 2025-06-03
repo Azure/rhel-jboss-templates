@@ -104,7 +104,7 @@ else
             --publisher Microsoft.Azure.Extensions \
             --version 2.0 \
             --settings "{\"fileUris\": [\"${masterDSScriptUri}\", \"${postgresqlDSScriptUri}\", \"${mssqlserverDSScriptUri}\", \"${oracleDSScriptUri}\", \"${mysqlDSScriptUri}\"]}" \
-            --protected-settings "{\"commandToExecute\":\"sh jbosseap-setup-master-ds.sh ${DATABASE_TYPE} ${jdbcDataSourceName} ${JDBC_DATA_SOURCE_JNDI_NAME_BASE64} ${DS_CONNECTION_URL_BASE64} ${DB_USER_BASE64} ${DB_PASSWORD_BASE64}\"}"
+            --protected-settings "{\"commandToExecute\":\"sh jbosseap-setup-master-ds.sh ${DATABASE_TYPE} ${jdbcDataSourceName} ${JDBC_DATA_SOURCE_JNDI_NAME_BASE64} ${DS_CONNECTION_URL_BASE64} ${DB_USER_BASE64} ${DB_PASSWORD_BASE64} ${enablePswlessConnection} ${uamiClientId}\"}"
             if [ $? != 0 ] ; then echo  "Failed to configure data source for host: ${ADMIN_VM_NAME}"; exit 1;  fi
             echo "Data source configuration VM extension execution completed"
 
