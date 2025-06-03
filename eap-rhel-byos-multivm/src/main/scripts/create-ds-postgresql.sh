@@ -17,7 +17,7 @@ databasePassword=$(echo "${6}" | base64 -d)         # Database user password
 isManagedDomain=$7                                  # true if the server is in a managed domain, false otherwise
 isSlaveServer=$8                                    # true if it's a slave server of a managed domain, false otherwise
 enablePswlessConnection=$9                          # Enable passwordless connection
-uamiClientId=$10                                    # UAMI display name
+uamiClientId=${10}                                    # UAMI display name
 
 azureIdentityExtensionVersion=1.1.20
 jdbcDriverVersion=42.5.2
