@@ -27,6 +27,35 @@ wait_login_complete() {
     done
 }
 
+wait_image_deployment_complete() {
+    application_name=$1
+    project_name=$2
+    logFile=$3
+
+    cnt=0
+    read -r -a replicas <<< `oc get wildflyserver ${application_name} -n ${project_name} -o=jsonpath='{.spec.replicas}{" "}{.status.replicas}{"\n"}'`
+    while [[ ${#replicas[@]} -ne 2 || ${replicas[0]} != ${replicas[1]} ]]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile
+            return 1
+        fi
+        cnt=$((cnt+1))
+        # Delete pods in ImagePullBackOff status
+        podIds=`oc get pod -n ${project_name} | grep ImagePullBackOff | awk '{print $1}'`
+        read -r -a podIds <<< `echo $podIds`
+        for podId in "${podIds[@]}"
+        do
+            echo "Delete pod ${podId} in ImagePullBackOff status" >> $logFile
+            oc delete pod ${podId} -n ${project_name}
+        done
+        sleep 5
+        echo "Wait until the deploymentConfig ${application_name} completes, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        read -r -a replicas <<< `oc get wildflyserver ${application_name} -n ${project_name} -o=jsonpath='{.spec.replicas}{" "}{.status.replicas}{"\n"}'`
+    done
+    echo "Deployment ${application_name} completed." >> $logFile
+}
+
 wait_route_available() {
     routeName=$1
     namespaceName=$2
