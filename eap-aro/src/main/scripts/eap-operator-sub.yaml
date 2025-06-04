@@ -8,4 +8,4 @@ spec:
   installPlanApproval: Automatic
   name: eap
   source:  redhat-operators
-  sourceNamespace: openshift-marketplace
+  sourceNamespace: redhat-operators
