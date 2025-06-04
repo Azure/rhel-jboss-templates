@@ -164,7 +164,7 @@ wait_subscription_created() {
     logFile=$4
 
     cnt=0
-    oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
+    oc get packagemanifests -n openshift-operators | grep -q ${subscriptionName}
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -175,7 +175,7 @@ wait_subscription_created() {
 
         echo "Unable to get the operator package manifest ${subscriptionName} from OperatorHub, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
+        oc get packagemanifests -n openshift-operators | grep -q ${subscriptionName}
     done
 
     cnt=0
