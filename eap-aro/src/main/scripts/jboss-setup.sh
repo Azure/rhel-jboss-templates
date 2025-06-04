@@ -319,11 +319,11 @@ install_and_config_helm
 
 echo ${PULL_SECRET} | base64 -d > ./my-pull-secret.json
 echo "Creating catalog secret with pull secret" >> $logFile
-oc delete secret catalog-secret -n openshift-operators --ignore-not-found >> $logFile
+oc delete secret catalog-secret -n openshift-marketplace --ignore-not-found >> $logFile
 oc create secret generic catalog-secret \
   --from-file=.dockerconfigjson=./my-pull-secret.json \
   --type=kubernetes.io/dockerconfigjson \
-  -n openshift-operators
+  -n openshift-marketplace
 
 if [[ $? -ne 0 ]]; then
   echo "Failed to create the catalog secret." >> $logFile
