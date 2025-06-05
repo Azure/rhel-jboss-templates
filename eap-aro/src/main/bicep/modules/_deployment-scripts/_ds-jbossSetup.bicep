@@ -23,6 +23,9 @@ param deployApplication bool = true
 @description('URL to the repository containing the application source code.')
 param srcRepoUrl string = ''
 
+@description('Flag indicating whether to create a new cluster or not')
+param createCluster bool = true
+
 @description('The Git repository reference to use for the source code. This can be a Git branch or tag reference.')
 param srcRepoRef string = ''
 
@@ -45,11 +48,16 @@ param applicationName string = 'eap-app'
 @description('The number of application replicas to deploy')
 param appReplicas int = 2
 
+@secure()
+@description('The pull secret to use for the deployment')
+param pullSecret string = ''
+
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jboss-setup.sh'
-var const_eapOperatorSubscriptionYaml = 'eap-operator-sub.yaml'
-var const_rhContainerRegistryPullSecretYaml = 'red-hat-container-registry-pull-secret.yaml.template'
-var const_appDeploymentYaml = 'app-deployment.yaml.template'
+var const_helmYaml = 'helm.yaml.template'
+var const_redHatCatalog = 'redhat-catalog.yaml'
+var const_deploymentTemplate = 'app-deployment.yaml.template'
+var const_operator = 'eap-operator-sub.yaml'
 var const_azcliVersion = '2.53.0'
 
 resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
@@ -60,6 +68,10 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
   properties: {
     azCliVersion: const_azcliVersion
     environmentVariables: [
+      {
+        name: 'CREATE_CLUSTER'
+        value: createCluster
+      }
       {
         name: 'RESOURCE_GROUP'
         value: clusterRGName
@@ -86,11 +98,11 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
       }
       {
         name: 'CON_REG_ACC_USER_NAME'
-        value: base64(conRegAccUserName)
+        value: conRegAccUserName
       }
       {
         name: 'CON_REG_ACC_PWD'
-        value: base64(conRegAccPwd)
+        value: conRegAccPwd
       }
       {
         name: 'CON_REG_SECRET_NAME'
@@ -108,12 +120,17 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
         name: 'APP_REPLICAS'
         value: string(appReplicas)
       }
+      {
+        name: 'PULL_SECRET'
+        value: base64(pullSecret)
+      }
     ]
     primaryScriptUri: uri(const_scriptLocation, '${const_setupJBossScript}${artifactsLocationSasToken}')
     supportingScriptUris: [
-      uri(const_scriptLocation, '${const_eapOperatorSubscriptionYaml}${artifactsLocationSasToken}')
-      uri(const_scriptLocation, '${const_rhContainerRegistryPullSecretYaml}${artifactsLocationSasToken}')
-      uri(const_scriptLocation, '${const_appDeploymentYaml}${artifactsLocationSasToken}')
+      uri(const_scriptLocation, '${const_helmYaml}${artifactsLocationSasToken}')
+      uri(const_scriptLocation, '${const_redHatCatalog}${artifactsLocationSasToken}')
+      uri(const_scriptLocation, '${const_deploymentTemplate}${artifactsLocationSasToken}')
+      uri(const_scriptLocation, '${const_operator}${artifactsLocationSasToken}')
     ]
     cleanupPreference:'OnSuccess'
     retentionInterval: 'P1D'

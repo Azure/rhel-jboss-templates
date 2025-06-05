@@ -3,6 +3,21 @@ name: Validate eap-aro offer
 on:
   workflow_dispatch:
     inputs:
+      useExistingCluster:
+        description: 'Use existing ARO cluster?'
+        required: true
+        type: boolean
+        default: false
+      clusterName:
+        description: 'Name of existing ARO cluster'
+        required: false
+        type: string
+        default: ''
+      clusterRGName:
+        description: 'Resource group Name of existing ARO cluster'
+        required: false
+        type: string
+        default: ''
       timeWaitBeforeDelete:
         description: 'Choose the wait time before deleting resources: 30m (30 minutes), 2h (2 hours), 5h (5 hours), 0 (immediately)'
         required: true
@@ -26,6 +41,8 @@ env:
   # To get pull secret text, see Get a Red Hat pull secret.
   # https://learn.microsoft.com/en-us/azure/openshift/tutorial-create-cluster?WT.mc_id=Portal-fx#get-a-red-hat-pull-secret-optional
   pullSecret: ${{ secrets.PULL_SECRET }}
+  conRegAccUserName: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+  conRegAccPwd: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
 
   offerName: "eap-aro"
 
@@ -91,6 +108,27 @@ jobs:
           # rpObjectId=$(az ad sp list --display-name "Azure Red Hat OpenShift RP" --query "[0].id" -o tsv)
           rpObjectId="ebeeb6e8-af58-4204-9e58-efca7922a3cc"
           
+          if [ "${{ github.event.inputs.useExistingCluster }}" == "true" ]; then
+            echo "Using existing ARO cluster"
+            createCluster=false
+          else
+            echo "Creating new ARO cluster"
+            createCluster=true
+          fi
+          
+          # if ${{ github.event.inputs.clusterName }} is empty, then set it to the default name
+          if [ -z "${{ github.event.inputs.clusterName }}" ]; then
+              clusterName="aro-cluster-${{ github.repository_owner }}"
+          else
+              clusterName="${{ github.event.inputs.clusterName }}"
+          fi
+          # if ${{ github.event.inputs.clusterRGName }} is empty, then set it to the default name
+          if [ -z "${{ github.event.inputs.clusterRGName }}" ]; then
+              clusterRGName="aro-rg-${{ github.repository_owner }}"
+          else
+              clusterRGName="${{ github.event.inputs.clusterRGName }}"
+          fi
+          
           echo "generate parameter file for eap-aro"
           params="rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json  \
           ${gitUserName} \
@@ -103,7 +141,12 @@ jobs:
           ${rpObjectId} \
           "Standard_D8s_v3" \
           "Standard_D4s_v3" \
-          3
+          3 \
+          ${conRegAccUserName} \
+          ${conRegAccPwd} \
+          ${createCluster} \
+          ${clusterName} \
+          ${clusterRGName}
           "
           echo $params |bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh 
 
@@ -137,16 +180,37 @@ jobs:
 
       - name: Verify the deployment
         run: |
-          appEndpoint=$(az resource show -n jboss-setup -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "properties.outputs.appEndpoint" -o tsv)
-          echo "appEndpoint: ${appEndpoint}"
-          if [[ -n "$appEndpoint" ]]; then
-            echo "Invalid value of appEndpoint: ${appEndpoint}"
-            exit 1
-          fi
+          # Get the resource name dynamically based on the pattern
+          resourceName=$(az resource list -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "[?starts_with(name, 'jboss-setup')].name" -o tsv)
+          
+          # Use the retrieved resource name to get the appEndpoint
+          appEndpoint=$(az resource show -n $resourceName -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "properties.outputs.appEndpoint" -o tsv)
 
-      # - name: Setup tmate session
-      #   if: ${{ failure() }}
-      #   uses: mxschmitt/action-tmate@v3
+          echo "appEndpoint: ${appEndpoint}"
+          
+          echo "Verifying appEndpoint is accessible"
+          
+          max_retries=20
+          retry_interval=30
+          attempt=1
+          
+          while [ $attempt -le $max_retries ]; do
+            response=$(curl -L -s -o /dev/null -w "%{http_code}" ${appEndpoint}/services/javadetails)
+            echo "Response code: $response, Attempt: $attempt"
+          
+            if [ "$response" -eq 200 ]; then
+              echo "appEndpoint is accessible"
+              exit 0
+            fi
+          
+            echo "appEndpoint is not accessible. Retrying in $retry_interval seconds..."
+            attempt=$((attempt + 1))
+            sleep $retry_interval
+            unset response
+          done
+          
+          echo "appEndpoint is not accessible after $max_retries attempts"
+          exit 1
 
   resources-cleanup:
     name: resources-cleanup after ${{ github.event.inputs.timeWaitBeforeDelete }}
