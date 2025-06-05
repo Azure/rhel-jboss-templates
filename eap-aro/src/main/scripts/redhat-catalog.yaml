@@ -4,8 +4,6 @@ kind: CatalogSource
 metadata:
   name: redhat-operators
   namespace: openshift-marketplace
-  annotations:
-    olm.catalogImageTemplate: "registry.redhat.io/redhat/redhat-operator-index:v4.18"
 spec:
   sourceType: grpc
   image: registry.redhat.io/redhat/redhat-operator-index:v4.18
