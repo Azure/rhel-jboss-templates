@@ -61,7 +61,7 @@ wait_route_available() {
     namespaceName=$2
     logFile=$3
     cnt=0
-    oc get route ${routeName} -n ${namespaceName} >> $logFile 2>&1
+    oc get route "${routeName}-route " -n ${namespaceName} >> $logFile 2>&1
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
