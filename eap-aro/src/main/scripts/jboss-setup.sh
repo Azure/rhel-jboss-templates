@@ -61,7 +61,7 @@ wait_route_available() {
     namespaceName=$2
     logFile=$3
     cnt=0
-    oc get route "${routeName}-route " -n ${namespaceName} >> $logFile 2>&1
+    oc get route ${routeName} -n ${namespaceName} >> $logFile 2>&1
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -405,14 +405,14 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     # Get the route of the application
     echo "Get the route of the application" >> $logFile
     oc expose svc/${APPLICATION_NAME}
-    wait_route_available ${APPLICATION_NAME} ${PROJECT_NAME} $logFile
+    wait_route_available "${APPLICATION_NAME}-route" ${PROJECT_NAME} $logFile
     if [[ $? -ne 0 ]]; then
         echo "The route ${APPLICATION_NAME} is not available." >> $logFile
         exit 1
     fi
 fi
 
-appEndpoint=$(oc get route ${APPLICATION_NAME} -n ${PROJECT_NAME} -o=jsonpath='{.spec.host}')
+appEndpoint=$(oc get route "${APPLICATION_NAME}-route" -n ${PROJECT_NAME} -o=jsonpath='{.spec.host}')
 
 # Write outputs to deployment script output path
 result=$(jq -n -c --arg consoleUrl $consoleUrl '{consoleUrl: $consoleUrl}')
