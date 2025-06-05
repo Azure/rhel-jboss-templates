@@ -1,4 +1,4 @@
-name: Get Latest Azure API Versions in Azure-Common.properties
+name: Get Latest Azure API Versions
 
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ jobs:
         with:
           creds: ${{ env.azureCredentials }}
       - name: Get and Update API Versions
-        id: update-versions
+        id: get-latest-versions
         run: |
           # Create a temporary file to store the updated content
           cp utilities/azure-common.properties utilities/azure-common.properties.new
@@ -75,4 +75,11 @@ jobs:
           echo "Summary of changes:"
           echo "----------------------------------------"
           diff utilities/azure-common.properties utilities/azure-common.properties.new || true
+
+      - name: Upload updated properties file
+        uses: actions/upload-artifact@v4
+        with:
+          name: updated-azure-common-properties
+          path: utilities/azure-common.properties.new
+          description: 'Updated azure-common.properties with latest API versions'
           
