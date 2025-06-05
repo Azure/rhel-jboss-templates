@@ -626,7 +626,7 @@
                                     "validations": [
                                         {
                                             "regex": "^jdbc:mysql:\/\/([^\/]+):([0-9]+)\/([\\w-]+)",
-                                            "validationMessage": "A valid JDBC URL for the chosen database type must be provided"
+                                            "message": "A valid JDBC URL for the chosen database type must be provided"
                                         },
                                         {
                                             "isValid": "[if(and(bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection), equals(steps('section_database').databaseConnectionInfo.databaseType, 'mysql')), and(not(contains(steps('section_database').databaseConnectionInfo.dsConnectionURL, 'defaultAuthenticationPlugin')),not(contains(steps('section_database').databaseConnectionInfo.dsConnectionURL, 'authenticationPlugins')), not(contains(steps('section_database').databaseConnectionInfo.dsConnectionURL, 'azure.clientId'))), 'true')]",
