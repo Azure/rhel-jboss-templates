@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       
+env:
+  azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
 
 jobs:
   check-api-versions:
@@ -11,7 +13,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+      - uses: azure/login@v1
+        id: azure-login
+        with:
+          creds: ${{ env.azureCredentials }}
       - name: Get and Update API Versions
         id: update-versions
         run: |
