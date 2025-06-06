@@ -13,7 +13,7 @@ wait_login_complete() {
     logFile=$4
 
     cnt=0
-    oc login -u $username -p $password --server="$apiServerUrl" >> $logFile 2>&1
+    oc login -u $username -p $password --server="$apiServerUrl" >> $logFile
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -24,7 +24,7 @@ wait_login_complete() {
 
         echo "Login failed with ${username}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc login -u $username -p $password --server="$apiServerUrl" >> $logFile 2>&1
+        oc login -u $username -p $password --server="$apiServerUrl" >> $logFile
     done
 }
 
@@ -62,7 +62,7 @@ wait_route_available() {
     namespaceName=$2
     logFile=$3
     cnt=0
-    oc get route ${routeName} -n ${namespaceName} >> $logFile 2>&1
+    oc get route ${routeName} -n ${namespaceName} >> $logFile
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -72,7 +72,7 @@ wait_route_available() {
         cnt=$((cnt+1))
         echo "Unable to get the route ${routeName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc get route ${routeName} -n ${namespaceName} >> $logFile 2>&1
+        oc get route ${routeName} -n ${namespaceName} >> $logFile
     done
     cnt=0
     appEndpoint=$(oc get route ${routeName} -n ${namespaceName} -o=jsonpath='{.spec.host}')
@@ -95,8 +95,8 @@ wait_project_created() {
     namespaceName=$1
     logFile=$2
     cnt=0
-    oc new-project ${namespaceName} >> $logFile 2>&1
-    oc get project ${namespaceName} >> $logFile 2>&1
+    oc new-project ${namespaceName} >> $logFile
+    oc get project ${namespaceName} >> $logFile
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -106,8 +106,8 @@ wait_project_created() {
         cnt=$((cnt+1))
         echo "Unable to create the project ${namespaceName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc new-project ${namespaceName} >> $logFile 2>&1
-        oc get project ${namespaceName} >> $logFile 2>&1
+        oc new-project ${namespaceName} >> $logFile
+        oc get project ${namespaceName} >> $logFile
     done
 }
 
@@ -136,7 +136,7 @@ wait_add_view_role() {
     namespaceName=$1
     logFile=$2
     cnt=0
-    oc policy add-role-to-user view system:serviceaccount:${namespaceName}:default -n ${namespaceName} >> $logFile 2>&1
+    oc policy add-role-to-user view system:serviceaccount:${namespaceName}:default -n ${namespaceName} >> $logFile
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -146,7 +146,7 @@ wait_add_view_role() {
         cnt=$((cnt+1))
         echo "Unable to add view role to project ${namespaceName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc policy add-role-to-user view system:serviceaccount:${namespaceName}:default -n ${namespaceName} >> $logFile 2>&1
+        oc policy add-role-to-user view system:serviceaccount:${namespaceName}:default -n ${namespaceName} >> $logFile
     done
 }
 
@@ -154,7 +154,7 @@ wait_add_scc_privileged() {
     namespaceName=$1
     logFile=$2
     cnt=0
-    oc adm policy add-scc-to-user privileged -z default --namespace ${namespaceName} >> $logFile 2>&1
+    oc adm policy add-scc-to-user privileged -z default --namespace ${namespaceName} >> $logFile
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -164,7 +164,7 @@ wait_add_scc_privileged() {
         cnt=$((cnt+1))
         echo "Unable to add scc privileged to project default service account of ${namespaceName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc adm policy add-scc-to-user privileged -z default --namespace ${namespaceName} >> $logFile 2>&1
+        oc adm policy add-scc-to-user privileged -z default --namespace ${namespaceName} >> $logFile
     done
 }
 
@@ -183,7 +183,7 @@ wait_file_based_creation() {
         cnt=$((cnt+1))
         echo "Unable to apply file, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc apply -f ${deploymentFile} >> $logFile 2>&1
+        oc apply -f ${deploymentFile} >> $logFile
     done
 }
 
@@ -243,15 +243,17 @@ wait_subscription_created() {
     done
     echo "wait_subscription_created--07"
     echo "Subscription ${subscriptionName} created." >> $logFile
+    echo "wait_subscription_created--08"
 }
 
 wait_deployment_complete() {
     deploymentName=$1
     namespaceName=$2
     logFile=$3
-
+    echo "wait_subscription_created--111-01"
     cnt=0
-    oc get deployment ${deploymentName} -n ${namespaceName} 2>/dev/null
+    oc get deployment ${deploymentName} -n ${namespaceName}
+    echo "wait_subscription_created--111-02"
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -262,7 +264,6 @@ wait_deployment_complete() {
 
         echo "Unable to get the deployment ${deploymentName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc get deployment ${deploymentName} -n ${namespaceName} 2>/dev/null
     done
 }
 
@@ -338,16 +339,20 @@ wait_resource_applied redhat-catalog.yaml $logFile
 
 wait_subscription_created eap openshift-operators eap-operator-sub.yaml ${logFile}
 if [[ $? -ne 0 ]]; then
+  echo "wait_deployment_complete--009"
   echo "Failed to install the JBoss EAP Operator from the OperatorHub." >> $logFile
   exit 1
 fi
 
 # Check deployment is succeed
+echo "wait_deployment_complete--010"
 wait_deployment_complete eap-operator openshift-operators ${logFile}
 if [[ $? -ne 0 ]]; then
+  echo "wait_deployment_complete--011"
   echo "The JBoss EAP Operator is not available." >> $logFile
   exit 1
 fi
+echo "wait_deployment_complete--012"
 
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
