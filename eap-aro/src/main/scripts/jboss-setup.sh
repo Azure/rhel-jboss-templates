@@ -199,7 +199,9 @@ wait_subscription_created() {
     echo "wait_subscription_created--04"
 
     cnt=0
-    echo "wait_subscription_created--05"
+    echo "wait_subscription_created--05 ${subscriptionName}"
+    oc get packagemanifests -n openshift-marketplace | grep ${subscriptionName}
+    echo "wait_subscription_created--05-01 ${subscriptionName}"
     oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
     echo "oc get packagemanifests"
     echo "wait_subscription_created--06"
