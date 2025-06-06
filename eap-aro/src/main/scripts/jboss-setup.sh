@@ -190,19 +190,28 @@ wait_file_based_creation() {
 wait_subscription_created() {
     echo "wait_subscription_created--start"
     subscriptionName=$1
+    echo "wait_subscription_created--01"
     namespaceName=$2
+    echo "wait_subscription_created--02"
     deploymentYaml=$3
+    echo "wait_subscription_created--03"
     logFile=$4
+    echo "wait_subscription_created--04"
 
     cnt=0
+    echo "wait_subscription_created--05"
     oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
     echo "oc get packagemanifests"
+    echo "wait_subscription_created--06"
     while [ $? -ne 0 ]
     do
+        echo "wait_subscription_created--07"
         if [ $cnt -eq $MAX_RETRIES ]; then
             echo "Timeout and exit due to the maximum retries reached."
             return 1
         fi
+        echo "wait_subscription_created--08"
+
         cnt=$((cnt+1))
 
         echo "Unable to get the operator package manifest ${subscriptionName} from OperatorHub, retry ${cnt} of ${MAX_RETRIES}..."
@@ -210,7 +219,10 @@ wait_subscription_created() {
         oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
     done
 
+    echo "wait_subscription_created--08"
+    sleep 10
     cnt=0
+    echo "wait_subscription_created--09"
     oc apply -f ${deploymentYaml}
     while [ $? -ne 0 ]
     do
