@@ -1,5 +1,4 @@
 #!/bin/bash
-set -Eeuo pipefail
 
 # See https://github.com/WASdev/azure.liberty.aro/issues/60
 MAX_RETRIES=99
