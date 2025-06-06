@@ -1,0 +1,16 @@
+# Reference https://docs.redhat.com/en/documentation/red_hat_openshift_container_storage/4.5/html/preparing_to_deploy_in_a_disconnected_environment/creating-a-catalogsource-from-a-mirrored-catalog_rhocs
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: redhat-operators
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  image: registry.redhat.io/redhat/redhat-operator-index:v4.18
+  displayName: Red Hat Operators
+  publisher: Red Hat
+  secrets:
+    - "catalog-secret"
+  updateStrategy:
+    registryPoll:
+      interval: 30m

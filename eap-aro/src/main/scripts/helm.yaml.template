@@ -1,0 +1,7 @@
+build:
+  uri: ${SRC_REPO_URL}
+  ref: ${SRC_REPO_REF}
+  contextDir: ${SRC_REPO_DIR}
+  pullSecret: pull-secret-${SUFFIX}
+deploy:
+  enabled: false
