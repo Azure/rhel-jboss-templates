@@ -12,7 +12,7 @@ wait_login_complete() {
     logFile=$4
 
     cnt=0
-    oc login -u $username -p $password --server="$apiServerUrl" >> $logFile
+    oc login -u $username -p $password --server="$apiServerUrl" >> $logFile 2>&1
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -23,7 +23,7 @@ wait_login_complete() {
 
         echo "Login failed with ${username}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc login -u $username -p $password --server="$apiServerUrl" >> $logFile
+        oc login -u $username -p $password --server="$apiServerUrl" >> $logFile 2>&1
     done
 }
 
@@ -32,22 +32,17 @@ wait_image_deployment_complete() {
     project_name=$2
     logFile=$3
 
-    echo "wait_subscription_created--333-07"
     cnt=0
     read -r -a replicas <<< `oc get wildflyserver ${application_name} -n ${project_name} -o=jsonpath='{.spec.replicas}{" "}{.status.replicas}{"\n"}'`
-    echo "wait_subscription_created--444-04"
     while [[ ${#replicas[@]} -ne 2 || ${replicas[0]} != ${replicas[1]} ]]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
             echo "Timeout and exit due to the maximum retries reached." >> $logFile
             return 1
         fi
-        echo "wait_subscription_created--444-01"
         cnt=$((cnt+1))
         # Delete pods in ImagePullBackOff status
-        echo "wait_subscription_created--444-02"
-        podIds=`oc get pod -n eap-demo-f04c51 | grep ImagePullBackOff | awk '{print $1}'`
-        echo "wait_subscription_created--444-03"
+        podIds=`oc get pod -n ${project_name} | grep ImagePullBackOff | awk '{print $1}'`
         read -r -a podIds <<< `echo $podIds`
         for podId in "${podIds[@]}"
         do
@@ -58,7 +53,6 @@ wait_image_deployment_complete() {
         echo "Wait until the deploymentConfig ${application_name} completes, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         read -r -a replicas <<< `oc get wildflyserver ${application_name} -n ${project_name} -o=jsonpath='{.spec.replicas}{" "}{.status.replicas}{"\n"}'`
     done
-    echo "wait_subscription_created--333-08"
     echo "Deployment ${application_name} completed." >> $logFile
 }
 
@@ -67,9 +61,7 @@ wait_route_available() {
     namespaceName=$2
     logFile=$3
     cnt=0
-    echo "wait_subscription_created--333-15"
-
-    oc get route ${routeName} -n ${namespaceName} >> $logFile
+    oc get route ${routeName} -n ${namespaceName} >> $logFile 2>&1
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -79,10 +71,9 @@ wait_route_available() {
         cnt=$((cnt+1))
         echo "Unable to get the route ${routeName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc get route ${routeName} -n ${namespaceName} >> $logFile
+        oc get route ${routeName} -n ${namespaceName} >> $logFile 2>&1
     done
     cnt=0
-    echo "wait_subscription_created--333-16"
     appEndpoint=$(oc get route ${routeName} -n ${namespaceName} -o=jsonpath='{.spec.host}')
     echo "appEndpoint is ${appEndpoint}"
     while [[ -z $appEndpoint ]]
@@ -103,8 +94,8 @@ wait_project_created() {
     namespaceName=$1
     logFile=$2
     cnt=0
-    oc new-project ${namespaceName} >> $logFile
-    oc get project ${namespaceName} >> $logFile
+    oc new-project ${namespaceName} >> $logFile 2>&1
+    oc get project ${namespaceName} >> $logFile 2>&1
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -114,8 +105,8 @@ wait_project_created() {
         cnt=$((cnt+1))
         echo "Unable to create the project ${namespaceName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc new-project ${namespaceName} >> $logFile
-        oc get project ${namespaceName} >> $logFile
+        oc new-project ${namespaceName} >> $logFile 2>&1
+        oc get project ${namespaceName} >> $logFile 2>&1
     done
 }
 
@@ -144,7 +135,7 @@ wait_add_view_role() {
     namespaceName=$1
     logFile=$2
     cnt=0
-    oc policy add-role-to-user view system:serviceaccount:${namespaceName}:default -n ${namespaceName} >> $logFile
+    oc policy add-role-to-user view system:serviceaccount:${namespaceName}:default -n ${namespaceName} >> $logFile 2>&1
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -154,7 +145,7 @@ wait_add_view_role() {
         cnt=$((cnt+1))
         echo "Unable to add view role to project ${namespaceName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc policy add-role-to-user view system:serviceaccount:${namespaceName}:default -n ${namespaceName} >> $logFile
+        oc policy add-role-to-user view system:serviceaccount:${namespaceName}:default -n ${namespaceName} >> $logFile 2>&1
     done
 }
 
@@ -162,7 +153,7 @@ wait_add_scc_privileged() {
     namespaceName=$1
     logFile=$2
     cnt=0
-    oc adm policy add-scc-to-user privileged -z default --namespace ${namespaceName} >> $logFile
+    oc adm policy add-scc-to-user privileged -z default --namespace ${namespaceName} >> $logFile 2>&1
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -172,7 +163,7 @@ wait_add_scc_privileged() {
         cnt=$((cnt+1))
         echo "Unable to add scc privileged to project default service account of ${namespaceName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc adm policy add-scc-to-user privileged -z default --namespace ${namespaceName} >> $logFile
+        oc adm policy add-scc-to-user privileged -z default --namespace ${namespaceName} >> $logFile 2>&1
     done
 }
 
@@ -191,7 +182,7 @@ wait_file_based_creation() {
         cnt=$((cnt+1))
         echo "Unable to apply file, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc apply -f ${deploymentFile} >> $logFile
+        oc apply -f ${deploymentFile} >> $logFile 2>&1
     done
 }
 
@@ -202,9 +193,7 @@ wait_subscription_created() {
     logFile=$4
 
     cnt=0
-    echo "wait_subscription_created--01"
-    oc get packagemanifests -n openshift-marketplace | grep ${subscriptionName}
-    echo "wait_subscription_created--02"
+    oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -215,11 +204,10 @@ wait_subscription_created() {
 
         echo "Unable to get the operator package manifest ${subscriptionName} from OperatorHub, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc get packagemanifests -n openshift-marketplace | grep ${subscriptionName}
+        oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
     done
-    echo "wait_subscription_created--03"
+
     cnt=0
-    echo "wait_subscription_created--04"
     oc apply -f ${deploymentYaml} >> $logFile
     while [ $? -ne 0 ]
     do
@@ -233,10 +221,9 @@ wait_subscription_created() {
         sleep 5
         oc apply -f ${deploymentYaml} >> $logFile
     done
-    echo "wait_subscription_created--05"
+
     cnt=0
-    echo "wait_subscription_created--06"
-    oc get subscription ${subscriptionName} -n ${namespaceName}
+    oc get subscription ${subscriptionName} -n ${namespaceName} 2>/dev/null
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -247,21 +234,18 @@ wait_subscription_created() {
 
         echo "Unable to get the operator subscription ${subscriptionName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc get subscription ${subscriptionName} -n ${namespaceName}
+        oc get subscription ${subscriptionName} -n ${namespaceName} 2>/dev/null
     done
-    echo "wait_subscription_created--07"
     echo "Subscription ${subscriptionName} created." >> $logFile
-    echo "wait_subscription_created--08"
 }
 
 wait_deployment_complete() {
     deploymentName=$1
     namespaceName=$2
     logFile=$3
-    echo "wait_subscription_created--111-01"
+
     cnt=0
-    oc get deployment ${deploymentName} -n ${namespaceName}
-    echo "wait_subscription_created--111-02"
+    oc get deployment ${deploymentName} -n ${namespaceName} 2>/dev/null
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -272,6 +256,7 @@ wait_deployment_complete() {
 
         echo "Unable to get the deployment ${deploymentName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
+        oc get deployment ${deploymentName} -n ${namespaceName} 2>/dev/null
     done
 }
 
@@ -347,20 +332,16 @@ wait_resource_applied redhat-catalog.yaml $logFile
 
 wait_subscription_created eap openshift-operators eap-operator-sub.yaml ${logFile}
 if [[ $? -ne 0 ]]; then
-  echo "wait_deployment_complete--009"
   echo "Failed to install the JBoss EAP Operator from the OperatorHub." >> $logFile
   exit 1
 fi
 
 # Check deployment is succeed
-echo "wait_deployment_complete--010"
 wait_deployment_complete eap-operator openshift-operators ${logFile}
 if [[ $? -ne 0 ]]; then
-  echo "wait_deployment_complete--011"
   echo "The JBoss EAP Operator is not available." >> $logFile
   exit 1
 fi
-echo "wait_deployment_complete--012"
 
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
@@ -381,7 +362,7 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     # Enable the containers to "view" the namespace
     wait_add_view_role ${PROJECT_NAME} ${logFile}
     if [[ $? -ne 0 ]]; then
-        echo "Add view role to ${PROJECT_NAME}."
+        echo "Add view role to ${PROJECT_NAME}." >&2
         exit 1
     fi
     
@@ -391,10 +372,9 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     	--docker-server=registry.redhat.io \
     	--docker-username=${CON_REG_ACC_USER_NAME} \
     	--docker-password=${CON_REG_ACC_PWD}
-    echo "wait_subscription_created--333-01"
+
     helmDeploymentTemplate=helm.yaml.template
     helmDeploymentFile=helm.yaml
-    echo "wait_subscription_created--333-02"
     envsubst < "$helmDeploymentTemplate" > "$helmDeploymentFile"
 
     echo "Using helm chart to build images, APPLICATION_NAME=${APPLICATION_NAME}, PROJECT_NAME=${PROJECT_NAME}" >> $logFile
@@ -410,21 +390,17 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     echo "Apply image deployment file" >> $logFile
     wait_file_based_creation ${appDeploymentFile} ${logFile}
     if [[ $? != 0 ]]; then
-        echo "Failed to apply image deployment file."
+        echo "Failed to apply image deployment file." >&2
         exit 1
     fi
 
     # Wait image deployment
     echo "Wait image deployment" >> $logFile
-    echo "wait_subscription_created--333-06"
     wait_image_deployment_complete ${APPLICATION_NAME} ${PROJECT_NAME} $logFile
-    echo "wait_subscription_created--333-09"
 
     # Get the route of the application
     echo "Get the route of the application" >> $logFile
-    echo "wait_subscription_created--333-10"
     oc expose svc/${APPLICATION_NAME}
-    echo "wait_subscription_created--333-11"
     wait_route_available "${APPLICATION_NAME}-route" ${PROJECT_NAME} $logFile
     if [[ $? -ne 0 ]]; then
         echo "The route ${APPLICATION_NAME} is not available." >> $logFile
@@ -432,14 +408,12 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     fi
 fi
 
-echo "wait_subscription_created--333-12"
 appEndpoint=$(oc get route "${APPLICATION_NAME}-route" -n ${PROJECT_NAME} -o=jsonpath='{.spec.host}')
-echo "wait_subscription_created--333-13"
+
 # Write outputs to deployment script output path
 result=$(jq -n -c --arg consoleUrl $consoleUrl '{consoleUrl: $consoleUrl}')
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     result=$(echo "$result" | jq --arg appEndpoint "http://$appEndpoint" '{"appEndpoint": $appEndpoint} + .')
 fi
-echo "wait_subscription_created--333-14"
 echo "Result is: $result" >> $logFile
 echo $result > $AZ_SCRIPTS_OUTPUT_PATH
