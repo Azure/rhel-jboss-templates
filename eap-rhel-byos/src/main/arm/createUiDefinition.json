@@ -681,7 +681,7 @@
                                             "message": "A valid JDBC URL for the chosen database type must be provided"
                                         },
                                         {
-                                            "isValid": "[if(and(bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection), equals(steps('section_database').databaseConnectionInfo.databaseType, 'mysql')), and(not(contains(steps('section_database').databaseConnectionInfo.dsConnectionURL, 'defaultAuthenticationPlugin')),not(contains(steps('section_database').databaseConnectionInfo.dsConnectionURL, 'authenticationPlugins')), not(contains(steps('section_database').databaseConnectionInfo.dsConnectionURL, 'azure.clientId'))), 'true')]",
+                                            "isValid": "[if(and(bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection), equals(steps('section_database').databaseConnectionInfo.databaseType, 'mysql')), and(not(contains(steps('section_database').databaseConnectionInfo.mysqlDsConnectionURL, 'defaultAuthenticationPlugin')),not(contains(steps('section_database').databaseConnectionInfo.mysqlDsConnectionURL, 'authenticationPlugins')), not(contains(steps('section_database').databaseConnectionInfo.mysqlDsConnectionURL, 'azure.clientId'))), 'true')]",
                                             "message": "The offer will append defaultAuthenticationPlugin, authenticationPlugins with Azure provided plugins, and append azure.clientId with your managed identity client ID automatically, please do not specify them in your connection string."
                                         },
                                         {
@@ -706,7 +706,7 @@
                                             "message": "A valid JDBC URL for the chosen database type must be provided"
                                         },
                                         {
-                                            "isValid": "[if(bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection), and(not(contains(steps('section_database').databaseConnectionInfo.sqlserverDsConnectionURL, 'authentication=ActiveDirectoryMSI')),not(contains(steps('section_database').databaseConnectionInfo.sqlserverDsConnectionURL, 'msiClientId'))), 'true')]",
+                                            "isValid": "[if(bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection), and(not(contains(steps('section_database').databaseConnectionInfo.postgresDsConnectionURL, 'authentication=ActiveDirectoryMSI')),not(contains(steps('section_database').databaseConnectionInfo.postgresDsConnectionURL, 'msiClientId'))), 'true')]",
                                             "message": "The offer will append authentication with ActiveDirectoryMSI, and append msiClientId with your managed identity client ID automatically, please do not specify them in your connection string."
                                         },
                                         {
