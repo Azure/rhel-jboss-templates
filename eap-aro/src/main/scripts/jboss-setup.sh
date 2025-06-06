@@ -330,6 +330,7 @@ fi
 
 # Create subscption and install operator
 wait_resource_applied redhat-catalog.yaml $logFile
+echo "Applying wait_subscription_created"
 
 wait_subscription_created eap openshift-operators eap-operator-sub.yaml ${logFile}
 if [[ $? -ne 0 ]]; then
