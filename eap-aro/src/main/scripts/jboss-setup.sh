@@ -1,5 +1,4 @@
 #!/bin/bash
-set -Eeuo pipefail
 
 # See https://github.com/WASdev/azure.liberty.aro/issues/60
 MAX_RETRIES=99
@@ -47,7 +46,7 @@ wait_image_deployment_complete() {
         cnt=$((cnt+1))
         # Delete pods in ImagePullBackOff status
         echo "wait_subscription_created--444-02"
-        podIds=`oc get pod -n ${project_name} | grep ImagePullBackOff | awk '{print $1}'`
+        podIds=`oc get pod -n eap-demo-f04c51 | grep ImagePullBackOff | awk '{print $1}'`
         echo "wait_subscription_created--444-03"
         read -r -a podIds <<< `echo $podIds`
         for podId in "${podIds[@]}"
