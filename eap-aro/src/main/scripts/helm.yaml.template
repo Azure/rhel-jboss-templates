@@ -4,4 +4,4 @@ build:
   contextDir: ${SRC_REPO_DIR}
   pullSecret: pull-secret-${SUFFIX}
 deploy:
-  replicas: ${APP_REPLICAS}
+  enabled: false

@@ -13,7 +13,7 @@ on:
         - mssqlserver
         - oracle
         - mysql(flexible)
-        - postgresql(single)
+        - postgresql(flexible)
         - none
       jdkVersion:
         description: 'jdkVersion'
@@ -38,6 +38,7 @@ on:
           - 0
 
 env:
+    azCliVersion: 2.72.0
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
     location: eastus
     domainResourceGroup: multivm-domain-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
@@ -180,20 +181,21 @@ jobs:
                 EOF
             - name: Deploy an instance of Azure Database for PostgreSQL
               id: deploy-postgresql
-              if: ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}
+              if: ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}
               run: |
-                az postgres server create \
+                az postgres flexible-server create \
                   --resource-group ${{ env.dependencyResourceGroup}} --name ${{ env.dbInstanceName }} \
                   --admin-user testuser --admin-password ${{ env.dbPassword }} \
-                  --location ${{ env.location }}
-                host=$(az postgres server show \
+                  --public-access 0.0.0.0 \
+                  --location ${{ env.location }} \
+                  --yes
+                host=$(az postgres flexible-server show \
                   --resource-group ${{ env.dependencyResourceGroup}} --name ${{ env.dbInstanceName }} \
                   --query "fullyQualifiedDomainName" -o tsv)
-                # Allow Azure services to access
-                az postgres server firewall-rule create \
-                  --resource-group ${{ env.dependencyResourceGroup}} --server ${{ env.dbInstanceName }} \
-                  --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
-                az postgres db create --resource-group ${{ env.dependencyResourceGroup}} --server ${{ env.dbInstanceName }} --name testdb
+                az postgres flexible-server db create --resource-group ${{ env.dependencyResourceGroup}} \
+                                                      --server-name ${{ env.dbInstanceName }} \
+                                                      --database-name testdb
+                
                 echo "postgresqlHost=${host}" >> "$GITHUB_OUTPUT"
 
     deploy-multivm-domain:
@@ -202,18 +204,12 @@ jobs:
           - deploy-dependent-resources
         runs-on: ubuntu-latest
         steps:
-            - name: Get versions of external dependencies
-              run: |
-                curl -Lo external-deps-versions.properties https://raw.githubusercontent.com/Azure/azure-javaee-iaas/main/external-deps-versions.properties
-                source external-deps-versions.properties
-                echo "azCliVersion=${AZ_CLI_VERSION}" >> "$GITHUB_ENV"
-                echo "bicepVersion=${BICEP_VERSION}" >> "$GITHUB_ENV"
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
               with:
                 path: rhel-jboss-templates
             - name: Download artifact for deployment
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v4.2.1
               with:
                 name: ${{needs.preflight.outputs.artifactName}}
                 path: rhel-jboss-templates-dev
@@ -271,11 +267,11 @@ jobs:
                   fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
+                elif ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}; then
                   enableDB=true
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlHost }}:5432/testdb"
-                  dbUser=testuser@${{ env.dbInstanceName }}
+                  dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
                 fi
                 echo "enableDB=${enableDB}" >> "$GITHUB_ENV"
@@ -312,13 +308,13 @@ jobs:
                 ${{ env.gracefulShutdownTimeout }}"
 
             - name: Archive parameters-test-domain.json
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v4.6.2
               if: success()
               with:
                 name: parameters-test-domain
                 path: rhel-jboss-templates/eap-rhel-byos-multivm/src/test/parameters-test-domain.json
             - name: Create Resource Group
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -326,7 +322,7 @@ jobs:
                     az group create --verbose --name ${{ env.domainResourceGroup }} --location ${{ env.location }}
             - name: Deploy JBoss EAP domain cluster
               id: deploy-multivm-managed-domain
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -350,7 +346,7 @@ jobs:
 
             - name: Create a container and uploading cafe app
               id: upload_cafe_app
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -387,7 +383,7 @@ jobs:
 
             - name: Query public ip of admin VM
               id: query_admin_public_ip
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -408,7 +404,7 @@ jobs:
                 curl --digest -L -D - http://${publicip}:9990/management --header "Content-Type: application/json" -u ${jbossEAPUserName}:${jbossEAPPassword} -d "{\"operation\" : \"deploy\", \"address\" : {\"server-group\" : \"main-server-group\",\"deployment\":\"javaee-cafe.war\"},\"json.pretty\":1}"
             - name: Query public ip of Application Gateway
               id: query_app_gateway_public_ip
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -457,18 +453,12 @@ jobs:
           - deploy-dependent-resources
         runs-on: ubuntu-latest
         steps:
-            - name: Get versions of external dependencies
-              run: |
-                curl -Lo external-deps-versions.properties https://raw.githubusercontent.com/Azure/azure-javaee-iaas/main/external-deps-versions.properties
-                source external-deps-versions.properties
-                echo "azCliVersion=${AZ_CLI_VERSION}" >> "$GITHUB_ENV"
-                echo "bicepVersion=${BICEP_VERSION}" >> "$GITHUB_ENV"
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
               with:
                 path: rhel-jboss-templates
             - name: Download artifact for test branch
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v4.2.1
               with:
                 name: ${{needs.preflight.outputs.artifactName}}
                 path: rhel-jboss-templates-dev
@@ -526,11 +516,11 @@ jobs:
                   fi
                   dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'postgresql(single)' || github.event.client_payload.databaseType == 'postgresql(single)' }}; then
+                elif ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}; then
                   enableDB=true
                   databaseType=postgresql
                   dsConnectionURL="jdbc:postgresql://${{ needs.deploy-dependent-resources.outputs.postgresqlHost }}:5432/testdb"
-                  dbUser=testuser@${{ env.dbInstanceName }}
+                  dbUser=testuser
                   dbPassword=${{ env.dbPassword }}
                 fi
 
@@ -565,13 +555,13 @@ jobs:
                 ${{ env.gracefulShutdownTimeout }}"
 
             - name: Archive parameters-test-standalone.json
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v4.6.2
               if: success()
               with:
                 name: parameters-test-standalone
                 path: rhel-jboss-templates/eap-rhel-byos-multivm/src/test/parameters-test-standalone.json
             - name: Create Resource Group
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -579,7 +569,7 @@ jobs:
                     az group create --verbose --name ${{ env.standaloneResourceGroup }} --location ${{ env.location }}
             - name: Deploy JBoss EAP standalone cluster
               id: deploy-multivm-managed-standalone
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -591,7 +581,7 @@ jobs:
                     --template-file rhel-jboss-templates/eap-rhel-byos-multivm/mainTemplate.json
             - name: Query public ip of Application Gateway
               id: query_app_gateway_public_ip
-              uses: azure/CLI@v1
+              uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |

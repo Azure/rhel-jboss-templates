@@ -1,4 +1,5 @@
 #!/bin/bash
+set -Eeuo pipefail
 
 # See https://github.com/WASdev/azure.liberty.aro/issues/60
 MAX_RETRIES=99
@@ -25,6 +26,35 @@ wait_login_complete() {
         sleep 5
         oc login -u $username -p $password --server="$apiServerUrl" >> $logFile 2>&1
     done
+}
+
+wait_image_deployment_complete() {
+    application_name=$1
+    project_name=$2
+    logFile=$3
+
+    cnt=0
+    read -r -a replicas <<< `oc get wildflyserver ${application_name} -n ${project_name} -o=jsonpath='{.spec.replicas}{" "}{.status.replicas}{"\n"}'`
+    while [[ ${#replicas[@]} -ne 2 || ${replicas[0]} != ${replicas[1]} ]]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile
+            return 1
+        fi
+        cnt=$((cnt+1))
+        # Delete pods in ImagePullBackOff status
+        podIds=`oc get pod -n ${project_name} | grep ImagePullBackOff | awk '{print $1}'`
+        read -r -a podIds <<< `echo $podIds`
+        for podId in "${podIds[@]}"
+        do
+            echo "Delete pod ${podId} in ImagePullBackOff status" >> $logFile
+            oc delete pod ${podId} -n ${project_name}
+        done
+        sleep 5
+        echo "Wait until the deploymentConfig ${application_name} completes, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        read -r -a replicas <<< `oc get wildflyserver ${application_name} -n ${project_name} -o=jsonpath='{.spec.replicas}{" "}{.status.replicas}{"\n"}'`
+    done
+    echo "Deployment ${application_name} completed." >> $logFile
 }
 
 wait_route_available() {
@@ -79,6 +109,27 @@ wait_project_created() {
         oc new-project ${namespaceName} >> $logFile 2>&1
         oc get project ${namespaceName} >> $logFile 2>&1
     done
+}
+
+wait_resource_applied() {
+    resourceYamlName=$1
+    logFile=$2
+
+    cnt=0
+    oc apply -f $resourceYamlName >> $logFile
+    while [ $? -ne 0 ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile
+            return 1
+        fi
+        cnt=$((cnt+1))
+
+        echo "Failed to apply the resource YAML file ${resourceYamlName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        sleep 5
+        oc apply -f $resourceYamlName >> $logFile
+    done
+    echo "Successfully applied the resource YAML file ${resourceYamlName}"
 }
 
 wait_add_view_role() {
@@ -136,23 +187,77 @@ wait_file_based_creation() {
     done
 }
 
-wait_secret_link() {
-    secretName=$1
-    logFile=$2
+wait_subscription_created() {
+    subscriptionName=$1
+    namespaceName=$2
+    deploymentYaml=$3
+    logFile=$4
+
     cnt=0
-    oc secrets link default ${secretName} --for=pull >> $logFile 2>&1
-    oc secrets link builder ${secretName} --for=pull >> $logFile 2>&1
+    oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
-            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile
             return 1
         fi
         cnt=$((cnt+1))
-        echo "Unable to secret link, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+
+        echo "Unable to get the operator package manifest ${subscriptionName} from OperatorHub, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc secrets link default ${secretName} --for=pull >> $logFile 2>&1
-        oc secrets link builder ${secretName} --for=pull >> $logFile 2>&1
+        oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
+    done
+
+    cnt=0
+    oc apply -f ${deploymentYaml} >> $logFile
+    while [ $? -ne 0 ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile
+            return 1
+        fi
+        cnt=$((cnt+1))
+
+        echo "Failed to create the operator subscription ${subscriptionName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        sleep 5
+        oc apply -f ${deploymentYaml} >> $logFile
+    done
+
+    cnt=0
+    oc get subscription ${subscriptionName} -n ${namespaceName} 2>/dev/null
+    while [ $? -ne 0 ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile
+            return 1
+        fi
+        cnt=$((cnt+1))
+
+        echo "Unable to get the operator subscription ${subscriptionName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        sleep 5
+        oc get subscription ${subscriptionName} -n ${namespaceName} 2>/dev/null
+    done
+    echo "Subscription ${subscriptionName} created." >> $logFile
+}
+
+wait_deployment_complete() {
+    deploymentName=$1
+    namespaceName=$2
+    logFile=$3
+
+    cnt=0
+    oc get deployment ${deploymentName} -n ${namespaceName} 2>/dev/null
+    while [ $? -ne 0 ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile
+            return 1
+        fi
+        cnt=$((cnt+1))
+
+        echo "Unable to get the deployment ${deploymentName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        sleep 5
+        oc get deployment ${deploymentName} -n ${namespaceName} 2>/dev/null
     done
 }
 
@@ -207,11 +312,41 @@ echo 'export PATH=$PATH:~/openshift' >> ~/.bash_profile && source ~/.bash_profil
 # Sign in to cluster
 wait_login_complete $kubeadminUsername $kubeadminPassword "$apiServerUrl" $logFile
 if [[ $? -ne 0 ]]; then
-  echo "Failed to sign into the cluster with ${kubeadminUsername}." >&2
+  echo "Failed to sign into the cluster with ${kubeadminUsername}." >> $logFile
   exit 1
 fi
 
 install_and_config_helm
+
+echo ${PULL_SECRET} | base64 -d > ./my-pull-secret.json
+echo "Creating catalog secret with pull secret" >> $logFile
+oc delete secret catalog-secret -n openshift-marketplace --ignore-not-found >> $logFile
+oc create secret generic catalog-secret \
+  --from-file=.dockerconfigjson=./my-pull-secret.json \
+  --type=kubernetes.io/dockerconfigjson \
+  -n openshift-marketplace
+
+if [[ $? -ne 0 ]]; then
+  echo "Failed to create the catalog secret." >> $logFile
+  exit 1
+fi
+
+
+# Create subscption and install operator
+wait_resource_applied redhat-catalog.yaml $logFile
+
+wait_subscription_created eap openshift-operators eap-operator-sub.yaml ${logFile}
+if [[ $? -ne 0 ]]; then
+  echo "Failed to install the JBoss EAP Operator from the OperatorHub." >> $logFile
+  exit 1
+fi
+
+# Check deployment is succeed
+wait_deployment_complete eap-operator openshift-operators ${logFile}
+if [[ $? -ne 0 ]]; then
+  echo "The JBoss EAP Operator is not available." >> $logFile
+  exit 1
+fi
 
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
@@ -243,26 +378,42 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     	--docker-username=${CON_REG_ACC_USER_NAME} \
     	--docker-password=${CON_REG_ACC_PWD}
 
-    # Create helm install value deployment YAML file
-    echo "Creating helm install value deployment YAML file" >> $logFile
     helmDeploymentTemplate=helm.yaml.template
     helmDeploymentFile=helm.yaml
     envsubst < "$helmDeploymentTemplate" > "$helmDeploymentFile"
 
-    echo "Using helm chart to deploy JBoss EAP, APPLICATION_NAME=${APPLICATION_NAME}, PROJECT_NAME=${PROJECT_NAME}" >> $logFile
+    echo "Using helm chart to build images, APPLICATION_NAME=${APPLICATION_NAME}, PROJECT_NAME=${PROJECT_NAME}" >> $logFile
     helm install ${APPLICATION_NAME} -f helm.yaml jboss-eap/eap8 --namespace ${PROJECT_NAME} >> $logFile
+
+    # Create image deployment YAML file
+    echo "Create image deployment YAML file" >> $logFile
+    appDeploymentTemplate=app-deployment.yaml.template >> $logFile
+    appDeploymentFile=app-deployment.yaml >> $logFile
+    envsubst < "$appDeploymentTemplate" > "$appDeploymentFile"
+
+    # Apply image deployment file
+    echo "Apply image deployment file" >> $logFile
+    wait_file_based_creation ${appDeploymentFile} ${logFile}
+    if [[ $? != 0 ]]; then
+        echo "Failed to apply image deployment file." >&2
+        exit 1
+    fi
+
+    # Wait image deployment
+    echo "Wait image deployment" >> $logFile
+    wait_image_deployment_complete ${APPLICATION_NAME} ${PROJECT_NAME} $logFile
 
     # Get the route of the application
     echo "Get the route of the application" >> $logFile
     oc expose svc/${APPLICATION_NAME}
-    wait_route_available ${APPLICATION_NAME} ${PROJECT_NAME} $logFile
+    wait_route_available "${APPLICATION_NAME}-route" ${PROJECT_NAME} $logFile
     if [[ $? -ne 0 ]]; then
         echo "The route ${APPLICATION_NAME} is not available." >> $logFile
         exit 1
     fi
 fi
 
-appEndpoint=$(oc get route ${APPLICATION_NAME} -n ${PROJECT_NAME} -o=jsonpath='{.spec.host}')
+appEndpoint=$(oc get route "${APPLICATION_NAME}-route" -n ${PROJECT_NAME} -o=jsonpath='{.spec.host}')
 
 # Write outputs to deployment script output path
 result=$(jq -n -c --arg consoleUrl $consoleUrl '{consoleUrl: $consoleUrl}')

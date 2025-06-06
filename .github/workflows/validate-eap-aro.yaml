@@ -30,7 +30,7 @@ on:
           - 0
 
 env:
-  azCliVersion: 2.30.0
+  azCliVersion: 2.72.0
   location: eastus
   aroResourceGroup: aro-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
   aroTestBranchName: aro-cicd-${{ github.run_id }}-${{ github.run_number }}
@@ -73,7 +73,7 @@ jobs:
         with:
           path: rhel-jboss-templates
       - name: Download artifact for test branch
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.2.1
         with:
           name: ${{needs.preflight.outputs.artifactName}}
           path: rhel-jboss-templates-dev
@@ -151,14 +151,14 @@ jobs:
           echo $params |bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh 
 
       - name: Archive parameters-test-eap-aro.json
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         if: success()
         with:
           name: parameters-test-eap-aro
           path: rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json
 
       - name: Create Resource Group
-        uses: azure/CLI@v1
+        uses: azure/cli@v2
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
@@ -167,7 +167,7 @@ jobs:
 
       - name: Deploy JBoss EAP on ARO
         id: deploy-eap-aro
-        uses: azure/CLI@v1
+        uses: azure/cli@v2
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
