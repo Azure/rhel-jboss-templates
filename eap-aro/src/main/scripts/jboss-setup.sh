@@ -188,6 +188,7 @@ wait_file_based_creation() {
 }
 
 wait_subscription_created() {
+    echo "wait_subscription_created--start"
     subscriptionName=$1
     namespaceName=$2
     deploymentYaml=$3
@@ -195,10 +196,11 @@ wait_subscription_created() {
 
     cnt=0
     oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
+    echo "oc get packagemanifests"
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
-            echo "Timeout and exit due to the maximum retries reached." >> $logFile
+            echo "Timeout and exit due to the maximum retries reached."
             return 1
         fi
         cnt=$((cnt+1))
@@ -209,7 +211,7 @@ wait_subscription_created() {
     done
 
     cnt=0
-    oc apply -f ${deploymentYaml} >> $logFile
+    oc apply -f ${deploymentYaml}
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -235,7 +237,7 @@ wait_subscription_created() {
 
         echo "Unable to get the operator subscription ${subscriptionName}, retry ${cnt} of ${MAX_RETRIES}..."
         sleep 5
-        oc get subscription ${subscriptionName} -n ${namespaceName} 2>/dev/null
+        oc get subscription ${subscriptionName} -n ${namespaceName}
     done
     echo "Subscription ${subscriptionName} created."
 }
@@ -327,19 +329,19 @@ if [[ $? -ne 0 ]]; then
   exit 1
 fi
 
-
 # Create subscption and install operator
 wait_resource_applied redhat-catalog.yaml $logFile
 echo "Applying wait_subscription_created"
 
-wait_subscription_created eap openshift-operators eap-operator-sub.yaml ${logFile}
+wait_subscription_created eap openshift-operators eap-operator-sub.yaml $logFile
+
 if [[ $? -ne 0 ]]; then
   echo "Failed to install the JBoss EAP Operator from the OperatorHub."
   exit 1
 fi
 
 # Check deployment is succeed
-wait_deployment_complete eap-operator openshift-operators ${logFile}
+wait_deployment_complete eap-operator openshift-operators $logFile
 if [[ $? -ne 0 ]]; then
   echo "The JBoss EAP Operator is not available." >> $logFile
   exit 1
