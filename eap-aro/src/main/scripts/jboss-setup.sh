@@ -55,6 +55,7 @@ wait_image_deployment_complete() {
         echo "Wait until the deploymentConfig ${application_name} completes, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         read -r -a replicas <<< `oc get wildflyserver ${application_name} -n ${project_name} -o=jsonpath='{.spec.replicas}{" "}{.status.replicas}{"\n"}'`
     done
+    echo "wait_subscription_created--333-08"
     echo "Deployment ${application_name} completed." >> $logFile
 }
 
@@ -63,6 +64,8 @@ wait_route_available() {
     namespaceName=$2
     logFile=$3
     cnt=0
+    echo "wait_subscription_created--333-15"
+
     oc get route ${routeName} -n ${namespaceName} >> $logFile
     while [ $? -ne 0 ]
     do
@@ -76,6 +79,7 @@ wait_route_available() {
         oc get route ${routeName} -n ${namespaceName} >> $logFile
     done
     cnt=0
+    echo "wait_subscription_created--333-16"
     appEndpoint=$(oc get route ${routeName} -n ${namespaceName} -o=jsonpath='{.spec.host}')
     echo "appEndpoint is ${appEndpoint}"
     while [[ -z $appEndpoint ]]
@@ -374,7 +378,7 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     # Enable the containers to "view" the namespace
     wait_add_view_role ${PROJECT_NAME} ${logFile}
     if [[ $? -ne 0 ]]; then
-        echo "Add view role to ${PROJECT_NAME}." >&2
+        echo "Add view role to ${PROJECT_NAME}."
         exit 1
     fi
     
@@ -403,7 +407,7 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     echo "Apply image deployment file" >> $logFile
     wait_file_based_creation ${appDeploymentFile} ${logFile}
     if [[ $? != 0 ]]; then
-        echo "Failed to apply image deployment file." >&2
+        echo "Failed to apply image deployment file."
         exit 1
     fi
 
@@ -411,10 +415,13 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     echo "Wait image deployment" >> $logFile
     echo "wait_subscription_created--333-06"
     wait_image_deployment_complete ${APPLICATION_NAME} ${PROJECT_NAME} $logFile
+    echo "wait_subscription_created--333-09"
 
     # Get the route of the application
     echo "Get the route of the application" >> $logFile
+    echo "wait_subscription_created--333-10"
     oc expose svc/${APPLICATION_NAME}
+    echo "wait_subscription_created--333-11"
     wait_route_available "${APPLICATION_NAME}-route" ${PROJECT_NAME} $logFile
     if [[ $? -ne 0 ]]; then
         echo "The route ${APPLICATION_NAME} is not available." >> $logFile
@@ -422,12 +429,14 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     fi
 fi
 
+echo "wait_subscription_created--333-12"
 appEndpoint=$(oc get route "${APPLICATION_NAME}-route" -n ${PROJECT_NAME} -o=jsonpath='{.spec.host}')
-
+echo "wait_subscription_created--333-13"
 # Write outputs to deployment script output path
 result=$(jq -n -c --arg consoleUrl $consoleUrl '{consoleUrl: $consoleUrl}')
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     result=$(echo "$result" | jq --arg appEndpoint "http://$appEndpoint" '{"appEndpoint": $appEndpoint} + .')
 fi
+echo "wait_subscription_created--333-14"
 echo "Result is: $result" >> $logFile
 echo $result > $AZ_SCRIPTS_OUTPUT_PATH
