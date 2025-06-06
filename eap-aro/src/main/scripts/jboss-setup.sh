@@ -33,6 +33,7 @@ wait_image_deployment_complete() {
     project_name=$2
     logFile=$3
 
+    echo "wait_subscription_created--333-07"
     cnt=0
     read -r -a replicas <<< `oc get wildflyserver ${application_name} -n ${project_name} -o=jsonpath='{.spec.replicas}{" "}{.status.replicas}{"\n"}'`
     while [[ ${#replicas[@]} -ne 2 || ${replicas[0]} != ${replicas[1]} ]]
@@ -383,9 +384,10 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     	--docker-server=registry.redhat.io \
     	--docker-username=${CON_REG_ACC_USER_NAME} \
     	--docker-password=${CON_REG_ACC_PWD}
-
+    echo "wait_subscription_created--333-01"
     helmDeploymentTemplate=helm.yaml.template
     helmDeploymentFile=helm.yaml
+    echo "wait_subscription_created--333-02"
     envsubst < "$helmDeploymentTemplate" > "$helmDeploymentFile"
 
     echo "Using helm chart to build images, APPLICATION_NAME=${APPLICATION_NAME}, PROJECT_NAME=${PROJECT_NAME}" >> $logFile
@@ -407,6 +409,7 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
 
     # Wait image deployment
     echo "Wait image deployment" >> $logFile
+    echo "wait_subscription_created--333-06"
     wait_image_deployment_complete ${APPLICATION_NAME} ${PROJECT_NAME} $logFile
 
     # Get the route of the application
