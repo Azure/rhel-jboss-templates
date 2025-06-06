@@ -1,0 +1,7 @@
+apiVersion: wildfly.org/v1alpha1
+kind: WildFlyServer
+metadata:
+  name: ${APPLICATION_NAME}
+spec:
+ applicationImage: '${APPLICATION_NAME}:latest'
+ replicas: ${APP_REPLICAS}

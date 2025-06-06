@@ -58,6 +58,9 @@ param pullSecret string = ''
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_setupJBossScript = 'jboss-setup.sh'
 var const_helmYaml = 'helm.yaml.template'
+var const_redHatCatalog = 'redhat-catalog.yaml'
+var const_deploymentTemplate = 'app-deployment.yaml.template'
+var const_operator = 'eap-operator-sub.yaml'
 var const_azcliVersion = '2.53.0'
 
 resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
@@ -129,6 +132,9 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
     primaryScriptUri: uri(const_scriptLocation, '${const_setupJBossScript}${artifactsLocationSasToken}')
     supportingScriptUris: [
       uri(const_scriptLocation, '${const_helmYaml}${artifactsLocationSasToken}')
+      uri(const_scriptLocation, '${const_redHatCatalog}${artifactsLocationSasToken}')
+      uri(const_scriptLocation, '${const_deploymentTemplate}${artifactsLocationSasToken}')
+      uri(const_scriptLocation, '${const_operator}${artifactsLocationSasToken}')
     ]
     cleanupPreference:'OnSuccess'
     retentionInterval: 'P1D'
