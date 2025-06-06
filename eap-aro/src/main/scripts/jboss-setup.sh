@@ -203,7 +203,7 @@ wait_subscription_created() {
         fi
         cnt=$((cnt+1))
 
-        echo "Unable to get the operator package manifest ${subscriptionName} from OperatorHub, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        echo "Unable to get the operator package manifest ${subscriptionName} from OperatorHub, retry ${cnt} of ${MAX_RETRIES}..."
         sleep 5
         oc get packagemanifests -n openshift-marketplace | grep -q ${subscriptionName}
     done
@@ -213,31 +213,31 @@ wait_subscription_created() {
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
-            echo "Timeout and exit due to the maximum retries reached." >> $logFile
+            echo "Timeout and exit due to the maximum retries reached."
             return 1
         fi
         cnt=$((cnt+1))
 
-        echo "Failed to create the operator subscription ${subscriptionName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        echo "Failed to create the operator subscription ${subscriptionName}, retry ${cnt} of ${MAX_RETRIES}..."
         sleep 5
-        oc apply -f ${deploymentYaml} >> $logFile
+        oc apply -f ${deploymentYaml}
     done
 
     cnt=0
-    oc get subscription ${subscriptionName} -n ${namespaceName} 2>/dev/null
+    oc get subscription ${subscriptionName} -n ${namespaceName}
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
-            echo "Timeout and exit due to the maximum retries reached." >> $logFile
+            echo "Timeout and exit due to the maximum retries reached."
             return 1
         fi
         cnt=$((cnt+1))
 
-        echo "Unable to get the operator subscription ${subscriptionName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        echo "Unable to get the operator subscription ${subscriptionName}, retry ${cnt} of ${MAX_RETRIES}..."
         sleep 5
         oc get subscription ${subscriptionName} -n ${namespaceName} 2>/dev/null
     done
-    echo "Subscription ${subscriptionName} created." >> $logFile
+    echo "Subscription ${subscriptionName} created."
 }
 
 wait_deployment_complete() {
@@ -333,7 +333,7 @@ wait_resource_applied redhat-catalog.yaml $logFile
 
 wait_subscription_created eap openshift-operators eap-operator-sub.yaml ${logFile}
 if [[ $? -ne 0 ]]; then
-  echo "Failed to install the JBoss EAP Operator from the OperatorHub." >> $logFile
+  echo "Failed to install the JBoss EAP Operator from the OperatorHub."
   exit 1
 fi
 
