@@ -194,7 +194,9 @@ wait_subscription_created() {
     logFile=$4
 
     cnt=0
+    echo "wait_subscription_created--01"
     oc get packagemanifests -n openshift-marketplace | grep ${subscriptionName}
+    echo "wait_subscription_created--02"
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -207,8 +209,9 @@ wait_subscription_created() {
         sleep 5
         oc get packagemanifests -n openshift-marketplace | grep ${subscriptionName}
     done
-
+    echo "wait_subscription_created--03"
     cnt=0
+    echo "wait_subscription_created--04"
     oc apply -f ${deploymentYaml} >> $logFile
     while [ $? -ne 0 ]
     do
@@ -222,9 +225,10 @@ wait_subscription_created() {
         sleep 5
         oc apply -f ${deploymentYaml} >> $logFile
     done
-
+    echo "wait_subscription_created--05"
     cnt=0
-    oc get subscription ${subscriptionName} -n ${namespaceName} 2>/dev/null
+    echo "wait_subscription_created--06"
+    oc get subscription ${subscriptionName} -n ${namespaceName}
     while [ $? -ne 0 ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -235,8 +239,9 @@ wait_subscription_created() {
 
         echo "Unable to get the operator subscription ${subscriptionName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
-        oc get subscription ${subscriptionName} -n ${namespaceName} 2>/dev/null
+        oc get subscription ${subscriptionName} -n ${namespaceName}
     done
+    echo "wait_subscription_created--07"
     echo "Subscription ${subscriptionName} created." >> $logFile
 }
 
