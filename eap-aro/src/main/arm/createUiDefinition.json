@@ -675,6 +675,24 @@
                         "visible": "[and(bool(steps('Application').deployApplication), equals(steps('Application').appSrcInfo.appOption, '1'))]"
                     }
                 ]
+            },
+            {
+                "name": "tags",
+                "label": "Tags",
+                "elements": [
+                    {
+                        "name": "tagsByResource",
+                        "type": "Microsoft.Common.TagsByResource",
+                        "resources": [
+                            "${identifier.openShiftClusters}",
+                            "${identifier.roleAssignments}",
+                            "${identifier.virtualNetworks}",
+                            "${identifier.userAssignedIdentities}",
+                            "${identifier.deploymentScripts}"
+                        ],
+                        "toolTip": "Tags help you organize your resources and categorize them for billing or management purposes. You can apply tags to resources deployed by the offer."
+                    }
+                ]
             }
         ],
         "outputs": {
@@ -698,7 +716,8 @@
             "conRegAccPwd": "[steps('Application').rhContainerRegistryAccountInfo.conRegAccPwd]",
             "appReplicas": "[int(steps('Application').appReplicas)]",
             "projectName": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').applicationOptional.projectName, 'sample-jboss-eap')]",
-            "applicationName": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').applicationOptional.applicationName, 'helloworld')]"
+            "applicationName": "[if(equals(steps('Application').appSrcInfo.appOption, '1'), steps('Application').applicationOptional.applicationName, 'helloworld')]",
+            "tagsByResource": "[steps('tags').tagsByResource]"
         }
     }
 }
