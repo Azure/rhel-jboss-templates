@@ -110,73 +110,25 @@ jobs:
                 dbInstanceName: ${{ env.dbInstanceName }}
                 dbPassword: ${{ env.dbPassword }}
 
+            - name: Get database parameters
+              id: database-parameters
+              uses: ./.github/actions/database-parameters
+              with:
+                databaseType: ${{ inputs.databaseType }}
+                uamiId: ${{ steps.dabase-provision.outputs.uamiId }}
+                serverHost: ${{ steps.dabase-provision.outputs.serverHost }}
+                dbInstanceName: ${{ env.dbInstanceName }}
+
             - name: Prepare parameter file
               run: |
-                enableDB=false
-                databaseType=postgresql
-                dsConnectionURL=jdbc:postgresql://contoso.postgres.database:5432/testdb
-                dbUser=contosoDbUser
-                dbPassword=contosoDbPwd
-                enablePasswordless=false
-                dbIdentity={}
-                serverHost=${{ steps.dabase-provision.outputs.serverHost }}
-                uamiId=${{ steps.dabase-provision.outputs.uamiId }}
-                if ${{ inputs.databaseType == 'mssqlserver' || github.event.client_payload.databaseType == 'mssqlserver' }}; then
-                  enableDB=true
-                  databaseType=mssqlserver
-                  dsConnectionURL="jdbc:sqlserver://$serverHost:1433;database=testdb"
-                  dbUser=testuser@${{ env.dbInstanceName }}
-                  dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'oracle' || github.event.client_payload.databaseType == 'oracle' }}; then
-                  enableDB=true
-                  databaseType=oracle
-                  publicIp=$(az vm show -g ${{ env.singleResourceGroup }} -n ${{ env.dbInstanceName }} -d --query publicIps -o tsv)
-                  dsConnectionURL=jdbc:oracle:thin:@${publicIp}:1521/oratest1
-                  dbUser=testuser
-                  dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}; then
-                  enableDB=true
-                  databaseType=mysql
-                  dsConnectionURL=jdbc:mysql://$serverHost:3306/testdb?sslMode=REQUIRED
-                  dbUser=testuser
-                  dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'mysql-passwordless(flexible)' || github.event.client_payload.databaseType == 'mysql-passwordless(flexible)' }}; then
-                  enableDB=true
-                  enablePasswordless=true
-                  dbUser=$(basename "$uamiId")
-                  dbIdentity=$(jq -n \
-                                --arg uamiId "$uamiId" \
-                                '{
-                                      "type": "UserAssigned",
-                                      "userAssignedIdentities": {
-                                          ($uamiId): {}
-                                      }
-                                  }'| jq -c '.')
-                  databaseType=mysql
-                  dsConnectionURL=jdbc:mysql://$serverHost:3306/testdb
-                elif ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}; then
-                  enableDB=true
-                  databaseType=postgresql
-                  dsConnectionURL="jdbc:postgresql://$serverHost:5432/testdb"
-                  dbUser=testuser
-                  dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'postgresql-passwordless(flexible)' || github.event.client_payload.databaseType == 'postgresql-passwordless(flexible)' }}; then
-                  echo "set parameter for passwordless postgresql"
-                  enableDB=true
-                  enablePasswordless=true
-                  dbUser=$(basename "$uamiId")
-                  dbIdentity=$(jq -n \
-                                --arg uamiId "$uamiId" \
-                                '{
-                                      "type": "UserAssigned",
-                                      "userAssignedIdentities": {
-                                          ($uamiId): {}
-                                      }
-                                  }'| jq -c '.')  
-                  databaseType=postgresql
-                  dsConnectionURL="jdbc:postgresql://$serverHost:5432/testdb"
-                fi
-
+                databaseType=${{ steps.database-parameters.outputs.databaseType }}
+                enableDB=${{ steps.database-parameters.outputs.enableDB }}
+                enablePasswordless=${{ steps.database-parameters.outputs.enablePasswordless }}
+                dbUser=${{ steps.database-parameters.outputs.dbUser }}
+                dbPassword=${{ env.dbPassword }}
+                dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
+                dbIdentity=${{ steps.database-parameters.outputs.dbIdentity }}
+                
                 echo "generate parameter file for single"
                 bash ./eap-rhel-byos/src/test/scripts/gen-parameters.sh \
                 <<< "./eap-rhel-byos/src/test/parameters-test-single.json  \
