@@ -15,4 +15,4 @@ jobs:
               with:
                 appEndpoint: "https://www.sjksjdfsjfl-gzh-for-test.com"
                 maxRetries: 10
-                retryInterval: 15
+                retryInterval: 5
