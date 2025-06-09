@@ -1,0 +1,51 @@
+name: Reusable Workflow Inputs
+
+on:
+  workflow_call:
+    inputs:
+      databaseType:
+        description: 'Database connection'
+        required: true
+        default: 'mssqlserver'
+        type: choice
+        options:
+          - mssqlserver
+          - oracle
+          - mysql(flexible)
+          - mysql-passwordless(flexible)
+          - postgresql(flexible)
+          - postgresql-passwordless(flexible)
+          - none
+      jdkVersion:
+        description: 'jdkVersion'
+        required: true
+        default: 'eap8-openjdk17'
+        type: choice
+        options:
+          - eap8-openjdk17
+          - eap8-openjdk11
+          - eap74-openjdk17
+          - eap74-openjdk11
+          - eap74-openjdk8
+      timeWaitBeforeDelete:
+        description: 'Choose the wait time before deleting resources: 30m (30 minutes), 2h (2 hours), 5h (5 hours), 0 (immediately)'
+        required: true
+        type: choice
+        default: 0
+        options:
+          - 30m
+          - 2h
+          - 5h
+          - 0
+
+
+jobs:
+
+  dummy_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log Inputs
+        run: |
+          echo "databaseType: ${{ inputs.databaseType }}"
+          echo "jdkVersion: ${{ inputs.jdkVersion }}"
+          echo "timeWaitBeforeDelete: ${{ inputs.timeWaitBeforeDelete }}"
