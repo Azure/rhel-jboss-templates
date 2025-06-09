@@ -43,17 +43,22 @@ runs:
       shell: bash
       run: |
         az sql server create \
-          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
           --admin-user testuser --admin-password ${{ inputs.dbPassword }} \
           --location ${{ inputs.location }}
         host=$(az sql server show \
-          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
           --query "fullyQualifiedDomainName" -o tsv)
         # Allow Azure services to access
         az sql server firewall-rule create \
-          --resource-group ${{ inputs.resourceGroup }} --server ${{ inputs.dbInstanceName }} \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --server ${{ inputs.dbInstanceName }} \
           --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
-        az sql db create --resource-group ${{ inputs.resourceGroup }} --server ${{ inputs.dbInstanceName }} --name testdb
+        az sql db create --resource-group ${{ inputs.resourceGroup }} \
+                         --server ${{ inputs.dbInstanceName }} \
+                         --name testdb
         
         echo "serverHost=${host}" >> "$GITHUB_ENV"
 
@@ -64,7 +69,8 @@ runs:
       run: |
         az group create -n ${{ inputs.resourceGroup }} -l ${{ inputs.location }}
         az vm create \
-          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
           --image Oracle:oracle-database-19-3:oracle-database-19-0904:latest --size Standard_DS2_v2 \
           --admin-username azureuser --generate-ssh-keys \
           --nsg-rule NONE --enable-agent true \
@@ -74,7 +80,8 @@ runs:
         az vm open-port -g ${{ inputs.resourceGroup }} -n ${{ inputs.dbInstanceName }} --port 1521,5502 --priority 100
         az vm extension set --name CustomScript \
           --extension-instance-name install-oracle \
-          --resource-group ${{ inputs.resourceGroup }} --vm-name ${{ inputs.dbInstanceName }} \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --vm-name ${{ inputs.dbInstanceName }} \
           --publisher Microsoft.Azure.Extensions --version 2.0 \
           --settings "{\"fileUris\": [\"${{ env.scriptLocation }}install-oracle-main.sh\", \"${{ env.scriptLocation }}install-oracle.sh\"]}" \
           --protected-settings "{\"commandToExecute\":\"bash install-oracle-main.sh ${{ inputs.dbPassword }}\"}"
@@ -89,23 +96,33 @@ runs:
       run: |
         az group create -n ${{ inputs.resourceGroup }} -l ${{ inputs.location }}
         az mysql flexible-server create \
-          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
-          --admin-user myadmin --admin-password ${{ inputs.dbPassword }} \
-          --sku-name Standard_B1ms --location ${{ inputs.location }} \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
+          --admin-user myadmin \
+          --admin-password ${{ inputs.dbPassword }} \
+          --sku-name Standard_B1ms \
+          --location ${{ inputs.location }} \
           --version 8.0.21 \
           --yes
         
         # Allow Azure services to access
         az mysql flexible-server firewall-rule create \
-          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
-          --rule-name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
+          --rule-name "AllowAllAzureIps" \
+          --start-ip-address 0.0.0.0 \
+          --end-ip-address 0.0.0.0
         # Allow current IP to access MySQL server
         currentIp=$(curl -s https://icanhazip.com)
         az mysql flexible-server firewall-rule create \
-          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
-          --rule-name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
+          --rule-name "AllowCurrentIp" \
+          --start-ip-address ${currentIp} \
+          --end-ip-address ${currentIp}
         host=$(az mysql flexible-server show \
-          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
           --query "fullyQualifiedDomainName" -o tsv)
         
         wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
@@ -125,23 +142,33 @@ runs:
       run: |
         az group create -n ${{ inputs.resourceGroup }} -l ${{ inputs.location }}
         az mysql flexible-server create \
-          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
-          --admin-user myadmin --admin-password ${{ inputs.dbPassword }} \
-          --sku-name Standard_B1ms --location ${{ inputs.location }} \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
+          --admin-user myadmin \
+          --admin-password ${{ inputs.dbPassword }} \
+          --sku-name Standard_B1ms \
+          --location ${{ inputs.location }} \
           --version 8.0.21 \
           --yes
         
         # Allow Azure services to access
         az mysql flexible-server firewall-rule create \
-          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
-          --rule-name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
+          --rule-name "AllowAllAzureIps" \
+          --start-ip-address 0.0.0.0 \
+          --end-ip-address 0.0.0.0
         # Allow current IP to access MySQL server
         currentIp=$(curl -s https://icanhazip.com)
         az mysql flexible-server firewall-rule create \
-          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
-          --rule-name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
+          --rule-name "AllowCurrentIp" \
+          --start-ip-address ${currentIp} \
+          --end-ip-address ${currentIp}
         host=$(az mysql flexible-server show \
-          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
           --query "fullyQualifiedDomainName" -o tsv)
 
         wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
@@ -158,8 +185,10 @@ runs:
         uamiId=$(az identity show --name ${{ inputs.uamiName }} --resource-group ${{ inputs.resourceGroup }} --query id -o tsv)
         objectId=$(az identity show --name ${{ inputs.uamiName }} --resource-group ${{ inputs.resourceGroup }} --query principalId -o tsv)
 
-        az mysql flexible-server ad-admin create --resource-group  ${{ inputs.resourceGroup }} \
-          --server-name ${{ inputs.dbInstanceName }} --display-name ${{ inputs.uamiName }} \
+        az mysql flexible-server ad-admin create \
+          --resource-group  ${{ inputs.resourceGroup }} \
+          --server-name ${{ inputs.dbInstanceName }} \
+          --display-name ${{ inputs.uamiName }} \
           --object-id $objectId \
           --identity $uamiId
 
@@ -172,13 +201,15 @@ runs:
       shell: bash
       run: |
         az postgres flexible-server create \
-          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
           --admin-user testuser --admin-password ${{ inputs.dbPassword }} \
           --public-access 0.0.0.0 \
           --location ${{ inputs.location }} \
           --yes
         host=$(az postgres flexible-server show \
-          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
           --query "fullyQualifiedDomainName" -o tsv)
         az postgres flexible-server db create --resource-group ${{ inputs.resourceGroup }} \
                                               --server-name ${{ inputs.dbInstanceName }} \
@@ -213,7 +244,8 @@ runs:
           --type ServicePrincipal
 
         host=$(az postgres flexible-server show \
-          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
           --query "fullyQualifiedDomainName" -o tsv)
         az postgres flexible-server db create --resource-group ${{ inputs.resourceGroup }} \
                                               --server-name ${{ inputs.dbInstanceName }} \
