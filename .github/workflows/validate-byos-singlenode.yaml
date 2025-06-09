@@ -166,7 +166,7 @@ jobs:
                     --resource-group ${{ env.singleResourceGroup }} \
                     --name single \
                     --parameters @./eap-rhel-byos/src/test/parameters-test-single.json \
-                    --template-file ./eap-rhel-byos/target/bicep/mainTemplate.json
+                    --template-file ./eap-rhel-byos/target/arm/mainTemplate.json
             - name: Setup tmate session
               if: ${{ failure() }}
               uses: mxschmitt/action-tmate@v3
