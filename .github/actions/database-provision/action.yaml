@@ -1,0 +1,219 @@
+name: Database provision
+description: Database provision
+
+inputs:
+  databaseType:
+    description: "databaseType"
+    required: true
+  resourceGroup:
+    description: "resourceGroup"
+    required: true
+  uamiName:
+    description: "uamiName"
+    required: false
+  location:
+    description: "location"
+    required: true
+  dbInstanceName:
+    description: "dbInstanceName"
+    required: true
+  dbPassword:
+    description: "dbPassword"
+    required: true
+
+outputs:
+  serverHost:
+    description: "serverHost"
+    value: ${{ steps.resource_outputs.outputs.serverHost }}
+  uamiId:
+    description: "uamiId"
+    value: ${{ steps.resource_outputs.outputs.uamiId }}
+
+
+runs:
+  using: "composite"
+  steps:
+    # 01-Deploy an instance of Azure SQL Database
+    - name: Deploy an instance of Azure SQL Database
+      id: deploy-mssqlserver
+      if: ${{ inputs.databaseType == 'mssqlserver' }}
+      run: |
+        az sql server create \
+          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --admin-user testuser --admin-password ${{ inputs.dbPassword }} \
+          --location ${{ inputs.location }}
+        host=$(az sql server show \
+          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --query "fullyQualifiedDomainName" -o tsv)
+        # Allow Azure services to access
+        az sql server firewall-rule create \
+          --resource-group ${{ inputs.resourceGroup }} --server ${{ inputs.dbInstanceName }} \
+          --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+        az sql db create --resource-group ${{ inputs.resourceGroup }} --server ${{ inputs.dbInstanceName }} --name testdb
+        echo "serverHost=${host}" >> "$GITHUB_OUTPUT"
+
+    - name: Deploy an Oracle database server on Azure VM
+      id: deploy-oracle
+      if: ${{ inputs.databaseType == 'oracle' }}
+      run: |
+        az group create -n ${{ inputs.resourceGroup }} -l ${{ inputs.location }}
+        az vm create \
+          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --image Oracle:oracle-database-19-3:oracle-database-19-0904:latest --size Standard_DS2_v2 \
+          --admin-username azureuser --generate-ssh-keys \
+          --nsg-rule NONE --enable-agent true \
+          --vnet-name ${{ inputs.dbInstanceName }}VNET --enable-auto-update false \
+          --tags SkipASMAzSecPack=true SkipNRMSCorp=true SkipNRMSDatabricks=true SkipNRMSDB=true SkipNRMSHigh=true SkipNRMSMedium=true SkipNRMSRDPSSH=true SkipNRMSSAW=true SkipNRMSMgmt=true
+        az vm disk attach --name oradata01 --new --resource-group ${{ inputs.resourceGroup }} --vm-name ${{ inputs.dbInstanceName }} --size-gb 64 --sku StandardSSD_LRS
+        az vm open-port -g ${{ inputs.resourceGroup }} -n ${{ inputs.dbInstanceName }} --port 1521,5502 --priority 100
+        az vm extension set --name CustomScript \
+          --extension-instance-name install-oracle \
+          --resource-group ${{ inputs.resourceGroup }} --vm-name ${{ inputs.dbInstanceName }} \
+          --publisher Microsoft.Azure.Extensions --version 2.0 \
+          --settings "{\"fileUris\": [\"${{ env.scriptLocation }}install-oracle-main.sh\", \"${{ env.scriptLocation }}install-oracle.sh\"]}" \
+          --protected-settings "{\"commandToExecute\":\"bash install-oracle-main.sh ${{ inputs.dbPassword }}\"}"
+        host=$(az vm show -g ${{ inputs.resourceGroup }} -n ${{ inputs.dbInstanceName }} -d --query publicIps -o tsv)
+        
+        echo "serverHost=${host}" >> "$GITHUB_OUTPUT"
+
+    - name: Deploy an instance of Azure Database for MySQL
+      id: deploy-mysql
+      if: ${{ inputs.databaseType == 'mysql(flexible)' }}
+      run: |
+        az group create -n ${{ inputs.resourceGroup }} -l ${{ inputs.location }}
+        az mysql flexible-server create \
+          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --admin-user myadmin --admin-password ${{ inputs.dbPassword }} \
+          --sku-name Standard_B1ms --location ${{ inputs.location }} \
+          --version 8.0.21 \
+          --yes
+        
+        # Allow Azure services to access
+        az mysql flexible-server firewall-rule create \
+          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --rule-name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+        # Allow current IP to access MySQL server
+        currentIp=$(curl -s https://icanhazip.com)
+        az mysql flexible-server firewall-rule create \
+          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --rule-name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
+        host=$(az mysql flexible-server show \
+          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --query "fullyQualifiedDomainName" -o tsv)
+        
+        wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
+        mysql -h $host -u myadmin -p${{ inputs.dbPassword }} --ssl-ca=DigiCertGlobalRootCA.crt.pem << EOF
+        CREATE DATABASE testdb;
+        CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ inputs.dbPassword }}';
+        GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
+        FLUSH PRIVILEGES;
+        EOF
+        
+        echo "serverHost=${host}" >> "$GITHUB_OUTPUT"
+
+    - name: Deploy an instance of Azure Database for MySQL passwordless
+      id: deploy-mysql-passwordless
+      if: ${{ inputs.databaseType == 'mysql-passwordless(flexible)' }}
+      run: |
+        az group create -n ${{ inputs.resourceGroup }} -l ${{ inputs.location }}
+        az mysql flexible-server create \
+          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --admin-user myadmin --admin-password ${{ inputs.dbPassword }} \
+          --sku-name Standard_B1ms --location ${{ inputs.location }} \
+          --version 8.0.21 \
+          --yes
+        
+        # Allow Azure services to access
+        az mysql flexible-server firewall-rule create \
+          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --rule-name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+        # Allow current IP to access MySQL server
+        currentIp=$(curl -s https://icanhazip.com)
+        az mysql flexible-server firewall-rule create \
+          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --rule-name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
+        host=$(az mysql flexible-server show \
+          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --query "fullyQualifiedDomainName" -o tsv)
+
+        wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
+        mysql -h $host -u myadmin -p${{ inputs.dbPassword }} --ssl-ca=DigiCertGlobalRootCA.crt.pem << EOF
+        CREATE DATABASE testdb;
+        CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ inputs.dbPassword }}';
+        GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
+        FLUSH PRIVILEGES;
+        EOF
+
+        # Create a user-assigned managed identity
+        az identity create --name ${{ inputs.uamiName }} --resource-group ${{ inputs.resourceGroup }}
+        # Export the resource ID of the user-assigned managed identity as an environment variable
+        uamiId=$(az identity show --name ${{ inputs.uamiName }} --resource-group ${{ inputs.resourceGroup }} --query id -o tsv)
+        objectId=$(az identity show --name ${{ inputs.uamiName }} --resource-group ${{ inputs.resourceGroup }} --query principalId -o tsv)
+
+        az mysql flexible-server ad-admin create --resource-group  ${{ inputs.resourceGroup }} \
+          --server-name ${{ inputs.dbInstanceName }} --display-name ${{ inputs.uamiName }} \
+          --object-id $objectId \
+          --identity $uamiId
+
+        echo "serverHost=${host}" >> "$GITHUB_OUTPUT"   
+        echo "uamiId=${uamiId}" >> "$GITHUB_OUTPUT"
+
+    - name: Deploy an instance of Azure Database for PostgreSQL
+      id: deploy-postgresql
+      if: ${{ inputs.databaseType == 'postgresql(flexible)' }}
+      run: |
+        az postgres flexible-server create \
+          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --admin-user testuser --admin-password ${{ inputs.dbPassword }} \
+          --public-access 0.0.0.0 \
+          --location ${{ inputs.location }} \
+          --yes
+        host=$(az postgres flexible-server show \
+          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --query "fullyQualifiedDomainName" -o tsv)
+        az postgres flexible-server db create --resource-group ${{ inputs.resourceGroup }} \
+                                              --server-name ${{ inputs.dbInstanceName }} \
+                                              --database-name testdb
+
+        echo "serverHost=${host}" >> "$GITHUB_OUTPUT"
+    - name: Deploy an instance of Azure Database for PostgreSQL passwordless
+      if: ${{ inputs.databaseType == 'postgresql-passwordless(flexible)' }}
+      id: deploy-postgresql-passwordless
+      run: |
+
+        # Create a user-assigned managed identity
+        az identity create --name ${{ inputs.uamiName }} --resource-group ${{ inputs.resourceGroup }}
+        # Export the resource ID of the user-assigned managed identity as an environment variable
+        uamiId=$(az identity show --name ${{ inputs.uamiName }} --resource-group ${{ inputs.resourceGroup }} --query id -o tsv)
+        objectId=$(az identity show --name ${{ inputs.uamiName }} --resource-group ${{ inputs.resourceGroup }} --query principalId -o tsv)
+
+        az postgres flexible-server create \
+          --active-directory-auth Enabled \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
+          --public-access 0.0.0.0 \
+          --location ${{ inputs.location }} \
+          --yes
+
+        az postgres flexible-server ad-admin create \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --server-name ${{ inputs.dbInstanceName }}  \
+          --display-name ${{ inputs.uamiName }}  \
+          --object-id $objectId \
+          --type ServicePrincipal
+
+        host=$(az postgres flexible-server show \
+          --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
+          --query "fullyQualifiedDomainName" -o tsv)
+        az postgres flexible-server db create --resource-group ${{ inputs.resourceGroup }} \
+                                              --server-name ${{ inputs.dbInstanceName }} \
+                                              --database-name testdb
+
+        echo "serverHost=${host}" >> "$GITHUB_OUTPUT"
+        echo "uamiId=${uamiId}" >> "$GITHUB_OUTPUT"
+
+    - name: Set outputs
+      id: resource_outputs
+      run: |
+        echo "uamiId=${{ env.uamiId }}" >> "$GITHUB_OUTPUT"
+        echo "serverHost=${{ env.serverHost }}" >> "$GITHUB_OUTPUT"  
