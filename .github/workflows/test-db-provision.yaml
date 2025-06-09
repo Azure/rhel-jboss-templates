@@ -76,10 +76,11 @@ jobs:
                 location: ${{ env.location }}
                 dbInstanceName: ${{ env.dbInstanceName }}
                 dbPassword: ${{ env.dbPassword }}
+                scriptLocation: ${{env.scriptLocation}}
 
             - name: Set outputs
               run: |
-                echo "sqlserverHost=${{ steps.dabase-provision.outputs.sqlserverHost }}" 
+                echo "serverHost=${{ steps.dabase-provision.outputs.serverHost }}" 
                 echo "uamiId=${{ steps.dabase-provision.outputs.uamiId }}"
             - name: delete resource group
               run: |
