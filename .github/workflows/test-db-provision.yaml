@@ -80,6 +80,8 @@ jobs:
           mysqlUamiId: ${{ steps.deploy-mysql-passwordless.outputs.uamiId }}
           postgresqlUamiId: ${{ steps.deploy-postgresql-passwordless.outputs.uamiId }}
         steps:
+            - name: checkout rhel-jboss-templates
+              uses: actions/checkout@v4
             - uses: azure/login@v1
               id: azure-login
               with:
