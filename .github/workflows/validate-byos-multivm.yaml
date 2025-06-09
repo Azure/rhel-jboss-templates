@@ -126,6 +126,7 @@ jobs:
                 offerName: ${{ env.offerName }}
                 token: ${{ secrets.GITHUB_TOKEN }}
                 workflowType: "build"
+                uploadArtifact: false
             - uses: azure/login@v1
               id: azure-login
               with:
@@ -283,6 +284,7 @@ jobs:
                 offerName: ${{ env.offerName }}
                 token: ${{ secrets.GITHUB_TOKEN }}
                 workflowType: "build"
+                uploadArtifact: false
             - uses: azure/login@v1
               id: azure-login
               with:

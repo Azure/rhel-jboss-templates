@@ -11,6 +11,10 @@ inputs:
   workflowType:
     description: "workflowType, 'build' or 'validate' "
     required: true
+  uploadArtifact:
+    description: "uploadArtifact, true or false"
+    required: false
+    default: "true"
 
 outputs:
   artifactName:
@@ -124,7 +128,7 @@ runs:
 
     - name: Archive ${{ inputs.offerName }} template
       uses: actions/upload-artifact@v4.6.2
-      if: success()
+      if: ${{ inputs.uploadArtifact == 'true' }}
       with:
         name: ${{steps.artifact_file.outputs.artifactName}}
         path: ${{steps.artifact_file.outputs.artifactPath}}
