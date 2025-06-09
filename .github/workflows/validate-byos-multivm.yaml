@@ -316,7 +316,7 @@ jobs:
 
                 echo "generate parameter file for standalone mode"
                 bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< ./${{ env.offerName }}/src/test/parameters-test-standalone.json  \
+                <<< "./${{ env.offerName }}/src/test/parameters-test-standalone.json \
                 ${{ github.repository_owner }} \
                 ${{ github.sha }} \
                 ${location} \
