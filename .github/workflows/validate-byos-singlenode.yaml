@@ -167,6 +167,9 @@ jobs:
                     --name single \
                     --parameters @./eap-rhel-byos/src/test/parameters-test-single.json \
                     --template-file ./eap-rhel-byos/target/bicep/mainTemplate.json
+            - name: Setup tmate session
+              if: ${{ failure() }}
+              uses: mxschmitt/action-tmate@v3
             - name: Get public IP
               id: get_public_ip
               uses: azure/cli@v2
