@@ -166,9 +166,6 @@ jobs:
                     --name single \
                     --parameters @./${{ env.offerName }}/src/test/parameters-test-single.json \
                     --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
-            - name: Setup tmate session
-              if: ${{ failure() }}
-              uses: mxschmitt/action-tmate@v3
             - name: Get public IP
               id: get_public_ip
               uses: azure/cli@v2
