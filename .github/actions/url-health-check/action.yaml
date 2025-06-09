@@ -21,7 +21,9 @@ runs:
   using: "composite"
   steps:
     - shell: bash
-      run: .github/actions/url-health-check/url-health-check.sh
+      run: |
+        chmod +x .github/actions/url-health-check/url-health-check.sh
+        .github/actions/url-health-check/url-health-check.sh
       env:
         APP_ENDPOINT: ${{ inputs.appEndpoint }}
         MAX_RETRIES: ${{ inputs.maxRetries }}
