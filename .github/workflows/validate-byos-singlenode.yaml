@@ -58,7 +58,6 @@ env:
     rhsmPoolEAP: ${{ secrets.RHSM_POOL }}
     rhsmPoolRHEL: ${{ secrets.RHSM_POOL_FOR_RHEL }}
     gitUserName: ${{ secrets.USER_NAME }}
-    singleTestBranchName: single-cicd-${{ github.run_id }}-${{ github.run_number }}
     gitEmail: ${{ secrets.USER_EMAIL }}
     testPubIpName: testPubIp
     nsgName: jbosseap-nsg
@@ -87,29 +86,6 @@ jobs:
         steps:
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
-              with:
-                path: rhel-jboss-templates
-            - name: Download artifact for test branch
-              uses: actions/download-artifact@v4.2.1
-              with:
-                name: ${{needs.preflight.outputs.artifactName}}
-                path: rhel-jboss-templates-dev
-            - name: Create a new branch with built artifact
-              run: |
-                current=`pwd`
-                echo "current=${current}" >> "$GITHUB_ENV"
-                cd rhel-jboss-templates
-                git config --global core.longpaths true
-                git config --global user.email $gitEmail
-                git config --global user.name $gitUserName
-                echo "create branch $singleTestBranchName"
-                git checkout -b $singleTestBranchName
-                rm -r -f $current/rhel-jboss-templates/eap-rhel-byos/src/main/*
-                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap-rhel-byos/
-                git add .
-                git status
-                git commit -m "test branch for pipeline"
-                git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git -f
             - uses: azure/login@v1
               id: azure-login
               with:
@@ -120,9 +96,12 @@ jobs:
                   echo "accept terms for VM image"
                   az vm image terms accept --urn redhat:rh-jboss-eap:rh-jboss-eap74-rhel8:latest
                   az vm image terms accept --urn redhat:rhel-byos:rhel-lvm94-gen2:latest
+            - name: Create Resource Group
+              run: |
+                az group create -n ${{ env.singleResourceGroup}} -l ${{ env.location }}
             - name: Provision dabase
               id: dabase-provision
-              uses: ./.github/actions/database-provision
+              uses: ./rhel-jboss-templates/.github/actions/database-provision
               with:
                 databaseType: ${{ inputs.databaseType }}
                 resourceGroup: ${{ env.singleResourceGroup }}
@@ -202,7 +181,7 @@ jobs:
                 bash rhel-jboss-templates/eap-rhel-byos/src/test/scripts/gen-parameters.sh \
                 <<< "rhel-jboss-templates/eap-rhel-byos/src/test/parameters-test-single.json  \
                 ${gitUserName} \
-                ${singleTestBranchName} \
+                ${{ github.sha }} \
                 ${location} \
                 ${vmName} \
                 ${adminUsername} \
@@ -233,14 +212,6 @@ jobs:
               with:
                 name: parameters-test-single
                 path: rhel-jboss-templates/eap-rhel-byos/src/test/parameters-test-single.json
-            - name: Create Resource Group if needed
-              if: ${{ inputs.databaseType == 'none' || github.event.client_payload.databaseType == 'none' }}
-              uses: azure/cli@v2
-              with:
-                azcliversion: ${{ env.azCliVersion }}
-                inlineScript: |
-                    echo "create resource group" ${{ env.singleResourceGroup }}
-                    az group create --verbose --name ${{ env.singleResourceGroup }} --location ${{ env.location }}
             - name: Deploy JBoss EAP single
               id: deploy-single
               uses: azure/cli@v2
@@ -304,8 +275,3 @@ jobs:
           run: |
             echo "delete... " $singleResourceGroup
             az group delete --yes --no-wait --verbose --name $singleResourceGroup
-        - name: Delete Testing Branch
-          if: always()
-          run: |
-            cd rhel-jboss-templates
-            git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git -f --delete $singleTestBranchName 

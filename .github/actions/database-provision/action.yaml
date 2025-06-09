@@ -67,7 +67,6 @@ runs:
       if: ${{ inputs.databaseType == 'oracle' }}
       shell: bash
       run: |
-        az group create -n ${{ inputs.resourceGroup }} -l ${{ inputs.location }}
         az vm create \
           --resource-group ${{ inputs.resourceGroup }} \
           --name ${{ inputs.dbInstanceName }} \
@@ -94,7 +93,6 @@ runs:
       if: ${{ inputs.databaseType == 'mysql(flexible)' }}
       shell: bash
       run: |
-        az group create -n ${{ inputs.resourceGroup }} -l ${{ inputs.location }}
         az mysql flexible-server create \
           --resource-group ${{ inputs.resourceGroup }} \
           --name ${{ inputs.dbInstanceName }} \
@@ -140,7 +138,6 @@ runs:
       if: ${{ inputs.databaseType == 'mysql-passwordless(flexible)' }}
       shell: bash
       run: |
-        az group create -n ${{ inputs.resourceGroup }} -l ${{ inputs.location }}
         az mysql flexible-server create \
           --resource-group ${{ inputs.resourceGroup }} \
           --name ${{ inputs.dbInstanceName }} \
