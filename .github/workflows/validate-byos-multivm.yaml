@@ -369,7 +369,7 @@ jobs:
                     --verbose \
                     --resource-group ${{ env.standaloneResourceGroup }} \
                     --name multivm-standalone \
-                    --parameters @./${{ env.offerName }}/src/test/parameters-test-single.json \
+                    --parameters @./${{ env.offerName }}/src/test/parameters-test-standalone.json \
                     --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
             - name: Query public ip of Application Gateway
               id: query_app_gateway_public_ip
