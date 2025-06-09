@@ -3,6 +3,10 @@ name: Test url health
 on:
   workflow_dispatch:
     inputs:
+      endpoint:
+        description: "The application endpoint to check."
+        required: true
+        default: "https://www.google.com"
 
 jobs:
     deploy-dependent-resources:
@@ -13,6 +17,6 @@ jobs:
             - name:  endpoint health check
               uses: ./.github/actions/url-health-check
               with:
-                appEndpoint: "https://www.sjksjdfsjfl-gzh-for-test.com"
+                appEndpoint: ${{ github.event.inputs.endpoint }}
                 maxRetries: 10
                 retryInterval: 5
