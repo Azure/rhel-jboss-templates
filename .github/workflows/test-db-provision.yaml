@@ -22,9 +22,7 @@ env:
     azCliVersion: 2.72.0
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
     location: eastus2
-    domainResourceGroup: multivm-domain-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
-    standaloneResourceGroup: multivm-standalone-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
-    dependencyResourceGroup: multivm-dep-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
+    dependencyResourceGroup: test-db-provision-dep-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
     vmName: ${{ github.run_id }}${{ github.run_number }}vm
     asName: ${{ github.run_id }}${{ github.run_number }}as
     adminUsername: azureadmin
