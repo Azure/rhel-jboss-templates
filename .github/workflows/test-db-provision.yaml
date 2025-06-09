@@ -49,26 +49,9 @@ env:
     standaloneTestBranchName: standalone-cicd-${{ github.run_id }}-${{ github.run_number }}
     gitEmail: ${{ secrets.USER_EMAIL }}
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
-    offerName: "eap-rhel-byos-multivm"
 
 jobs:
-    preflight:
-        outputs:
-          artifactName: ${{steps.build.outputs.artifactName}}
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@v4
-            - name: build
-              id: build
-              uses: ./.github/actions/build
-              with:
-                offerName: ${{ env.offerName }}
-                token: ${{ secrets.GITHUB_TOKEN }}
-                workflowType: "validate"
-
     deploy-dependent-resources:
-        needs: preflight
         runs-on: ubuntu-latest
         outputs:
           serverHost: ${{ steps.dabase-provision.outputs.sqlserverHost }}

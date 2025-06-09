@@ -54,6 +54,8 @@ runs:
           --resource-group ${{ inputs.resourceGroup }} --server ${{ inputs.dbInstanceName }} \
           --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
         az sql db create --resource-group ${{ inputs.resourceGroup }} --server ${{ inputs.dbInstanceName }} --name testdb
+        
+        echo "output the server host"
         echo "serverHost=${host}" >> "$GITHUB_OUTPUT"
 
     - name: Deploy an Oracle database server on Azure VM
@@ -225,5 +227,7 @@ runs:
       id: resource_outputs
       shell: bash
       run: |
+        echo "uamiId=${{ env.uamiId }}" 
+        echo "serverHost=${{ env.serverHost }}"  
         echo "uamiId=${{ env.uamiId }}" >> "$GITHUB_OUTPUT"
         echo "serverHost=${{ env.serverHost }}" >> "$GITHUB_OUTPUT"  
