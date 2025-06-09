@@ -21,6 +21,9 @@ param aadObjectId string = ''
 param identity object = {}
 param guidValue string = ''
 
+@description('${label.tagsLabel}')
+param tagsByResource object
+
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_preflightScript = 'preflight.sh'
 var const_azcliVersion = '2.53.0'
@@ -31,6 +34,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
   location: location
   kind: 'AzureCLI'
   identity: identity
+  tags: tagsByResource['${identifier.deploymentScripts}']
   properties: {
     azCliVersion: const_azcliVersion
     environmentVariables: [

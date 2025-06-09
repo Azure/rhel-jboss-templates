@@ -49,6 +49,9 @@ param applicationName string = 'eap-app'
 param appReplicas int = 2
 param guidValue string = ''
 
+@description('${label.tagsLabel}')
+param tagsByResource object
+
 @secure()
 @description('The pull secret to use for the deployment')
 param pullSecret string = ''
@@ -67,6 +70,7 @@ resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionFor
   location: location
   kind: 'AzureCLI'
   identity: identity
+  tags: tagsByResource['${identifier.deploymentScripts}']
   properties: {
     azCliVersion: const_azcliVersion
     environmentVariables: [
