@@ -178,8 +178,8 @@ jobs:
                 fi
 
                 echo "generate parameter file for single"
-                bash rhel-jboss-templates/eap-rhel-byos/src/test/scripts/gen-parameters.sh \
-                <<< "rhel-jboss-templates/eap-rhel-byos/src/test/parameters-test-single.json  \
+                bash ./eap-rhel-byos/src/test/scripts/gen-parameters.sh \
+                <<< "./eap-rhel-byos/src/test/parameters-test-single.json  \
                 ${gitUserName} \
                 ${{ github.sha }} \
                 ${location} \
@@ -211,7 +211,7 @@ jobs:
               if: success()
               with:
                 name: parameters-test-single
-                path: rhel-jboss-templates/eap-rhel-byos/src/test/parameters-test-single.json
+                path: ./eap-rhel-byos/src/test/parameters-test-single.json
             - name: Deploy JBoss EAP single
               id: deploy-single
               uses: azure/cli@v2
@@ -222,8 +222,8 @@ jobs:
                     --verbose \
                     --resource-group ${{ env.singleResourceGroup }} \
                     --name single \
-                    --parameters @rhel-jboss-templates/eap-rhel-byos/src/test/parameters-test-single.json \
-                    --template-file rhel-jboss-templates/eap-rhel-byos/mainTemplate.json
+                    --parameters @./eap-rhel-byos/src/test/parameters-test-single.json \
+                    --template-file ./eap-rhel-byos/mainTemplate.json
             - name: Get public IP
               id: get_public_ip
               uses: azure/cli@v2
@@ -261,10 +261,6 @@ jobs:
           id: azure-login
           with:
             creds: ${{ env.azureCredentials }}
-        - name: Checkout rhel-jboss-templates
-          uses: actions/checkout@v4
-          with:
-            path: rhel-jboss-templates
         - name: Pause ${{ github.event.inputs.timeWaitBeforeDelete }} before deleting resources
           run: |
             echo "Sleeping for ${{ github.event.inputs.timeWaitBeforeDelete }}"
