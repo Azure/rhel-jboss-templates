@@ -119,8 +119,8 @@ jobs:
                 dbIdentity=${{ steps.database-parameters.outputs.dbIdentity }}
 
                 echo "generate parameter file for single"
-                bash rhel-jboss-templates/${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< "rhel-jboss-templates/${{ env.offerName }}/src/test/parameters-test-single.json  \
+                bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
+                <<< "./${{ env.offerName }}/src/test/parameters-test-single.json  \
                 ${{ github.repository_owner }} \
                 ${{ github.sha }} \
                 ${location} \
