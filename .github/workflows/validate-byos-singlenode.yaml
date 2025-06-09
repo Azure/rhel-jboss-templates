@@ -101,7 +101,7 @@ jobs:
                 az group create -n ${{ env.singleResourceGroup}} -l ${{ env.location }}
             - name: Provision dabase
               id: dabase-provision
-              uses: ./rhel-jboss-templates/.github/actions/database-provision
+              uses: ./.github/actions/database-provision
               with:
                 databaseType: ${{ inputs.databaseType }}
                 resourceGroup: ${{ env.singleResourceGroup }}
