@@ -1,5 +1,5 @@
-name: Validate byos-multivm offer
-run-name: Validate byos-multivm offer with `jdk`:${{ inputs.jdkVersion }} and `db`:${{ inputs.databaseType }}
+name: Test db provision
+run-name:  Test db provision with `db`:${{ inputs.databaseType }}
 
 on:
   workflow_dispatch:
