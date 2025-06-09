@@ -55,8 +55,7 @@ runs:
           --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
         az sql db create --resource-group ${{ inputs.resourceGroup }} --server ${{ inputs.dbInstanceName }} --name testdb
         
-        echo "output the server host"
-        echo "serverHost=${host}" >> "$GITHUB_OUTPUT"
+        echo "serverHost=${host}" >> "$GITHUB_ENV"
 
     - name: Deploy an Oracle database server on Azure VM
       id: deploy-oracle
@@ -81,7 +80,7 @@ runs:
           --protected-settings "{\"commandToExecute\":\"bash install-oracle-main.sh ${{ inputs.dbPassword }}\"}"
         host=$(az vm show -g ${{ inputs.resourceGroup }} -n ${{ inputs.dbInstanceName }} -d --query publicIps -o tsv)
         
-        echo "serverHost=${host}" >> "$GITHUB_OUTPUT"
+        echo "serverHost=${host}" >> "$GITHUB_ENV"
 
     - name: Deploy an instance of Azure Database for MySQL
       id: deploy-mysql
@@ -117,7 +116,7 @@ runs:
         FLUSH PRIVILEGES;
         EOF
         
-        echo "serverHost=${host}" >> "$GITHUB_OUTPUT"
+        echo "serverHost=${host}" >> "$GITHUB_ENV"
 
     - name: Deploy an instance of Azure Database for MySQL passwordless
       id: deploy-mysql-passwordless
@@ -164,8 +163,8 @@ runs:
           --object-id $objectId \
           --identity $uamiId
 
-        echo "serverHost=${host}" >> "$GITHUB_OUTPUT"   
-        echo "uamiId=${uamiId}" >> "$GITHUB_OUTPUT"
+        echo "serverHost=${host}" >> "$GITHUB_ENV"   
+        echo "uamiId=${uamiId}" >> "$GITHUB_ENV"
 
     - name: Deploy an instance of Azure Database for PostgreSQL
       id: deploy-postgresql
@@ -185,7 +184,7 @@ runs:
                                               --server-name ${{ inputs.dbInstanceName }} \
                                               --database-name testdb
 
-        echo "serverHost=${host}" >> "$GITHUB_OUTPUT"
+        echo "serverHost=${host}" >> "$GITHUB_ENV"
     - name: Deploy an instance of Azure Database for PostgreSQL passwordless
       if: ${{ inputs.databaseType == 'postgresql-passwordless(flexible)' }}
       id: deploy-postgresql-passwordless
@@ -220,8 +219,8 @@ runs:
                                               --server-name ${{ inputs.dbInstanceName }} \
                                               --database-name testdb
 
-        echo "serverHost=${host}" >> "$GITHUB_OUTPUT"
-        echo "uamiId=${uamiId}" >> "$GITHUB_OUTPUT"
+        echo "serverHost=${host}" >> "$GITHUB_ENV"
+        echo "uamiId=${uamiId}" >> "$GITHUB_ENV"
 
     - name: Set outputs
       id: resource_outputs
