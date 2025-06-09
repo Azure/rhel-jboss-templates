@@ -59,7 +59,6 @@ env:
     rhsmPoolRHEL: ${{ secrets.RHSM_POOL_FOR_RHEL }}
     gitUserName: ${{ secrets.USER_NAME }}
     gitEmail: ${{ secrets.USER_EMAIL }}
-    testPubIpName: testPubIp
     nsgName: jbosseap-nsg
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
     offerName: "eap-rhel-byos"
