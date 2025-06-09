@@ -66,7 +66,7 @@ jobs:
             - name: Create Resource Group
               run: |
                 az group create -n ${{ env.dependencyResourceGroup}} -l ${{ env.location }}
-            - name: provision dabase
+            - name: Provision dabase
               id: dabase-provision
               uses: ./.github/actions/database-provision
               with:
@@ -76,3 +76,11 @@ jobs:
                 location: ${{ env.location }}
                 dbInstanceName: ${{ env.dbInstanceName }}
                 dbPassword: ${{ env.dbPassword }}
+
+            - name: Set outputs
+              run: |
+                echo "sqlserverHost=${{ steps.dabase-provision.outputs.sqlserverHost }}" 
+                echo "uamiId=${{ steps.dabase-provision.outputs.uamiId }}"
+            - name: delete resource group
+              run: |
+                  az group delete -n ${{ env.dependencyResourceGroup }} --yes --no-wait

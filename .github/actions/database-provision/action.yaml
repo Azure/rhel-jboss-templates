@@ -10,7 +10,7 @@ inputs:
     required: true
   uamiName:
     description: "uamiName"
-    required: false
+    required: true
   location:
     description: "location"
     required: true
