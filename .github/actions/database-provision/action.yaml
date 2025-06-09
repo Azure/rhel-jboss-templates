@@ -254,8 +254,6 @@ runs:
     - name: Set outputs
       id: resource_outputs
       shell: bash
-      run: |
-        echo "uamiId=${{ env.uamiId }}" 
-        echo "serverHost=${{ env.serverHost }}"  
+      run: |  
         echo "uamiId=${{ env.uamiId }}" >> "$GITHUB_OUTPUT"
         echo "serverHost=${{ env.serverHost }}" >> "$GITHUB_OUTPUT"  
