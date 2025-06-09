@@ -10,7 +10,7 @@ jobs:
         steps:
             - name: checkout rhel-jboss-templates
               uses: actions/checkout@v4
-            - name: Verify console is accessible
+            - name:  endpoint health check
               uses: ./.github/actions/url-health-check
               with:
                 appEndpoint: "https://www.sjksjdfsjfl-gzh-for-test.com"

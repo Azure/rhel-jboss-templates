@@ -178,21 +178,11 @@ jobs:
                     publicip=$(az network public-ip list --resource-group $singleResourceGroup --query "[?starts_with(name, 'jbosseapVm-ip')].ipAddress" -o tsv)
                     echo "##[set-output name=publicip;]${publicip}"
             - name: Verify console is accessible
-              run: |
-                publicip=${{steps.get_public_ip.outputs.publicip}}
-                echo "publicip: " $publicip
-                CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
-                echo "Verifying console is accessible"
-                curl --verbose http://${publicip}:9990/console/index.html
-                response=$(curl ${CURL_RETRY_PARMS}  --write-out '%{http_code}' --silent --output /dev/null http://${publicip}:9990/console/index.html)
-                echo "$response"
-                if [ "$response" -ne 200 ]; then
-                  echo "console is not accessible"
-                  exit 1
-                else
-                  echo "console is accessible"
-                fi
-                exit 0
+              uses: ./.github/actions/url-health-check
+              with:
+                appEndpoint: "http://${{steps.get_public_ip.outputs.publicip}}:9990/console/index.html"
+                maxRetries: 10
+                retryInterval: 15
 
     resources-cleanup:
       name: resources-cleanup after ${{ github.event.inputs.timeWaitBeforeDelete }}

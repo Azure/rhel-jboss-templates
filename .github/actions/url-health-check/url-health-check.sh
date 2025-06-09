@@ -5,7 +5,7 @@ retry_interval=${RETRY_INTERVAL:-30}
 attempt=1
 
 while [ $attempt -le $max_retries ]; do
-  response=$(curl -L -s -o /dev/null -w "%{http_code}" "${APP_ENDPOINT}/services/javadetails")
+  response=$(curl -L -s -o /dev/null -w "%{http_code}" "${APP_ENDPOINT}")
   echo "Response code: $response, Attempt: $attempt"
 
   if [ "$response" -eq 200 ]; then

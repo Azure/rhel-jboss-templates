@@ -170,12 +170,13 @@ jobs:
                     # Query public IP for later use
                     publicip=$(az network public-ip list --resource-group $singleResourceGroup --query "[?starts_with(name, 'jbosseapVm-ip')].ipAddress" -o tsv)
                     echo "##[set-output name=publicip;]${publicip}"
+
             - name: Verify console is accessible
-              uses: jtalk/url-health-check-action@v4
+              uses: ./.github/actions/url-health-check
               with:
-                url: http://${{steps.get_public_ip.outputs.publicip}}:9990/console/index.html
-                max-attempts: 10
-                retry-delay: 30s
+                appEndpoint: "http://${{steps.get_public_ip.outputs.publicip}}:9990/console/index.html"
+                maxRetries: 10
+                retryInterval: 15
 
     resources-cleanup:
       name: resources-cleanup after ${{ github.event.inputs.timeWaitBeforeDelete }}
