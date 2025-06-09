@@ -13,6 +13,6 @@ jobs:
             - name: Verify console is accessible
               uses: ./.github/actions/url-health-check
               with:
-                appEndpoint: "https://www.google.com"
+                appEndpoint: "https://www.sjksjdfsjfl-gzh-for-test.com"
                 maxRetries: 10
                 retryInterval: 15
