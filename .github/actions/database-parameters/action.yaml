@@ -101,3 +101,10 @@ runs:
           databaseType=postgresql
           dsConnectionURL="jdbc:postgresql://$serverHost:5432/testdb"
         fi
+        
+        echo "enableDB=$enableDB" >> "$GITHUB_OUTPUT"
+        echo "enablePasswordless=$enablePasswordless" >> "$GITHUB_OUTPUT"
+        echo "databaseType=$databaseType" >> "$GITHUB_OUTPUT"
+        echo "dsConnectionURL=$dsConnectionURL" >> "$GITHUB_OUTPUT"
+        echo "dbUser=$dbUser" >> "$GITHUB_OUTPUT"
+        echo "dbIdentity=$dbIdentity" >> "$GITHUB_OUTPUT"
