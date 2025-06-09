@@ -16,9 +16,12 @@ inputs:
 outputs:
   status:
     description: "The status of the endpoint check."
+
 runs:
   using: "composite"
   steps:
+    - shell: bash
+      run: chmod +x ./url-health-check.sh
     - shell: bash
       run: ./url-health-check.sh
       env:
