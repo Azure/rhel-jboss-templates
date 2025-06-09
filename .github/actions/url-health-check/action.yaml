@@ -1,0 +1,27 @@
+name: "URL Health Check"
+description: "Checks the health of a URL by retrying HTTP requests until the endpoint is accessible or the maximum retries are reached."
+inputs:
+  appEndpoint:
+    description: "The application endpoint to check."
+    required: true
+  maxRetries:
+    description: "Maximum number of retries."
+    required: false
+    default: 20
+  retryInterval:
+    description: "Interval between retries in seconds."
+    required: false
+    default: 30
+
+outputs:
+  status:
+    description: "The status of the endpoint check."
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: ./url-health-check.sh
+      env:
+        APP_ENDPOINT: ${{ inputs.appEndpoint }}
+        MAX_RETRIES: ${{ inputs.maxRetries }}
+        RETRY_INTERVAL: ${{ inputs.retryInterval }}
