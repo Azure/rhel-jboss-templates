@@ -57,10 +57,9 @@ env:
     rhsmPassword: ${{ secrets.RHSM_PASSWORD }}
     rhsmPoolEAP: ${{ secrets.RHSM_POOL }}
     rhsmPoolRHEL: ${{ secrets.RHSM_POOL_FOR_RHEL }}
-    gitUserName: ${{ secrets.USER_NAME }}
     gitEmail: ${{ secrets.USER_EMAIL }}
     nsgName: jbosseap-nsg
-    scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
+    scriptLocation: https://raw.githubusercontent.com/${{ github.repository_owner }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
     offerName: "eap-rhel-byos"
     gracefulShutdownTimeout: "-1"
 
@@ -123,7 +122,7 @@ jobs:
                 echo "generate parameter file for single"
                 bash ./eap-rhel-byos/src/test/scripts/gen-parameters.sh \
                 <<< "./eap-rhel-byos/src/test/parameters-test-single.json  \
-                ${gitUserName} \
+                ${{ github.repository_owner }} \
                 ${{ github.sha }} \
                 ${location} \
                 ${vmName} \
