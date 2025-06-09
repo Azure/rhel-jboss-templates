@@ -88,9 +88,11 @@ jobs:
         needs: preflight
         runs-on: ubuntu-latest
         outputs:
-          uamiId: ${{ steps.dabase-provision.outputs.uamiId }}
-          serverHost: ${{ steps.dabase-provision.outputs.serverHost }}
+          uamiId: ${{ steps.database-provision.outputs.uamiId }}
+          serverHost: ${{ steps.database-provision.outputs.serverHost }}
         steps:
+            - name: Checkout rhel-jboss-templates
+              uses: actions/checkout@v4
             - uses: azure/login@v1
               id: azure-login
               with:
@@ -98,8 +100,8 @@ jobs:
             - name: Create Resource Group
               run: |
                 az group create -n ${{ env.dependencyResourceGroup}} -l ${{ env.location }}
-            - name: Provision dabase
-              id: dabase-provision
+            - name: Provision database
+              id: database-provision
               uses: ./.github/actions/database-provision
               with:
                 databaseType: ${{ inputs.databaseType }}

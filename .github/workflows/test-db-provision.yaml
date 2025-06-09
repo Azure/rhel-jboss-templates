@@ -52,8 +52,8 @@ jobs:
     deploy-dependent-resources:
         runs-on: ubuntu-latest
         outputs:
-          serverHost: ${{ steps.dabase-provision.outputs.sqlserverHost }}
-          uamiId: ${{ steps.dabase-provision.outputs.uamiId }}
+          serverHost: ${{ steps.database-provision.outputs.sqlserverHost }}
+          uamiId: ${{ steps.database-provision.outputs.uamiId }}
         steps:
             - name: checkout rhel-jboss-templates
               uses: actions/checkout@v4
@@ -64,8 +64,8 @@ jobs:
             - name: Create Resource Group
               run: |
                 az group create -n ${{ env.dependencyResourceGroup}} -l ${{ env.location }}
-            - name: Provision dabase
-              id: dabase-provision
+            - name: Provision database
+              id: database-provision
               uses: ./.github/actions/database-provision
               with:
                 databaseType: ${{ inputs.databaseType }}
@@ -78,8 +78,8 @@ jobs:
 
             - name: Set outputs
               run: |
-                echo "serverHost=${{ steps.dabase-provision.outputs.serverHost }}" 
-                echo "uamiId=${{ steps.dabase-provision.outputs.uamiId }}"
+                echo "serverHost=${{ steps.database-provision.outputs.serverHost }}" 
+                echo "uamiId=${{ steps.database-provision.outputs.uamiId }}"
             - name: delete resource group
               run: |
                   az group delete -n ${{ env.dependencyResourceGroup }} --yes --no-wait

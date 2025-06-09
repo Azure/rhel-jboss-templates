@@ -88,8 +88,8 @@ jobs:
               run: |
                 az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
 
-            - name: Provision dabase
-              id: dabase-provision
+            - name: Provision database
+              id: database-provision
               uses: ./.github/actions/database-provision
               with:
                 databaseType: ${{ inputs.databaseType }}
@@ -104,8 +104,8 @@ jobs:
               uses: ./.github/actions/database-parameters
               with:
                 databaseType: ${{ inputs.databaseType }}
-                uamiId: ${{ steps.dabase-provision.outputs.uamiId }}
-                serverHost: ${{ steps.dabase-provision.outputs.serverHost }}
+                uamiId: ${{ steps.database-provision.outputs.uamiId }}
+                serverHost: ${{ steps.database-provision.outputs.serverHost }}
                 dbInstanceName: ${{ env.dbInstanceName }}
 
             - name: Prepare parameter file
