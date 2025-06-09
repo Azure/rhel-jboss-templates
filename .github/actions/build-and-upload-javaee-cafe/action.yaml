@@ -1,0 +1,76 @@
+name: Build and upload javaee cafe
+description: Build and upload javaee cafe
+
+inputs:
+  jdkVersion:
+    description: "jdkVersion"
+    required: true
+  storageAccountName:
+    description: "storageAccountName"
+    required: true
+  resourceGroup:
+    description: "resourceGroup"
+    required: true
+  location:
+    description: "location"
+    required: true
+  enableDB:
+    description: "enableDB"
+    required: true
+
+outputs:
+  appbloburl:
+    description: "appbloburl"
+    value: ${{ steps.upload_cafe_app.outputs.appbloburl }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build javaee cafe
+      shell: bash
+      run: |
+        if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk17" || "${{ inputs.jdkVersion }}" == "eap8-openjdk11" ]]; then
+          git clone https://github.com/Azure/rhel-jboss-templates.git --branch 20240924 --single-branch rhel-jboss-templates-to-build
+        else
+          git clone https://github.com/Azure/rhel-jboss-templates.git --branch 20240904 --single-branch rhel-jboss-templates-to-build
+        fi
+        if ${{ inputs.enableDB != 'true' }}; then
+          sed -i "s/java:jboss\/datasources\/JavaEECafeDB/java:jboss\/datasources\/ExampleDS/g" rhel-jboss-templates-to-build/eap-coffee-app/src/main/resources/META-INF/persistence.xml
+        fi
+        mvn clean install --file rhel-jboss-templates-to-build/eap-coffee-app/pom.xml
+
+    - name: Create a container and uploading cafe app
+      id: upload_cafe_app
+      uses: azure/cli@v2
+      with:
+        inlineScript: |
+          az storage account create \
+            --name ${{ inputs.storageAccountName }} \
+            --resource-group ${{ inputs.resourceGroup }} \
+            --location ${{ inputs.location }} \
+            --sku "Standard_LRS" 
+          # create a container
+          az storage container create --name cafeapp --account-name ${{ inputs.storageAccountName }}
+          # upload cafe app
+          az storage blob upload \
+            --account-name ${{ inputs.storageAccountName }} \
+            --container-name cafeapp \
+            --name javaee-cafe.war \
+            --file rhel-jboss-templates-to-build/eap-coffee-app/target/javaee-cafe.war
+
+          # query the app url
+          sasTokenValidTime=3600
+          expiryData=$(( `date +%s`+${sasTokenValidTime}))
+          sasEnd=`date -d@"$expiryData" -u '+%Y-%m-%dT%H:%MZ'`
+          sasToken=$(az storage account generate-sas \
+              --permissions r \
+              --account-name ${{ inputs.storageAccountName }} \
+              --services b \
+              --resource-types sco \
+              --expiry $sasEnd  -o tsv)
+          appbloburl=$(az storage blob url \
+              --container-name cafeapp \
+              --name javaee-cafe.war \
+              --account-name ${{ inputs.storageAccountName }} \
+              --sas-token ${sasToken} -o tsv) 
+          echo "appbloburl=${appbloburl}" >> "$GITHUB_OUTPUT"         

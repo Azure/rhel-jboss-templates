@@ -211,55 +211,15 @@ jobs:
                     --name multivm-managed-domain \
                     --parameters @./${{ env.offerName }}/src/test/parameters-test-domain.json \
                     --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
-            - name: Build javaee cafe
-              run: |
-                if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk17" || "${{ inputs.jdkVersion }}" == "eap8-openjdk11" ]]; then
-                  git clone https://github.com/Azure/rhel-jboss-templates.git --branch 20240924 --single-branch rhel-jboss-templates-to-build
-                else
-                  git clone https://github.com/Azure/rhel-jboss-templates.git --branch 20240904 --single-branch rhel-jboss-templates-to-build
-                fi
-                if ${{ env.enableDB != 'true' }}; then
-                  sed -i "s/java:jboss\/datasources\/JavaEECafeDB/java:jboss\/datasources\/ExampleDS/g" rhel-jboss-templates-to-build/eap-coffee-app/src/main/resources/META-INF/persistence.xml
-                fi
-                mvn clean install --file rhel-jboss-templates-to-build/eap-coffee-app/pom.xml
-
-            - name: Create a container and uploading cafe app
-              id: upload_cafe_app
-              uses: azure/cli@v2
+            - name: Build and upload javaee cafe
+              id: build-and-upload-javaee-cafe
+              uses: ./.github/actions/build-and-upload-javaee-cafe
               with:
-                azcliversion: ${{ env.azCliVersion }}
-                inlineScript: |
-                  az storage account create \
-                    --name ${{ env.cafeappStorageAccountName }} \
-                    --resource-group ${{ env.domainResourceGroup }} \
-                    --location ${{ env.location }} \
-                    --sku "Standard_LRS" 
-                  # create a container
-                  az storage container create --name cafeapp --account-name ${{ env.cafeappStorageAccountName }}
-                  # upload cafe app
-                  az storage blob upload \
-                    --account-name ${{ env.cafeappStorageAccountName }} \
-                    --container-name cafeapp \
-                    --name javaee-cafe.war \
-                    --file rhel-jboss-templates-to-build/eap-coffee-app/target/javaee-cafe.war
-                  
-                  # query the app url
-                  sasTokenValidTime=3600
-                  expiryData=$(( `date +%s`+${sasTokenValidTime}))
-                  sasEnd=`date -d@"$expiryData" -u '+%Y-%m-%dT%H:%MZ'`
-                  sasToken=$(az storage account generate-sas \
-                      --permissions r \
-                      --account-name ${{ env.cafeappStorageAccountName }} \
-                      --services b \
-                      --resource-types sco \
-                      --expiry $sasEnd  -o tsv)
-                  appbloburl=$(az storage blob url \
-                      --container-name cafeapp \
-                      --name javaee-cafe.war \
-                      --account-name ${{ env.cafeappStorageAccountName }} \
-                      --sas-token ${sasToken} -o tsv) 
-                  echo "appbloburl=${appbloburl}" >> "$GITHUB_OUTPUT"
-
+                jdkVersion: ${{ inputs.jdkVersion }}
+                storageAccountName: ${{ env.cafeappStorageAccountName }}
+                resourceGroup: ${{ env.domainResourceGroup }}
+                location: ${{ env.location }}
+                enableDB: ${{ env.enableDB }}
             - name: Query public ip of admin VM
               id: query_admin_public_ip
               uses: azure/cli@v2
@@ -272,7 +232,7 @@ jobs:
                     echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Deploy cafe application
               run: |
-                appbloburl="${{steps.upload_cafe_app.outputs.appbloburl}}"
+                appbloburl="${{steps.build-and-upload-javaee-cafe.outputs.appbloburl}}"
                 echo "appbloburl: " $appbloburl
 
                 publicip=${{steps.query_admin_public_ip.outputs.publicip}}
