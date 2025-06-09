@@ -20,6 +20,10 @@ inputs:
   dbPassword:
     description: "dbPassword"
     required: true
+  scriptLocation:
+    description: "scriptLocation"
+    required: true
+    default: "https://raw.githubusercontent.com/azure-javaee/rhel-jboss-templates/main/utilities/"
 
 outputs:
   serverHost:
