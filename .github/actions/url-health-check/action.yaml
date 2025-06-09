@@ -21,14 +21,7 @@ runs:
   using: "composite"
   steps:
     - shell: bash
-      run: |
-        echo current folder is $(pwd)
-        ls -la
-
-    - shell: bash
-      run: chmod +x ./url-health-check.sh
-    - shell: bash
-      run: ./url-health-check.sh
+      run: .github/actions/url-health-check/url-health-check.sh
       env:
         APP_ENDPOINT: ${{ inputs.appEndpoint }}
         MAX_RETRIES: ${{ inputs.maxRetries }}
