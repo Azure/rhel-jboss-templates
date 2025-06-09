@@ -33,7 +33,6 @@ outputs:
     description: "uamiId"
     value: ${{ steps.resource_outputs.outputs.uamiId }}
 
-
 runs:
   using: "composite"
   steps:
@@ -41,6 +40,7 @@ runs:
     - name: Deploy an instance of Azure SQL Database
       id: deploy-mssqlserver
       if: ${{ inputs.databaseType == 'mssqlserver' }}
+      shell: bash
       run: |
         az sql server create \
           --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
@@ -59,6 +59,7 @@ runs:
     - name: Deploy an Oracle database server on Azure VM
       id: deploy-oracle
       if: ${{ inputs.databaseType == 'oracle' }}
+      shell: bash
       run: |
         az group create -n ${{ inputs.resourceGroup }} -l ${{ inputs.location }}
         az vm create \
@@ -83,6 +84,7 @@ runs:
     - name: Deploy an instance of Azure Database for MySQL
       id: deploy-mysql
       if: ${{ inputs.databaseType == 'mysql(flexible)' }}
+      shell: bash
       run: |
         az group create -n ${{ inputs.resourceGroup }} -l ${{ inputs.location }}
         az mysql flexible-server create \
@@ -118,6 +120,7 @@ runs:
     - name: Deploy an instance of Azure Database for MySQL passwordless
       id: deploy-mysql-passwordless
       if: ${{ inputs.databaseType == 'mysql-passwordless(flexible)' }}
+      shell: bash
       run: |
         az group create -n ${{ inputs.resourceGroup }} -l ${{ inputs.location }}
         az mysql flexible-server create \
@@ -165,6 +168,7 @@ runs:
     - name: Deploy an instance of Azure Database for PostgreSQL
       id: deploy-postgresql
       if: ${{ inputs.databaseType == 'postgresql(flexible)' }}
+      shell: bash
       run: |
         az postgres flexible-server create \
           --resource-group ${{ inputs.resourceGroup }} --name ${{ inputs.dbInstanceName }} \
@@ -183,6 +187,7 @@ runs:
     - name: Deploy an instance of Azure Database for PostgreSQL passwordless
       if: ${{ inputs.databaseType == 'postgresql-passwordless(flexible)' }}
       id: deploy-postgresql-passwordless
+      shell: bash
       run: |
 
         # Create a user-assigned managed identity
@@ -218,6 +223,7 @@ runs:
 
     - name: Set outputs
       id: resource_outputs
+      shell: bash
       run: |
         echo "uamiId=${{ env.uamiId }}" >> "$GITHUB_OUTPUT"
         echo "serverHost=${{ env.serverHost }}" >> "$GITHUB_OUTPUT"  
