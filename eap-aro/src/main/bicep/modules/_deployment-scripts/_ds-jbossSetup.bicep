@@ -47,6 +47,10 @@ param applicationName string = 'eap-app'
 
 @description('The number of application replicas to deploy')
 param appReplicas int = 2
+param guidValue string = ''
+
+@description('${label.tagsLabel}')
+param tagsByResource object
 
 @secure()
 @description('The pull secret to use for the deployment')
@@ -59,12 +63,14 @@ var const_redHatCatalog = 'redhat-catalog.yaml'
 var const_deploymentTemplate = 'app-deployment.yaml.template'
 var const_operator = 'eap-operator-sub.yaml'
 var const_azcliVersion = '2.53.0'
+var jbossSetup_name = 'jboss-setup-${guidValue}'
 
 resource jbossSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
-  name: 'jboss-setup'
+  name: jbossSetup_name
   location: location
   kind: 'AzureCLI'
   identity: identity
+  tags: tagsByResource['${identifier.deploymentScripts}']
   properties: {
     azCliVersion: const_azcliVersion
     environmentVariables: [

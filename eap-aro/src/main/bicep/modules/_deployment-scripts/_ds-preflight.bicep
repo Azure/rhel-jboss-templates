@@ -19,16 +19,22 @@ param aadObjectId string = ''
 
 @description('An user assigned managed identity. Make sure the identity has permission to create/update/delete/list Azure resources.')
 param identity object = {}
+param guidValue string = ''
+
+@description('${label.tagsLabel}')
+param tagsByResource object
 
 var const_scriptLocation = uri(artifactsLocation, 'scripts/')
 var const_preflightScript = 'preflight.sh'
 var const_azcliVersion = '2.53.0'
+var jboss_preflight_name = 'jboss-preflight-${guidValue}'
 
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
-  name: 'jboss-preflight'
+  name: jboss_preflight_name
   location: location
   kind: 'AzureCLI'
   identity: identity
+  tags: tagsByResource['${identifier.deploymentScripts}']
   properties: {
     azCliVersion: const_azcliVersion
     environmentVariables: [

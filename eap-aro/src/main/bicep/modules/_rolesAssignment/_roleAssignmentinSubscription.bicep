@@ -3,6 +3,8 @@ targetScope = 'subscription'
 // https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
 param roleDefinitionId string = ''
 param principalId string = ''
+@description('${label.tagsLabel}')
+param tagsByResource object
 
 var name_roleAssignmentName = guid('${subscription().id}${principalId}Role assignment in subscription scope')
 
@@ -20,6 +22,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@${azure.apiVers
     principalType: 'ServicePrincipal'
     roleDefinitionId: roleResourceDefinition.id
   }
+  tags: tagsByResource['${identifier.roleAssignments}']
 }
 
 output roleId string = roleResourceDefinition.id
