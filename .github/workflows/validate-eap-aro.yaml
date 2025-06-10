@@ -170,12 +170,12 @@ jobs:
 
           echo "appEndpoint=${appEndpoint}" >> "$GITHUB_OUTPUT"
 
-      - name: Verify cafe application is accessible
+      - name: Verify the endpoint is accessible
         uses: ./.github/actions/url-health-check
         with:
-          appEndpoint: "http://${{steps.query-endpoint.outputs.appEndpoint}}/services/javadetails"
+          appEndpoint: "${{steps.query-endpoint.outputs.appEndpoint}}/services/javadetails"
           maxRetries: 10
-          retryInterval: 15
+          retryInterval: 20
 
   resources-cleanup:
     name: resources-cleanup after ${{ github.event.inputs.timeWaitBeforeDelete }}
