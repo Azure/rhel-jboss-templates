@@ -154,7 +154,7 @@ jobs:
                 dbUser=${{ steps.database-parameters.outputs.dbUser }}
                 dbPassword=${{ env.dbPassword }}
                 dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
-                dbIdentity=$(echo ${{ steps.database-parameters.outputs.dbIdentityBase64 }} | base64 -d)
+                dbIdentity=${{ steps.database-parameters.outputs.dbIdentity }}
 
                 echo "generate parameter file for domain mode"
                 # Generate parameters for db template deployment

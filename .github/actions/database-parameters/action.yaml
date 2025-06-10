@@ -32,9 +32,9 @@ outputs:
   dbUser:
     description: "dbUser"
     value: ${{ steps.database-parameters.outputs.dbUser }}
-  dbIdentityBase64:
-    description: "dbIdentityBase64"
-    value: ${{ steps.database-parameters.outputs.dbIdentityBase64 }}
+  dbIdentity:
+    description: "dbIdentity"
+    value: ${{ steps.database-parameters.outputs.dbIdentity }}
 
 runs:
   using: "composite"
@@ -71,14 +71,14 @@ runs:
           enableDB=true
           enablePasswordless=true
           dbUser=$(basename "$uamiId")
-          dbIdentityBase64=$(jq -n \
+          dbIdentity=$(jq -n \
                         --arg uamiId "$uamiId" \
                         '{
                               "type": "UserAssigned",
                               "userAssignedIdentities": {
                                   ($uamiId): {}
                               }
-                          }'| jq -c '.'| base64 -w0)
+                          }'| jq -c '.')
           databaseType=mysql
           dsConnectionURL=jdbc:mysql://$serverHost:3306/testdb
         elif ${{ inputs.databaseType == 'postgresql(flexible)' }}; then
@@ -90,14 +90,14 @@ runs:
           enableDB=true
           enablePasswordless=true
           dbUser=$(basename "$uamiId")
-          dbIdentityBase64=$(jq -n \
+          dbIdentity=$(jq -n \
                         --arg uamiId "$uamiId" \
                         '{
                               "type": "UserAssigned",
                               "userAssignedIdentities": {
                                   ($uamiId): {}
                               }
-                          }'| jq -c '.' | base64 -w0)
+                          }'| jq -c '.')
           databaseType=postgresql
           dsConnectionURL="jdbc:postgresql://$serverHost:5432/testdb"
         fi
@@ -107,4 +107,4 @@ runs:
         echo "databaseType=$databaseType" >> "$GITHUB_OUTPUT"
         echo "dsConnectionURL=$dsConnectionURL" >> "$GITHUB_OUTPUT"
         echo "dbUser=$dbUser" >> "$GITHUB_OUTPUT"
-        echo "dbIdentityBase64=$dbIdentityBase64" >> "$GITHUB_OUTPUT"
+        echo "dbIdentity=$dbIdentity" >> "$GITHUB_OUTPUT"
