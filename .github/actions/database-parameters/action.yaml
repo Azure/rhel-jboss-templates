@@ -107,4 +107,6 @@ runs:
         echo "databaseType=$databaseType" >> "$GITHUB_OUTPUT"
         echo "dsConnectionURL=$dsConnectionURL" >> "$GITHUB_OUTPUT"
         echo "dbUser=$dbUser" >> "$GITHUB_OUTPUT"
+        echo "----------------------------------------------"
+        echo "dbIdentity=$dbIdentity"
         echo "dbIdentityBase64=$(echo -n "$dbIdentity" | base64 -w0)" >> "$GITHUB_OUTPUT"
