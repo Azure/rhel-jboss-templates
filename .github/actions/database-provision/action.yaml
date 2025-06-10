@@ -62,6 +62,43 @@ runs:
         
         echo "serverHost=${host}" >> "$GITHUB_ENV"
 
+    - name: Deploy an instance of Azure SQL passwordless Database
+      id: deploy-mssqlserver-passwordless
+      if: ${{ inputs.databaseType == 'mssqlserver-passwordless' }}
+      shell: bash
+      run: |
+        # Create a user-assigned managed identity
+        az identity create --name ${{ inputs.uamiName }} --resource-group ${{ inputs.resourceGroup }}
+        # Export the resource ID of the user-assigned managed identity as an environment variable
+        uamiId=$(az identity show --name ${{ inputs.uamiName }} --resource-group ${{ inputs.resourceGroup }} --query id -o tsv)
+        objectId=$(az identity show --name ${{ inputs.uamiName }} --resource-group ${{ inputs.resourceGroup }} --query principalId -o tsv)
+        
+        az sql server create \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
+          --admin-user testuser \
+          --admin-password ${{ inputs.dbPassword }} \
+          --assign-identity \
+          --external-admin-principal-type Application \
+          --external-admin-name ${{ inputs.uamiName }} \
+          --external-admin-sid $objectId \
+          --location ${{ inputs.location }}
+        host=$(az sql server show \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
+          --query "fullyQualifiedDomainName" -o tsv)
+        # Allow Azure services to access
+        az sql server firewall-rule create \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --server ${{ inputs.dbInstanceName }} \
+          --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
+        az sql db create --resource-group ${{ inputs.resourceGroup }} \
+                         --server ${{ inputs.dbInstanceName }} \
+                         --name testdb
+        
+        echo "serverHost=${host}" >> "$GITHUB_ENV"
+        echo "uamiId=${uamiId}" >> "$GITHUB_ENV"
+
     - name: Deploy an Oracle database server on Azure VM
       id: deploy-oracle
       if: ${{ inputs.databaseType == 'oracle' }}
