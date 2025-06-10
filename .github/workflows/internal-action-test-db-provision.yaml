@@ -72,6 +72,17 @@ jobs:
           echo "serverHost=${{ steps.database-provision.outputs.serverHost }}" 
           echo "uamiId=${{ steps.database-provision.outputs.uamiId }}"
           echo dbIdentity=${{ steps.database-parameters.outputs.dbIdentity }}
+
+  resource-clean-up:
+    runs-on: ubuntu-latest
+    needs: deploy-dependent-resources
+    if: ${{ always() }}
+    steps:
+      - name: checkout rhel-jboss-templates
+        uses: actions/checkout@v4
+      - uses: azure/login@v1
+        with:
+          creds: ${{ env.azureCredentials }}
       - name: delete resource group
         run: |
           az group delete -n ${{ env.resourceGroup }} --yes --no-wait
