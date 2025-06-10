@@ -41,11 +41,11 @@
              check https://github.com/azure-javaee/azure-javaee-iaas/blob/b7b966b502212c40f23fd391a088da6a9b20bdc3/arm-parent/pom.xml#L361  -->
         <template.azure-common.properties.url>file:///${rootmoduledir}/utilities/azure-common.properties</template.azure-common.properties.url>
 
-        <version.eap-rhel-byos>1.0.27</version.eap-rhel-byos>
-        <version.eap-rhel-byos-multivm>1.0.36</version.eap-rhel-byos-multivm>
+        <version.eap-rhel-byos>1.0.28</version.eap-rhel-byos>
+        <version.eap-rhel-byos-multivm>1.0.37</version.eap-rhel-byos-multivm>
         <version.eap-rhel-byos-vmss>1.0.31</version.eap-rhel-byos-vmss>
-        <version.eap-rhel-payg>1.0.43</version.eap-rhel-payg>
-        <version.eap-rhel-payg-multivm>1.0.40</version.eap-rhel-payg-multivm>
+        <version.eap-rhel-payg>1.0.44</version.eap-rhel-payg>
+        <version.eap-rhel-payg-multivm>1.0.41</version.eap-rhel-payg-multivm>
         <version.eap-rhel-payg-vmss>1.0.38</version.eap-rhel-payg-vmss>
         <version.eap-aro>1.0.22</version.eap-aro>
     </properties>

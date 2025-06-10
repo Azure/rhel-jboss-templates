@@ -773,11 +773,11 @@
                                 "type": "Microsoft.Common.DropDown",
                                 "label": "Choose database type",
                                 "toolTip": "Choose database type",
-                                "defaultValue": "Microsoft SQL Server",
+                                "defaultValue": "Microsoft SQL Server(Supports passwordless connection)",
                                 "constraints": {
                                     "allowedValues": [
                                         {
-                                            "label": "Microsoft SQL Server",
+                                            "label": "Microsoft SQL Server(Supports passwordless connection)",
                                             "value": "mssqlserver"
                                         },
                                         {
@@ -818,8 +818,20 @@
                                 "defaultValue": "",
                                 "constraints": {
                                     "required": true,
-                                    "regex": "^jdbc:sqlserver:\/\/([^\/]+):([0-9]+);database=([\\w-]+)",
-                                    "validationMessage": "A valid JDBC URL for the chosen database type must be provided"
+                                    "validations": [
+                                        {
+                                            "regex": "^jdbc:sqlserver:\/\/([^\/]+):([0-9]+);database=([\\w-]+)",
+                                            "message": "A valid JDBC URL for the chosen database type must be provided"
+                                        },
+                                        {
+                                            "isValid": "[if(bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection), and(not(contains(steps('section_database').databaseConnectionInfo.sqlserverDsConnectionURL, 'authentication=ActiveDirectoryMSI')),not(contains(steps('section_database').databaseConnectionInfo.sqlserverDsConnectionURL, 'msiClientId'))), 'true')]",
+                                            "message": "The offer will append values to the connection string for the passwordless connection. Do not specify values for ActiveDirectoryMSI and msiClientId in your connection string."
+                                        },
+                                        {
+                                            "isValid": "[if(bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection), greater(length(steps('section_database').databaseConnectionInfo.dbIdentity.userAssignedIdentities),0), bool('true'))]",
+                                            "message": "You must select at least one managed identity that has access to your database."
+                                        }
+                                    ]
                                 },
                                 "visible": "[equals(steps('section_database').databaseConnectionInfo.databaseType, 'mssqlserver')]"
                             },

@@ -16,6 +16,8 @@ databaseUser=$(echo "${5}" | base64 -d)             # Database username
 databasePassword=$(echo "${6}" | base64 -d)         # Database user password
 isManagedDomain=$7                                  # true if the server is in a managed domain, false otherwise
 isSlaveServer=$8                                    # true if it's a slave server of a managed domain, false otherwise
+enablePswlessConnection=${9}                        # Enable passwordless connection
+uamiClientId=${10}                                  # UAMI display name
 
 # Create JDBC driver and module directory
 jdbcDriverModuleDirectory="$eapRootPath"/modules/com/microsoft/sqlserver/main
@@ -47,22 +49,37 @@ EOF
 chmod 644 $jdbcDriverModule
 mv $jdbcDriverModule $jdbcDriverModuleDirectory/$jdbcDriverModule
 
+# Register JDBC driver
 if [ $isManagedDomain == "false" ]; then
     # Register JDBC driver
     sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
     "/subsystem=datasources/jdbc-driver=sqlserver:add(driver-name=sqlserver,driver-module-name=com.microsoft.sqlserver,driver-xa-datasource-class-name=com.microsoft.sqlserver.jdbc.SQLServerXADataSource)" | log
-
-    # Create data source
-    echo "data-source add --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=*** --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter" | log
-    sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
-    "data-source add --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=${databasePassword} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter"
 elif [ $isSlaveServer == "false" ]; then
     # Register JDBC driver
     sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --controller=$(hostname -I) --echo-command \
     "/profile=ha/subsystem=datasources/jdbc-driver=sqlserver:add(driver-name=sqlserver,driver-module-name=com.microsoft.sqlserver,driver-xa-datasource-class-name=com.microsoft.sqlserver.jdbc.SQLServerXADataSource)" | log
+fi
 
-    # Create data source
-    echo "data-source add --profile=ha --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=*** --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter" | log
-    sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --controller=$(hostname -I) --echo-command \
-    "data-source add --driver-name=sqlserver --profile=ha --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=${databasePassword} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter"
+# Create data source
+if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+  dsConnectionString="$dsConnectionString?authentication=ActiveDirectoryMsi&MSIClientId=${uamiClientId}"
+  if [ $isManagedDomain == "false" ]; then
+      echo "data-source add --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter" | log
+      sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
+      "data-source add --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter"
+  elif [ $isSlaveServer == "false" ]; then
+      echo "data-source add --profile=ha --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter" | log
+      sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --controller=$(hostname -I) --echo-command \
+      "data-source add --driver-name=sqlserver --profile=ha --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter"
+  fi
+else
+  if [ $isManagedDomain == "false" ]; then
+      echo "data-source add --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=*** --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter" | log
+      sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
+      "data-source add --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=${databasePassword} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter"
+  elif [ $isSlaveServer == "false" ]; then
+      echo "data-source add --profile=ha --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=*** --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter" | log
+      sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --controller=$(hostname -I) --echo-command \
+      "data-source add --driver-name=sqlserver --profile=ha --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=${databasePassword} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter"
+  fi
 fi

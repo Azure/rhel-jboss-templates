@@ -14,6 +14,8 @@ jdbcDSJNDIName=$(echo "${3}" | base64 -d)           # JDBC Datasource JNDI name
 dsConnectionString=$(echo "${4}" | base64 -d)       # JDBC Datasource connection String
 databaseUser=$(echo "${5}" | base64 -d)             # Database username
 databasePassword=$(echo "${6}" | base64 -d)         # Database user password
+enablePswlessConnection=${7}                        # Enable passwordless connection
+uamiClientId=${8}                                   # UAMI display name
 
 # Create JDBC driver and module directory
 jdbcDriverModuleDirectory="$eapRootPath"/modules/com/microsoft/sqlserver/main
@@ -49,7 +51,16 @@ mv $jdbcDriverModule $jdbcDriverModuleDirectory/$jdbcDriverModule
 sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
 "/subsystem=datasources/jdbc-driver=sqlserver:add(driver-name=sqlserver,driver-module-name=com.microsoft.sqlserver,driver-xa-datasource-class-name=com.microsoft.sqlserver.jdbc.SQLServerXADataSource)" | log
 
-# Create data source
-echo "data-source add --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=*** --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter" | log
-sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
-"data-source add --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=${databasePassword} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter"
+if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" ]; then
+  # Create data source
+  dsConnectionString="$dsConnectionString?authentication=ActiveDirectoryMsi&MSIClientId=${uamiClientId}"
+
+  echo "data-source add --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter" | log
+  sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
+  "data-source add --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter"
+else
+  # Create data source
+  echo "data-source add --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=*** --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter" | log
+  sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
+  "data-source add --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --password=${databasePassword} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter"
+fi
