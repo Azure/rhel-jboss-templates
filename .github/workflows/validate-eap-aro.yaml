@@ -33,8 +33,6 @@ env:
   azCliVersion: 2.72.0
   location: eastus2
   aroResourceGroup: aro-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
-  aroTestBranchName: aro-cicd-${{ github.run_id }}-${{ github.run_number }}
-
   azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
   gitUserName: ${{ secrets.USER_NAME }}
   gitEmail: ${{ secrets.USER_EMAIL }}
@@ -43,7 +41,6 @@ env:
   pullSecret: ${{ secrets.PULL_SECRET }}
   conRegAccUserName: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
   conRegAccPwd: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
-
   offerName: "eap-aro"
 
 jobs:
@@ -70,29 +67,14 @@ jobs:
     steps:
       - name: Checkout rhel-jboss-templates
         uses: actions/checkout@v4
+      - name: build
+        id: build
+        uses: ./.github/actions/build
         with:
-          path: rhel-jboss-templates
-      - name: Download artifact for test branch
-        uses: actions/download-artifact@v4.2.1
-        with:
-          name: ${{needs.preflight.outputs.artifactName}}
-          path: rhel-jboss-templates-dev
-      - name: Create a new branch with built artifact
-        run: |
-          current=`pwd`
-          echo "current=${current}" >> "$GITHUB_ENV"
-          cd rhel-jboss-templates
-          git config --global core.longpaths true
-          git config --global user.email $gitEmail
-          git config --global user.name $gitUserName
-          echo "create branch $aroTestBranchName"
-          git checkout -b $aroTestBranchName
-          rm -r -f $current/rhel-jboss-templates/eap-aro/src/main/*
-          cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap-aro/
-          git add .
-          git status
-          git commit -m "test branch for pipeline"
-          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git -f
+          offerName: ${{ env.offerName }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          workflowType: "build"
+          uploadArtifact: false
       - uses: azure/login@v1
         id: azure-login
         with:
@@ -130,9 +112,10 @@ jobs:
           fi
           
           echo "generate parameter file for eap-aro"
-          params="rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json  \
-          ${gitUserName} \
-          ${aroTestBranchName} \
+          bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
+          <<< "./${{ env.offerName }}/src/test/parameters-test-eap-aro.json \
+          ${{ github.repository_owner }} \
+          ${{ github.sha }} \
           ${location} \
           ${pullSecret} \
           ${aadClientId} \
@@ -148,14 +131,13 @@ jobs:
           ${clusterName} \
           ${clusterRGName}
           "
-          echo $params |bash rhel-jboss-templates/eap-aro/src/test/scripts/gen-parameters.sh 
 
       - name: Archive parameters-test-eap-aro.json
         uses: actions/upload-artifact@v4.6.2
         if: success()
         with:
           name: parameters-test-eap-aro
-          path: rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json
+          path: ./${{ env.offerName }}/src/test/parameters-test-eap-aro.json
 
       - name: Create Resource Group
         uses: azure/cli@v2
@@ -175,40 +157,25 @@ jobs:
             --verbose \
             --resource-group ${{ env.aroResourceGroup }} \
             --name eap-on-aro \
-            --parameters @rhel-jboss-templates/eap-aro/src/test/parameters-test-eap-aro.json \
-            --template-file rhel-jboss-templates/eap-aro/mainTemplate.json
+            --parameters @./${{ env.offerName }}/src/test/parameters-test-eap-aro.json \
+            --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
 
-      - name: Verify the deployment
+      - name: Query endpoint from deployment script
+        id: query-endpoint
         run: |
           resourceName=$(az resource list -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "[?starts_with(name, 'jboss-setup')].name" -o tsv)
           
           # Use the retrieved resource name to get the appEndpoint
           appEndpoint=$(az resource show -n $resourceName -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "properties.outputs.appEndpoint" -o tsv)
 
-          echo "appEndpoint: ${appEndpoint}"
-          echo "Verifying appEndpoint is accessible"
-          
-          max_retries=20
-          retry_interval=30
-          attempt=1
-          
-          while [ $attempt -le $max_retries ]; do
-            response=$(curl -L -s -o /dev/null -w "%{http_code}" ${appEndpoint}/services/javadetails)
-            echo "Response code: $response, Attempt: $attempt"
-          
-            if [ "$response" -eq 200 ]; then
-              echo "appEndpoint is accessible"
-              exit 0
-            fi
-          
-            echo "appEndpoint is not accessible. Retrying in $retry_interval seconds..."
-            attempt=$((attempt + 1))
-            sleep $retry_interval
-            unset response
-          done
-          
-          echo "appEndpoint is not accessible after $max_retries attempts"
-          exit 1
+          echo "appEndpoint=${appEndpoint}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify cafe application is accessible
+        uses: ./.github/actions/url-health-check
+        with:
+          appEndpoint: "http://${{steps.query-endpoint.outputs.appEndpoint}}/services/javadetails"
+          maxRetries: 10
+          retryInterval: 15
 
   resources-cleanup:
     name: resources-cleanup after ${{ github.event.inputs.timeWaitBeforeDelete }}
@@ -236,8 +203,3 @@ jobs:
         run: |
           echo "delete... " $aroResourceGroup
           az group delete --yes --no-wait --verbose --name $aroResourceGroup
-      - name: Delete Testing Branch
-        if: always()
-        run: |
-          cd rhel-jboss-templates
-          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git -f --delete $aroTestBranchName  
