@@ -116,7 +116,7 @@ jobs:
                 dbUser=${{ steps.database-parameters.outputs.dbUser }}
                 dbPassword=${{ env.dbPassword }}
                 dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
-                dbIdentity=${{ steps.database-parameters.outputs.dbIdentity }}
+                dbIdentity=$(echo ${{ steps.database-parameters.outputs.dbIdentityBase64 }} | base64 -d)
 
                 echo "generate parameter file for single"
                 bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
