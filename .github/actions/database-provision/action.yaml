@@ -270,7 +270,7 @@ runs:
           --location ${{ inputs.location }} \
           --yes
 
-        az postgres flexible-server ad-admin create \
+        az postgres flexible-server microsoft-entra-admin  create \
           --resource-group ${{ inputs.resourceGroup }} \
           --server-name ${{ inputs.dbInstanceName }}  \
           --display-name ${{ inputs.uamiName }}  \
