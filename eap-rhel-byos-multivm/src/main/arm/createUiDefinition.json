@@ -903,7 +903,7 @@
                                 "type": "Microsoft.Common.CheckBox",
                                 "label": "Use passwordless datasource connection",
                                 "toolTip": "Use passwordless datasource connection.",
-                                "visible": "[and(bool(steps('section_database').enableDB),or(equals(steps('section_database').databaseConnectionInfo.databaseType, 'mysql'),equals(steps('section_database').databaseConnectionInfo.databaseType, 'postgresql')))]"
+                                "visible": "[and(bool(steps('section_database').enableDB),or(equals(steps('section_database').databaseConnectionInfo.databaseType, 'mssqlserver'),equals(steps('section_database').databaseConnectionInfo.databaseType, 'mysql'),equals(steps('section_database').databaseConnectionInfo.databaseType, 'postgresql')))]"
                             },
                             {
                                 "name": "dbUser",
