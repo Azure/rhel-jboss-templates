@@ -1,5 +1,5 @@
-name: Internal Action Test Database provision
-run-name:  Test database provision with `db`:${{ inputs.databaseType }}
+name: Internal Action Test JavaEE Cafe
+run-name:  Test JavaEE Cafe with `jdkVersion`:${{ inputs.jdkVersion }}
 
 on:
   workflow_dispatch:
