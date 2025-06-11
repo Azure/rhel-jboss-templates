@@ -74,7 +74,7 @@ jobs:
           dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
           dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
           
-          //use heredoc to echo the values with json format to file parameters-output.json
+          # use heredoc to echo the values with json format to file parameters-output.json
           cat <<EOF > parameters-output.json
           {
               "databaseType": "$databaseType",
