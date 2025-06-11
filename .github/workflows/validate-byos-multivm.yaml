@@ -277,7 +277,7 @@ jobs:
                   --location ${{ env.location }} \
                   --yes
                 
-                az postgres flexible-server ad-admin create \
+                az postgres flexible-server microsoft-entra-admin  create \
                   --resource-group ${{ env.dependencyResourceGroup }} \
                   --server-name ${{ env.dbInstanceName }}  \
                   --display-name ${{ env.uamiName }}  \
