@@ -20,7 +20,7 @@ env:
   azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
   location: eastus2
   resourceGroup: test-javaee-cafe-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
-  storageAccountName: testjavaeecafestorage${{ github.run_id }}${{ github.run_number }}
+  storageAccountName: sa${{ github.run_id }}${{ github.run_number }}
 
 jobs:
   deploy-dependent-resources:
