@@ -64,6 +64,34 @@ jobs:
           uamiId: ${{ steps.database-provision.outputs.uamiId }}
           serverHost: ${{ steps.database-provision.outputs.serverHost }}
           dbInstanceName: ${{ env.dbInstanceName }}
+      - name: Prepare parameter file
+        run: |
+          databaseType=${{ steps.database-parameters.outputs.databaseType }}
+          enableDB=${{ steps.database-parameters.outputs.enableDB }}
+          enablePasswordless=${{ steps.database-parameters.outputs.enablePasswordless }}
+          dbUser=${{ steps.database-parameters.outputs.dbUser }}
+          dbPassword=${{ env.dbPassword }}
+          dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
+          dbIdentity=${{ steps.database-parameters.outputs.dbIdentity }}
+          
+          //use heredoc to echo the values with json format to file parameters-output.json
+          cat <<EOF > parameters-output.json
+          {
+              "databaseType": "$databaseType",
+              "enableDB": $enableDB,
+              "enablePasswordless": $enablePasswordless,
+              "dbUser": "$dbUser",
+              "dbPassword": "$dbPassword",
+              "dsConnectionURL": "$dsConnectionURL",
+              "dbIdentity": $dbIdentity
+          }
+
+      - name: Archive parameters-output.json
+        uses: actions/upload-artifact@v4.6.2
+        if: success()
+        with:
+          name: parameters-output
+          path: ./parameters-output.json
       - name: Setup tmate session
         if: ${{ failure() }}
         uses: mxschmitt/action-tmate@v3
