@@ -1,10 +1,6 @@
 name: Build and upload javaee cafe
 description: Build and upload javaee cafe
 
-env:
-  BRANCH_VERSION_EAP8: "20240924"
-  BRANCH_VERSION_OTHER: "20240904"
-
 inputs:
   jdkVersion:
     description: "jdkVersion"
@@ -32,6 +28,9 @@ runs:
   steps:
     - name: Build javaee cafe
       shell: bash
+      env:
+        BRANCH_VERSION_EAP8: "20240924"
+        BRANCH_VERSION_OTHER: "20240904"
       run: |
         if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk17" || "${{ inputs.jdkVersion }}" == "eap8-openjdk11" ]]; then
           git clone https://github.com/Azure/rhel-jboss-templates.git --branch ${{ env.BRANCH_VERSION_EAP8 }} --single-branch rhel-jboss-templates-to-build
