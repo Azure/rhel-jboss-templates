@@ -169,6 +169,10 @@ param dbUser string = 'contosoDbUser'
 @secure()
 @description('Password for Database')
 param dbPassword string = newGuid()
+@description('Enable passwordless datasource connection.')
+param enablePswlessConnection bool = false
+@description('Managed identity that has access to database')
+param dbIdentity object = {}
 @description('${label.tagsLabel}')
 param tagsByResource object = {}
 
@@ -177,6 +181,8 @@ var name_fileshare = 'jbossshare'
 var skuName = 'Aligned'
 var eapstorageReplication = 'Standard_LRS'
 
+var uamiId= enablePswlessConnection ? items(dbIdentity.userAssignedIdentities)[0].key: 'NA'
+var uamiClientId = enablePswlessConnection ? reference(uamiId, '${azure.apiVersionForIdentity}', 'full').properties.clientId : 'NA'
 var containerName = 'eapblobcontainer-${guidValue}'
 var eapStorageAccountName = 'jbosstrg${guidValue}'
 var vmName_var = '${vmName}-${guidValue}'
@@ -621,6 +627,7 @@ module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = {
 resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionForVirtualMachines}' = [for i in range(0, numberOfInstances): {
   name: (operatingMode == name_managedDomain) ? (i == 0 ? '${vmName_var}${name_adminVmName}' : '${vmName_var}${i}') : '${vmName_var}${i}'
   location: location
+  identity: enablePswlessConnection ? dbIdentity : null
   tags: union(_objTagsByResource['${identifier.virtualMachines}'], {
         'QuickstartName': 'JBoss EAP on RHEL (clustered, multi-VM)'
       })
@@ -704,6 +711,8 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
     dbUser: dbUser
     dbPassword: dbPassword
     gracefulShutdownTimeout: gracefulShutdownTimeout
+    enablePswlessConnection: enablePswlessConnection
+    uamiClientId: uamiClientId
     tagsByResource: _objTagsByResource
   }
   dependsOn: [

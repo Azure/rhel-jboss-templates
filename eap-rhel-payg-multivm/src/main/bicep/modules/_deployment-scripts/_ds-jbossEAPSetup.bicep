@@ -22,6 +22,12 @@ param jbossEAPPassword string
 @description('Please enter a Graceful Shutdown Timeout in seconds')
 param gracefulShutdownTimeout string
 
+@description('Enable passwordless datasource connection.')
+param enablePswlessConnection bool = false
+
+@description('User Assigned Managed Identity Client ID. This is used to connect to the Azure resources using the User Assigned Managed Identity.')
+param uamiClientId string
+
 @description('Storage account name created in main')
 param eapStorageAccountName string = ''
 
@@ -230,6 +236,14 @@ resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersion
       {
         name: 'DB_PASSWORD_BASE64'
         secureValue: base64(dbPassword)
+      }
+      {
+        name: 'enablePswlessConnection'
+        secureValue: enablePswlessConnection
+      }
+      {
+        name: 'uamiClientId'
+        secureValue: uamiClientId
       }
     ]
     primaryScriptUri: uri(const_scriptLocation, '${const_setupJBossScript}${artifactsLocationSasToken}')

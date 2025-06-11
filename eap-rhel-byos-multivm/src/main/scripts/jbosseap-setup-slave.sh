@@ -79,6 +79,8 @@ dsConnectionString=${21}
 databaseUser=${22}
 databasePassword=${23}
 gracefulShutdownTimeout=${24}
+enablePswlessConnection=${25}
+uamiClientId=${26}
 
 HOST_VM_NAME=$(hostname)
 HOST_VM_NAME_LOWERCASES=$(echo "${HOST_VM_NAME,,}")
@@ -178,6 +180,9 @@ echo "Install curl, wget, git, unzip, vim" | log; flag=${PIPESTATUS[0]}
 echo "sudo yum install curl wget unzip vim git -y" | log; flag=${PIPESTATUS[0]}
 sudo yum install curl wget unzip vim git -y | log; flag=${PIPESTATUS[0]}#java-1.8.4-openjdk
 ####################### 
+
+# workaround to this issue:https://github.com/azure-javaee/rhel-jboss-templates/issues/2
+sudo update-crypto-policies --set DEFAULT:SHA1 | log; flag=${PIPESTATUS[0]}
 
 ####################### Setitng up the satelitte channels for EAP instalation
 if [[ "${JDK_VERSION,,}" == "eap8-openjdk17" || "${JDK_VERSION,,}" == "eap8-openjdk11" ]]; then
@@ -384,7 +389,7 @@ sleep 20
 if [ "$enableDB" == "True" ]; then
     echo "Start to install JDBC driver module" | log
     jdbcDataSourceName=dataSource-$dbType
-    ./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true true
+    ./create-ds-${dbType}.sh $EAP_HOME "$jdbcDataSourceName" "$jdbcDSJNDIName" "$dsConnectionString" "$databaseUser" "$databasePassword" true true $enablePswlessConnection "$uamiClientId"
     echo "Complete to install JDBC driver module" | log
 fi
 

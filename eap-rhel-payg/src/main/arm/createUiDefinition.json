@@ -564,11 +564,11 @@
                                             "value": "oracle"
                                         },
                                         {
-                                            "label": "MySQL",
+                                            "label": "MySQL(Supports passwordless connection)",
                                             "value": "mysql"
                                         },
                                         {
-                                            "label": "PostgreSQL",
+                                            "label": "PostgreSQL(Supports passwordless connection)",
                                             "value": "postgresql"
                                         }
                                     ],
@@ -623,8 +623,20 @@
                                 "defaultValue": "",
                                 "constraints": {
                                     "required": true,
-                                    "regex": "^jdbc:mysql:\/\/([^\/]+):([0-9]+)\/([\\w-]+)",
-                                    "validationMessage": "A valid JDBC URL for the chosen database type must be provided"
+                                    "validations": [
+                                        {
+                                            "regex": "^jdbc:mysql:\/\/([^\/]+):([0-9]+)\/([\\w-]+)",
+                                            "message": "A valid JDBC URL for the chosen database type must be provided"
+                                        },
+                                        {
+                                            "isValid": "[if(and(bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection), equals(steps('section_database').databaseConnectionInfo.databaseType, 'mysql')), and(not(contains(steps('section_database').databaseConnectionInfo.mysqlDsConnectionURL, 'defaultAuthenticationPlugin')),not(contains(steps('section_database').databaseConnectionInfo.mysqlDsConnectionURL, 'authenticationPlugins')), not(contains(steps('section_database').databaseConnectionInfo.mysqlDsConnectionURL, 'azure.clientId'))), 'true')]",
+                                            "message": "The offer will append defaultAuthenticationPlugin, authenticationPlugins with Azure provided plugins, and append azure.clientId with your managed identity client ID automatically, please do not specify them in your connection string."
+                                        },
+                                        {
+                                            "isValid": "[if(bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection), greater(length(steps('section_database').databaseConnectionInfo.dbIdentity.userAssignedIdentities),0), bool('true'))]",
+                                            "message": "You must select at least one managed identity that has access to your database."
+                                        }
+                                    ]
                                 },
                                 "visible": "[equals(steps('section_database').databaseConnectionInfo.databaseType, 'mysql')]"
                             },
@@ -636,10 +648,29 @@
                                 "defaultValue": "",
                                 "constraints": {
                                     "required": true,
-                                    "regex": "^jdbc:postgresql:\/\/([^\/]+):([0-9]+)\/([\\w-]+)",
-                                    "validationMessage": "A valid JDBC URL for the chosen database type must be provided"
+                                    "validations": [
+                                        {
+                                            "regex": "^jdbc:postgresql:\/\/([^\/]+):([0-9]+)\/([\\w-]+)",
+                                            "message": "A valid JDBC URL for the chosen database type must be provided"
+                                        },
+                                        {
+                                            "isValid": "[if(and(bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection), equals(steps('section_database').databaseConnectionInfo.databaseType, 'postgresql')), and(not(contains(steps('section_database').databaseConnectionInfo.postgresDsConnectionURL, 'authenticationPluginClassName')),not(contains(steps('section_database').databaseConnectionInfo.postgresDsConnectionURL, 'azure.clientId'))), 'true')]",
+                                            "message": "The offer will append authenticationPluginClassName with Azure provided plugins, and append azure.clientId with your managed identity client ID automatically, please do not specify them in your connection string."
+                                        },
+                                        {
+                                            "isValid": "[if(bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection), greater(length(steps('section_database').databaseConnectionInfo.dbIdentity.userAssignedIdentities),0), bool('true'))]",
+                                            "message": "You must select at least one managed identity that has access to your database."
+                                        }
+                                    ]
                                 },
                                 "visible": "[equals(steps('section_database').databaseConnectionInfo.databaseType, 'postgresql')]"
+                            },
+                            {
+                                "name": "enablePswlessConnection",
+                                "type": "Microsoft.Common.CheckBox",
+                                "label": "Use passwordless datasource connection",
+                                "toolTip": "Use passwordless datasource connection.",
+                                "visible": "[and(bool(steps('section_database').enableDB),or(equals(steps('section_database').databaseConnectionInfo.databaseType, 'mysql'),equals(steps('section_database').databaseConnectionInfo.databaseType, 'postgresql')))]"
                             },
                             {
                                 "name": "dbUser",
@@ -668,7 +699,23 @@
                                 "options": {
                                     "hideConfirmation": false
                                 },
-                                "visible": true
+                                "visible": "[not(bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection))]"
+                            },
+                            {
+                                "name": "dbIdentity",
+                                "type": "Microsoft.ManagedIdentity.IdentitySelector",
+                                "label": "Connect database with Managed Identity",
+                                "toolTip": {
+                                    "userAssignedIdentity": "Select a user assigned identity that has access to your database. For how to create a database user for your managed identity, see https://aka.ms/javaee-db-identity."
+                                },
+                                "defaultValue": {
+                                    "systemAssignedIdentity": "Off"
+                                },
+                                "options": {
+                                    "hideSystemAssignedIdentity": true,
+                                    "hideUserAssignedIdentity": false
+                                },
+                                "visible": "[bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection)]"
                             }
                         ],
                         "visible": "[bool(steps('section_database').enableDB)]"
@@ -737,7 +784,9 @@
             "dsConnectionURL": "[if(equals(steps('section_database').databaseConnectionInfo.databaseType, 'oracle'), steps('section_database').databaseConnectionInfo.oracleDsConnectionURL, if(equals(steps('section_database').databaseConnectionInfo.databaseType, 'mysql'), steps('section_database').databaseConnectionInfo.mysqlDsConnectionURL, if(equals(steps('section_database').databaseConnectionInfo.databaseType, 'postgresql'), steps('section_database').databaseConnectionInfo.postgresDsConnectionURL, steps('section_database').databaseConnectionInfo.sqlserverDsConnectionURL)))]",
             "dbUser": "[steps('section_database').databaseConnectionInfo.dbUser]",
             "dbPassword": "[steps('section_database').databaseConnectionInfo.dbPassword]",
-            "tagsByResource": "[steps('tags').tagsByResource]"
+            "tagsByResource": "[steps('tags').tagsByResource]",
+            "enablePswlessConnection": "[bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection)]",
+            "dbIdentity": "[steps('section_database').databaseConnectionInfo.dbIdentity]"
         }
     }
 }

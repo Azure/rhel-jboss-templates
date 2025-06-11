@@ -142,10 +142,20 @@ param dbUser string = 'contosoDbUser'
 @secure()
 @description('Password for Database')
 param dbPassword string = newGuid()
-
+@description('Enable passwordless datasource connection.')
+param enablePswlessConnection bool = false
+@description('Managed identity that has access to database')
+param dbIdentity object = {}
 @description('${label.tagsLabel}')
 param tagsByResource object = {}
 
+var uamiId= enablePswlessConnection ? items(dbIdentity.userAssignedIdentities)[0].key: 'NA'
+var uamiClientId = enablePswlessConnection ? reference(uamiId, '${azure.apiVersionForIdentity}', 'full').properties.clientId : 'NA'
+var const_arguments = format(' {0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17} {18} {19}',       /*
+*/ jbossEAPUserName, base64(jbossEAPPassword), rhsmUserName, base64(rhsmPassword), rhsmPoolEAP, rhsmPoolRHEL, connectSatellite,  /*
+*/ base64(satelliteActivationKey), base64(satelliteOrgName), satelliteFqdn, jdkVersion, enableDB, databaseType,                  /*
+*/ base64(jdbcDataSourceJNDIName), base64(dsConnectionURL), base64(dbUser), base64(dbPassword), gracefulShutdownTimeout,         /*
+*/ enablePswlessConnection, uamiClientId)
 var vmName_var = '${vmName}-${guidValue}'
 var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
 var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
@@ -308,6 +318,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
 resource vmName_resource 'Microsoft.Compute/virtualMachines@${azure.apiVersionForVirtualMachines}' = {
   name: vmName_var
   location: location
+  identity: enablePswlessConnection ? dbIdentity : null
   plan: {
     name: ((jdkVersion == 'eap8-openjdk17') || (jdkVersion == 'eap8-openjdk11'))? 'rhel-lvm94-gen2': 'rhel-lvm86-gen2'
     publisher: 'redhat'
@@ -398,7 +409,7 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
       ]
     }
     protectedSettings: {
-      commandToExecute: 'sh jbosseap-setup-redhat.sh \'${jbossEAPUserName}\' \'${base64(jbossEAPPassword)}\' \'${rhsmUserName}\' \'${base64(rhsmPassword)}\' \'${rhsmPoolEAP}\' \'${rhsmPoolRHEL}\' \'${connectSatellite}\' \'${base64(satelliteActivationKey)}\' \'${base64(satelliteOrgName)}\' \'${satelliteFqdn}\' \'${jdkVersion}\' \'${enableDB}\' \'${databaseType}\' \'${base64(jdbcDataSourceJNDIName)}\' \'${base64(dsConnectionURL)}\' \'${base64(dbUser)}\' \'${base64(dbPassword)}\' \'${gracefulShutdownTimeout}\''
+      commandToExecute: 'sh jbosseap-setup-redhat.sh ${const_arguments}'
     }
   }
   tags: _objTagsByResource['${identifier.virtualMachinesExtensions}']
