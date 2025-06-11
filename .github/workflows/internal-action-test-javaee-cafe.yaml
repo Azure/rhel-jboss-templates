@@ -48,7 +48,6 @@ jobs:
   resource-clean-up:
     runs-on: ubuntu-latest
     needs: deploy-dependent-resources
-    if: ${{ always() }}
     steps:
       - name: checkout rhel-jboss-templates
         uses: actions/checkout@v4
