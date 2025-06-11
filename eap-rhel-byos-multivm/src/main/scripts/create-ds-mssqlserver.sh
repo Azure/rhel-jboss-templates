@@ -62,7 +62,7 @@ fi
 
 # Create data source
 if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" ]; then
-  dsConnectionString="$dsConnectionString?authentication=ActiveDirectoryMsi&MSIClientId=${uamiClientId}"
+  dsConnectionString="$dsConnectionString;authentication=ActiveDirectoryMsi;msiClientId=${uamiClientId}"
   if [ $isManagedDomain == "false" ]; then
       echo "data-source add --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --user-name=${databaseUser} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter" | log
       sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
