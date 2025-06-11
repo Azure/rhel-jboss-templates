@@ -57,6 +57,20 @@ runs:
           databaseType=mssqlserver
           dsConnectionURL="jdbc:sqlserver://$serverHost:1433;database=testdb"
           dbUser=testuser@${{ inputs.dbInstanceName }}
+        elif ${{ inputs.databaseType == 'mssqlserver-passwordless' }}; then
+          enableDB=true
+          enablePasswordless=true
+          databaseType=mssqlserver
+          dsConnectionURL="jdbc:sqlserver://$serverHost:1433;database=testdb"
+          dbUser=testuser@${{ inputs.dbInstanceName }} 
+          dbIdentity=$(jq -n \
+                          --arg uamiId "$uamiId" \
+                          '{
+                                "type": "UserAssigned",
+                                "userAssignedIdentities": {
+                                    ($uamiId): {}
+                                }
+                            }'| jq -c '.')
         elif ${{ inputs.databaseType == 'oracle' }}; then
           enableDB=true
           databaseType=oracle
