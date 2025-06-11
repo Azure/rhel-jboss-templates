@@ -1,6 +1,10 @@
 name: Build and upload javaee cafe
 description: Build and upload javaee cafe
 
+env:
+  BRANCH_VERSION_EAP8: "20240924"
+  BRANCH_VERSION_OTHER: "20240904"
+
 inputs:
   jdkVersion:
     description: "jdkVersion"
@@ -30,9 +34,9 @@ runs:
       shell: bash
       run: |
         if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk17" || "${{ inputs.jdkVersion }}" == "eap8-openjdk11" ]]; then
-          git clone https://github.com/Azure/rhel-jboss-templates.git --branch 20240924 --single-branch rhel-jboss-templates-to-build
+          git clone https://github.com/Azure/rhel-jboss-templates.git --branch ${{ env.BRANCH_VERSION_EAP8 }} --single-branch rhel-jboss-templates-to-build
         else
-          git clone https://github.com/Azure/rhel-jboss-templates.git --branch 20240904 --single-branch rhel-jboss-templates-to-build
+          git clone https://github.com/Azure/rhel-jboss-templates.git --branch ${{ env.BRANCH_VERSION_OTHER }} --single-branch rhel-jboss-templates-to-build
         fi
         if ${{ inputs.enableDB != 'true' }}; then
           sed -i "s/java:jboss\/datasources\/JavaEECafeDB/java:jboss\/datasources\/ExampleDS/g" rhel-jboss-templates-to-build/eap-coffee-app/src/main/resources/META-INF/persistence.xml
