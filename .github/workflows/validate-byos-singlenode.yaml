@@ -198,7 +198,7 @@ jobs:
             echo "Sleeping for ${{ github.event.inputs.timeWaitBeforeDelete }}"
             sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
         - name: Delete Resource Group
-          if: ${{ github.event_name == 'workflow_dispatch' }}
+          if: always()
           id: delete-resource-group
           run: |
             echo "delete... " $singleResourceGroup

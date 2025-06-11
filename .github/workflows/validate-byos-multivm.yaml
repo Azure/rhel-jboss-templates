@@ -406,17 +406,17 @@ jobs:
             echo "Sleeping for ${{ github.event.inputs.timeWaitBeforeDelete }}"
             sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
         - name: Delete Dependent Resource Group
-          if: ${{ github.event_name == 'workflow_dispatch' }}
+          if: always()
           run: |
             az group delete --yes --no-wait --name ${{ env.dependencyResourceGroup }}
         - name: Delete Standalone Resource Group
-          if: ${{ github.event_name == 'workflow_dispatch' }}
+          if: always()
           id: delete-standalone-resource-group
           run: |
             echo "delete... " $standaloneResourceGroup
             az group delete --yes --no-wait --verbose --name $standaloneResourceGroup
         - name: Delete Domain Resource Group
-          if: ${{ github.event_name == 'workflow_dispatch' }}
+          if: always()
           id: delete-domain-resource-group
           run: |
             echo "delete... " $domainResourceGroup
