@@ -276,7 +276,7 @@ jobs:
                 objectId=$(az identity show --name ${{ env.uamiName }} --resource-group ${{ env.singleResourceGroup }} --query principalId -o tsv)
                 
                 az postgres flexible-server create \
-                  --active-directory-auth Enabled \
+                  --microsoft-entra-auth Enabled \
                   --resource-group ${{ env.singleResourceGroup }} \
                   --name ${{ env.dbInstanceName }} \
                   --public-access 0.0.0.0 \
