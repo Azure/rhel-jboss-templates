@@ -72,7 +72,7 @@ jobs:
           dbUser=${{ steps.database-parameters.outputs.dbUser }}
           dbPassword=${{ env.dbPassword }}
           dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
-          dbIdentity=${{ steps.database-parameters.outputs.dbIdentity }}
+          dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
           
           //use heredoc to echo the values with json format to file parameters-output.json
           cat <<EOF > parameters-output.json
@@ -99,7 +99,7 @@ jobs:
         run: |
           echo "serverHost=${{ steps.database-provision.outputs.serverHost }}" 
           echo "uamiId=${{ steps.database-provision.outputs.uamiId }}"
-          echo dbIdentity=${{ steps.database-parameters.outputs.dbIdentity }}
+          echo dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
 
   resource-clean-up:
     runs-on: ubuntu-latest

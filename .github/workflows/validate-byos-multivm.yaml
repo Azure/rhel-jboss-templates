@@ -155,7 +155,7 @@ jobs:
                 dbUser=${{ steps.database-parameters.outputs.dbUser }}
                 dbPassword=${{ env.dbPassword }}
                 dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
-                dbIdentity=${{ steps.database-parameters.outputs.dbIdentity }}
+                dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
 
                 echo "generate parameter file for domain mode"
                 # Generate parameters for db template deployment
@@ -313,7 +313,7 @@ jobs:
                 dbUser=${{ steps.database-parameters.outputs.dbUser }}
                 dbPassword=${{ env.dbPassword }}
                 dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
-                dbIdentity=${{ steps.database-parameters.outputs.dbIdentity }}
+                dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
 
                 echo "generate parameter file for standalone mode"
                 bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
