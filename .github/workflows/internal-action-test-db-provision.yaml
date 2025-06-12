@@ -38,7 +38,6 @@ jobs:
       - name: Generate matrix
         id: set-matrix
         run: |
-          echo "Generating matrix for database type: ${{ inputs.databaseType }}"
           if [ "${{ inputs.databaseType }}" == "all" ]; then
             echo "Generating matrix for all database types"
             echo '{
@@ -53,6 +52,12 @@ jobs:
             }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
             echo "matrix=$matrix"
           else
+            echo "Generating matrix for specific database type: ${{ inputs.databaseType }}"
+            echo '{
+                "databaseType": [
+                  "${{ inputs.databaseType }}"
+                ]
+              }' | jq -c '.'
             echo '{
               "databaseType": [
                 "${{ inputs.databaseType }}"
