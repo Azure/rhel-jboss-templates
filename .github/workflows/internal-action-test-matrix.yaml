@@ -44,7 +44,7 @@ jobs:
             }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
           fi
 
-  build:
+  test-database:
     needs: generateMatrix
     runs-on: ubuntu-latest
     strategy:
