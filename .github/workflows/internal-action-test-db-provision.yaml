@@ -17,7 +17,6 @@ on:
           - mysql-passwordless(flexible)
           - postgresql(flexible)
           - postgresql-passwordless(flexible)
-          - none
           - all
 
 env:
