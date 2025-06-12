@@ -62,6 +62,15 @@ jobs:
           echo "The database type is: ${{ inputs.databaseType }}"
           echo "The database type is: ${{ steps.set-matrix.outputs.matrix.databaseType }}"
 
+  output-matrix:
+    needs: generateMatrix
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo the matrix
+        run: |
+          echo "The matrix is: ${{ fromJson(needs.generateMatrix.outputs.matrix) }}"
+          echo "The database type is: ${{ fromJson(needs.generateMatrix.outputs.matrix).databaseType }}"
+
   test-database:
     needs: generateMatrix
     runs-on: ubuntu-latest
