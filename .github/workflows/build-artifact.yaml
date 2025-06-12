@@ -1,0 +1,68 @@
+name: Build artifact
+run-name:  Build artifact for `offerName`:${{ inputs.offerName }}
+
+on:
+  workflow_dispatch:
+    inputs:
+        offerName:
+          description: "Offer to build artifact "
+          required: true
+          type: choice
+          default: all
+          options:
+            - eap-rhel-byos
+            - eap-rhel-byos-multivm
+            - eap-rhel-payg
+            - eap-rhel-payg-multivm
+            - eap-aro
+            - all
+        pid:
+          description: "partner ID, used for plan in partner center"
+          required: false
+          type: string
+          default: ""
+
+jobs:
+  generateMatrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Generate matrix
+        id: set-matrix
+        run: |
+          if [ "${{ inputs.offerName }}" == "all" ]; then
+            echo '{
+              "offerName": [
+                "eap-rhel-byos",
+                "eap-rhel-byos-multivm",
+                "eap-rhel-payg",
+                "eap-rhel-payg-multivm",
+                "eap-aro"
+              ]
+            }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
+          else
+            echo '{
+              "offerName": [
+                "${{ inputs.offerName }}"
+              ]
+            }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: generateMatrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.generateMatrix.outputs.matrix)}}
+    steps:
+      - name: Checkout rhel-jboss-templates
+        uses: actions/checkout@v4
+
+      - name: build
+        id: build
+        uses: ./.github/actions/build
+        with:
+          offerName: ${{ matrix.offerName }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pid: ${{ inputs.pid }}
+          workflowType: "build"

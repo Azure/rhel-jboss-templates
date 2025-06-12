@@ -43,7 +43,7 @@ env:
     azCliVersion: 2.72.0
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
     location: eastus2
-    singleResourceGroup: single-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
+    resourceGroup: single-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
     vmName: ${{ github.run_id }}${{ github.run_number }}vm
     adminUsername: azureadmin
     password: ${{ secrets.VM_PASSWORD }}
@@ -57,19 +57,14 @@ env:
     rhsmPassword: ${{ secrets.RHSM_PASSWORD }}
     rhsmPoolEAP: ${{ secrets.RHSM_POOL }}
     rhsmPoolRHEL: ${{ secrets.RHSM_POOL_FOR_RHEL }}
-    gitUserName: ${{ secrets.USER_NAME }}
-    singleTestBranchName: single-cicd-${{ github.run_id }}-${{ github.run_number }}
     gitEmail: ${{ secrets.USER_EMAIL }}
-    testPubIpName: testPubIp
     nsgName: jbosseap-nsg
-    scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
+    scriptLocation: https://raw.githubusercontent.com/${{ github.repository_owner }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
     offerName: "eap-rhel-byos"
     gracefulShutdownTimeout: "-1"
 
 jobs:
-    preflight:
-        outputs:
-          artifactName: ${{steps.build.outputs.artifactName}}
+    deploy:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout rhel-jboss-templates
@@ -80,36 +75,7 @@ jobs:
               with:
                 offerName: ${{ env.offerName }}
                 token: ${{ secrets.GITHUB_TOKEN }}
-                workflowType: "validate"
-    deploy-single:
-        needs: preflight
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@v4
-              with:
-                path: rhel-jboss-templates
-            - name: Download artifact for test branch
-              uses: actions/download-artifact@v4.2.1
-              with:
-                name: ${{needs.preflight.outputs.artifactName}}
-                path: rhel-jboss-templates-dev
-            - name: Create a new branch with built artifact
-              run: |
-                current=`pwd`
-                echo "current=${current}" >> "$GITHUB_ENV"
-                cd rhel-jboss-templates
-                git config --global core.longpaths true
-                git config --global user.email $gitEmail
-                git config --global user.name $gitUserName
-                echo "create branch $singleTestBranchName"
-                git checkout -b $singleTestBranchName
-                rm -r -f $current/rhel-jboss-templates/eap-rhel-byos/src/main/*
-                cp -r -f $current/rhel-jboss-templates-dev/* $current/rhel-jboss-templates/eap-rhel-byos/
-                git add .
-                git status
-                git commit -m "test branch for pipeline"
-                git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git -f
+                workflowType: "build"
             - uses: azure/login@v1
               id: azure-login
               with:
@@ -120,269 +86,52 @@ jobs:
                   echo "accept terms for VM image"
                   az vm image terms accept --urn redhat:rh-jboss-eap:rh-jboss-eap74-rhel8:latest
                   az vm image terms accept --urn redhat:rhel-byos:rhel-lvm94-gen2:latest
-            - name: Deploy an instance of Azure SQL Database
-              if: ${{ inputs.databaseType == 'mssqlserver' || github.event.client_payload.databaseType == 'mssqlserver' }}
+            - name: Create Resource Group
               run: |
-                az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
-                az sql server create \
-                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
-                  --admin-user testuser --admin-password ${{ env.dbPassword }} \
-                  --location ${{ env.location }}
-                host=$(az sql server show \
-                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
-                  --query "fullyQualifiedDomainName" -o tsv)
-                echo "sqlserverHost=${host}" >> "$GITHUB_ENV"
-                # Allow Azure services to access
-                az sql server firewall-rule create \
-                  --resource-group ${{ env.singleResourceGroup }} --server ${{ env.dbInstanceName }} \
-                  --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
-                az sql db create --resource-group ${{ env.singleResourceGroup }} --server ${{ env.dbInstanceName }} --name testdb
-            - name: Deploy an Oracle database server on Azure VM
-              if: ${{ inputs.databaseType == 'oracle' || github.event.client_payload.databaseType == 'oracle' }}
-              run: |
-                az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
-                az vm create \
-                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
-                  --image Oracle:oracle-database-19-3:oracle-database-19-0904:latest --size Standard_DS2_v2 \
-                  --admin-username azureuser --generate-ssh-keys \
-                  --nsg-rule NONE --enable-agent true \
-                  --vnet-name ${{ env.dbInstanceName }}VNET --enable-auto-update false \
-                  --tags SkipASMAzSecPack=true SkipNRMSCorp=true SkipNRMSDatabricks=true SkipNRMSDB=true SkipNRMSHigh=true SkipNRMSMedium=true SkipNRMSRDPSSH=true SkipNRMSSAW=true SkipNRMSMgmt=true
-                az vm disk attach --name oradata01 --new --resource-group ${{ env.singleResourceGroup }} --vm-name ${{ env.dbInstanceName }} --size-gb 64 --sku StandardSSD_LRS
-                az vm open-port -g ${{ env.singleResourceGroup }} -n ${{ env.dbInstanceName }} --port 1521,5502 --priority 100
-                az vm extension set --name CustomScript \
-                  --extension-instance-name install-oracle \
-                  --resource-group ${{ env.singleResourceGroup }} --vm-name ${{ env.dbInstanceName }} \
-                  --publisher Microsoft.Azure.Extensions --version 2.0 \
-                  --settings "{\"fileUris\": [\"${{ env.scriptLocation }}install-oracle-main.sh\", \"${{ env.scriptLocation }}install-oracle.sh\"]}" \
-                  --protected-settings "{\"commandToExecute\":\"bash install-oracle-main.sh ${{ env.dbPassword }}\"}"
-            - name: Deploy an instance of Azure Database for MySQL
-              if: ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}
-              run: |
-                az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
-                az mysql flexible-server create \
-                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
-                  --admin-user myadmin --admin-password ${{ env.dbPassword }} \
-                  --sku-name Standard_B1ms --location ${{ env.location }} \
-                  --version 8.0.21 \
-                  --yes
-                # https://github.com/azure-javaee/rhel-jboss-templates/issues/2                
-                if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
-                    az mysql flexible-server parameter set --resource-group ${{ env.singleResourceGroup }} \
-                    --server-name ${{ env.dbInstanceName }} \
-                    --name require_secure_transport \
-                    --value OFF       
-                fi
-                # Allow Azure services to access
-                az mysql flexible-server firewall-rule create \
-                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
-                  --rule-name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
-                # Allow current IP to access MySQL server
-                currentIp=$(curl -s https://icanhazip.com)
-                az mysql flexible-server firewall-rule create \
-                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
-                  --rule-name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
-                host=$(az mysql flexible-server show \
-                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
-                  --query "fullyQualifiedDomainName" -o tsv)
-                echo "mysqlHost=${host}" >> "$GITHUB_ENV"     
-                wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
-                mysql -h $host -u myadmin -p${{ env.dbPassword }} --ssl-ca=DigiCertGlobalRootCA.crt.pem << EOF
-                CREATE DATABASE testdb;
-                CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ env.dbPassword }}';
-                GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
-                FLUSH PRIVILEGES;
-                EOF
-            - name: Deploy an instance of Azure Database for MySQL passwordless
-              if: ${{ inputs.databaseType == 'mysql-passwordless(flexible)' || github.event.client_payload.databaseType == 'mysql-passwordless(flexible)' }}
-              run: |
-                az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
-                az mysql flexible-server create \
-                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
-                  --admin-user myadmin --admin-password ${{ env.dbPassword }} \
-                  --sku-name Standard_B1ms --location ${{ env.location }} \
-                  --version 8.0.21 \
-                  --yes
-                # https://github.com/azure-javaee/rhel-jboss-templates/issues/2                
-                if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
-                    az mysql flexible-server parameter set --resource-group ${{ env.singleResourceGroup }} \
-                    --server-name ${{ env.dbInstanceName }} \
-                    --name require_secure_transport \
-                    --value OFF       
-                fi
-                # Allow Azure services to access
-                az mysql flexible-server firewall-rule create \
-                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
-                  --rule-name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
-                # Allow current IP to access MySQL server
-                currentIp=$(curl -s https://icanhazip.com)
-                az mysql flexible-server firewall-rule create \
-                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
-                  --rule-name "AllowCurrentIp" --start-ip-address ${currentIp} --end-ip-address ${currentIp}
-                host=$(az mysql flexible-server show \
-                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
-                  --query "fullyQualifiedDomainName" -o tsv)
-                
-                wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
-                mysql -h $host -u myadmin -p${{ env.dbPassword }} --ssl-ca=DigiCertGlobalRootCA.crt.pem << EOF
-                CREATE DATABASE testdb;
-                CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ env.dbPassword }}';
-                GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
-                FLUSH PRIVILEGES;
-                EOF
-                
-                # Create a user-assigned managed identity
-                az identity create --name ${{ env.uamiName }} --resource-group ${{ env.singleResourceGroup }}
-                # Export the resource ID of the user-assigned managed identity as an environment variable
-                uamiId=$(az identity show --name ${{ env.uamiName }} --resource-group ${{ env.singleResourceGroup }} --query id -o tsv)
-                objectId=$(az identity show --name ${{ env.uamiName }} --resource-group ${{ env.singleResourceGroup }} --query principalId -o tsv)
-                
-                az mysql flexible-server ad-admin create --resource-group  ${{ env.singleResourceGroup }} \
-                  --server-name ${{ env.dbInstanceName }} --display-name ${{ env.uamiName }} \
-                  --object-id $objectId \
-                  --identity $uamiId
-                
-                echo "mysqlHost=${host}" >> "$GITHUB_ENV"     
-                echo "uamiId=${uamiId}" >> $GITHUB_ENV
-            - name: Deploy an instance of Azure Database for PostgreSQL
-              if: ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}
-              run: |
-                az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
-                az postgres flexible-server create \
-                  --resource-group ${{ env.singleResourceGroup }} \
-                  --name ${{ env.dbInstanceName }} \
-                  --admin-user testuser \
-                  --admin-password ${{ env.dbPassword }} \
-                  --public-access 0.0.0.0 \
-                  --location ${{ env.location }} \
-                  --yes
-                host=$(az postgres flexible-server show \
-                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
-                  --query "fullyQualifiedDomainName" -o tsv)
-                az postgres flexible-server db create --resource-group ${{ env.singleResourceGroup }} \
-                                                      --server-name ${{ env.dbInstanceName }} \
-                                                      --database-name testdb
-                
-                echo "postgresqlHost=${host}" >> "$GITHUB_ENV"
-            - name: Deploy an instance of Azure Database for PostgreSQL passwordless
-              if: ${{ inputs.databaseType == 'postgresql-passwordless(flexible)' || github.event.client_payload.databaseType == 'postgresql-passwordless(flexible)' }}
-              run: |
-                az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
-                
-                # Create a user-assigned managed identity
-                az identity create --name ${{ env.uamiName }} --resource-group ${{ env.singleResourceGroup }}
-                # Export the resource ID of the user-assigned managed identity as an environment variable
-                uamiId=$(az identity show --name ${{ env.uamiName }} --resource-group ${{ env.singleResourceGroup }} --query id -o tsv)
-                objectId=$(az identity show --name ${{ env.uamiName }} --resource-group ${{ env.singleResourceGroup }} --query principalId -o tsv)
-                
-                az postgres flexible-server create \
-                  --microsoft-entra-auth Enabled \
-                  --resource-group ${{ env.singleResourceGroup }} \
-                  --name ${{ env.dbInstanceName }} \
-                  --public-access 0.0.0.0 \
-                  --location ${{ env.location }} \
-                  --yes
-                
-                az postgres flexible-server microsoft-entra-admin  create \
-                  --resource-group ${{ env.singleResourceGroup }} \
-                  --server-name ${{ env.dbInstanceName }}  \
-                  --display-name ${{ env.uamiName }}  \
-                  --object-id $objectId \
-                  --type ServicePrincipal
-                      
-                host=$(az postgres flexible-server show \
-                  --resource-group ${{ env.singleResourceGroup }} --name ${{ env.dbInstanceName }} \
-                  --query "fullyQualifiedDomainName" -o tsv)
-                az postgres flexible-server db create --resource-group ${{ env.singleResourceGroup }} \
-                                                      --server-name ${{ env.dbInstanceName }} \
-                                                      --database-name testdb
-                
-                echo "postgresqlHost=${host}" >> "$GITHUB_ENV"
-                echo "uamiId=${uamiId}" >> $GITHUB_ENV
+                az group create -n ${{ env.resourceGroup }} -l ${{ env.location }}
+            - name: Provision database
+              id: database-provision
+              uses: ./.github/actions/database-provision
+              with:
+                databaseType: ${{ inputs.databaseType }}
+                resourceGroup: ${{ env.resourceGroup }}
+                uamiName: ${{ env.uamiName }}
+                location: ${{ env.location }}
+                dbInstanceName: ${{ env.dbInstanceName }}
+                dbPassword: ${{ env.dbPassword }}
+
+            - name: Get database parameters
+              id: database-parameters
+              uses: ./.github/actions/database-parameters
+              with:
+                databaseType: ${{ inputs.databaseType }}
+                uamiId: ${{ steps.database-provision.outputs.uamiId }}
+                serverHost: ${{ steps.database-provision.outputs.serverHost }}
+                dbInstanceName: ${{ env.dbInstanceName }}
 
             - name: Prepare parameter file
               run: |
-                enableDB=false
-                databaseType=postgresql
-                dsConnectionURL=jdbc:postgresql://contoso.postgres.database:5432/testdb
-                dbUser=contosoDbUser
-                dbPassword=contosoDbPwd
-                enablePasswordless=false
-                dbIdentity={}
-                if ${{ inputs.databaseType == 'mssqlserver' || github.event.client_payload.databaseType == 'mssqlserver' }}; then
-                  enableDB=true
-                  databaseType=mssqlserver
-                  dsConnectionURL="jdbc:sqlserver://${{ env.sqlserverHost }}:1433;database=testdb"
-                  dbUser=testuser@${{ env.dbInstanceName }}
-                  dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'oracle' || github.event.client_payload.databaseType == 'oracle' }}; then
-                  enableDB=true
-                  databaseType=oracle
-                  publicIp=$(az vm show -g ${{ env.singleResourceGroup }} -n ${{ env.dbInstanceName }} -d --query publicIps -o tsv)
-                  dsConnectionURL=jdbc:oracle:thin:@${publicIp}:1521/oratest1
-                  dbUser=testuser
-                  dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'mysql(flexible)' || github.event.client_payload.databaseType == 'mysql(flexible)' }}; then
-                  enableDB=true
-                  databaseType=mysql
-                  if [[ "${{ inputs.jdkVersion }}" == "eap8-openjdk"* ]]; then
-                    dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?useSSL=false
-                  else
-                    dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb?sslMode=REQUIRED
-                  fi
-                  dbUser=testuser
-                  dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'mysql-passwordless(flexible)' || github.event.client_payload.databaseType == 'mysql-passwordless(flexible)' }}; then
-                  enableDB=true
-                  enablePasswordless=true
-                  uamiId=${{ env.uamiId }}
-                  dbUser=$(basename "$uamiId")
-                  dbIdentity=$(jq -n \
-                                --arg uamiId "$uamiId" \
-                                '{
-                                      "type": "UserAssigned",
-                                      "userAssignedIdentities": {
-                                          ($uamiId): {}
-                                      }
-                                  }'| jq -c '.')
-                  databaseType=mysql
-                  dsConnectionURL=jdbc:mysql://${{ env.mysqlHost }}:3306/testdb
-                elif ${{ inputs.databaseType == 'postgresql(flexible)' || github.event.client_payload.databaseType == 'postgresql(flexible)' }}; then
-                  enableDB=true
-                  databaseType=postgresql
-                  dsConnectionURL="jdbc:postgresql://${{ env.postgresqlHost }}:5432/testdb"
-                  dbUser=testuser
-                  dbPassword=${{ env.dbPassword }}
-                elif ${{ inputs.databaseType == 'postgresql-passwordless(flexible)' || github.event.client_payload.databaseType == 'postgresql-passwordless(flexible)' }}; then
-                  echo "set parameter for passwordless postgresql"
-                  enableDB=true
-                  enablePasswordless=true
-                  uamiId=${{ env.uamiId }}
-                  dbUser=$(basename "$uamiId")
-                  dbIdentity=$(jq -n \
-                                --arg uamiId "$uamiId" \
-                                '{
-                                      "type": "UserAssigned",
-                                      "userAssignedIdentities": {
-                                          ($uamiId): {}
-                                      }
-                                  }'| jq -c '.')  
-                  databaseType=postgresql
-                  dsConnectionURL="jdbc:postgresql://${{ env.postgresqlHost }}:5432/testdb"
-                fi
+                databaseType=${{ steps.database-parameters.outputs.databaseType }}
+                enableDB=${{ steps.database-parameters.outputs.enableDB }}
+                enablePasswordless=${{ steps.database-parameters.outputs.enablePasswordless }}
+                dbUser=${{ steps.database-parameters.outputs.dbUser }}
+                dbPassword=${{ env.dbPassword }}
+                dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
+                dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
 
+                
                 echo "generate parameter file for single"
-                bash rhel-jboss-templates/eap-rhel-byos/src/test/scripts/gen-parameters.sh \
-                <<< "rhel-jboss-templates/eap-rhel-byos/src/test/parameters-test-single.json  \
-                ${gitUserName} \
-                ${singleTestBranchName} \
+                bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
+                <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json  \
+                ${{ github.repository_owner }} \
+                ${{ github.sha }} \
                 ${location} \
                 ${vmName} \
                 ${adminUsername} \
                 ${password} \
-                ${singleResourceGroup} \
+                ${resourceGroup} \
                 ${singleStorageAccountName} \
-                ${singleResourceGroup} \
+                ${resourceGroup} \
                 ${jbossEAPUserName} \
                 ${jbossEAPPassword} \
                 ${rhsmUserName} \
@@ -400,62 +149,42 @@ jobs:
                 ${enablePasswordless} \
                 ${dbIdentity}"
 
-            - name: Archive parameters-test-single.json
+            - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
               if: success()
               with:
-                name: parameters-test-single
-                path: rhel-jboss-templates/eap-rhel-byos/src/test/parameters-test-single.json
-            - name: Create Resource Group if needed
-              if: ${{ inputs.databaseType == 'none' || github.event.client_payload.databaseType == 'none' }}
-              uses: azure/cli@v2
-              with:
-                azcliversion: ${{ env.azCliVersion }}
-                inlineScript: |
-                    echo "create resource group" ${{ env.singleResourceGroup }}
-                    az group create --verbose --name ${{ env.singleResourceGroup }} --location ${{ env.location }}
-            - name: Deploy JBoss EAP single
-              id: deploy-single
+                name: parameters-test-${{ env.offerName }}-${{ github.job }}
+                path: ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
+            - name: Deploy JBoss EAP ${{ env.offerName }}
               uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     az deployment group create \
                     --verbose \
-                    --resource-group ${{ env.singleResourceGroup }} \
-                    --name single \
-                    --parameters @rhel-jboss-templates/eap-rhel-byos/src/test/parameters-test-single.json \
-                    --template-file rhel-jboss-templates/eap-rhel-byos/mainTemplate.json
+                    --resource-group ${{ env.resourceGroup }} \
+                    --name ${{ env.offerName }} \
+                    --parameters @./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
+                    --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
             - name: Get public IP
               id: get_public_ip
               uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
-                    publicip=$(az network public-ip list --resource-group $singleResourceGroup --query "[?starts_with(name, 'jbosseapVm-ip')].ipAddress" -o tsv)
-                    echo "##[set-output name=publicip;]${publicip}"
+                    publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?starts_with(name, 'jbosseapVm-ip')].ipAddress" -o tsv)
+                    echo "publicip=${publicip}" >> $GITHUB_OUTPUT
             - name: Verify console is accessible
-              run: |
-                publicip=${{steps.get_public_ip.outputs.publicip}}
-                echo "publicip: " $publicip
-                CURL_RETRY_PARMS="--connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused"
-                echo "Verifying console is accessible"
-                curl --verbose http://${publicip}:9990/console/index.html
-                response=$(curl ${CURL_RETRY_PARMS}  --write-out '%{http_code}' --silent --output /dev/null http://${publicip}:9990/console/index.html)
-                echo "$response"
-                if [ "$response" -ne 200 ]; then
-                  echo "console is not accessible"
-                  exit 1
-                else
-                  echo "console is accessible"
-                fi
-                exit 0
+              uses: ./.github/actions/url-health-check
+              with:
+                appEndpoint: "http://${{steps.get_public_ip.outputs.publicip}}:9990/console/index.html"
+                maxRetries: 10
+                retryInterval: 15
 
     resources-cleanup:
       name: resources-cleanup after ${{ github.event.inputs.timeWaitBeforeDelete }}
       needs:
-        - preflight
-        - deploy-single
+        - deploy
       if: always()
       runs-on: ubuntu-latest
       steps:
@@ -463,22 +192,13 @@ jobs:
           id: azure-login
           with:
             creds: ${{ env.azureCredentials }}
-        - name: Checkout rhel-jboss-templates
-          uses: actions/checkout@v4
-          with:
-            path: rhel-jboss-templates
         - name: Pause ${{ github.event.inputs.timeWaitBeforeDelete }} before deleting resources
           run: |
             echo "Sleeping for ${{ github.event.inputs.timeWaitBeforeDelete }}"
             sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
         - name: Delete Resource Group
-          if: ${{ github.event_name == 'workflow_dispatch' }}
+          if: always()
           id: delete-resource-group
           run: |
-            echo "delete... " $singleResourceGroup
-            az group delete --yes --no-wait --verbose --name $singleResourceGroup
-        - name: Delete Testing Branch
-          if: always()
-          run: |
-            cd rhel-jboss-templates
-            git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git -f --delete $singleTestBranchName 
+            echo "delete... " $resourceGroup
+            az group delete --yes --no-wait --verbose --name $resourceGroup
