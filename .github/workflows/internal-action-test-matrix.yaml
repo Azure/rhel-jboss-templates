@@ -68,8 +68,7 @@ jobs:
     steps:
       - name: echo the matrix
         run: |
-          echo "The matrix is: ${{ fromJson(needs.generateMatrix.outputs.matrix) }}"
-          echo "The database type is: ${{ fromJson(needs.generateMatrix.outputs.matrix).databaseType }}"
+          echo "The matrix is: ${{ needs.generateMatrix.outputs.matrix }}"
 
   test-database:
     needs: generateMatrix
