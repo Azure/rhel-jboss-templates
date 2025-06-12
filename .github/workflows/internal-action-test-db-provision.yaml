@@ -1,5 +1,5 @@
 name: Internal Action Test Database provision
-run-name:  Test database provision with `db`:${{ matrix.databaseType }}
+run-name:  Test database provision with `db`:${{ inputs.databaseType }}
 
 on:
   workflow_dispatch:
