@@ -1,5 +1,5 @@
 name: Internal Action Test generateMatrix
-run-name:  Test generateMatrix with `db`:${{ inputs.databaseType }}
+run-name:  Test generateMatrix with `offerName`:${{ inputs.offerName }}
 
 on:
   workflow_dispatch:
@@ -16,16 +16,6 @@ on:
           - eap-rhel-payg-multivm
           - eap-aro
           - all
-
-env:
-  azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
-  location: eastus2
-  resourceGroupPrefix: test-db-provision-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
-  password: ${{ secrets.VM_PASSWORD }}
-  dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
-  dbPassword: ${{ secrets.DATABASE_PASSWORD }}
-  uamiName: uami${{ github.run_id }}${{ github.run_number }}
-  scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
 
 jobs:
   generateMatrix:
@@ -53,20 +43,16 @@ jobs:
               ]
             }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
           fi
-          
 
-  output-matrix:
+  build:
     needs: generateMatrix
     runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.generateMatrix.outputs.matrix)}}
     steps:
-      - name: echo the matrix
-        run: |
-          echo ${{ needs.generateMatrix.outputs.matrix }} > matrix.json
+        - name: Checkout rhel-jboss-templates
+          uses: actions/checkout@v4
 
-      - name: echo the jsonmatrix
-        run: |
-          echo ${{ fromJson(needs.generateMatrix.outputs.matrix) }} > jsonmatrix.json
-
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-          
+        - name: echo current matrix
+          run: |
+          echo "Current matrix: ${{ matrix.offerName }}"
