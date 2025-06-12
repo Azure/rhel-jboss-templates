@@ -84,9 +84,27 @@ jobs:
                 token: ${{ secrets.GITHUB_TOKEN }}
                 workflowType: "validate"
 
-    deploy-dependent-resources:
+    create-all-resource-groups:
         needs: preflight
         runs-on: ubuntu-latest
+        steps:
+          - name: Checkout rhel-jboss-templates
+            uses: actions/checkout@v4
+          - name: Create Dependent Resource Group
+            run: |
+              az group create -n ${{ env.dependencyResourceGroup }} -l ${{ env.location }}
+          - name: Create Domain Resource Group
+            run: |
+              az group create -n ${{ env.domainResourceGroup }} -l ${{ env.location }}
+          - name: Create Standalone Resource Group
+            run: |
+              az group create -n ${{ env.standaloneResourceGroup }} -l ${{ env.location }}
+
+    deploy-resources:
+        needs: preflight
+        runs-on: ubuntu-latest
+        env:
+          resourceGroup: ${{ env.dependencyResourceGroup }}
         outputs:
           uamiId: ${{ steps.database-provision.outputs.uamiId }}
           serverHost: ${{ steps.database-provision.outputs.serverHost }}
@@ -97,15 +115,12 @@ jobs:
               id: azure-login
               with:
                 creds: ${{ env.azureCredentials }}
-            - name: Create Resource Group
-              run: |
-                az group create -n ${{ env.dependencyResourceGroup}} -l ${{ env.location }}
             - name: Provision database
               id: database-provision
               uses: ./.github/actions/database-provision
               with:
                 databaseType: ${{ inputs.databaseType }}
-                resourceGroup: ${{ env.dependencyResourceGroup }}
+                resourceGroup: ${{ env.resourceGroup }}
                 uamiName: ${{ env.uamiName }}
                 location: ${{ env.location }}
                 dbInstanceName: ${{ env.dbInstanceName }}
@@ -114,8 +129,10 @@ jobs:
     deploy-multivm-domain:
         needs: 
           - preflight
-          - deploy-dependent-resources
+          - deploy-resources
         runs-on: ubuntu-latest
+        env:
+          resourceGroup: ${{ env.domainResourceGroup }}
         steps:
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
@@ -169,9 +186,9 @@ jobs:
                 ${password} \
                 ${numberOfInstances} \
                 ${domainOperatingMode} \
-                ${domainResourceGroup} \
+                ${resourceGroup} \
                 ${domainBootStorageAccountName} \
-                ${domainResourceGroup} \
+                ${resourceGroup} \
                 ${jbossEAPUserName} \
                 ${jbossEAPPassword} \
                 ${rhsmUserName} \
@@ -195,13 +212,6 @@ jobs:
               with:
                 name: parameters-test-${{ env.offerName }}-${{ github.job }}
                 path: ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
-            - name: Create Resource Group
-              uses: azure/cli@v2
-              with:
-                azcliversion: ${{ env.azCliVersion }}
-                inlineScript: |
-                    echo "create resource group" ${{ env.domainResourceGroup }}
-                    az group create --verbose --name ${{ env.domainResourceGroup }} --location ${{ env.location }}
             - name: Deploy JBoss EAP ${{ env.offerName }}
               uses: azure/cli@v2
               with:
@@ -219,7 +229,7 @@ jobs:
               with:
                 jdkVersion: ${{ inputs.jdkVersion }}
                 storageAccountName: ${{ env.cafeappStorageAccountName }}
-                resourceGroup: ${{ env.domainResourceGroup }}
+                resourceGroup: ${{ env.resourceGroup }}
                 location: ${{ env.location }}
                 enableDB: ${{ env.enableDB }}
             - name: Query public ip of admin VM
@@ -229,7 +239,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # query public ip address of admin VM
-                    publicip=$(az network public-ip list --resource-group ${{ env.domainResourceGroup }} --query "[?ends_with(name, '-adminVM-pubIp')].ipAddress" -o tsv)
+                    publicip=$(az network public-ip list --resource-group ${{ env.resourceGroup }} --query "[?ends_with(name, '-adminVM-pubIp')].ipAddress" -o tsv)
                     
                     echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Deploy cafe application
@@ -250,8 +260,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                   # query public ip address of Application Gateway
-                  publicip=$(az network public-ip list --resource-group $domainResourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
-                  
+                  publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
                   echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
 
             - name: Verify cafe application is accessible
@@ -271,8 +280,10 @@ jobs:
     deploy-multivm-standalone:
         needs: 
           - preflight
-          - deploy-dependent-resources
+          - deploy-resources
         runs-on: ubuntu-latest
+        env:
+          resourceGroup: ${{ env.standaloneResourceGroup }}
         steps:
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
@@ -325,9 +336,9 @@ jobs:
                 ${password} \
                 ${numberOfInstances} \
                 ${standaloneOperatingMode} \
-                ${standaloneResourceGroup} \
+                ${resourceGroup} \
                 ${standaloneBootStorageAccountName} \
-                ${standaloneResourceGroup} \
+                ${resourceGroup} \
                 ${jbossEAPUserName} \
                 ${jbossEAPPassword} \
                 ${rhsmUserName} \
@@ -351,13 +362,7 @@ jobs:
               with:
                 name: parameters-test-${{ env.offerName }}-${{ github.job }}
                 path: ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
-            - name: Create Resource Group
-              uses: azure/cli@v2
-              with:
-                azcliversion: ${{ env.azCliVersion }}
-                inlineScript: |
-                    echo "create resource group" ${{ env.standaloneResourceGroup }}
-                    az group create --verbose --name ${{ env.standaloneResourceGroup }} --location ${{ env.location }}
+
             - name: Deploy JBoss EAP ${{ env.offerName }}
               uses: azure/cli@v2
               with:
@@ -376,7 +381,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # query public ip address of Application Gateway
-                    publicip=$(az network public-ip list --resource-group $standaloneResourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
+                    publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
                     echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Verify eap-session-replication application is accessible
               uses: ./.github/actions/url-health-check
@@ -389,7 +394,7 @@ jobs:
       name: resources-cleanup after ${{ github.event.inputs.timeWaitBeforeDelete }}
       needs:
         - preflight
-        - deploy-dependent-resources
+        - deploy-resources
         - deploy-multivm-domain
         - deploy-multivm-standalone
       if: always()

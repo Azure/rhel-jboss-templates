@@ -32,7 +32,7 @@ on:
 env:
   azCliVersion: 2.72.0
   location: eastus2
-  aroResourceGroup: aro-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
+  resourceGroup: aro-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
   azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
   gitUserName: ${{ secrets.USER_NAME }}
   gitEmail: ${{ secrets.USER_EMAIL }}
@@ -113,7 +113,7 @@ jobs:
           
           echo "generate parameter file for eap-aro"
           bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-          <<< "./${{ env.offerName }}/src/test/parameters-test-eap-aro.json \
+          <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
           ${{ github.repository_owner }} \
           ${{ github.sha }} \
           ${location} \
@@ -132,41 +132,40 @@ jobs:
           ${clusterRGName}
           "
 
-      - name: Archive parameters-test-eap-aro.json
+      - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
         uses: actions/upload-artifact@v4.6.2
         if: success()
         with:
-          name: parameters-test-eap-aro
-          path: ./${{ env.offerName }}/src/test/parameters-test-eap-aro.json
+          name: parameters-test-${{ env.offerName }}-${{ github.job }}
+          path: ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
 
       - name: Create Resource Group
         uses: azure/cli@v2
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
-            echo "create resource group" ${{ env.aroResourceGroup }}
-            az group create --verbose --name ${{ env.aroResourceGroup }} --location ${{ env.location }}
+            echo "create resource group" ${{ env.resourceGroup }}
+            az group create --verbose --name ${{ env.resourceGroup }} --location ${{ env.location }}
 
-      - name: Deploy JBoss EAP on ARO
-        id: deploy-eap-aro
+      - name: Deploy JBoss EAP ${{ env.offerName }}
         uses: azure/cli@v2
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
             az deployment group create \
             --verbose \
-            --resource-group ${{ env.aroResourceGroup }} \
-            --name eap-on-aro \
-            --parameters @./${{ env.offerName }}/src/test/parameters-test-eap-aro.json \
+            --resource-group ${{ env.resourceGroup }} \
+            --name ${{ env.offerName }} \
+            --parameters @./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
             --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
 
       - name: Query endpoint from deployment script
         id: query-endpoint
         run: |
-          resourceName=$(az resource list -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "[?starts_with(name, 'jboss-setup')].name" -o tsv)
+          resourceName=$(az resource list -g ${{ env.resourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "[?starts_with(name, 'jboss-setup')].name" -o tsv)
           
           # Use the retrieved resource name to get the appEndpoint
-          appEndpoint=$(az resource show -n $resourceName -g ${{ env.aroResourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "properties.outputs.appEndpoint" -o tsv)
+          appEndpoint=$(az resource show -n $resourceName -g ${{ env.resourceGroup }} --resource-type Microsoft.Resources/deploymentScripts --query "properties.outputs.appEndpoint" -o tsv)
 
           echo "appEndpoint=${appEndpoint}" >> "$GITHUB_OUTPUT"
 
@@ -201,5 +200,5 @@ jobs:
         if: always()
         id: delete-resource-group
         run: |
-          echo "delete... " $aroResourceGroup
-          az group delete --yes --no-wait --verbose --name $aroResourceGroup
+          echo "delete... " $resourceGroup
+          az group delete --yes --no-wait --verbose --name $resourceGroup
