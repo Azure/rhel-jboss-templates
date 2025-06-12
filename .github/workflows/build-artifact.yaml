@@ -27,7 +27,7 @@ jobs:
         id: set-matrix
         run: |
           if [ "${{ inputs.offerName }}" == "all" ]; then
-            echo 'matrix={
+            echo '{
               "offerName": [
                 "eap-rhel-byos",
                 "eap-rhel-byos-multivm",
@@ -35,13 +35,13 @@ jobs:
                 "eap-rhel-payg-multivm",
                 "eap-aro"
               ]
-            }' >> "$GITHUB_OUTPUT"
+            }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
           else
-            echo 'matrix={
+            echo '{
               "offerName": [
                 "${{ inputs.offerName }}"
               ]
-            }' >> "$GITHUB_OUTPUT"
+            }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
           fi
 
   build:
