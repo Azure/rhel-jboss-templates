@@ -53,6 +53,3 @@ jobs:
         - name: Checkout rhel-jboss-templates
           uses: actions/checkout@v4
 
-        - name: echo current matrix
-          run: |
-          echo "Current matrix: ${{ matrix.offerName }}"
