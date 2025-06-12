@@ -58,6 +58,7 @@ jobs:
           fi
 
   test-database:
+    needs: generateMatrix
     runs-on: ubuntu-latest
     strategy: ${{fromJson(needs.generateMatrix.outputs.matrix)}}
     steps:
