@@ -43,7 +43,7 @@ env:
     azCliVersion: 2.72.0
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS_PAYG }}
     location: eastus2
-    singleResourceGroup: single-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
+    resourceGroup: single-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
     vmName: ${{ github.run_id }}${{ github.run_number }}vm
     adminUsername: azureadmin
     password: ${{ secrets.VM_PASSWORD }}
@@ -86,14 +86,14 @@ jobs:
                   az vm image terms accept --urn RedHat:rh-jboss-eap:rh-jboss-eap8-jdk11-rhel9:latest
             - name: Create Resource Group
               run: |
-                az group create -n ${{ env.singleResourceGroup }} -l ${{ env.location }}
+                az group create -n ${{ env.resourceGroup }} -l ${{ env.location }}
 
             - name: Provision database
               id: database-provision
               uses: ./.github/actions/database-provision
               with:
                 databaseType: ${{ inputs.databaseType }}
-                resourceGroup: ${{ env.singleResourceGroup }}
+                resourceGroup: ${{ env.resourceGroup }}
                 uamiName: ${{ env.uamiName }}
                 location: ${{ env.location }}
                 dbInstanceName: ${{ env.dbInstanceName }}
@@ -120,16 +120,16 @@ jobs:
 
                 echo "generate parameter file for single"
                 bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< "./${{ env.offerName }}/src/test/parameters-test-single.json  \
+                <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json  \
                 ${{ github.repository_owner }} \
                 ${{ github.sha }} \
                 ${location} \
                 ${vmName} \
                 ${adminUsername} \
                 ${password} \
-                ${singleResourceGroup} \
+                ${resourceGroup} \
                 ${singleStorageAccountName} \
-                ${singleResourceGroup} \
+                ${resourceGroup} \
                 ${jbossEAPUserName} \
                 ${jbossEAPPassword} \
                 ${enableDB} \
@@ -143,24 +143,23 @@ jobs:
                 ${enablePasswordless} \
                 ${dbIdentity}"
 
-            - name: Archive parameters-test-single.json
+            - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
               if: success()
               with:
-                name: parameters-test-single
-                path: ./${{ env.offerName }}/src/test/parameters-test-single.json
-            - name: Deploy JBoss EAP single
-              id: deploy-single
+                name: parameters-test-${{ env.offerName }}-${{ github.job }}
+                path: ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
+            - name: Deploy JBoss EAP ${{ env.offerName }}
               uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
-                    az deployment group create \
-                    --verbose \
-                    --resource-group ${{ env.singleResourceGroup }} \
-                    --name single \
-                    --parameters @./${{ env.offerName }}/src/test/parameters-test-single.json \
-                    --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
+                  az deployment group create \
+                  --verbose \
+                  --resource-group ${{ env.resourceGroup }} \
+                  --name ${{ env.offerName }} \
+                  --parameters @./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
+                  --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
             - name: Get public IP
               id: get_public_ip
               uses: azure/cli@v2
@@ -168,8 +167,8 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # Query public IP for later use
-                    publicip=$(az network public-ip list --resource-group $singleResourceGroup --query "[?starts_with(name, 'jbosseapVm-ip')].ipAddress" -o tsv)
-                    echo "##[set-output name=publicip;]${publicip}"
+                    publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?starts_with(name, 'jbosseapVm-ip')].ipAddress" -o tsv)
+                    echo "publicip=${publicip}" >> $GITHUB_OUTPUT
 
             - name: Verify console is accessible
               uses: ./.github/actions/url-health-check
@@ -197,5 +196,5 @@ jobs:
           if: always()
           id: delete-resource-group
           run: |
-            echo "delete... " $singleResourceGroup
-            az group delete --yes --no-wait --verbose --name $singleResourceGroup
+            echo "delete... " $resourceGroup
+            az group delete --yes --no-wait --verbose --name $resourceGroup
