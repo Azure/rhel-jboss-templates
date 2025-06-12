@@ -103,12 +103,13 @@ jobs:
     deploy-resources:
         needs: preflight
         runs-on: ubuntu-latest
-        env:
-          resourceGroup: ${{ env.dependencyResourceGroup }}
         outputs:
           uamiId: ${{ steps.database-provision.outputs.uamiId }}
           serverHost: ${{ steps.database-provision.outputs.serverHost }}
         steps:
+            - name: Export environment variables for resourceGroup
+              run: |
+                echo "resourceGroup=${{ env.dependencyResourceGroup }}" >> $GITHUB_ENV
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
             - uses: azure/login@v1
@@ -131,9 +132,10 @@ jobs:
           - preflight
           - deploy-resources
         runs-on: ubuntu-latest
-        env:
-          resourceGroup: ${{ env.domainResourceGroup }}
         steps:
+            - name: Export environment variables for resourceGroup
+              run: |
+                echo "resourceGroup=${{ env.domainResourceGroup }}" >> $GITHUB_ENV
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
             - name: build
@@ -282,9 +284,10 @@ jobs:
           - preflight
           - deploy-resources
         runs-on: ubuntu-latest
-        env:
-          resourceGroup: ${{ env.standaloneResourceGroup }}
         steps:
+            - name: Export environment variables for resourceGroup
+              run: |
+                echo "resourceGroup=${{ env.standaloneResourceGroup }}" >> $GITHUB_ENV
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
             - name: build
