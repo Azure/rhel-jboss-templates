@@ -31,11 +31,12 @@ jobs:
           if [ "${{ inputs.offerName }}" == "all" ]; then
             echo '{
               "offerName": [
-                "eap-rhel-byos",
-                "eap-rhel-byos-multivm",
-                "eap-rhel-payg",
-                "eap-rhel-payg-multivm",
-                "eap-aro"
+                "mssqlserver",
+                "mssqlserver-passwordless",
+                "mysql(flexible)",
+                "mysql-passwordless(flexible)",
+                "postgresql(flexible)",
+                "postgresql-passwordless(flexible)"
               ]
             }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
           else
