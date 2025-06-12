@@ -200,7 +200,6 @@ jobs:
                 ${{ env.gracefulShutdownTimeout }} \
                 ${enablePasswordless} \
                 ${dbIdentity}"
-
             - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
               if: success()
@@ -215,7 +214,7 @@ jobs:
                   az deployment group create \
                   --verbose \
                   --resource-group ${{ env.resourceGroup }} \
-                  --name ${{ env.offerName }} \
+                  --name ${{ env.offerName }}-${{ github.job }} \
                   --parameters @./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
                   --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
             - name: Build and upload javaee cafe
@@ -314,7 +313,7 @@ jobs:
 
                 echo "generate parameter file for standalone mode"
                 bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< "./${{ env.offerName }}/src/test/parameters-test-standalone.json \
+                <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
                 ${{ github.repository_owner }} \
                 ${{ github.sha }} \
                 ${location} \
@@ -342,25 +341,23 @@ jobs:
                 ${{ env.gracefulShutdownTimeout }} \
                 ${enablePasswordless} \
                 ${dbIdentity}"
-
-            - name: Archive parameters-test-standalone.json
+            - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
               if: success()
               with:
-                name: parameters-test-standalone
-                path: ./${{ env.offerName }}/src/test/parameters-test-standalone.json
-            - name: Deploy JBoss EAP standalone cluster
-              id: deploy-multivm-managed-standalone
+                name: parameters-test-${{ env.offerName }}-${{ github.job }}
+                path: ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
+            - name: Deploy JBoss EAP ${{ env.offerName }}
               uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
-                    az deployment group create \
-                    --verbose \
-                    --resource-group ${{ env.resourceGroup }} \
-                    --name multivm-standalone \
-                    --parameters @./${{ env.offerName }}/src/test/parameters-test-standalone.json \
-                    --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
+                  az deployment group create \
+                  --verbose \
+                  --resource-group ${{ env.resourceGroup }} \
+                  --name ${{ env.offerName }}-${{ github.job }} \
+                  --parameters @./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
+                  --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
             - name: Query public ip of Application Gateway
               id: query_app_gateway_public_ip
               uses: azure/cli@v2
