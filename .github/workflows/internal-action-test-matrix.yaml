@@ -10,11 +10,13 @@ on:
         type: choice
         default: all
         options:
-          - eap-rhel-byos
-          - eap-rhel-byos-multivm
-          - eap-rhel-payg
-          - eap-rhel-payg-multivm
-          - eap-aro
+          - mssqlserver
+          - mssqlserver-passwordless
+          - oracle
+          - mysql(flexible)
+          - mysql-passwordless(flexible)
+          - postgresql(flexible)
+          - postgresql-passwordless(flexible)
           - all
 
 jobs:
