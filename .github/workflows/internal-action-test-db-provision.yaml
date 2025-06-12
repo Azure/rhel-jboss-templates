@@ -19,6 +19,16 @@ on:
           - postgresql-passwordless(flexible)
           - all
 
+env:
+  azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
+  location: eastus2
+  resourceGroupPrefix: test-db-provision-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
+  password: ${{ secrets.VM_PASSWORD }}
+  dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
+  dbPassword: ${{ secrets.DATABASE_PASSWORD }}
+  uamiName: uami${{ github.run_id }}${{ github.run_number }}
+  scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
+
 jobs:
   generateMatrix:
     runs-on: ubuntu-latest
@@ -31,12 +41,12 @@ jobs:
           if [ "${{ inputs.databaseType }}" == "all" ]; then
             echo '{
               "databaseType": [
-                "mssqlserver",
-                "mssqlserver-passwordless",
-                "mysql(flexible)",
-                "mysql-passwordless(flexible)",
-                "postgresql(flexible)",
-                "postgresql-passwordless(flexible)"
+                 "mssqlserver",
+                 "mssqlserver-passwordless",
+                 "mysql(flexible)",
+                 "mysql-passwordless(flexible)",
+                 "postgresql(flexible)",
+                 "postgresql-passwordless(flexible)"
               ]
             }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
           else
