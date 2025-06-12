@@ -59,8 +59,7 @@ jobs:
       - name: output matrix
         run: |
           echo "The matrix is: ${{ steps.set-matrix.outputs.matrix }}"
-          echo "The database type is: ${{ inputs.databaseType }}"
-          echo "The database type is: ${{ steps.set-matrix.outputs.matrix.databaseType }}"
+          
 
   output-matrix:
     needs: generateMatrix
