@@ -424,10 +424,10 @@ jobs:
           id: delete-standalone-resource-group
           run: |
             echo "delete... " $standaloneResourceGroup
-            az group delete --yes --no-wait --verbose --name $standaloneResourceGroup
+            az group delete --yes --no-wait --verbose --name ${{ env.standaloneResourceGroup }}
         - name: Delete Domain Resource Group
           if: always()
           id: delete-domain-resource-group
           run: |
             echo "delete... " $domainResourceGroup
-            az group delete --yes --no-wait --verbose --name $domainResourceGroup
+            az group delete --yes --no-wait --verbose --name ${{ env.domainResourceGroup }}
