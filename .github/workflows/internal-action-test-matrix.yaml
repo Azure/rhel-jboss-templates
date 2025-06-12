@@ -5,10 +5,10 @@ on:
   workflow_dispatch:
     inputs:
       databaseType:
-        description: "Offer to build artifact "
+        description: 'Database connection'
         required: true
+        default: 'mssqlserver'
         type: choice
-        default: all
         options:
           - mssqlserver
           - mssqlserver-passwordless
