@@ -90,6 +90,10 @@ jobs:
         steps:
           - name: Checkout rhel-jboss-templates
             uses: actions/checkout@v4
+          - uses: azure/login@v1
+            id: azure-login
+            with:
+              creds: ${{ env.azureCredentials }}
           - name: Create Dependent Resource Group
             run: |
               az group create -n ${{ env.dependencyResourceGroup }} -l ${{ env.location }}
@@ -101,7 +105,7 @@ jobs:
               az group create -n ${{ env.standaloneResourceGroup }} -l ${{ env.location }}
 
     deploy-resources:
-        needs: preflight
+        needs: create-all-resource-groups
         runs-on: ubuntu-latest
         outputs:
           uamiId: ${{ steps.database-provision.outputs.uamiId }}
