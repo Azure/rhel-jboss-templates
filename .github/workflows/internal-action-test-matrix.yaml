@@ -1,0 +1,81 @@
+name: Internal Action Test Database provision
+run-name:  Test database provision with `db`:${{ inputs.databaseType }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      databaseType:
+        description: 'Database connection'
+        required: true
+        default: 'mssqlserver'
+        type: choice
+        options:
+          - mssqlserver
+          - mssqlserver-passwordless
+          - oracle
+          - mysql(flexible)
+          - mysql-passwordless(flexible)
+          - postgresql(flexible)
+          - postgresql-passwordless(flexible)
+          - all
+
+env:
+  azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
+  location: eastus2
+  resourceGroupPrefix: test-db-provision-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
+  password: ${{ secrets.VM_PASSWORD }}
+  dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
+  dbPassword: ${{ secrets.DATABASE_PASSWORD }}
+  uamiName: uami${{ github.run_id }}${{ github.run_number }}
+  scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
+
+jobs:
+  generateMatrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Generate matrix
+        id: set-matrix
+        run: |
+          if [ "${{ inputs.databaseType }}" == "all" ]; then
+            echo '{
+              "databaseType": [
+                 "mssqlserver",
+                 "mssqlserver-passwordless",
+                 "mysql(flexible)",
+                 "mysql-passwordless(flexible)",
+                 "postgresql(flexible)",
+                 "postgresql-passwordless(flexible)"
+              ]
+            }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
+          else
+            echo '{
+              "databaseType": [
+                "${{ inputs.databaseType }}"
+              ]
+            }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
+          fi
+      - name: output matrix
+        run: |
+          echo "The matrix is: ${{ toJson(steps.set-matrix.outputs.matrix) }}"
+          echo "The database type is: ${{ inputs.databaseType }}"
+          echo "The database type is: ${{ steps.set-matrix.outputs.matrix.databaseType }}"
+
+  test-database:
+    needs: generateMatrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.generateMatrix.outputs.matrix)}}
+    steps:
+      - name: checkout rhel-jboss-templates
+        uses: actions/checkout@v4
+      - uses: azure/login@v1
+        id: azure-login
+        with:
+          creds: ${{ env.azureCredentials }}
+      - name: echo the matrix
+        id: resource-group-name
+        run: |
+            echo "The matrix is: ${{ toJson(matrix) }}"
+            echo "The database type is: ${{ matrix.databaseType }}"
