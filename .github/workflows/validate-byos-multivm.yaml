@@ -159,7 +159,7 @@ jobs:
                 echo "generate parameter file for domain mode"
                 # Generate parameters for db template deployment
                 bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< "./${{ env.offerName }}/src/test/parameters-test-domain.json \
+                <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
                 ${{ github.repository_owner }} \
                 ${{ github.sha }} \
                 ${location} \
@@ -189,12 +189,12 @@ jobs:
                 ${enablePasswordless} \
                 ${dbIdentity}"
 
-            - name: Archive parameters-test-domain.json
+            - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
               if: success()
               with:
-                name: parameters-test-domain
-                path: ./${{ env.offerName }}/src/test/parameters-test-domain.json
+                name: parameters-test-${{ env.offerName }}-${{ github.job }}
+                path: ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
             - name: Create Resource Group
               uses: azure/cli@v2
               with:
@@ -202,17 +202,16 @@ jobs:
                 inlineScript: |
                     echo "create resource group" ${{ env.domainResourceGroup }}
                     az group create --verbose --name ${{ env.domainResourceGroup }} --location ${{ env.location }}
-            - name: Deploy JBoss EAP domain cluster
-              id: deploy-multivm-managed-domain
+            - name: Deploy JBoss EAP ${{ env.offerName }}
               uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     az deployment group create \
                     --verbose \
-                    --resource-group ${{ env.domainResourceGroup }} \
-                    --name multivm-managed-domain \
-                    --parameters @./${{ env.offerName }}/src/test/parameters-test-domain.json \
+                    --resource-group ${{ env.resourceGroup }} \
+                    --name ${{ env.offerName }} \
+                    --parameters @./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
                     --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
             - name: Build and upload javaee cafe
               id: build-and-upload-javaee-cafe
@@ -316,7 +315,7 @@ jobs:
 
                 echo "generate parameter file for standalone mode"
                 bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< "./${{ env.offerName }}/src/test/parameters-test-standalone.json \
+                <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
                 ${{ github.repository_owner }} \
                 ${{ github.sha }} \
                 ${location} \
@@ -346,12 +345,12 @@ jobs:
                 ${enablePasswordless} \
                 ${dbIdentity}"
 
-            - name: Archive parameters-test-standalone.json
+            - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
               if: success()
               with:
-                name: parameters-test-standalone
-                path: ./${{ env.offerName }}/src/test/parameters-test-standalone.json
+                name: parameters-test-${{ env.offerName }}-${{ github.job }}
+                path: ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
             - name: Create Resource Group
               uses: azure/cli@v2
               with:
@@ -359,18 +358,17 @@ jobs:
                 inlineScript: |
                     echo "create resource group" ${{ env.standaloneResourceGroup }}
                     az group create --verbose --name ${{ env.standaloneResourceGroup }} --location ${{ env.location }}
-            - name: Deploy JBoss EAP standalone cluster
-              id: deploy-multivm-managed-standalone
+            - name: Deploy JBoss EAP ${{ env.offerName }}
               uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
-                    az deployment group create \
-                    --verbose \
-                    --resource-group ${{ env.standaloneResourceGroup }} \
-                    --name multivm-standalone \
-                    --parameters @./${{ env.offerName }}/src/test/parameters-test-standalone.json \
-                    --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
+                  az deployment group create \
+                  --verbose \
+                  --resource-group ${{ env.resourceGroup }} \
+                  --name ${{ env.offerName }} \
+                  --parameters @./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
+                  --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
             - name: Query public ip of Application Gateway
               id: query_app_gateway_public_ip
               uses: azure/cli@v2
