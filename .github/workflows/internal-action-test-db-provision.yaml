@@ -31,12 +31,12 @@ jobs:
           if [ "${{ inputs.databaseType }}" == "all" ]; then
             echo '{
               "databaseType": [
-                 "mssqlserver",
-                 "mssqlserver-passwordless",
-                 "mysql(flexible)",
-                 "mysql-passwordless(flexible)",
-                 "postgresql(flexible)",
-                 "postgresql-passwordless(flexible)"
+                "mssqlserver",
+                "mssqlserver-passwordless",
+                "mysql(flexible)",
+                "mysql-passwordless(flexible)",
+                "postgresql(flexible)",
+                "postgresql-passwordless(flexible)"
               ]
             }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
           else
