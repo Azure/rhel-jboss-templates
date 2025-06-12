@@ -27,7 +27,7 @@ jobs:
         id: set-matrix
         run: |
           if [ "${{ inputs.offerName }}" == "all" ]; then
-            echo "matrix={\"offerName\":[\"eap-rhel-byos\", \"eap-rhel-byos-multivm\", \"eap-rhel-payg\", \"eap-rhel-payg-multivm\"]}" >> "$GITHUB_OUTPUT"
+            echo "matrix={\"offerName\":[\"eap-rhel-byos\", \"eap-rhel-byos-multivm\", \"eap-rhel-payg\", \"eap-rhel-payg-multivm\", \"eap-aro\"]}" >> "$GITHUB_OUTPUT"
           else
             echo "matrix={\"offerName\":[\"${{ inputs.offerName }}\"]}" >> "$GITHUB_OUTPUT"
           fi
