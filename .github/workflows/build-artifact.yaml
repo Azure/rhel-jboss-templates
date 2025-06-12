@@ -18,11 +18,24 @@ on:
             - all
 
 jobs:
+  generateMatrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      steps:
+        - id: set-matrix
+          run: |
+            if [ "${{ inputs.offerName }}" == "all" ]; then
+              echo "matrix={\"offerName\":[\"eap-rhel-byos\", \"eap-rhel-byos-multivm\", \"eap-rhel-payg\", \"eap-rhel-payg-multivm\"]}" >> "$GITHUB_OUTPUT"
+            else
+              echo "matrix={\"offerName\":[\"${{ inputs.offerName }}\"]}" >> "$GITHUB_OUTPUT"
+            fi
+
   build:
+    needs: generateMatrix
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        offerName: ${{ fromJSON(inputs.offerName == 'all' && '["eap-rhel-byos", "eap-rhel-byos-multivm", "eap-rhel-payg", "eap-rhel-payg-multivm"]' || format('["{0}"]', inputs.offerName)) }}
+      matrix: ${{fromJson(needs.generateMatrix.outputs.matrix)}}
     steps:
       - name: Checkout rhel-jboss-templates
         uses: actions/checkout@v4
