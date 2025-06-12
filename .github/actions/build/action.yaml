@@ -133,11 +133,13 @@ runs:
     - name: Update pid if the pid is provided and is valid
       shell: bash
       run: |
+        artifactName=${{steps.artifact_file.outputs.artifactName}}
+        
         echo "Checking if pid is provided and valid..."
         echo "inputs.pid: ${{ inputs.pid }}"
         if [ -n "${{ inputs.pid }}" ] && [[ "${{ inputs.pid }}" =~ ^pid-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}-partnercenter$ ]]; then
           echo "Valid pid provided: ${{ inputs.pid }}"
-          sed -i "s/pid-[0-9a-zA-Z-]\+-partnercenter/${{ inputs.pid }}-partnercenter/g" ${{ steps.artifact_file.outputs.artifactPath }}/mainTemplate.bicep
+          sed -i "s/pid-[0-9a-zA-Z-]\+-partnercenter/${{ inputs.pid }}-partnercenter/g" ${{inputs.offerName }}/target/$artifactName/mainTemplate.bicep
         else
           echo "No valid pid provided, skipping update pid."
         fi
