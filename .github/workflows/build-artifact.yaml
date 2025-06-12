@@ -16,6 +16,11 @@ on:
             - eap-rhel-payg-multivm
             - eap-aro
             - all
+        pid:
+          description: "partner ID, used for plan in partner center"
+          required: false
+          type: string
+          default: ""
 
 jobs:
   generateMatrix:
