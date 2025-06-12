@@ -69,6 +69,10 @@ jobs:
         run: |
           echo ${{ needs.generateMatrix.outputs.matrix }} > matrix.json
 
+      - name: echo the jsonmatrix
+        run: |
+          echo ${{ fromJson(needs.generateMatrix.outputs.matrix) }} > jsonmatrix.json
+
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
           
