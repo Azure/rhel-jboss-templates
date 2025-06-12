@@ -52,18 +52,7 @@ jobs:
             }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
             echo "matrix=$matrix"
           else
-            echo "Generating matrix for specific database type: ${{ inputs.databaseType }}"
-            echo '{
-                "databaseType": [
-                  "${{ inputs.databaseType }}"
-                ]
-              }' | jq -c '.'
-            echo '{
-              "databaseType": [
-                "${{ inputs.databaseType }}"
-              ]
-            }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
-            echo "matrix=$matrix"
+            echo 'matrix={"databaseType": ["${{ inputs.databaseType }}"]}' >> "$GITHUB_OUTPUT"
           fi
 
   test-database:
