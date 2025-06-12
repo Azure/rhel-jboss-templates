@@ -64,4 +64,5 @@ jobs:
         with:
           offerName: ${{ matrix.offerName }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          pid: ${{ inputs.pid }}
           workflowType: "build"
