@@ -1,10 +1,10 @@
 name: Internal Action Test generateMatrix
-run-name:  Test generateMatrix with `offerName`:${{ inputs.offerName }}
+run-name:  Test generateMatrix with `databaseType`:${{ inputs.databaseType }}
 
 on:
   workflow_dispatch:
     inputs:
-      offerName:
+      databaseType:
         description: "Offer to build artifact "
         required: true
         type: choice
@@ -28,9 +28,9 @@ jobs:
       - name: Generate matrix
         id: set-matrix
         run: |
-          if [ "${{ inputs.offerName }}" == "all" ]; then
+          if [ "${{ inputs.databaseType }}" == "all" ]; then
             echo '{
-              "offerName": [
+              "databaseType": [
                 "mssqlserver",
                 "mssqlserver-passwordless",
                 "mysql(flexible)",
@@ -41,8 +41,8 @@ jobs:
             }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
           else
             echo '{
-              "offerName": [
-                "${{ inputs.offerName }}"
+              "databaseType": [
+                "${{ inputs.databaseType }}"
               ]
             }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
           fi
