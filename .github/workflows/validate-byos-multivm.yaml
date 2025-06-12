@@ -165,8 +165,8 @@ jobs:
               uses: ./.github/actions/database-parameters
               with:
                 databaseType: ${{ inputs.databaseType }}
-                uamiId: ${{ needs.deploy-dependent-resources.outputs.uamiId }}
-                serverHost: ${{ needs.deploy-dependent-resources.outputs.serverHost }}
+                uamiId: ${{ needs.deploy-resources.outputs.uamiId }}
+                serverHost: ${{ needs.deploy-resources.outputs.serverHost }}
                 dbInstanceName: ${{ env.dbInstanceName }}
 
             - name: Prepare parameter file
@@ -317,8 +317,8 @@ jobs:
               uses: ./.github/actions/database-parameters
               with:
                 databaseType: ${{ inputs.databaseType }}
-                uamiId: ${{ needs.deploy-dependent-resources.outputs.uamiId }}
-                serverHost: ${{ needs.deploy-dependent-resources.outputs.serverHost }}
+                uamiId: ${{ needs.deploy-resources.outputs.uamiId }}
+                serverHost: ${{ needs.deploy-resources.outputs.serverHost }}
                 dbInstanceName: ${{ env.dbInstanceName }}
 
             - name: Prepare parameter file
