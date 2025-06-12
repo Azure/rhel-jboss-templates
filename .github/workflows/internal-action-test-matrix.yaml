@@ -70,20 +70,3 @@ jobs:
         run: |
           echo "The matrix is: ${{ needs.generateMatrix.outputs.matrix }}"
 
-  test-database:
-    needs: generateMatrix
-    runs-on: ubuntu-latest
-    strategy:
-      matrix: ${{fromJson(needs.generateMatrix.outputs.matrix)}}
-    steps:
-      - name: checkout rhel-jboss-templates
-        uses: actions/checkout@v4
-      - uses: azure/login@v1
-        id: azure-login
-        with:
-          creds: ${{ env.azureCredentials }}
-      - name: echo the matrix
-        id: resource-group-name
-        run: |
-            echo "The matrix is: ${{ toJson(matrix) }}"
-            echo "The database type is: ${{ matrix.databaseType }}"
