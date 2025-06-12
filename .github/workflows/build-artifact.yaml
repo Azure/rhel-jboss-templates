@@ -1,0 +1,35 @@
+name: Build artifact
+run-name:  Build artifact for `offerName`:${{ inputs.offerName }}
+
+on:
+  workflow_dispatch:
+    inputs:
+        offerName:
+          description: "Offer to build artifact "
+          required: true
+          type: option
+          options:
+            - eap-rhel-byos
+            - eap-rhel-byos-multivm
+            - eap-rhel-payg
+            - eap-rhel-payg-multivm
+            - all
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        offerName: ${{ fromJSON(inputs.offerName == 'all' && '["eap-rhel-byos", "eap-rhel-byos-multivm", "eap-rhel-payg", "eap-rhel-payg-multivm""]' || format('["{0}"]', inputs.offerName)) }}
+    steps:
+      - name: Checkout rhel-jboss-templates
+        uses: actions/checkout@v4
+
+      - name: build
+        id: build
+        uses: ./.github/actions/build
+        with:
+          offerName: ${{ matrix.offerName }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          workflowType: "build"
+
