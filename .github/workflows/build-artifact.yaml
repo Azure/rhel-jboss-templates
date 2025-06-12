@@ -23,7 +23,8 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       steps:
-        - id: set-matrix
+        - name: Generate matrix
+          id: set-matrix
           run: |
             if [ "${{ inputs.offerName }}" == "all" ]; then
               echo "matrix={\"offerName\":[\"eap-rhel-byos\", \"eap-rhel-byos-multivm\", \"eap-rhel-payg\", \"eap-rhel-payg-multivm\"]}" >> "$GITHUB_OUTPUT"
