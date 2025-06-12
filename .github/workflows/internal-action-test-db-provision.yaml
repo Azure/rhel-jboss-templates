@@ -54,9 +54,9 @@ jobs:
         with:
           databaseType: ${{ matrix.databaseType }}
           resourceGroup: ${{ env.resourceGroup }}
-          uamiName: ${{ env.uamiName }}-${{ matrix.databaseType }}
+          uamiName: ${{ env.uamiName }}-${{ strategy.job-index }}
           location: ${{ env.location }}
-          dbInstanceName: ${{ env.dbInstanceName }}-${{ matrix.databaseType }}
+          dbInstanceName: ${{ env.dbInstanceName }}-${{ strategy.job-index }}
           dbPassword: ${{ env.dbPassword }}
           scriptLocation: ${{env.scriptLocation}}
       - name: Get database parameters
@@ -78,7 +78,7 @@ jobs:
           dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
           
           # use heredoc to echo the values with json format to file parameters-output.json
-          cat <<EOF > parameters-output-${{ matrix.databaseType }}.json
+          cat <<EOF > parameters-output-${{ strategy.job-index }}.json
           {
               "databaseType": "$databaseType",
               "enableDB": $enableDB,
@@ -94,8 +94,8 @@ jobs:
         uses: actions/upload-artifact@v4.6.2
         if: success()
         with:
-          name: parameters-output-${{ matrix.databaseType }}
-          path: ./parameters-output-${{ matrix.databaseType }}.json
+          name: parameters-output-${{ strategy.job-index }}
+          path: ./parameters-output-${{ strategy.job-index }}.json
       - name: Setup tmate session
         if: ${{ failure() }}
         uses: mxschmitt/action-tmate@v3
