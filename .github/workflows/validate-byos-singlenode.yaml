@@ -122,7 +122,7 @@ jobs:
                 
                 echo "generate parameter file for single"
                 bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< "./${{ env.offerName }}/src/test/parameters-test-single.json  \
+                <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json  \
                 ${{ github.repository_owner }} \
                 ${{ github.sha }} \
                 ${location} \
@@ -149,12 +149,12 @@ jobs:
                 ${enablePasswordless} \
                 ${dbIdentity}"
 
-            - name: Archive parameters-test-single.json
+            - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
               if: success()
               with:
-                name: parameters-test-single
-                path: ./${{ env.offerName }}/src/test/parameters-test-single.json
+                name: parameters-test-${{ env.offerName }}-${{ github.job }}
+                path: ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
             - name: Deploy JBoss EAP single
               id: deploy-single
               uses: azure/cli@v2
@@ -165,7 +165,7 @@ jobs:
                     --verbose \
                     --resource-group ${{ env.singleResourceGroup }} \
                     --name single \
-                    --parameters @./${{ env.offerName }}/src/test/parameters-test-single.json \
+                    --parameters @./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
                     --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
             - name: Get public IP
               id: get_public_ip
