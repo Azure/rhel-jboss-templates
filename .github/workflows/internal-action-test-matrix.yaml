@@ -68,9 +68,7 @@ jobs:
       - name: echo the matrix
         run: |
           echo ${{ steps.set-matrix.outputs.matrix }} > matrix.json
-          echo "The matrix is: ${{fromJson(needs.generateMatrix.outputs.matrix)}}
 
       - name: Setup tmate session
-        if: ${{ failure() }}
         uses: mxschmitt/action-tmate@v3
           
