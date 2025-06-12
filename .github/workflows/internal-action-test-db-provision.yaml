@@ -48,7 +48,7 @@ jobs:
           creds: ${{ env.azureCredentials }}
       - name: Create Resource Group
         run: |
-          az group create -n ${{ env.resourceGroup}}-${{ matrix.databaseType }} -l ${{ env.location }}
+          az group create -n ${{ env.resourceGroup}}-${{ strategy.job-index }} -l ${{ env.location }}
       - name: Provision database
         id: database-provision
         uses: ./.github/actions/database-provision
