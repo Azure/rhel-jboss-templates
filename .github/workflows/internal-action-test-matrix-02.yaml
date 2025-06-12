@@ -1,5 +1,5 @@
-name: Internal Action Test generateMatrix
-run-name:  Test generateMatrix with `db`:${{ inputs.databaseType }}
+name: Internal Action Test generateMatrix02
+run-name:  Test generateMatrix02 with `offerName`:${{ inputs.offerName }}
 
 on:
   workflow_dispatch:
