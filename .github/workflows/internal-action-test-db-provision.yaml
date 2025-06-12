@@ -23,7 +23,7 @@ on:
 env:
   azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
   location: eastus2
-  resourceGroup: test-db-provision-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
+  resourceGroupPrefix: test-db-provision-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
   password: ${{ secrets.VM_PASSWORD }}
   dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
   dbPassword: ${{ secrets.DATABASE_PASSWORD }}
@@ -36,9 +36,6 @@ jobs:
     strategy:
       matrix:
         databaseType: ${{ fromJSON(inputs.databaseType == 'all' && '["mssqlserver", "mssqlserver-passwordless", "mysql(flexible)", "mysql-passwordless(flexible)", "postgresql(flexible)", "postgresql-passwordless(flexible)"]' || format('["{0}"]', inputs.databaseType)) }}
-    outputs:
-      serverHost: ${{ steps.database-provision.outputs.sqlserverHost }}
-      uamiId: ${{ steps.database-provision.outputs.uamiId }}
     steps:
       - name: checkout rhel-jboss-templates
         uses: actions/checkout@v4
@@ -46,15 +43,18 @@ jobs:
         id: azure-login
         with:
           creds: ${{ env.azureCredentials }}
+      - name: Generate Resource Group Name
+        id: resource-group-name
+        run: echo "resourceGroup=${{ env.resourceGroupPrefix }}-${{ strategy.job-index }}" >> $GITHUB_ENV
       - name: Create Resource Group
         run: |
-          az group create -n ${{ env.resourceGroup}}-${{ strategy.job-index }} -l ${{ env.location }}
+          az group create -n ${{ env.resourceGroup}} -l ${{ env.location }}
       - name: Provision database
         id: database-provision
         uses: ./.github/actions/database-provision
         with:
           databaseType: ${{ matrix.databaseType }}
-          resourceGroup: ${{ env.resourceGroup }}-${{ matrix.databaseType }}
+          resourceGroup: ${{ env.resourceGroup }}
           uamiName: ${{ env.uamiName }}-${{ matrix.databaseType }}
           location: ${{ env.location }}
           dbInstanceName: ${{ env.dbInstanceName }}-${{ matrix.databaseType }}
@@ -67,7 +67,7 @@ jobs:
           databaseType: ${{ matrix.databaseType }}
           uamiId: ${{ steps.database-provision.outputs.uamiId }}
           serverHost: ${{ steps.database-provision.outputs.serverHost }}
-          dbInstanceName: ${{ env.dbInstanceName }}-${{ matrix.databaseType }}
+          dbInstanceName: ${{ env.dbInstanceName }}-${{ strategy.job-index }}
       - name: Prepare parameter file
         run: |
           databaseType=${{ steps.database-parameters.outputs.databaseType }}
@@ -108,4 +108,4 @@ jobs:
       - name: Cleanup resources
         if: always()
         run: |
-          az group delete -n ${{ env.resourceGroup }}-${{ matrix.databaseType }} --yes --no-wait
+          az group delete -n ${{ env.resourceGroup }} --yes --no-wait
