@@ -155,8 +155,7 @@ jobs:
               with:
                 name: parameters-test-${{ env.offerName }}-${{ github.job }}
                 path: ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
-            - name: Deploy JBoss EAP single
-              id: deploy-single
+            - name: Deploy JBoss EAP ${{ env.offerName }}
               uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
@@ -164,7 +163,7 @@ jobs:
                     az deployment group create \
                     --verbose \
                     --resource-group ${{ env.resourceGroup }} \
-                    --name single \
+                    --name ${{ env.offerName }} \
                     --parameters @./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
                     --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
             - name: Get public IP
@@ -174,7 +173,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?starts_with(name, 'jbosseapVm-ip')].ipAddress" -o tsv)
-                    echo "##[set-output name=publicip;]${publicip}"
+                    echo "publicip=${publicip}" >> $GITHUB_OUTPUT
             - name: Verify console is accessible
               uses: ./.github/actions/url-health-check
               with:
