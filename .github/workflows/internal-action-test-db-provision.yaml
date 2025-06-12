@@ -31,7 +31,7 @@ env:
   scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
 
 jobs:
-  test database:
+  test-database:
     runs-on: ubuntu-latest
     strategy:
       matrix:
