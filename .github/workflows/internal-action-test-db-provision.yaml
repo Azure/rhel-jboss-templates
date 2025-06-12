@@ -123,9 +123,6 @@ jobs:
         with:
           name: parameters-output-${{ strategy.job-index }}
           path: ./parameters-output-${{ strategy.job-index }}.json
-      - name: Setup tmate session
-        if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3
       - name: Set outputs
         run: |
           echo "serverHost=${{ steps.database-provision.outputs.serverHost }}" 

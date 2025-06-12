@@ -60,4 +60,3 @@ jobs:
           offerName: ${{ matrix.offerName }}
           token: ${{ secrets.GITHUB_TOKEN }}
           workflowType: "build"
-
