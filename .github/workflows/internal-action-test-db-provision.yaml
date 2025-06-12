@@ -19,16 +19,6 @@ on:
           - postgresql-passwordless(flexible)
           - all
 
-env:
-  azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
-  location: eastus2
-  resourceGroupPrefix: test-db-provision-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
-  password: ${{ secrets.VM_PASSWORD }}
-  dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
-  dbPassword: ${{ secrets.DATABASE_PASSWORD }}
-  uamiName: uami${{ github.run_id }}${{ github.run_number }}
-  scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
-
 jobs:
   generateMatrix:
     runs-on: ubuntu-latest
@@ -57,11 +47,21 @@ jobs:
             }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
           fi
 
+  # env can't add at the top level when using matrix strategy
   test-database:
     needs: generateMatrix
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{fromJson(needs.generateMatrix.outputs.matrix)}}
+    env:
+      azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
+      location: eastus2
+      resourceGroupPrefix: test-db-provision-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
+      password: ${{ secrets.VM_PASSWORD }}
+      dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
+      dbPassword: ${{ secrets.DATABASE_PASSWORD }}
+      uamiName: uami${{ github.run_id }}${{ github.run_number }}
+      scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
     steps:
       - name: checkout rhel-jboss-templates
         uses: actions/checkout@v4
