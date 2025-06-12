@@ -1,5 +1,5 @@
 name: Internal Action Test Database provision
-run-name:  Test database provision with `db`:${{ inputs.databaseType }}
+run-name:  Test database provision with `db`:${{ matrix.databaseType }}
 
 on:
   workflow_dispatch:
@@ -18,6 +18,7 @@ on:
           - postgresql(flexible)
           - postgresql-passwordless(flexible)
           - none
+          - all
 
 env:
   azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
@@ -32,6 +33,9 @@ env:
 jobs:
   deploy-dependent-resources:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        databaseType: ${{ fromJSON(inputs.databaseType == 'all' && '["mssqlserver", "mssqlserver-passwordless", "mysql(flexible)", "mysql-passwordless(flexible)", "postgresql(flexible)", "postgresql-passwordless(flexible)"]' || format('["{0}"]', inputs.databaseType)) }}
     outputs:
       serverHost: ${{ steps.database-provision.outputs.sqlserverHost }}
       uamiId: ${{ steps.database-provision.outputs.uamiId }}
@@ -44,26 +48,26 @@ jobs:
           creds: ${{ env.azureCredentials }}
       - name: Create Resource Group
         run: |
-          az group create -n ${{ env.resourceGroup}} -l ${{ env.location }}
+          az group create -n ${{ env.resourceGroup}}-${{ matrix.databaseType }} -l ${{ env.location }}
       - name: Provision database
         id: database-provision
         uses: ./.github/actions/database-provision
         with:
-          databaseType: ${{ inputs.databaseType }}
-          resourceGroup: ${{ env.resourceGroup }}
-          uamiName: ${{ env.uamiName }}
+          databaseType: ${{ matrix.databaseType }}
+          resourceGroup: ${{ env.resourceGroup }}-${{ matrix.databaseType }}
+          uamiName: ${{ env.uamiName }}-${{ matrix.databaseType }}
           location: ${{ env.location }}
-          dbInstanceName: ${{ env.dbInstanceName }}
+          dbInstanceName: ${{ env.dbInstanceName }}-${{ matrix.databaseType }}
           dbPassword: ${{ env.dbPassword }}
           scriptLocation: ${{env.scriptLocation}}
       - name: Get database parameters
         id: database-parameters
         uses: ./.github/actions/database-parameters
         with:
-          databaseType: ${{ inputs.databaseType }}
+          databaseType: ${{ matrix.databaseType }}
           uamiId: ${{ steps.database-provision.outputs.uamiId }}
           serverHost: ${{ steps.database-provision.outputs.serverHost }}
-          dbInstanceName: ${{ env.dbInstanceName }}
+          dbInstanceName: ${{ env.dbInstanceName }}-${{ matrix.databaseType }}
       - name: Prepare parameter file
         run: |
           databaseType=${{ steps.database-parameters.outputs.databaseType }}
@@ -75,7 +79,7 @@ jobs:
           dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
           
           # use heredoc to echo the values with json format to file parameters-output.json
-          cat <<EOF > parameters-output.json
+          cat <<EOF > parameters-output-${{ matrix.databaseType }}.json
           {
               "databaseType": "$databaseType",
               "enableDB": $enableDB,
@@ -85,13 +89,14 @@ jobs:
               "dsConnectionURL": "$dsConnectionURL",
               "dbIdentity": $dbIdentity
           }
+          EOF
 
       - name: Archive parameters-output.json
         uses: actions/upload-artifact@v4.6.2
         if: success()
         with:
-          name: parameters-output
-          path: ./parameters-output.json
+          name: parameters-output-${{ matrix.databaseType }}
+          path: ./parameters-output-${{ matrix.databaseType }}.json
       - name: Setup tmate session
         if: ${{ failure() }}
         uses: mxschmitt/action-tmate@v3
@@ -100,16 +105,7 @@ jobs:
           echo "serverHost=${{ steps.database-provision.outputs.serverHost }}" 
           echo "uamiId=${{ steps.database-provision.outputs.uamiId }}"
           echo dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
-
-  resource-clean-up:
-    runs-on: ubuntu-latest
-    needs: deploy-dependent-resources
-    steps:
-      - name: checkout rhel-jboss-templates
-        uses: actions/checkout@v4
-      - uses: azure/login@v1
-        with:
-          creds: ${{ env.azureCredentials }}
-      - name: delete resource group
+      - name: Cleanup resources
+        if: always()
         run: |
-          az group delete -n ${{ env.resourceGroup }} --yes --no-wait
+          az group delete -n ${{ env.resourceGroup }}-${{ matrix.databaseType }} --yes --no-wait
