@@ -38,7 +38,9 @@ jobs:
       - name: Generate matrix
         id: set-matrix
         run: |
+          echo "Generating matrix for database type: ${{ inputs.databaseType }}"
           if [ "${{ inputs.databaseType }}" == "all" ]; then
+            echo "Generating matrix for all database types"
             echo '{
               "databaseType": [
                  "mssqlserver",
@@ -49,14 +51,15 @@ jobs:
                  "postgresql-passwordless(flexible)"
               ]
             }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
+            echo "matrix=$matrix"
           else
             echo '{
               "databaseType": [
                 "${{ inputs.databaseType }}"
               ]
             }' | jq -c '.' | sed 's/^/matrix=/' >> "$GITHUB_OUTPUT"
+            echo "matrix=$matrix"
           fi
-          echo "matrix=$matrix"
 
   test-database:
     needs: generateMatrix
