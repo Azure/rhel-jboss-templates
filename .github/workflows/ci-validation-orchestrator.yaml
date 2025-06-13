@@ -111,7 +111,9 @@ jobs:
                   combination: combo,
                   status: 'timeout',
                   runId: runId,
-                  runUrl: runs.data.workflow_runs[0].html_url
+                  runUrl: runs.data.workflow_runs[0].html_url,
+                  startTime: runs.data.workflow_runs[0].created_at,
+                  endTime: new Date().toISOString()
                 });
                 continue;
               }
@@ -121,7 +123,9 @@ jobs:
                 combination: combo,
                 status: runs.data.workflow_runs[0].conclusion,
                 runId: runId,
-                runUrl: runs.data.workflow_runs[0].html_url
+                runUrl: runs.data.workflow_runs[0].html_url,
+                startTime: runs.data.workflow_runs[0].created_at,
+                endTime: runs.data.workflow_runs[0].updated_at
               });
             }
             
@@ -143,30 +147,60 @@ jobs:
           <html>
           <head>
             <title>Validation Workflow Results</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
               body { font-family: Arial, sans-serif; margin: 20px; }
-              table { border-collapse: collapse; width: 100%; }
+              table { border-collapse: collapse; width: 100%; margin-top: 20px; }
               th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-              th { background-color: #f2f2f2; }
+              th { background-color: #f2f2f2; position: sticky; top: 0; }
               .success { background-color: #dff0d8; }
               .failure { background-color: #f2dede; }
               .pending { background-color: #fcf8e3; }
               .timeout { background-color: #f8d7da; }
               a { color: #0066cc; text-decoration: none; }
               a:hover { text-decoration: underline; }
+              .summary { margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px; }
+              .timestamp { color: #666; font-size: 0.9em; }
+              .combination { font-family: monospace; }
             </style>
           </head>
           <body>
             <h1>Validation Workflow Results</h1>
+            <div class="summary">
+              <h2>Summary</h2>
+              <p>Total Workflows: <span id="total-count">0</span></p>
+              <p>Successful: <span id="success-count">0</span></p>
+              <p>Failed: <span id="failure-count">0</span></p>
+              <p>Timed Out: <span id="timeout-count">0</span></p>
+            </div>
             <table>
               <tr>
                 <th>Workflow</th>
                 <th>Combination</th>
                 <th>Status</th>
+                <th>Duration</th>
                 <th>Run URL</th>
               </tr>
               ${{ join(needs.run-validations.outputs.results, '') }}
             </table>
+            <script>
+              function updateSummary() {
+                const rows = document.querySelectorAll('tr:not(:first-child)');
+                const total = rows.length;
+                const success = document.querySelectorAll('.success').length;
+                const failure = document.querySelectorAll('.failure').length;
+                const timeout = document.querySelectorAll('.timeout').length;
+                
+                document.getElementById('total-count').textContent = total;
+                document.getElementById('success-count').textContent = success;
+                document.getElementById('failure-count').textContent = failure;
+                document.getElementById('timeout-count').textContent = timeout;
+              }
+              
+              // Update summary when page loads
+              document.addEventListener('DOMContentLoaded', updateSummary);
+            </script>
           </body>
           </html>
           EOF
@@ -181,12 +215,21 @@ jobs:
             combination=$(_jq '.combination')
             status=$(_jq '.status')
             runUrl=$(_jq '.runUrl')
+            startTime=$(_jq '.startTime')
+            endTime=$(_jq '.endTime')
+            
+            # Calculate duration
+            start=$(date -d "$startTime" +%s)
+            end=$(date -d "$endTime" +%s)
+            duration=$((end - start))
+            duration_str=$(printf '%dh:%dm:%ds' $((duration/3600)) $((duration%3600/60)) $((duration%60)))
             
             # Create table row with appropriate status class
             row_html="<tr class='${status}'>
               <td>${workflow}</td>
-              <td>$(echo ${combination} | jq -r 'to_entries | map("\(.key): \(.value)") | join(", ")')</td>
+              <td class='combination'>$(echo ${combination} | jq -r 'to_entries | map("\(.key): \(.value)") | join(", ")')</td>
               <td>${status}</td>
+              <td class='timestamp'>${duration_str}</td>
               <td><a href='${runUrl}' target='_blank'>View Run</a></td>
             </tr>"
             
