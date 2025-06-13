@@ -1,0 +1,12 @@
+{
+  "validation_combinations": [
+    {
+      "workflow": "build-artifact.yaml",
+      "combinations": [
+        {
+          "offerName": "all"
+        }
+      ]
+    }
+  ]
+} 
