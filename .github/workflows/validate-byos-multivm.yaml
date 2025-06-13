@@ -85,28 +85,48 @@ jobs:
                 token: ${{ secrets.GITHUB_TOKEN }}
                 workflowType: "validate"
 
-    deploy-dependent-resources:
+    create-all-resource-groups:
         needs: preflight
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout rhel-jboss-templates
+            uses: actions/checkout@v4
+          - uses: azure/login@v1
+            id: azure-login
+            with:
+              creds: ${{ env.azureCredentials }}
+          - name: Create Dependent Resource Group
+            run: |
+              az group create -n ${{ env.dependencyResourceGroup }} -l ${{ env.location }}
+          - name: Create Domain Resource Group
+            run: |
+              az group create -n ${{ env.domainResourceGroup }} -l ${{ env.location }}
+          - name: Create Standalone Resource Group
+            run: |
+              az group create -n ${{ env.standaloneResourceGroup }} -l ${{ env.location }}
+
+    deploy-resources:
+        needs: create-all-resource-groups
         runs-on: ubuntu-latest
         outputs:
           uamiId: ${{ steps.database-provision.outputs.uamiId }}
           serverHost: ${{ steps.database-provision.outputs.serverHost }}
         steps:
+            - name: Export environment variables for resourceGroup
+              run: |
+                echo "resourceGroup=${{ env.dependencyResourceGroup }}" >> $GITHUB_ENV
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
             - uses: azure/login@v1
               id: azure-login
               with:
                 creds: ${{ env.azureCredentials }}
-            - name: Create Resource Group
-              run: |
-                az group create -n ${{ env.dependencyResourceGroup}} -l ${{ env.location }}
             - name: Provision database
               id: database-provision
               uses: ./.github/actions/database-provision
               with:
                 databaseType: ${{ inputs.databaseType }}
-                resourceGroup: ${{ env.dependencyResourceGroup }}
+                resourceGroup: ${{ env.resourceGroup }}
                 uamiName: ${{ env.uamiName }}
                 location: ${{ env.location }}
                 dbInstanceName: ${{ env.dbInstanceName }}
@@ -115,9 +135,12 @@ jobs:
     deploy-multivm-domain:
         needs: 
           - preflight
-          - deploy-dependent-resources
+          - deploy-resources
         runs-on: ubuntu-latest
         steps:
+            - name: Export environment variables for resourceGroup
+              run: |
+                echo "resourceGroup=${{ env.domainResourceGroup }}" >> $GITHUB_ENV
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
             - name: build
@@ -143,8 +166,8 @@ jobs:
               uses: ./.github/actions/database-parameters
               with:
                 databaseType: ${{ inputs.databaseType }}
-                uamiId: ${{ needs.deploy-dependent-resources.outputs.uamiId }}
-                serverHost: ${{ needs.deploy-dependent-resources.outputs.serverHost }}
+                uamiId: ${{ needs.deploy-resources.outputs.uamiId }}
+                serverHost: ${{ needs.deploy-resources.outputs.serverHost }}
                 dbInstanceName: ${{ env.dbInstanceName }}
 
             - name: Prepare parameter file
@@ -160,7 +183,7 @@ jobs:
                 echo "generate parameter file for domain mode"
                 # Generate parameters for db template deployment
                 bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< "./${{ env.offerName }}/src/test/parameters-test-domain.json \
+                <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
                 ${{ github.repository_owner }} \
                 ${{ github.sha }} \
                 ${location} \
@@ -170,9 +193,9 @@ jobs:
                 ${password} \
                 ${numberOfInstances} \
                 ${domainOperatingMode} \
-                ${domainResourceGroup} \
+                ${resourceGroup} \
                 ${domainBootStorageAccountName} \
-                ${domainResourceGroup} \
+                ${resourceGroup} \
                 ${jbossEAPUserName} \
                 ${jbossEAPPassword} \
                 ${rhsmUserName} \
@@ -190,30 +213,22 @@ jobs:
                 ${enablePasswordless} \
                 ${dbIdentity}"
 
-            - name: Archive parameters-test-domain.json
+            - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
               if: success()
               with:
-                name: parameters-test-domain
-                path: ./${{ env.offerName }}/src/test/parameters-test-domain.json
-            - name: Create Resource Group
-              uses: azure/cli@v2
-              with:
-                azcliversion: ${{ env.azCliVersion }}
-                inlineScript: |
-                    echo "create resource group" ${{ env.domainResourceGroup }}
-                    az group create --verbose --name ${{ env.domainResourceGroup }} --location ${{ env.location }}
-            - name: Deploy JBoss EAP domain cluster
-              id: deploy-multivm-managed-domain
+                name: parameters-test-${{ env.offerName }}-${{ github.job }}
+                path: ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
+            - name: Deploy JBoss EAP ${{ env.offerName }}
               uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     az deployment group create \
                     --verbose \
-                    --resource-group ${{ env.domainResourceGroup }} \
-                    --name multivm-managed-domain \
-                    --parameters @./${{ env.offerName }}/src/test/parameters-test-domain.json \
+                    --resource-group ${{ env.resourceGroup }} \
+                    --name ${{ env.offerName }} \
+                    --parameters @./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
                     --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
             - name: Build and upload javaee cafe
               id: build-and-upload-javaee-cafe
@@ -221,7 +236,7 @@ jobs:
               with:
                 jdkVersion: ${{ inputs.jdkVersion }}
                 storageAccountName: ${{ env.cafeappStorageAccountName }}
-                resourceGroup: ${{ env.domainResourceGroup }}
+                resourceGroup: ${{ env.resourceGroup }}
                 location: ${{ env.location }}
                 enableDB: ${{ env.enableDB }}
             - name: Query public ip of admin VM
@@ -231,7 +246,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # query public ip address of admin VM
-                    publicip=$(az network public-ip list --resource-group ${{ env.domainResourceGroup }} --query "[?ends_with(name, '-adminVM-pubIp')].ipAddress" -o tsv)
+                    publicip=$(az network public-ip list --resource-group ${{ env.resourceGroup }} --query "[?ends_with(name, '-adminVM-pubIp')].ipAddress" -o tsv)
                     
                     echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Deploy cafe application
@@ -252,8 +267,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                   # query public ip address of Application Gateway
-                  publicip=$(az network public-ip list --resource-group $domainResourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
-                  
+                  publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
                   echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
 
             - name: Verify cafe application is accessible
@@ -273,9 +287,12 @@ jobs:
     deploy-multivm-standalone:
         needs: 
           - preflight
-          - deploy-dependent-resources
+          - deploy-resources
         runs-on: ubuntu-latest
         steps:
+            - name: Export environment variables for resourceGroup
+              run: |
+                echo "resourceGroup=${{ env.standaloneResourceGroup }}" >> $GITHUB_ENV
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
             - name: build
@@ -301,8 +318,8 @@ jobs:
               uses: ./.github/actions/database-parameters
               with:
                 databaseType: ${{ inputs.databaseType }}
-                uamiId: ${{ needs.deploy-dependent-resources.outputs.uamiId }}
-                serverHost: ${{ needs.deploy-dependent-resources.outputs.serverHost }}
+                uamiId: ${{ needs.deploy-resources.outputs.uamiId }}
+                serverHost: ${{ needs.deploy-resources.outputs.serverHost }}
                 dbInstanceName: ${{ env.dbInstanceName }}
 
             - name: Prepare parameter file
@@ -317,7 +334,7 @@ jobs:
 
                 echo "generate parameter file for standalone mode"
                 bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< "./${{ env.offerName }}/src/test/parameters-test-standalone.json \
+                <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
                 ${{ github.repository_owner }} \
                 ${{ github.sha }} \
                 ${location} \
@@ -327,9 +344,9 @@ jobs:
                 ${password} \
                 ${numberOfInstances} \
                 ${standaloneOperatingMode} \
-                ${standaloneResourceGroup} \
+                ${resourceGroup} \
                 ${standaloneBootStorageAccountName} \
-                ${standaloneResourceGroup} \
+                ${resourceGroup} \
                 ${jbossEAPUserName} \
                 ${jbossEAPPassword} \
                 ${rhsmUserName} \
@@ -347,31 +364,24 @@ jobs:
                 ${enablePasswordless} \
                 ${dbIdentity}"
 
-            - name: Archive parameters-test-standalone.json
+            - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
               if: success()
               with:
-                name: parameters-test-standalone
-                path: ./${{ env.offerName }}/src/test/parameters-test-standalone.json
-            - name: Create Resource Group
+                name: parameters-test-${{ env.offerName }}-${{ github.job }}
+                path: ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
+
+            - name: Deploy JBoss EAP ${{ env.offerName }}
               uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
-                    echo "create resource group" ${{ env.standaloneResourceGroup }}
-                    az group create --verbose --name ${{ env.standaloneResourceGroup }} --location ${{ env.location }}
-            - name: Deploy JBoss EAP standalone cluster
-              id: deploy-multivm-managed-standalone
-              uses: azure/cli@v2
-              with:
-                azcliversion: ${{ env.azCliVersion }}
-                inlineScript: |
-                    az deployment group create \
-                    --verbose \
-                    --resource-group ${{ env.standaloneResourceGroup }} \
-                    --name multivm-standalone \
-                    --parameters @./${{ env.offerName }}/src/test/parameters-test-standalone.json \
-                    --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
+                  az deployment group create \
+                  --verbose \
+                  --resource-group ${{ env.resourceGroup }} \
+                  --name ${{ env.offerName }} \
+                  --parameters @./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
+                  --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
             - name: Query public ip of Application Gateway
               id: query_app_gateway_public_ip
               uses: azure/cli@v2
@@ -379,7 +389,7 @@ jobs:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
                     # query public ip address of Application Gateway
-                    publicip=$(az network public-ip list --resource-group $standaloneResourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
+                    publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
                     echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
             - name: Verify eap-session-replication application is accessible
               uses: ./.github/actions/url-health-check
@@ -392,7 +402,7 @@ jobs:
       name: resources-cleanup after ${{ github.event.inputs.timeWaitBeforeDelete }}
       needs:
         - preflight
-        - deploy-dependent-resources
+        - deploy-resources
         - deploy-multivm-domain
         - deploy-multivm-standalone
       if: always()
@@ -415,10 +425,10 @@ jobs:
           id: delete-standalone-resource-group
           run: |
             echo "delete... " $standaloneResourceGroup
-            az group delete --yes --no-wait --verbose --name $standaloneResourceGroup
+            az group delete --yes --no-wait --verbose --name ${{ env.standaloneResourceGroup }}
         - name: Delete Domain Resource Group
           if: always()
           id: delete-domain-resource-group
           run: |
             echo "delete... " $domainResourceGroup
-            az group delete --yes --no-wait --verbose --name $domainResourceGroup
+            az group delete --yes --no-wait --verbose --name ${{ env.domainResourceGroup }}

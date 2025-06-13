@@ -15,6 +15,10 @@ inputs:
     description: "uploadArtifact, true or false"
     required: false
     default: "true"
+  pid:
+    description: "partner ID, used for plan in partner center"
+    required: false
+    default: ""
 
 outputs:
   artifactName:
@@ -124,6 +128,20 @@ runs:
         
         else
           echo "${{ inputs.offerName }}/target/$artifactName/bin does not exist, skip this step."
+        fi
+
+    - name: Update pid if the pid is provided and is valid
+      shell: bash
+      run: |
+        artifactName=${{steps.artifact_file.outputs.artifactName}}
+        
+        echo "Checking if pid is provided and valid..."
+        echo "inputs.pid: ${{ inputs.pid }}"
+        if [ -n "${{ inputs.pid }}" ] && [[ "${{ inputs.pid }}" =~ ^pid-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}-partnercenter$ ]]; then
+          echo "Valid pid provided: ${{ inputs.pid }}"
+          sed -i "s/pid-[0-9a-zA-Z-]\+-partnercenter/${{ inputs.pid }}/g" ${{inputs.offerName }}/target/$artifactName/mainTemplate.json 
+        else
+          echo "No valid pid provided, skipping update pid."
         fi
 
     - name: Archive ${{ inputs.offerName }} template
