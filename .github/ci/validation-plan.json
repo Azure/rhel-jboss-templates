@@ -1,0 +1,39 @@
+{
+  "validation_combinations": [
+    {
+      "workflow": "validate-payg-multivm.yaml",
+      "combinations": [
+        {
+          "databaseType": "mssqlserver",
+          "jdkVersion": "eap8-openjdk17",
+          "timeWaitBeforeDelete": "0"
+        },
+        {
+          "databaseType": "postgresql(flexible)",
+          "jdkVersion": "eap8-openjdk11",
+          "timeWaitBeforeDelete": "0"
+        }
+      ]
+    },
+    {
+      "workflow": "validate-payg-singlenode.yaml",
+      "combinations": [
+        {
+          "databaseType": "mysql(flexible)",
+          "jdkVersion": "eap74-openjdk17",
+          "timeWaitBeforeDelete": "0"
+        }
+      ]
+    },
+    {
+      "workflow": "validate-byos-multivm.yaml",
+      "combinations": [
+        {
+          "databaseType": "oracle",
+          "jdkVersion": "eap74-openjdk11",
+          "timeWaitBeforeDelete": "0"
+        }
+      ]
+    }
+  ]
+} 

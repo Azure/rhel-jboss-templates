@@ -1,0 +1,66 @@
+name: CI Validation Orchestrator
+run-name: Running validation workflows with different combinations
+
+on:
+  workflow_dispatch:
+    inputs:
+      plan_file:
+        description: 'Path to the validation plan file'
+        required: true
+        default: '.github/ci/validation-plan.json'
+        type: string
+
+jobs:
+  read-plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Read validation plan
+        id: set-matrix
+        run: |
+          PLAN_FILE="${{ inputs.plan_file }}"
+          if [ ! -f "$PLAN_FILE" ]; then
+            echo "Error: Plan file $PLAN_FILE not found"
+            exit 1
+          fi
+          
+          # Create matrix from plan
+          MATRIX=$(jq -r '.validation_combinations | map({
+            workflow: .workflow,
+            combinations: .combinations
+          })' "$PLAN_FILE")
+          
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
+  run-validations:
+    needs: read-plan
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.read-plan.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run validation workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const workflow = '${{ matrix.workflow }}';
+            const combinations = ${{ toJSON(matrix.combinations) }};
+            
+            for (const combo of combinations) {
+              console.log(`Triggering ${workflow} with:`, combo);
+              
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: workflow,
+                ref: context.ref,
+                inputs: combo
+              });
+              
+              // Wait for 30 seconds between workflow triggers to avoid rate limiting
+              await new Promise(resolve => setTimeout(resolve, 30000));
+            } 
