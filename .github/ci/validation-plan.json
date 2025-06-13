@@ -1,7 +1,7 @@
 {
   "validation_combinations": [
     {
-      "workflow": "validate-payg-multivm.yaml",
+      "workflow": "validate-payg-singlenode.yaml",
       "combinations": [
         {
           "databaseType": "mssqlserver",
@@ -12,25 +12,70 @@
           "databaseType": "postgresql(flexible)",
           "jdkVersion": "eap8-openjdk11",
           "timeWaitBeforeDelete": "0"
-        }
-      ]
-    },
-    {
-      "workflow": "validate-payg-singlenode.yaml",
-      "combinations": [
+        },
         {
           "databaseType": "mysql(flexible)",
           "jdkVersion": "eap74-openjdk17",
+          "timeWaitBeforeDelete": "0"
+        },
+        {
+          "databaseType": "mssqlserver-passwordless",
+          "jdkVersion": "eap8-openjdk17",
+          "timeWaitBeforeDelete": "0"
+        },
+        {
+          "databaseType": "postgresql-passwordless(flexible)",
+          "jdkVersion": "eap8-openjdk11",
+          "timeWaitBeforeDelete": "0"
+        },
+        {
+          "databaseType": "mysql-passwordless(flexible)",
+          "jdkVersion": "eap74-openjdk17",
+          "timeWaitBeforeDelete": "0"
+        },
+        {
+          "databaseType": "none",
+          "jdkVersion": "eap8-openjdk17",
           "timeWaitBeforeDelete": "0"
         }
       ]
     },
     {
-      "workflow": "validate-byos-multivm.yaml",
+      "workflow": "validate-byos-singlenode.yaml",
       "combinations": [
         {
-          "databaseType": "oracle",
-          "jdkVersion": "eap74-openjdk11",
+          "databaseType": "mssqlserver",
+          "jdkVersion": "eap8-openjdk17",
+          "timeWaitBeforeDelete": "0"
+        },
+        {
+          "databaseType": "postgresql(flexible)",
+          "jdkVersion": "eap8-openjdk11",
+          "timeWaitBeforeDelete": "0"
+        },
+        {
+          "databaseType": "mysql(flexible)",
+          "jdkVersion": "eap74-openjdk17",
+          "timeWaitBeforeDelete": "0"
+        },
+        {
+          "databaseType": "mssqlserver-passwordless",
+          "jdkVersion": "eap8-openjdk17",
+          "timeWaitBeforeDelete": "0"
+        },
+        {
+          "databaseType": "postgresql-passwordless(flexible)",
+          "jdkVersion": "eap8-openjdk11",
+          "timeWaitBeforeDelete": "0"
+        },
+        {
+          "databaseType": "mysql-passwordless(flexible)",
+          "jdkVersion": "eap74-openjdk17",
+          "timeWaitBeforeDelete": "0"
+        },
+        {
+          "databaseType": "none",
+          "jdkVersion": "eap8-openjdk17",
           "timeWaitBeforeDelete": "0"
         }
       ]

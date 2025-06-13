@@ -42,18 +42,22 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.read-plan.outputs.matrix) }}
     runs-on: ubuntu-latest
+    outputs:
+      results: ${{ steps.collect-results.outputs.results }}
     steps:
       - name: Run validation workflow
+        id: run-workflow
         uses: actions/github-script@v7
         with:
           script: |
             const workflow = '${{ matrix.workflow }}';
             const combinations = ${{ toJSON(matrix.combinations) }};
+            const results = [];
             
             for (const combo of combinations) {
               console.log(`Triggering ${workflow} with:`, combo);
               
-              await github.rest.actions.createWorkflowDispatch({
+              const response = await github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 workflow_id: workflow,
@@ -63,4 +67,113 @@ jobs:
               
               // Wait for 30 seconds between workflow triggers to avoid rate limiting
               await new Promise(resolve => setTimeout(resolve, 30000));
-            } 
+              
+              // Get the workflow run ID
+              const runs = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: workflow,
+                branch: context.ref,
+                per_page: 1
+              });
+              
+              const runId = runs.data.workflow_runs[0].id;
+              
+              // Wait for the workflow to complete
+              let status = 'queued';
+              while (status !== 'completed') {
+                await new Promise(resolve => setTimeout(resolve, 30000));
+                const run = await github.rest.actions.getWorkflowRun({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  run_id: runId
+                });
+                status = run.data.status;
+                console.log(`Workflow status: ${status}`);
+              }
+              
+              results.push({
+                workflow: workflow,
+                combination: combo,
+                status: run.data.conclusion,
+                runId: runId,
+                runUrl: run.data.html_url
+              });
+            }
+            
+            core.setOutput('results', JSON.stringify(results));
+
+      - name: Collect results
+        id: collect-results
+        run: |
+          echo "results=${{ steps.run-workflow.outputs.results }}" >> $GITHUB_OUTPUT
+
+  generate-report:
+    needs: run-validations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate HTML report
+        run: |
+          cat << 'EOF' > report.html
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Validation Workflow Results</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              table { border-collapse: collapse; width: 100%; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background-color: #f2f2f2; }
+              .success { background-color: #dff0d8; }
+              .failure { background-color: #f2dede; }
+              .pending { background-color: #fcf8e3; }
+              a { color: #0066cc; text-decoration: none; }
+              a:hover { text-decoration: underline; }
+            </style>
+          </head>
+          <body>
+            <h1>Validation Workflow Results</h1>
+            <table>
+              <tr>
+                <th>Workflow</th>
+                <th>Combination</th>
+                <th>Status</th>
+                <th>Run URL</th>
+              </tr>
+              ${{ join(needs.run-validations.outputs.results, '') }}
+            </table>
+          </body>
+          </html>
+          EOF
+          
+          # Replace the placeholder with actual results
+          RESULTS='${{ needs.run-validations.outputs.results }}'
+          for row in $(echo "$RESULTS" | jq -r '.[] | @base64'); do
+            _jq() {
+              echo ${row} | base64 --decode | jq -r ${1}
+            }
+            workflow=$(_jq '.workflow')
+            combination=$(_jq '.combination')
+            status=$(_jq '.status')
+            runUrl=$(_jq '.runUrl')
+            
+            # Create table row with appropriate status class
+            row_html="<tr class='${status}'>
+              <td>${workflow}</td>
+              <td>$(echo ${combination} | jq -r 'to_entries | map("\(.key): \(.value)") | join(", ")')</td>
+              <td>${status}</td>
+              <td><a href='${runUrl}' target='_blank'>View Run</a></td>
+            </tr>"
+            
+            # Replace placeholder with actual row
+            sed -i "s|\${{ join(needs.run-validations.outputs.results, '') }}|${row_html}\n\${{ join(needs.run-validations.outputs.results, '') }}|" report.html
+          done
+          
+          # Remove the placeholder
+          sed -i 's|\${{ join(needs.run-validations.outputs.results, '') }}||' report.html
+
+      - name: Upload report
+        uses: actions/upload-artifact@v3
+        with:
+          name: validation-report
+          path: report.html 
