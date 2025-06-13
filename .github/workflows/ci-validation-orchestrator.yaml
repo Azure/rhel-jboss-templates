@@ -57,7 +57,8 @@ jobs:
             for (const combo of combinations) {
               console.log(`Triggering ${workflow} with:`, combo);
               
-              const response = await github.rest.actions.createWorkflowDispatch({
+              // Trigger the workflow
+              await github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 workflow_id: workflow,
@@ -65,10 +66,10 @@ jobs:
                 inputs: combo
               });
               
-              // Wait for 30 seconds between workflow triggers to avoid rate limiting
+              // Wait for 30 seconds for the workflow to be created
               await new Promise(resolve => setTimeout(resolve, 30000));
               
-              // Get the workflow run ID
+              // Get the latest workflow run
               const runs = await github.rest.actions.listWorkflowRuns({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -77,11 +78,21 @@ jobs:
                 per_page: 1
               });
               
+              if (!runs.data.workflow_runs || runs.data.workflow_runs.length === 0) {
+                console.log('No workflow runs found, waiting longer...');
+                await new Promise(resolve => setTimeout(resolve, 30000));
+                continue;
+              }
+              
               const runId = runs.data.workflow_runs[0].id;
+              console.log(`Found workflow run ID: ${runId}`);
               
               // Wait for the workflow to complete
               let status = 'queued';
-              while (status !== 'completed') {
+              let attempts = 0;
+              const maxAttempts = 40; // 20 minutes maximum wait time
+              
+              while (status !== 'completed' && attempts < maxAttempts) {
                 await new Promise(resolve => setTimeout(resolve, 30000));
                 const run = await github.rest.actions.getWorkflowRun({
                   owner: context.repo.owner,
@@ -89,15 +100,28 @@ jobs:
                   run_id: runId
                 });
                 status = run.data.status;
-                console.log(`Workflow status: ${status}`);
+                console.log(`Workflow status: ${status} (attempt ${attempts + 1}/${maxAttempts})`);
+                attempts++;
+              }
+              
+              if (status !== 'completed') {
+                console.log('Workflow did not complete within the maximum wait time');
+                results.push({
+                  workflow: workflow,
+                  combination: combo,
+                  status: 'timeout',
+                  runId: runId,
+                  runUrl: runs.data.workflow_runs[0].html_url
+                });
+                continue;
               }
               
               results.push({
                 workflow: workflow,
                 combination: combo,
-                status: run.data.conclusion,
+                status: runs.data.workflow_runs[0].conclusion,
                 runId: runId,
-                runUrl: run.data.html_url
+                runUrl: runs.data.workflow_runs[0].html_url
               });
             }
             
@@ -127,6 +151,7 @@ jobs:
               .success { background-color: #dff0d8; }
               .failure { background-color: #f2dede; }
               .pending { background-color: #fcf8e3; }
+              .timeout { background-color: #f8d7da; }
               a { color: #0066cc; text-decoration: none; }
               a:hover { text-decoration: underline; }
             </style>
@@ -176,4 +201,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: validation-report
-          path: report.html 
+          path: report.html
