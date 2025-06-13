@@ -110,7 +110,9 @@ var const_enableElytronSe17DomainCli = 'enable-elytron-se17-domain.cli'
 var const_deploySampleAppScript = 'deploy-sample-app.sh'
 var const_azcliVersion = '2.15.0'
 var scriptFolder = 'scripts'
-var fileFolder = 'bin'
+// To keep the same as eap-rhel-byos-multivm, use the same fileFolder name to simplify the maintenance
+// For eap-rhel-byos-multivm, the fileFolder='scripts' is a workaround for issue: https://github.com/Azure/rhel-jboss-templates/issues/108
+var fileFolder = 'scripts'
 var fileToBeDownloaded = 'eap-session-replication.war'
 
 resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {
