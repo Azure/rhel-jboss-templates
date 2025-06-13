@@ -36,23 +36,23 @@ jobs:
           
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
-  run-validations:
+  trigger-workflows:
     needs: read-plan
     strategy:
       matrix:
         include: ${{ fromJson(needs.read-plan.outputs.matrix) }}
     runs-on: ubuntu-latest
     outputs:
-      results: ${{ steps.collect-results.outputs.results }}
+      workflow_runs: ${{ steps.trigger.outputs.workflow_runs }}
     steps:
-      - name: Run validation workflow
-        id: run-workflow
+      - name: Trigger validation workflow
+        id: trigger
         uses: actions/github-script@v7
         with:
           script: |
             const workflow = '${{ matrix.workflow }}';
             const combinations = ${{ toJSON(matrix.combinations) }};
-            const results = [];
+            const workflowRuns = [];
             
             for (const combo of combinations) {
               console.log(`Triggering ${workflow} with:`, combo);
@@ -84,60 +84,86 @@ jobs:
                 continue;
               }
               
-              const runId = runs.data.workflow_runs[0].id;
-              console.log(`Found workflow run ID: ${runId}`);
+              const run = runs.data.workflow_runs[0];
+              workflowRuns.push({
+                workflow: workflow,
+                combination: combo,
+                runId: run.id,
+                runUrl: run.html_url,
+                startTime: run.created_at
+              });
+            }
+            
+            core.setOutput('workflow_runs', JSON.stringify(workflowRuns));
+
+  wait-for-workflows:
+    needs: trigger-workflows
+    runs-on: ubuntu-latest
+    outputs:
+      results: ${{ steps.collect-results.outputs.results }}
+    steps:
+      - name: Wait for workflows and collect results
+        id: collect-results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const workflowRuns = ${{ needs.trigger-workflows.outputs.workflow_runs }};
+            const results = [];
+            
+            for (const run of workflowRuns) {
+              console.log(`Waiting for workflow ${run.workflow} run ${run.runId}...`);
               
-              // Wait for the workflow to complete
               let status = 'queued';
               let attempts = 0;
               const maxAttempts = 40; // 20 minutes maximum wait time
               
               while (status !== 'completed' && attempts < maxAttempts) {
                 await new Promise(resolve => setTimeout(resolve, 30000));
-                const run = await github.rest.actions.getWorkflowRun({
+                const runData = await github.rest.actions.getWorkflowRun({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  run_id: runId
+                  run_id: run.runId
                 });
-                status = run.data.status;
-                console.log(`Workflow status: ${status} (attempt ${attempts + 1}/${maxAttempts})`);
+                status = runData.data.status;
+                console.log(`Workflow ${run.workflow} status: ${status} (attempt ${attempts + 1}/${maxAttempts})`);
                 attempts++;
               }
               
               if (status !== 'completed') {
-                console.log('Workflow did not complete within the maximum wait time');
+                console.log(`Workflow ${run.workflow} did not complete within the maximum wait time`);
                 results.push({
-                  workflow: workflow,
-                  combination: combo,
+                  workflow: run.workflow,
+                  combination: run.combination,
                   status: 'timeout',
-                  runId: runId,
-                  runUrl: runs.data.workflow_runs[0].html_url,
-                  startTime: runs.data.workflow_runs[0].created_at,
+                  runId: run.runId,
+                  runUrl: run.runUrl,
+                  startTime: run.startTime,
                   endTime: new Date().toISOString()
                 });
                 continue;
               }
               
+              const runData = await github.rest.actions.getWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: run.runId
+              });
+              
               results.push({
-                workflow: workflow,
-                combination: combo,
-                status: runs.data.workflow_runs[0].conclusion,
-                runId: runId,
-                runUrl: runs.data.workflow_runs[0].html_url,
-                startTime: runs.data.workflow_runs[0].created_at,
-                endTime: runs.data.workflow_runs[0].updated_at
+                workflow: run.workflow,
+                combination: run.combination,
+                status: runData.data.conclusion,
+                runId: run.runId,
+                runUrl: run.runUrl,
+                startTime: run.startTime,
+                endTime: runData.data.updated_at
               });
             }
             
             core.setOutput('results', JSON.stringify(results));
 
-      - name: Collect results
-        id: collect-results
-        run: |
-          echo "results=${{ steps.run-workflow.outputs.results }}" >> $GITHUB_OUTPUT
-
   generate-report:
-    needs: run-validations
+    needs: wait-for-workflows
     runs-on: ubuntu-latest
     steps:
       - name: Generate HTML report
@@ -182,7 +208,7 @@ jobs:
                 <th>Duration</th>
                 <th>Run URL</th>
               </tr>
-              ${{ join(needs.run-validations.outputs.results, '') }}
+              ${{ join(needs.wait-for-workflows.outputs.results, '') }}
             </table>
             <script>
               function updateSummary() {
@@ -206,7 +232,7 @@ jobs:
           EOF
           
           # Replace the placeholder with actual results
-          RESULTS='${{ needs.run-validations.outputs.results }}'
+          RESULTS='${{ needs.wait-for-workflows.outputs.results }}'
           for row in $(echo "$RESULTS" | jq -r '.[] | @base64'); do
             _jq() {
               echo ${row} | base64 --decode | jq -r ${1}
@@ -234,11 +260,11 @@ jobs:
             </tr>"
             
             # Replace placeholder with actual row
-            sed -i "s|\${{ join(needs.run-validations.outputs.results, '') }}|${row_html}\n\${{ join(needs.run-validations.outputs.results, '') }}|" report.html
+            sed -i "s|\${{ join(needs.wait-for-workflows.outputs.results, '') }}|${row_html}\n\${{ join(needs.wait-for-workflows.outputs.results, '') }}|" report.html
           done
           
           # Remove the placeholder
-          sed -i 's|\${{ join(needs.run-validations.outputs.results, '') }}||' report.html
+          sed -i 's|\${{ join(needs.wait-for-workflows.outputs.results, '') }}||' report.html
 
       - name: Upload report
         uses: actions/upload-artifact@v4.6.2
