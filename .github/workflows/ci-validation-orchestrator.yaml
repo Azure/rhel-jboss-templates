@@ -54,45 +54,85 @@ jobs:
             const combinations = ${{ toJSON(matrix.combinations) }};
             const workflowRuns = [];
             
+            console.log(`Starting to trigger workflow: ${workflow}`);
+            console.log(`Number of combinations to process: ${combinations.length}`);
+            
             for (const combo of combinations) {
-              console.log(`Triggering ${workflow} with:`, combo);
-              
-              // Trigger the workflow
-              await github.rest.actions.createWorkflowDispatch({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: workflow,
-                ref: context.ref,
-                inputs: combo
-              });
-              
-              // Wait for 30 seconds for the workflow to be created
-              await new Promise(resolve => setTimeout(resolve, 30000));
-              
-              // Get the latest workflow run
-              const runs = await github.rest.actions.listWorkflowRuns({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: workflow,
-                branch: context.ref,
-                per_page: 1
-              });
-              
-              if (!runs.data.workflow_runs || runs.data.workflow_runs.length === 0) {
-                console.log('No workflow runs found, waiting longer...');
+              try {
+                console.log(`Triggering ${workflow} with combination:`, JSON.stringify(combo, null, 2));
+                
+                // Trigger the workflow
+                const dispatchResponse = await github.rest.actions.createWorkflowDispatch({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  workflow_id: workflow,
+                  ref: context.ref,
+                  inputs: combo
+                });
+                
+                console.log(`Workflow dispatch response:`, JSON.stringify(dispatchResponse.data, null, 2));
+                
+                // Wait for 30 seconds for the workflow to be created
+                console.log('Waiting 30 seconds for workflow to be created...');
                 await new Promise(resolve => setTimeout(resolve, 30000));
-                continue;
+                
+                // Get the latest workflow run
+                let attempts = 0;
+                const maxAttempts = 5;
+                let run = null;
+                
+                while (attempts < maxAttempts) {
+                  console.log(`Attempt ${attempts + 1} to find workflow run...`);
+                  const runs = await github.rest.actions.listWorkflowRuns({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    workflow_id: workflow,
+                    branch: context.ref,
+                    per_page: 5
+                  });
+                  
+                  console.log(`Found ${runs.data.workflow_runs.length} workflow runs`);
+                  
+                  if (runs.data.workflow_runs && runs.data.workflow_runs.length > 0) {
+                    // Find the most recent run that matches our trigger
+                    run = runs.data.workflow_runs.find(r => 
+                      r.head_branch === context.ref && 
+                      new Date(r.created_at) > new Date(Date.now() - 60000) // Created within last minute
+                    );
+                    
+                    if (run) {
+                      console.log(`Found matching workflow run: ${run.id}`);
+                      break;
+                    }
+                  }
+                  
+                  console.log('No matching workflow run found, waiting 30 seconds...');
+                  await new Promise(resolve => setTimeout(resolve, 30000));
+                  attempts++;
+                }
+                
+                if (!run) {
+                  console.log('Failed to find workflow run after all attempts');
+                  continue;
+                }
+                
+                workflowRuns.push({
+                  workflow: workflow,
+                  combination: combo,
+                  runId: run.id,
+                  runUrl: run.html_url,
+                  startTime: run.created_at
+                });
+                
+                console.log(`Successfully tracked workflow run: ${run.id}`);
+              } catch (error) {
+                console.error(`Error processing combination:`, error);
+                console.error(`Error details:`, JSON.stringify(error, null, 2));
               }
-              
-              const run = runs.data.workflow_runs[0];
-              workflowRuns.push({
-                workflow: workflow,
-                combination: combo,
-                runId: run.id,
-                runUrl: run.html_url,
-                startTime: run.created_at
-              });
             }
+            
+            console.log(`Total workflow runs tracked: ${workflowRuns.length}`);
+            console.log('Workflow runs:', JSON.stringify(workflowRuns, null, 2));
             
             core.setOutput('workflow_runs', JSON.stringify(workflowRuns));
 
