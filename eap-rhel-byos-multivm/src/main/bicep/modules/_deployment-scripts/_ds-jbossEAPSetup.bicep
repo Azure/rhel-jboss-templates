@@ -123,10 +123,8 @@ var const_setupDomainStandaloneScript = 'jbosseap-setup-standalone.sh'
 var const_enableElytronSe17DomainCli = 'enable-elytron-se17-domain.cli'
 var const_deploySampleAppScript = 'deploy-sample-app.sh'
 var const_azcliVersion = '2.15.0'
-var scriptFolder = 'scripts'
-// A workaround for publishing private plan in Partner center, see issue: https://github.com/Azure/rhel-jboss-templates/issues/108
-// This change is coupled with .github/workflows/validate-byos-multivm.yaml#81
-var fileFolder = 'scripts'
+var scriptFolder = 'bin'
+var fileFolder = 'bin'
 var fileToBeDownloaded = 'eap-session-replication.war'
 
 resource jbossEAPSetup 'Microsoft.Resources/deploymentScripts@${azure.apiVersionForDeploymentScript}' = {

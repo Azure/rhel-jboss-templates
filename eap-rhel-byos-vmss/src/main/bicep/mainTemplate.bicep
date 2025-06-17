@@ -204,9 +204,7 @@ var plan = {
   publisher: 'redhat'
   product: 'rhel-byos'
 }
-// A workaround for publishing private plan in Partner center, see issue: https://github.com/Azure/rhel-jboss-templates/issues/108
-// This change is coupled with .github/workflows/validate-byos-vmss.yaml#77
-var scriptFolder = 'scripts'
+var scriptFolder = 'bin'
 var fileToBeDownloaded = 'eap-session-replication.war'
 var scriptArgs = '-a \'${uri(artifactsLocation, '.')}\' -t "${artifactsLocationSasToken}" -p ${scriptFolder} -f ${fileToBeDownloaded}'
 var obj_uamiForDeploymentScript = {

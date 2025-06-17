@@ -100,28 +100,6 @@ runs:
         echo "artifactName=${artifactName}" >> "$GITHUB_OUTPUT"
         echo "artifactPath=${{ inputs.offerName }}/target/$artifactName" >> "$GITHUB_OUTPUT"
 
-    - name: Move eap-session-replication.war from /bin to /scripts
-      shell: bash
-      run: |
-        artifactName=${{steps.artifact_file.outputs.artifactName}}
-        if [ -d "${{ inputs.offerName }}/target/$artifactName/bin" ]; then
-          echo "${{ inputs.offerName }}/target/$artifactName/bin exist..."
-        
-          if [[ ${{ inputs.offerName }} == *"byos"* ]]; then
-            # Move eap-session-replication.war from /bin to /scripts, a workaround for publishing private plan in Partner center, 
-            # see issue: https://github.com/Azure/rhel-jboss-templates/issues/108
-            # This change is coupled with /src/main/bicep/mainTemplate.bicep
-            cp -R ${{ inputs.offerName }}/target/$artifactName/bin/. ${{ inputs.offerName }}/target/$artifactName/scripts/
-            # Delete /bin 
-            rm -r ${{ inputs.offerName }}/target/$artifactName/bin
-          else
-            echo "offerName does not contain byos, skip this step."
-          fi
-        
-        else
-          echo "${{ inputs.offerName }}/target/$artifactName/bin does not exist, skip this step."
-        fi
-
     - name: Archive ${{ inputs.offerName }} template
       uses: actions/upload-artifact@v4.6.2
       if: success()
