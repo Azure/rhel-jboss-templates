@@ -293,7 +293,7 @@ jobs:
           timeout=0
           for row in $(echo "$RESULTS" | jq -r '.[] | @base64'); do
             _jq() {
-              echo ${row} | base64 --decode | jq -r ${1}
+              echo ${row} | base64 --decode | jq -r "$1"
             }
             workflow=$(_jq '.workflow')
             combination=$(_jq '.combination | if type=="object" then to_entries | map("\(.key): \(.value)") | join(", ") else tostring end')

@@ -5,9 +5,6 @@
       "combinations": [
         {
           "offerName": "eap-rhel-payg-multivm"
-        },
-        {
-          "offerName": "eap-rhel-payg"
         }
       ]
     }
