@@ -338,6 +338,11 @@ jobs:
           name: validation-report-${{ steps.generate-report.outputs.timestamp }}
           path: ${{ steps.generate-report.outputs.timestamp }}-report.html
 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Setup Git
         run: |
           git config --global user.name "GitHub Actions"
