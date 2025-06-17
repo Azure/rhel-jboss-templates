@@ -200,11 +200,11 @@ var containerName = 'eapblobcontainer-${guidValue}'
 var eapStorageAccountName = 'jbosstrg${guidValue}'
 var vmName_var = '${vmName}-${guidValue}'
 var asName_var = '${asName}-${guidValue}'
-var virtualNetworkName_var = virtualNetworkNewOrExisting != 'new' ? virtualNetworkName : '${virtualNetworkName}-${guidValue}'
 
 var nicName_var = 'jbosseap-server-nic-${guidValue}'
 var privateSaEndpointName_var = 'saep-${guidValue}'
-var bootStorageName_var = (storageNewOrExisting == 'existing') ? existingStorageAccount : '${bootStorageAccountName}-${guidValue}'
+var virtualNetworkName_var = virtualNetworkNewOrExisting != 'new' ? virtualNetworkName : '${virtualNetworkName}-${guidValue}'
+var bootStorageName_var = (storageNewOrExisting == 'existing') ? existingStorageAccount : '${bootStorageAccountName}${guidValue}'
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {

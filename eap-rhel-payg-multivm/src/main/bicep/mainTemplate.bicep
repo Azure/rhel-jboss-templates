@@ -187,12 +187,10 @@ var containerName = 'eapblobcontainer-${guidValue}'
 var eapStorageAccountName = 'jbosstrg${guidValue}'
 var vmName_var = '${vmName}-${guidValue}'
 var asName_var = '${asName}-${guidValue}'
-var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
-
 var nicName_var = 'jbosseap-server-nic-${guidValue}'
 var privateSaEndpointName_var = 'saep-${guidValue}'
-var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'new') && (bootDiagnostics == 'on'))
-var bootStorageName_var = format('{0}{1}',((bootStorageNewOrExisting == 'existing') ? existingStorageAccount : bootStorageAccountName), guidValue)
+var virtualNetworkName_var = virtualNetworkNewOrExisting != 'new' ? virtualNetworkName : '${virtualNetworkName}-${guidValue}'
+var bootStorageName_var = (storageNewOrExisting == 'existing') ? existingStorageAccount : '${bootStorageAccountName}${guidValue}'
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -396,7 +394,7 @@ module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
   ]
 }
 
-resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = if (bootDiagnosticsCheck) {
+resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = if ((bootStorageNewOrExisting == 'new') && (bootDiagnostics == 'on')) {
   name: bootStorageName_var
   location: location
   sku: {
