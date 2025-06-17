@@ -159,9 +159,8 @@ var const_arguments = format(' {0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11}
 var vmName_var = '${vmName}-${guidValue}'
 var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
 var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
-var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
-var bootDiagnosticsCheck = ((storageNewOrExisting == 'new') && (bootDiagnostics == 'on'))
-var bootStorageName_var = format('{0}{1}',((storageNewOrExisting == 'existing') ? existingStorageAccount : storageAccountName), guidValue)
+var virtualNetworkName_var = (virtualNetworkNewOrExisting == 'existing') ? virtualNetworkName : '${virtualNetworkName}-${guidValue}'
+var bootStorageName_var = (storageNewOrExisting == 'existing') ? storageAccountName : '${storageAccountName}-${guidValue}'
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -226,7 +225,7 @@ module byosSingleStartPid './modules/_pids/_pid.bicep' = {
   ]
 }
 
-resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = if (bootDiagnosticsCheck) {
+resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = if ((storageNewOrExisting == 'new') && (bootDiagnostics == 'on')) {
   name: bootStorageName_var
   location: location
   sku: {
