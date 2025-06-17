@@ -265,10 +265,10 @@ jobs:
             <h1>Validation Workflow Results</h1>
             <div class="summary">
               <h2>Summary</h2>
-              <p>Total Workflows: <span id="total-count">0</span></p>
-              <p>Successful: <span id="success-count">0</span></p>
-              <p>Failed: <span id="failure-count">0</span></p>
-              <p>Timed Out: <span id="timeout-count">0</span></p>
+              <p>Total Workflows: <span id="total-count">__TOTAL__</span></p>
+              <p>Successful: <span id="success-count">__SUCCESS__</span></p>
+              <p>Failed: <span id="failure-count">__FAILURE__</span></p>
+              <p>Timed Out: <span id="timeout-count">__TIMEOUT__</span></p>
             </div>
             <table>
               <tr>
@@ -278,37 +278,25 @@ jobs:
                 <th>Duration</th>
                 <th>Run URL</th>
               </tr>
-              ${{ join(needs.wait-for-workflows.outputs.results, '') }}
+              __TABLE_ROWS__
             </table>
-            <script>
-              function updateSummary() {
-                const rows = document.querySelectorAll('tr:not(:first-child)');
-                const total = rows.length;
-                const success = document.querySelectorAll('.success').length;
-                const failure = document.querySelectorAll('.failure').length;
-                const timeout = document.querySelectorAll('.timeout').length;
-                
-                document.getElementById('total-count').textContent = total;
-                document.getElementById('success-count').textContent = success;
-                document.getElementById('failure-count').textContent = failure;
-                document.getElementById('timeout-count').textContent = timeout;
-              }
-              
-              // Update summary when page loads
-              document.addEventListener('DOMContentLoaded', updateSummary);
-            </script>
           </body>
           </html>
           EOF
           
-          # Replace the placeholder with actual results
+          # Generate table rows and summary
           RESULTS='${{ needs.wait-for-workflows.outputs.results }}'
+          rows=""
+          total=0
+          success=0
+          failure=0
+          timeout=0
           for row in $(echo "$RESULTS" | jq -r '.[] | @base64'); do
             _jq() {
               echo ${row} | base64 --decode | jq -r ${1}
             }
             workflow=$(_jq '.workflow')
-            combination=$(_jq '.combination')
+            combination=$(_jq '.combination | if type=="object" then to_entries | map("\(.key): \(.value)") | join(", ") else tostring end')
             status=$(_jq '.status')
             runUrl=$(_jq '.runUrl')
             startTime=$(_jq '.startTime')
@@ -320,23 +308,26 @@ jobs:
             duration=$((end - start))
             duration_str=$(printf '%dh:%dm:%ds' $((duration/3600)) $((duration%3600/60)) $((duration%60)))
             
-            # Create table row with appropriate status class
-            row_html="<tr class='${status}'>
-              <td>${workflow}</td>
-              <td class='combination'>$(echo ${combination} | jq -r 'to_entries | map("\(.key): \(.value)") | join(", ")')</td>
-              <td>${status}</td>
-              <td class='timestamp'>${duration_str}</td>
-              <td><a href='${runUrl}' target='_blank'>View Run</a></td>
-            </tr>"
+            # Count status
+            total=$((total+1))
+            if [ "$status" = "success" ]; then
+              success=$((success+1))
+            elif [ "$status" = "failure" ]; then
+              failure=$((failure+1))
+            elif [ "$status" = "timeout" ]; then
+              timeout=$((timeout+1))
+            fi
             
-            # Replace placeholder with actual row using a temporary file
-            echo "$row_html" >> temp_rows.html
+            # Create table row
+            rows+="<tr class='${status}'>\n  <td>${workflow}</td>\n  <td class='combination'>${combination}</td>\n  <td>${status}</td>\n  <td class='timestamp'>${duration_str}</td>\n  <td><a href='${runUrl}' target='_blank'>View Run</a></td>\n</tr>\n"
           done
           
-          # Combine the HTML parts
-          sed -i "\|\${{ join(needs.wait-for-workflows.outputs.results, '') }}|r temp_rows.html" report.html
-          sed -i "s|\${{ join(needs.wait-for-workflows.outputs.results, '') }}||" report.html
-          rm temp_rows.html
+          # Insert the rows and summary values into the HTML
+          sed -i "s|__TABLE_ROWS__|${rows}|" report.html
+          sed -i "s|__TOTAL__|${total}|" report.html
+          sed -i "s|__SUCCESS__|${success}|" report.html
+          sed -i "s|__FAILURE__|${failure}|" report.html
+          sed -i "s|__TIMEOUT__|${timeout}|" report.html
 
       - name: Upload report
         uses: actions/upload-artifact@v4.6.2
