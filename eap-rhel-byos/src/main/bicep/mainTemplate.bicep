@@ -168,7 +168,7 @@ var vmName_var = '${vmName}-${guidValue}'
 var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
 var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
 var virtualNetworkName_var = (virtualNetworkNewOrExisting == 'existing') ? virtualNetworkName : '${virtualNetworkName}-${guidValue}'
-var bootStorageName_var = (storageNewOrExisting == 'existing') ? existingStorageAccount : '${storageAccountName}-${guidValue}'
+var bootStorageName_var = (storageNewOrExisting == 'existing') ? existingStorageAccount : '${storageAccountName}${guidValue}'
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -206,7 +206,6 @@ var _objTagsByResource = {
 */
 module pids './modules/_pids/_pid.bicep' = {
   name: 'initialization-${guidValue}'
-  
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
