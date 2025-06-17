@@ -199,17 +199,17 @@
                         "name": "storageNewOrExisting",
                         "type": "Microsoft.Common.DropDown",
                         "label": "Storage Account",
-                        "defaultValue": "New",
+                        "defaultValue": "new",
                         "toolTip": "Select new or existing Storage account",
                         "constraints": {
                             "allowedValues": [
                                 {
                                     "label": "Existing",
-                                    "value": "Existing"
+                                    "value": "existing"
                                 },
                                 {
                                     "label": "New",
-                                    "value": "New"
+                                    "value": "new"
                                 }
                             ],
                             "required": true
@@ -224,7 +224,7 @@
                             "method": "GET",
                             "path": "[concat(subscription().id, '/providers/Microsoft.Storage/storageAccounts?api-version=2021-04-01')]"
                         },
-                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'Existing'))]"
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'existing'))]"
                     },
                     {
                         "name": "existingStorageAccount",
@@ -235,7 +235,7 @@
                             "allowedValues": "[filter(map(basics('armApiControl').value, (item) => parse(concat('{\"label\":\"', concat(item.name,' (',item.kind,')'), '\",\"value\":\"', item.name, '\",\"kind\":\"', item.kind, '\",\"location\":\"', item.location, '\",\"tier\":\"', item.sku.tier, '\"}'))), (item) => and(and(not(contains(toLower(item.kind),'blob')),equals(location(),item.location)),equals('Standard',item.tier)))]",
                             "required": true
                         },
-                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'Existing'))]"
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'existing'))]"
                     },
                     {
                         "name": "nameApi",
@@ -250,7 +250,7 @@
                                 "type": "Microsoft.Storage/storageAccounts"
                             }
                         },
-                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'New'))]"
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'new'))]"
                     },
                     {
                         "name": "storageAccountName",
@@ -271,7 +271,7 @@
                             ],
                             "required": true
                         },
-                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'New'))]"
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'new'))]"
                     },
                     {
                         "name": "storageAccountKind",
@@ -292,7 +292,7 @@
                             ],
                             "required": true
                         },
-                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'New'))]"
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'new'))]"
                     },
                     {
                         "name": "storageAccountType",
@@ -313,7 +313,7 @@
                             ],
                             "required": true
                         },
-                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'New'))]"
+                        "visible": "[and(bool(basics('basicsOptional').basicsOptionalAcceptDefaults), equals(basics('basicsOptional').storageNewOrExisting, 'new'))]"
                     }
                 ],
                 "visible": true

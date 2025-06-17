@@ -40,7 +40,7 @@ param jdkVersion string = 'eap8-openjdk17'
 param bootDiagnostics string = 'on'
 
 @description('Determines whether or not a new storage account should be provisioned.')
-param storageNewOrExisting string = 'New'
+param storageNewOrExisting string = 'new'
 
 @description('Name of the existing Storage Account Name')
 param existingStorageAccount string = ''
@@ -160,8 +160,8 @@ var vmName_var = '${vmName}-${guidValue}'
 var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
 var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
 var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
-var bootDiagnosticsCheck = ((storageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
-var bootStorageName_var = format('{0}{1}',((storageNewOrExisting == 'Existing') ? existingStorageAccount : storageAccountName), guidValue)
+var bootDiagnosticsCheck = ((storageNewOrExisting == 'new') && (bootDiagnostics == 'on'))
+var bootStorageName_var = format('{0}{1}',((storageNewOrExisting == 'existing') ? existingStorageAccount : storageAccountName), guidValue)
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
