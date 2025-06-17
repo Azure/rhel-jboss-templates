@@ -329,12 +329,14 @@ jobs:
               <td><a href='${runUrl}' target='_blank'>View Run</a></td>
             </tr>"
             
-            # Replace placeholder with actual row
-            sed -i "s|\${{ join(needs.wait-for-workflows.outputs.results, '') }}|${row_html}\n\${{ join(needs.wait-for-workflows.outputs.results, '') }}|" report.html
+            # Replace placeholder with actual row using a temporary file
+            echo "$row_html" >> temp_rows.html
           done
           
-          # Remove the placeholder
-          sed -i 's|\${{ join(needs.wait-for-workflows.outputs.results, '') }}||' report.html
+          # Combine the HTML parts
+          sed -i '/\${{ join(needs.wait-for-workflows.outputs.results, '\'''\'') }}/r temp_rows.html' report.html
+          sed -i 's|\${{ join(needs.wait-for-workflows.outputs.results, '\'''\'') }}||' report.html
+          rm temp_rows.html
 
       - name: Upload report
         uses: actions/upload-artifact@v4.6.2
