@@ -204,7 +204,7 @@ var asName_var = '${asName}-${guidValue}'
 var nicName_var = 'jbosseap-server-nic-${guidValue}'
 var privateSaEndpointName_var = 'saep-${guidValue}'
 var virtualNetworkName_var = virtualNetworkNewOrExisting != 'new' ? virtualNetworkName : '${virtualNetworkName}-${guidValue}'
-var bootStorageName_var = (storageNewOrExisting == 'existing') ? existingStorageAccount : '${bootStorageAccountName}${guidValue}'
+var bootStorageName_var = (bootStorageNewOrExisting == 'existing') ? existingStorageAccount : '${bootStorageAccountName}${guidValue}'
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
