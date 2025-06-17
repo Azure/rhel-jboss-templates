@@ -1,5 +1,6 @@
 name: Get Latest Azure API Versions
 
+# this workflow is used to update the azure-common.properties file with the latest API versions for Azure resources.
 on:
   workflow_dispatch:
     inputs:
