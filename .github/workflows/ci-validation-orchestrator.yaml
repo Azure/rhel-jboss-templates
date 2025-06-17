@@ -56,6 +56,8 @@ jobs:
             
             console.log(`Starting to trigger workflow: ${workflow}`);
             console.log(`Number of combinations to process: ${combinations.length}`);
+            console.log(`Current owner: ${context.repo.owner}`);
+            console.log(`Current repo: ${context.repo.repo}`);
             
             for (const combo of combinations) {
               try {
@@ -72,9 +74,9 @@ jobs:
                 
                 console.log(`Workflow dispatch response:`, JSON.stringify(dispatchResponse.data, null, 2));
                 
-                // Wait for 30 seconds for the workflow to be created
-                console.log('Waiting 30 seconds for workflow to be created...');
-                await new Promise(resolve => setTimeout(resolve, 30000));
+                // Wait for 5 seconds for the workflow to be created
+                console.log('Waiting 5 seconds for workflow to be created...');
+                await new Promise(resolve => setTimeout(resolve, 5000));
                 
                 // Get the latest workflow run
                 let attempts = 0;
@@ -88,26 +90,33 @@ jobs:
                     repo: context.repo.repo,
                     workflow_id: workflow,
                     branch: context.ref,
-                    per_page: 5
+                    per_page: 1,
+                    status: 'queued'
                   });
                   
-                  console.log(`Found ${runs.data.workflow_runs.length} workflow runs`);
-                  
                   if (runs.data.workflow_runs && runs.data.workflow_runs.length > 0) {
-                    // Find the most recent run that matches our trigger
-                    run = runs.data.workflow_runs.find(r => 
-                      r.head_branch === context.ref && 
-                      new Date(r.created_at) > new Date(Date.now() - 60000) // Created within last minute
-                    );
+                    const potentialRun = runs.data.workflow_runs[0];
+                    // Get detailed run information
+                    const runDetails = await github.rest.actions.getWorkflowRun({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      run_id: potentialRun.id
+                    });
                     
-                    if (run) {
-                      console.log(`Found matching workflow run: ${run.id}`);
-                      break;
-                    }
+                    console.log(`Found workflow run:`, JSON.stringify({
+                      id: runDetails.data.id,
+                      status: runDetails.data.status,
+                      created_at: runDetails.data.created_at,
+                      head_branch: runDetails.data.head_branch,
+                      html_url: runDetails.data.html_url
+                    }, null, 2));
+                    
+                    run = runDetails.data;
+                    break;
                   }
                   
-                  console.log('No matching workflow run found, waiting 30 seconds...');
-                  await new Promise(resolve => setTimeout(resolve, 30000));
+                  console.log('No matching workflow run found, waiting 5 seconds...');
+                  await new Promise(resolve => setTimeout(resolve, 5000));
                   attempts++;
                 }
                 
