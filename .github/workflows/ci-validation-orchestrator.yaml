@@ -91,7 +91,6 @@ jobs:
                     workflow_id: workflow,
                     branch: context.ref,
                     per_page: 1,
-                    status: 'queued'
                   });
                   
                   if (runs.data.workflow_runs && runs.data.workflow_runs.length > 0) {
