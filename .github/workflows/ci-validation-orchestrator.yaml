@@ -354,7 +354,7 @@ jobs:
           mkdir -p ci-report
           
           # Move the report to ci-report directory
-          mv ${{ steps.generate-report.outputs.timestamp }}-report.html ci-report/
+          cp $GITHUB_WORKSPACE/${{ steps.generate-report.outputs.timestamp }}-report.html ci-report/
           
           # Create or update the ci branch
           git checkout -B ci || git checkout ci
