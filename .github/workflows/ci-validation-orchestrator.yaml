@@ -237,8 +237,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Generate HTML report
+        id: generate-report
         run: |
           TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
           cat << 'EOF' > ${TIMESTAMP}-report.html
           <!DOCTYPE html>
           <html>
@@ -333,5 +335,33 @@ jobs:
       - name: Upload report
         uses: actions/upload-artifact@v4.6.2
         with:
-          name: validation-report-${TIMESTAMP}
-          path: ${TIMESTAMP}-report.html
+          name: validation-report-${{ steps.generate-report.outputs.timestamp }}
+          path: ${{ steps.generate-report.outputs.timestamp }}-report.html
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Create/Update CI Branch
+        run: |
+          # Create ci-report directory if it doesn't exist
+          mkdir -p ci-report
+          
+          # Move the report to ci-report directory
+          mv ${{ steps.generate-report.outputs.timestamp }}-report.html ci-report/
+          
+          # Create or update the ci branch
+          git checkout -B ci || git checkout ci
+          
+          # Add and commit the report
+          git add ci-report/${{ steps.generate-report.outputs.timestamp }}-report.html
+          git commit -m "Add validation report ${{ steps.generate-report.outputs.timestamp }}"
+          
+          # Push to the ci branch
+          git push origin ci --force
+
+      - name: Output Report URL
+        run: |
+          echo "::notice::📊 Validation Report URL: https://github.com/${{ github.repository }}/blob/ci/ci-report/${{ steps.generate-report.outputs.timestamp }}-report.html"
+          echo "::notice::📊 Raw Report URL: https://raw.githubusercontent.com/${{ github.repository }}/ci/ci-report/${{ steps.generate-report.outputs.timestamp }}-report.html"
