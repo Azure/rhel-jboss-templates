@@ -238,7 +238,8 @@ jobs:
     steps:
       - name: Generate HTML report
         run: |
-          cat << 'EOF' > report.html
+          TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
+          cat << 'EOF' > ${TIMESTAMP}-report.html
           <!DOCTYPE html>
           <html>
           <head>
@@ -323,14 +324,14 @@ jobs:
           done
           
           # Insert the rows and summary values into the HTML
-          sed -i "s|__TABLE_ROWS__|${rows}|" report.html
-          sed -i "s|__TOTAL__|${total}|" report.html
-          sed -i "s|__SUCCESS__|${success}|" report.html
-          sed -i "s|__FAILURE__|${failure}|" report.html
-          sed -i "s|__TIMEOUT__|${timeout}|" report.html
+          sed -i "s|__TABLE_ROWS__|${rows}|" ${TIMESTAMP}-report.html
+          sed -i "s|__TOTAL__|${total}|" ${TIMESTAMP}-report.html
+          sed -i "s|__SUCCESS__|${success}|" ${TIMESTAMP}-report.html
+          sed -i "s|__FAILURE__|${failure}|" ${TIMESTAMP}-report.html
+          sed -i "s|__TIMEOUT__|${timeout}|" ${TIMESTAMP}-report.html
 
       - name: Upload report
         uses: actions/upload-artifact@v4.6.2
         with:
-          name: validation-report
-          path: report.html
+          name: validation-report-${TIMESTAMP}
+          path: ${TIMESTAMP}-report.html
