@@ -4,7 +4,10 @@
       "workflow": "build-artifact.yaml",
       "combinations": [
         {
-          "offerName": "all"
+          "offerName": "eap-rhel-payg-multivm"
+        },
+        {
+          "offerName": "eap-rhel-payg"
         }
       ]
     }
