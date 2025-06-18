@@ -247,21 +247,23 @@ jobs:
           TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
           echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
           echo "Current directory: $(pwd)"
-          cat > ${TIMESTAMP}-report.md << 'EOF'
-# Validation Workflow Results
-
-## Summary
-- Total Workflows: __TOTAL__
-- Successful: __SUCCESS__
-- Failed: __FAILURE__
-- Timed Out: __TIMEOUT__
-
-## Detailed Results
-
-| Workflow | Combination | Status | Duration | Run URL |
-|----------|-------------|---------|-----------|----------|
-__TABLE_ROWS__
-EOF
+          
+          # Create the markdown file
+          {
+            echo "# Validation Workflow Results"
+            echo ""
+            echo "## Summary"
+            echo "- Total Workflows: __TOTAL__"
+            echo "- Successful: __SUCCESS__"
+            echo "- Failed: __FAILURE__"
+            echo "- Timed Out: __TIMEOUT__"
+            echo ""
+            echo "## Detailed Results"
+            echo ""
+            echo "| Workflow | Combination | Status | Duration | Run URL |"
+            echo "|----------|-------------|---------|-----------|----------|"
+            echo "__TABLE_ROWS__"
+          } > ${TIMESTAMP}-report.md
           
           # Generate table rows and summary
           RESULTS='${{ needs.wait-for-workflows.outputs.results }}'
