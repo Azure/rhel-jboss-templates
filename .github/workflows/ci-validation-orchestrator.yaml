@@ -236,6 +236,11 @@ jobs:
     needs: wait-for-workflows
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Generate HTML report
         id: generate-report
         run: |
@@ -338,11 +343,6 @@ jobs:
         with:
           name: validation-report-${{ steps.generate-report.outputs.timestamp }}
           path: ${{ steps.generate-report.outputs.timestamp }}-report.html
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Git
         run: |
