@@ -241,6 +241,7 @@ jobs:
         run: |
           TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
           echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "Current directory: $(pwd)"
           cat << 'EOF' > ${TIMESTAMP}-report.html
           <!DOCTYPE html>
           <html>
@@ -350,11 +351,27 @@ jobs:
 
       - name: Create/Update CI Branch
         run: |
+          # Debug information
+          echo "Current directory: $(pwd)"
+          echo "Listing files in current directory:"
+          ls -la
+          echo "Listing files in workspace:"
+          ls -la $GITHUB_WORKSPACE
+          
           # Create ci-report directory if it doesn't exist
           mkdir -p ci-report
           
-          # Move the report to ci-report directory
-          cp $GITHUB_WORKSPACE/${{ steps.generate-report.outputs.timestamp }}-report.html ci-report/
+          # Find the report file
+          REPORT_FILE=$(find $GITHUB_WORKSPACE -name "${{ steps.generate-report.outputs.timestamp }}-report.html")
+          echo "Found report file at: $REPORT_FILE"
+          
+          if [ -f "$REPORT_FILE" ]; then
+            # Copy the report to ci-report directory
+            cp "$REPORT_FILE" ci-report/
+          else
+            echo "Error: Report file not found!"
+            exit 1
+          fi
           
           # Create or update the ci branch
           git checkout -B ci || git checkout ci
