@@ -247,51 +247,21 @@ jobs:
           TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
           echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
           echo "Current directory: $(pwd)"
-          cat << 'EOF' > ${TIMESTAMP}-report.html
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Validation Workflow Results</title>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-              th { background-color: #f2f2f2; position: sticky; top: 0; }
-              .success { background-color: #dff0d8; }
-              .failure { background-color: #f2dede; }
-              .pending { background-color: #fcf8e3; }
-              .timeout { background-color: #f8d7da; }
-              a { color: #0066cc; text-decoration: none; }
-              a:hover { text-decoration: underline; }
-              .summary { margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px; }
-              .timestamp { color: #666; font-size: 0.9em; }
-              .combination { font-family: monospace; }
-            </style>
-          </head>
-          <body>
-            <h1>Validation Workflow Results</h1>
-            <div class="summary">
-              <h2>Summary</h2>
-              <p>Total Workflows: <span id="total-count">__TOTAL__</span></p>
-              <p>Successful: <span id="success-count">__SUCCESS__</span></p>
-              <p>Failed: <span id="failure-count">__FAILURE__</span></p>
-              <p>Timed Out: <span id="timeout-count">__TIMEOUT__</span></p>
-            </div>
-            <table>
-              <tr>
-                <th>Workflow</th>
-                <th>Combination</th>
-                <th>Status</th>
-                <th>Duration</th>
-                <th>Run URL</th>
-              </tr>
-              __TABLE_ROWS__
-            </table>
-          </body>
-          </html>
-          EOF
+          cat << 'EOF' > ${TIMESTAMP}-report.md
+# Validation Workflow Results
+
+## Summary
+- Total Workflows: __TOTAL__
+- Successful: __SUCCESS__
+- Failed: __FAILURE__
+- Timed Out: __TIMEOUT__
+
+## Detailed Results
+
+| Workflow | Combination | Status | Duration | Run URL |
+|----------|-------------|---------|-----------|----------|
+__TABLE_ROWS__
+EOF
           
           # Generate table rows and summary
           RESULTS='${{ needs.wait-for-workflows.outputs.results }}'
@@ -328,21 +298,21 @@ jobs:
             fi
             
             # Create table row
-            rows+="<tr class='${status}'>\n  <td>${workflow}</td>\n  <td class='combination'>${combination}</td>\n  <td>${status}</td>\n  <td class='timestamp'>${duration_str}</td>\n  <td><a href='${runUrl}' target='_blank'>View Run</a></td>\n</tr>\n"
+            rows+="| ${workflow} | \`${combination}\` | ${status} | ${duration_str} | [View Run](${runUrl}) |\n"
           done
           
-          # Insert the rows and summary values into the HTML
-          sed -i "s|__TABLE_ROWS__|${rows}|" ${TIMESTAMP}-report.html
-          sed -i "s|__TOTAL__|${total}|" ${TIMESTAMP}-report.html
-          sed -i "s|__SUCCESS__|${success}|" ${TIMESTAMP}-report.html
-          sed -i "s|__FAILURE__|${failure}|" ${TIMESTAMP}-report.html
-          sed -i "s|__TIMEOUT__|${timeout}|" ${TIMESTAMP}-report.html
+          # Insert the rows and summary values into the Markdown
+          sed -i "s|__TABLE_ROWS__|${rows}|" ${TIMESTAMP}-report.md
+          sed -i "s|__TOTAL__|${total}|" ${TIMESTAMP}-report.md
+          sed -i "s|__SUCCESS__|${success}|" ${TIMESTAMP}-report.md
+          sed -i "s|__FAILURE__|${failure}|" ${TIMESTAMP}-report.md
+          sed -i "s|__TIMEOUT__|${timeout}|" ${TIMESTAMP}-report.md
 
       - name: Upload report
         uses: actions/upload-artifact@v4.6.2
         with:
           name: validation-report-${{ steps.generate-report.outputs.timestamp }}
-          path: ${{ steps.generate-report.outputs.timestamp }}-report.html
+          path: ${{ steps.generate-report.outputs.timestamp }}-report.md
 
       - name: Setup Git
         run: |
@@ -362,7 +332,7 @@ jobs:
           mkdir -p ci-report
           
           # Find the report file
-          REPORT_FILE=$(find $GITHUB_WORKSPACE -name "${{ steps.generate-report.outputs.timestamp }}-report.html")
+          REPORT_FILE=$(find $GITHUB_WORKSPACE -name "${{ steps.generate-report.outputs.timestamp }}-report.md")
           echo "Found report file at: $REPORT_FILE"
           
           if [ -f "$REPORT_FILE" ]; then
@@ -377,7 +347,7 @@ jobs:
           git checkout -B ci || git checkout ci
           
           # Add and commit the report
-          git add ci-report/${{ steps.generate-report.outputs.timestamp }}-report.html
+          git add ci-report/${{ steps.generate-report.outputs.timestamp }}-report.md
           git commit -m "Add validation report ${{ steps.generate-report.outputs.timestamp }}"
           
           # Push to the ci branch
@@ -385,5 +355,5 @@ jobs:
 
       - name: Output Report URL
         run: |
-          echo "::notice::📊 Validation Report URL: https://github.com/${{ github.repository }}/blob/ci/ci-report/${{ steps.generate-report.outputs.timestamp }}-report.html"
-          echo "::notice::📊 Raw Report URL: https://raw.githubusercontent.com/${{ github.repository }}/ci/ci-report/${{ steps.generate-report.outputs.timestamp }}-report.html"
+          echo "::notice::📊 Validation Report URL: https://github.com/${{ github.repository }}/blob/ci/ci-report/${{ steps.generate-report.outputs.timestamp }}-report.md"
+          echo "::notice::📊 Raw Report URL: https://raw.githubusercontent.com/${{ github.repository }}/ci/ci-report/${{ steps.generate-report.outputs.timestamp }}-report.md"
