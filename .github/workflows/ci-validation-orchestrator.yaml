@@ -247,7 +247,7 @@ jobs:
           TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
           echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
           echo "Current directory: $(pwd)"
-          cat << 'EOF' > ${TIMESTAMP}-report.md
+          cat > ${TIMESTAMP}-report.md << 'EOF'
 # Validation Workflow Results
 
 ## Summary
