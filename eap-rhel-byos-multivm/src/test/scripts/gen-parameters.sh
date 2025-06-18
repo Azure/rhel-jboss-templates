@@ -10,7 +10,7 @@ cat <<EOF > ${parametersPath}
     "contentVersion": "1.0.0.0",
     "parameters": {
         "artifactsLocation": {
-            "value": "https://raw.githubusercontent.com/${gitUserName}/rhel-jboss-templates/${testbranchName}/eap-rhel-byos-multivm/"
+            "value": "https://raw.githubusercontent.com/${gitUserName}/rhel-jboss-templates/${testbranchName}/eap-rhel-byos-multivm/src/main/"
         },
         "location": {
             "value": "${location}"
