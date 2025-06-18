@@ -248,23 +248,6 @@ jobs:
           echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
           echo "Current directory: $(pwd)"
           
-          # Create the markdown file
-          {
-            echo "# Validation Workflow Results"
-            echo ""
-            echo "## Summary"
-            echo "- Total Workflows: __TOTAL__"
-            echo "- Successful: __SUCCESS__"
-            echo "- Failed: __FAILURE__"
-            echo "- Timed Out: __TIMEOUT__"
-            echo ""
-            echo "## Detailed Results"
-            echo ""
-            echo "| Workflow | Combination | Status | Duration | Run URL |"
-            echo "|----------|-------------|---------|-----------|----------|"
-            echo "__TABLE_ROWS__"
-          } > ${TIMESTAMP}-report.md
-          
           # Generate table rows and summary
           RESULTS='${{ needs.wait-for-workflows.outputs.results }}'
           rows=""
@@ -303,12 +286,22 @@ jobs:
             rows+="| ${workflow} | \`${combination}\` | ${status} | ${duration_str} | [View Run](${runUrl}) |\n"
           done
           
-          # Insert the rows and summary values into the Markdown
-          sed -i "s|__TABLE_ROWS__|${rows}|g" "${TIMESTAMP}-report.md"
-          sed -i "s|__TOTAL__|${total}|g" "${TIMESTAMP}-report.md"
-          sed -i "s|__SUCCESS__|${success}|g" "${TIMESTAMP}-report.md"
-          sed -i "s|__FAILURE__|${failure}|g" "${TIMESTAMP}-report.md"
-          sed -i "s|__TIMEOUT__|${timeout}|g" "${TIMESTAMP}-report.md"
+          # Create a temporary file with the content
+          {
+            echo "# Validation Workflow Results"
+            echo ""
+            echo "## Summary"
+            echo "- Total Workflows: ${total}"
+            echo "- Successful: ${success}"
+            echo "- Failed: ${failure}"
+            echo "- Timed Out: ${timeout}"
+            echo ""
+            echo "## Detailed Results"
+            echo ""
+            echo "| Workflow | Combination | Status | Duration | Run URL |"
+            echo "|----------|-------------|---------|-----------|----------|"
+            echo -e "${rows}"
+          } > "${TIMESTAMP}-report.md"
 
       - name: Upload report
         uses: actions/upload-artifact@v4.6.2
