@@ -1,0 +1,24 @@
+{
+  "validation_combinations": [
+    {
+      "workflow": "validate-payg-singlenode.yaml",
+      "combinations": [
+        {
+          "databaseType": "none",
+          "jdkVersion": "eap8-openjdk17",
+          "timeWaitBeforeDelete": "0"
+        }
+      ]
+    },
+    {
+      "workflow": "validate-byos-singlenode.yaml",
+      "combinations": [
+        {
+          "databaseType": "none",
+          "jdkVersion": "eap8-openjdk17",
+          "timeWaitBeforeDelete": "0"
+        }
+      ]
+    }
+  ]
+} 

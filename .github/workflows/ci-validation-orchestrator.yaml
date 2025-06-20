@@ -1,0 +1,354 @@
+name: CI Validation Orchestrator
+run-name: Running validation workflows with different combinations
+
+on:
+  workflow_dispatch:
+    inputs:
+      plan_file:
+        description: 'Path to the validation plan file'
+        required: true
+        default: '.github/ci/validation-plan-build.json'
+        type: string
+
+jobs:
+  read-plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Read validation plan
+        id: set-matrix
+        run: |
+          PLAN_FILE="${{ inputs.plan_file }}"
+          if [ ! -f "$PLAN_FILE" ]; then
+            echo "Error: Plan file $PLAN_FILE not found"
+            exit 1
+          fi
+          
+          # Create matrix from plan
+          MATRIX=$(jq -c '.validation_combinations | map({
+            workflow: .workflow,
+            combinations: .combinations
+          })' "$PLAN_FILE")
+          
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
+  trigger-workflows:
+    needs: read-plan
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.read-plan.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    outputs:
+      workflow_runs: ${{ steps.trigger.outputs.workflow_runs }}
+    steps:
+      - name: Trigger validation workflow
+        id: trigger
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const workflow = '${{ matrix.workflow }}';
+            const combinations = ${{ toJSON(matrix.combinations) }};
+            const workflowRuns = [];
+            
+            console.log(`Starting to trigger workflow: ${workflow}`);
+            console.log(`Number of combinations to process: ${combinations.length}`);
+            console.log(`Current owner: ${context.repo.owner}`);
+            console.log(`Current repo: ${context.repo.repo}`);
+            
+            for (const combo of combinations) {
+              try {
+                console.log(`Triggering ${workflow} with combination:`, JSON.stringify(combo, null, 2));
+                
+                // Trigger the workflow
+                const dispatchResponse = await github.rest.actions.createWorkflowDispatch({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  workflow_id: workflow,
+                  ref: context.ref,
+                  inputs: combo
+                });
+                
+                console.log(`Workflow dispatch response:`, JSON.stringify(dispatchResponse.data, null, 2));
+                
+                // Wait for 5 seconds for the workflow to be created
+                console.log('Waiting 5 seconds for workflow to be created...');
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                
+                // Get the latest workflow run
+                let attempts = 0;
+                const maxAttempts = 5;
+                let run = null;
+                
+                while (attempts < maxAttempts) {
+                  console.log(`Attempt ${attempts + 1} to find workflow run...`);
+                  const runs = await github.rest.actions.listWorkflowRuns({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    workflow_id: workflow
+                  });
+                  
+                  if (runs.data.workflow_runs && runs.data.workflow_runs.length > 0) {
+                    const potentialRun = runs.data.workflow_runs[0];
+                    // Get detailed run information
+                    const runDetails = await github.rest.actions.getWorkflowRun({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      run_id: potentialRun.id
+                    });
+                    
+                    console.log(`Found workflow run:`, JSON.stringify({
+                      id: runDetails.data.id,
+                      status: runDetails.data.status,
+                      created_at: runDetails.data.created_at,
+                      head_branch: runDetails.data.head_branch,
+                      html_url: runDetails.data.html_url
+                    }, null, 2));
+                    
+                    run = runDetails.data;
+                    break;
+                  }
+                  
+                  console.log('No matching workflow run found, waiting 5 seconds...');
+                  await new Promise(resolve => setTimeout(resolve, 5000));
+                  attempts++;
+                }
+                
+                if (!run) {
+                  console.log('Failed to find workflow run after all attempts');
+                  continue;
+                }
+                
+                workflowRuns.push({
+                  workflow: workflow,
+                  combination: combo,
+                  runId: run.id,
+                  runUrl: run.html_url,
+                  startTime: run.created_at
+                });
+                
+                console.log(`Successfully tracked workflow run: ${run.id}`);
+              } catch (error) {
+                console.error(`Error processing combination:`, error);
+                console.error(`Error details:`, JSON.stringify(error, null, 2));
+              }
+            }
+            
+            console.log(`Total workflow runs tracked: ${workflowRuns.length}`);
+            console.log('Workflow runs:', JSON.stringify(workflowRuns, null, 2));
+            
+            core.setOutput('workflow_runs', JSON.stringify(workflowRuns));
+
+  wait-for-workflows:
+    needs: trigger-workflows
+    runs-on: ubuntu-latest
+    outputs:
+      results: ${{ steps.collect-results.outputs.results }}
+    steps:
+      - name: Wait for workflows and collect results
+        id: collect-results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const workflowRuns = ${{ needs.trigger-workflows.outputs.workflow_runs }};
+            const results = [];
+            
+            for (const run of workflowRuns) {
+              console.log(`Waiting for workflow ${run.workflow} run ${run.runId}...`);
+              
+              let status = 'queued';
+              let attempts = 0;
+              const maxAttempts = 40; // 20 minutes maximum wait time
+              
+              while (status !== 'completed' && attempts < maxAttempts) {
+                try {
+                  // Wait for 30 seconds between checks
+                  await new Promise(resolve => setTimeout(resolve, 30000));
+                  
+                  // Get the workflow run status
+                  const runData = await github.rest.actions.getWorkflowRun({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    run_id: run.runId
+                  });
+                  
+                  status = runData.data.status;
+                  console.log(`Workflow ${run.workflow} status: ${status} (attempt ${attempts + 1}/${maxAttempts})`);
+                  
+                  // If the workflow is still queued or in progress, continue waiting
+                  if (status === 'queued' || status === 'in_progress') {
+                    attempts++;
+                    continue;
+                  }
+                  
+                  // If the workflow is completed, break the loop
+                  if (status === 'completed') {
+                    break;
+                  }
+                  
+                  // If we get here, the status is something unexpected
+                  console.log(`Unexpected status for workflow ${run.workflow}: ${status}`);
+                  attempts++;
+                } catch (error) {
+                  console.log(`Error checking workflow status: ${error.message}`);
+                  attempts++;
+                }
+              }
+              
+              if (status !== 'completed') {
+                console.log(`Workflow ${run.workflow} did not complete within the maximum wait time`);
+                results.push({
+                  workflow: run.workflow,
+                  combination: run.combination,
+                  status: 'timeout',
+                  runId: run.runId,
+                  runUrl: run.runUrl,
+                  startTime: run.startTime,
+                  endTime: new Date().toISOString()
+                });
+                continue;
+              }
+              
+              // Get the final workflow run data
+              const runData = await github.rest.actions.getWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: run.runId
+              });
+              
+              results.push({
+                workflow: run.workflow,
+                combination: run.combination,
+                status: runData.data.conclusion,
+                runId: run.runId,
+                runUrl: run.runUrl,
+                startTime: run.startTime,
+                endTime: runData.data.updated_at
+              });
+            }
+            
+            core.setOutput('results', JSON.stringify(results));
+
+  generate-report:
+    needs: wait-for-workflows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate Markdown report
+        id: generate-report
+        run: |
+          TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "Current directory: $(pwd)"
+          
+          # Generate table rows and summary
+          RESULTS='${{ needs.wait-for-workflows.outputs.results }}'
+          rows=""
+          total=0
+          success=0
+          failure=0
+          timeout=0
+          for row in $(echo "$RESULTS" | jq -r '.[] | @base64'); do
+            _jq() {
+              echo ${row} | base64 --decode | jq -r "$1"
+            }
+            workflow=$(_jq '.workflow')
+            combination=$(_jq '.combination | if type=="object" then to_entries | map("\(.key): \(.value)") | join(", ") else tostring end')
+            status=$(_jq '.status')
+            runUrl=$(_jq '.runUrl')
+            startTime=$(_jq '.startTime')
+            endTime=$(_jq '.endTime')
+            
+            # Calculate duration
+            start=$(date -d "$startTime" +%s)
+            end=$(date -d "$endTime" +%s)
+            duration=$((end - start))
+            duration_str=$(printf '%dh:%dm:%ds' $((duration/3600)) $((duration%3600/60)) $((duration%60)))
+            
+            # Count status
+            total=$((total+1))
+            if [ "$status" = "success" ]; then
+              success=$((success+1))
+            elif [ "$status" = "failure" ]; then
+              failure=$((failure+1))
+            elif [ "$status" = "timeout" ]; then
+              timeout=$((timeout+1))
+            fi
+            
+            # Create table row
+            rows+="| ${workflow} | \`${combination}\` | ${status} | ${duration_str} | [View Run](${runUrl}) |\n"
+          done
+          
+          # Create a temporary file with the content
+          {
+            echo "# Validation Workflow Results"
+            echo ""
+            echo "## Summary"
+            echo "- Total Workflows: ${total}"
+            echo "- Successful: ${success}"
+            echo "- Failed: ${failure}"
+            echo "- Timed Out: ${timeout}"
+            echo ""
+            echo "## Detailed Results"
+            echo ""
+            echo "| Workflow | Combination | Status | Duration | Run URL |"
+            echo "|----------|-------------|---------|-----------|----------|"
+            echo -e "${rows}"
+          } > "${TIMESTAMP}-report.md"
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: validation-report-${{ steps.generate-report.outputs.timestamp }}
+          path: ${{ steps.generate-report.outputs.timestamp }}-report.md
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Create/Update CI Branch
+        run: |
+          # Debug information
+          echo "Current directory: $(pwd)"
+          echo "Listing files in current directory:"
+          ls -la
+          echo "Listing files in workspace:"
+          ls -la $GITHUB_WORKSPACE
+          
+          # Create ci-report directory if it doesn't exist
+          mkdir -p ci-report
+          
+          # Find the report file
+          REPORT_FILE=$(find $GITHUB_WORKSPACE -name "${{ steps.generate-report.outputs.timestamp }}-report.md")
+          echo "Found report file at: $REPORT_FILE"
+          
+          if [ -f "$REPORT_FILE" ]; then
+            # Copy the report to ci-report directory
+            cp "$REPORT_FILE" ci-report/
+          else
+            echo "Error: Report file not found!"
+            exit 1
+          fi
+          
+          # Create or update the ci branch
+          git checkout -B ci || git checkout ci
+          
+          # Add and commit the report
+          git add ci-report/${{ steps.generate-report.outputs.timestamp }}-report.md
+          git commit -m "Add validation report ${{ steps.generate-report.outputs.timestamp }}"
+          
+          # Push to the ci branch
+          git push origin ci --force
+
+      - name: Output Report URL
+        run: |
+          echo "::notice::📊 Validation Report URL: https://github.com/${{ github.repository }}/blob/ci/ci-report/${{ steps.generate-report.outputs.timestamp }}-report.md"
+          echo "::notice::📊 Raw Report URL: https://raw.githubusercontent.com/${{ github.repository }}/ci/ci-report/${{ steps.generate-report.outputs.timestamp }}-report.md"

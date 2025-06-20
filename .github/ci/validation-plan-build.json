@@ -1,0 +1,15 @@
+{
+  "validation_combinations": [
+    {
+      "workflow": "build-artifact.yaml",
+      "combinations": [
+        {
+          "offerName": "eap-rhel-payg-multivm"
+        },
+        {
+          "offerName": "eap-rhel-byos"
+        }
+      ]
+    }
+  ]
+} 
