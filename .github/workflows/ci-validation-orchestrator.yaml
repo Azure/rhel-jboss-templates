@@ -241,7 +241,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate HTML report
+      - name: Generate Markdown report
         id: generate-report
         run: |
           TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
