@@ -107,10 +107,10 @@ param subnetPrefixForAppGateway string = '10.0.1.0/24'
 
 @description('Specify whether to create a new or use an existing Boot Diagnostics Storage Account.')
 @allowed([
-  'New'
-  'Existing'
+  'new'
+  'existing'
 ])
-param bootStorageNewOrExisting string = 'New'
+param bootStorageNewOrExisting string = 'new'
 
 @description('Name of the existing Storage Account Name')
 param existingStorageAccount string = ''
@@ -200,12 +200,11 @@ var containerName = 'eapblobcontainer-${guidValue}'
 var eapStorageAccountName = 'jbosstrg${guidValue}'
 var vmName_var = '${vmName}-${guidValue}'
 var asName_var = '${asName}-${guidValue}'
-var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
 
 var nicName_var = 'jbosseap-server-nic-${guidValue}'
 var privateSaEndpointName_var = 'saep-${guidValue}'
-var bootDiagnosticsCheck = ((bootStorageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
-var bootStorageName_var = format('{0}{1}',((bootStorageNewOrExisting == 'Existing') ? existingStorageAccount : bootStorageAccountName), guidValue)
+var virtualNetworkName_var = virtualNetworkNewOrExisting != 'new' ? virtualNetworkName : '${virtualNetworkName}-${guidValue}'
+var bootStorageName_var = (bootStorageNewOrExisting == 'existing') ? existingStorageAccount : '${bootStorageAccountName}${guidValue}'
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -397,7 +396,7 @@ module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
   ]
 }
 
-resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = if (bootDiagnosticsCheck) {
+resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = if ((bootStorageNewOrExisting == 'new') && (bootDiagnostics == 'on')) {
   name: bootStorageName_var
   location: location
   sku: {

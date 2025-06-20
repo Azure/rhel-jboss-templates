@@ -40,7 +40,7 @@ param jdkVersion string = 'eap8-openjdk17'
 param bootDiagnostics string = 'on'
 
 @description('Determines whether or not a new storage account should be provisioned.')
-param storageNewOrExisting string = 'New'
+param storageNewOrExisting string = 'new'
 
 @description('Name of the existing Storage Account Name')
 param existingStorageAccount string = ''
@@ -142,9 +142,8 @@ var const_arguments = format(' {0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11}
 var vmName_var = '${vmName}-${guidValue}'
 var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
 var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
-var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
-var bootDiagnosticsCheck = ((storageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
-var bootStorageName_var = format('{0}{1}',((storageNewOrExisting == 'Existing') ? existingStorageAccount : storageAccountName), guidValue)
+var virtualNetworkName_var = (virtualNetworkNewOrExisting == 'existing') ? virtualNetworkName : '${virtualNetworkName}-${guidValue}'
+var bootStorageName_var = (storageNewOrExisting == 'existing') ? existingStorageAccount : '${storageAccountName}${guidValue}'
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -217,7 +216,7 @@ module paygSingleStartPid './modules/_pids/_pid.bicep' = {
   ]
 }
 
-resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = if (bootDiagnosticsCheck) {
+resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = if ((storageNewOrExisting == 'new') && (bootDiagnostics == 'on')) {
   name: bootStorageName_var
   location: location
   sku: {

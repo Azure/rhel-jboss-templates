@@ -54,7 +54,7 @@ cat <<EOF > ${parametersPath}
             "value": "on"
         },
         "storageNewOrExisting": {
-            "value": "New"
+            "value": "new"
         },
         "storageAccountName": {
             "value": "${storageAccountName}"
