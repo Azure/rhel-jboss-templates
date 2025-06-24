@@ -66,7 +66,7 @@ cat <<EOF > ${parametersPath}
             "value": "on"
         },
         "bootStorageNewOrExisting": {
-            "value": "New"
+            "value": "new"
         },
         "bootStorageAccountName": {
             "value": "${bootStorageAccountName}"

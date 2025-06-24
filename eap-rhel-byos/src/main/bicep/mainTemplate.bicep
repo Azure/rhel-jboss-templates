@@ -39,9 +39,6 @@ param jdkVersion string = 'eap8-openjdk17'
 ])
 param bootDiagnostics string = 'on'
 
-@description('Determines whether or not a new storage account should be provisioned.')
-param storageNewOrExisting string = 'New'
-
 @description('Name of the existing Storage Account Name')
 param existingStorageAccount string = ''
 
@@ -56,9 +53,6 @@ param storageAccountKind string = 'Storage'
 
 @description('Name of the resource group for the existing storage account')
 param storageAccountResourceGroupName string = resourceGroup().name
-
-@description('Determines whether or not a new virtual network should be provisioned.')
-param virtualNetworkNewOrExisting string = 'new'
 
 @description('Name of the virtual network')
 param virtualNetworkName string = 'VirtualNetwork'
@@ -125,6 +119,7 @@ param satelliteFqdn string = newGuid()
 
 @description('Boolean value indicating, if user wants to enable database connection.')
 param enableDB bool = false
+
 @allowed([
   'mssqlserver'
   'postgresql'
@@ -133,21 +128,34 @@ param enableDB bool = false
 ])
 @description('One of the supported database types')
 param databaseType string = 'postgresql'
+
 @description('JNDI Name for JDBC Datasource')
 param jdbcDataSourceJNDIName string = 'jdbc/contoso'
+
 @description('JDBC Connection String')
 param dsConnectionURL string = 'jdbc:postgresql://contoso.postgres.database:5432/testdb'
+
 @description('User id of Database')
 param dbUser string = 'contosoDbUser'
+
 @secure()
 @description('Password for Database')
 param dbPassword string = newGuid()
+
 @description('Enable passwordless datasource connection.')
 param enablePswlessConnection bool = false
+
 @description('Managed identity that has access to database')
 param dbIdentity object = {}
+
 @description('${label.tagsLabel}')
 param tagsByResource object = {}
+
+@description('Determines whether or not a new storage account should be provisioned.')
+param storageNewOrExisting string = 'new'
+
+@description('Determines whether or not a new virtual network should be provisioned.')
+param virtualNetworkNewOrExisting string = 'new'
 
 var uamiId= enablePswlessConnection ? items(dbIdentity.userAssignedIdentities)[0].key: 'NA'
 var uamiClientId = enablePswlessConnection ? reference(uamiId, '${azure.apiVersionForIdentity}', 'full').properties.clientId : 'NA'
@@ -159,9 +167,8 @@ var const_arguments = format(' {0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11}
 var vmName_var = '${vmName}-${guidValue}'
 var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
 var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
-var virtualNetworkName_var = '${virtualNetworkName}-${guidValue}'
-var bootDiagnosticsCheck = ((storageNewOrExisting == 'New') && (bootDiagnostics == 'on'))
-var bootStorageName_var = format('{0}{1}',((storageNewOrExisting == 'Existing') ? existingStorageAccount : storageAccountName), guidValue)
+var virtualNetworkName_var = (virtualNetworkNewOrExisting == 'existing') ? virtualNetworkName : '${virtualNetworkName}-${guidValue}'
+var bootStorageName_var = (storageNewOrExisting == 'existing') ? existingStorageAccount : '${storageAccountName}${guidValue}'
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -199,7 +206,6 @@ var _objTagsByResource = {
 */
 module pids './modules/_pids/_pid.bicep' = {
   name: 'initialization-${guidValue}'
-  
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
@@ -226,7 +232,7 @@ module byosSingleStartPid './modules/_pids/_pid.bicep' = {
   ]
 }
 
-resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = if (bootDiagnosticsCheck) {
+resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = if ((storageNewOrExisting == 'new') && (bootDiagnostics == 'on')) {
   name: bootStorageName_var
   location: location
   sku: {
