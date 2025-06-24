@@ -4,10 +4,16 @@
       "workflow": "build-artifact.yaml",
       "combinations": [
         {
-          "offerName": "eap-rhel-payg-multivm"
+          "offerName": "eap-rhel-payg-multivm",
+          "env": {
+            "env-out-workflow": "env-out-workflow02"
+          }
         },
         {
-          "offerName": "eap-rhel-byos"
+          "offerName": "eap-rhel-byos",
+          "env": {
+            "env-out-workflow": "env-out-workflow02"
+          }
         }
       ]
     }
