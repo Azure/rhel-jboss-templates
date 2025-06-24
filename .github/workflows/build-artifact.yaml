@@ -21,6 +21,10 @@ on:
           required: false
           type: string
           default: ""
+        other_inputs:
+          description: 'JSON string of environment variables'
+          required: false
+          default: '{}'
 
 env:
   env-in-workflow: env01
