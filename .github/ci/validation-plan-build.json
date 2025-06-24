@@ -5,13 +5,13 @@
       "combinations": [
         {
           "offerName": "eap-rhel-payg-multivm",
-          "env_json": {
+          "other_inputs": {
             "env-out-workflow": "env-out-workflow02"
           }
         },
         {
           "offerName": "eap-rhel-byos",
-          "env_json": {
+          "other_inputs": {
             "env-out-workflow": "env-out-workflow02"
           }
         }

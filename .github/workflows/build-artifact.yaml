@@ -21,7 +21,7 @@ on:
           required: false
           type: string
           default: ""
-        env_json:
+        other_inputs:
           description: 'JSON string of environment variables'
           required: false
           default: '{}'
@@ -58,7 +58,7 @@ jobs:
   build:
     needs: generateMatrix
     runs-on: ubuntu-latest
-    env: ${{ fromJson(inputs.env_json) }}
+    env: ${{ fromJson(inputs.other_inputs) }}
     strategy:
       matrix: ${{fromJson(needs.generateMatrix.outputs.matrix)}}
     steps:
