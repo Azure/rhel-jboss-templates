@@ -39,6 +39,10 @@ on:
           - 2h
           - 5h
           - 0
+      configuration_for_ci:
+        description: "JSON string of environment variables used for CI"
+        required: false
+        default: '{}'
 
 env:
     azCliVersion: 2.72.0
@@ -67,6 +71,7 @@ env:
 jobs:
     deploy:
         runs-on: ubuntu-latest
+        env: ${{ fromJson(inputs.configuration_for_ci) }}
         steps:
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4

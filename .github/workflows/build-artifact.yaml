@@ -21,13 +21,7 @@ on:
           required: false
           type: string
           default: ""
-        other_inputs:
-          description: 'JSON string of environment variables'
-          required: false
-          default: '{}'
 
-env:
-  env-in-workflow: env01
 jobs:
   generateMatrix:
     runs-on: ubuntu-latest
@@ -58,24 +52,23 @@ jobs:
   build:
     needs: generateMatrix
     runs-on: ubuntu-latest
-    env: ${{ fromJson(inputs.other_inputs) }}
     strategy:
       matrix: ${{fromJson(needs.generateMatrix.outputs.matrix)}}
     steps:
       - name: Checkout rhel-jboss-templates
         uses: actions/checkout@v4
 
-      - name: Use the env var
+      - name: output the env var
         run: |
           echo "The value env-in-workflow is ${{ env.env-in-workflow }}"
           echo "The value env-out-workflow2 is ${{ env.env-out-workflow2 }}"
           echo "The value env-out-workflow3 is ${{ env.env-out-workflow3 }}"
 
-#      - name: build
-#        id: build
-#        uses: ./.github/actions/build
-#        with:
-#          offerName: ${{ matrix.offerName }}
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          pid: ${{ inputs.pid }}
-#          workflowType: "build"
+      - name: build
+        id: build
+        uses: ./.github/actions/build
+        with:
+          offerName: ${{ matrix.offerName }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pid: ${{ inputs.pid }}
+          workflowType: "build"
