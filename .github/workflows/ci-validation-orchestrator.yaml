@@ -63,13 +63,24 @@ jobs:
               try {
                 console.log(`Triggering ${workflow} with combination:`, JSON.stringify(combo, null, 2));
                 
+                // The github rest api for workflow dispatch requires all inputs to be strings.
+                // We need to convert any object values to JSON strings.
+                const inputs = Object.fromEntries(
+                  Object.entries(combo).map(([key, value]) => {
+                    if (typeof value === 'object' && value !== null) {
+                      return [key, JSON.stringify(value)];
+                    }
+                    return [key, value];
+                  })
+                );
+
                 // Trigger the workflow
                 const dispatchResponse = await github.rest.actions.createWorkflowDispatch({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   workflow_id: workflow,
                   ref: context.ref,
-                  inputs: combo
+                  inputs: inputs
                 });
                 
                 console.log(`Workflow dispatch response:`, JSON.stringify(dispatchResponse.data, null, 2));
