@@ -174,10 +174,10 @@ jobs:
                 ${{ inputs.jdkVersion }} \
                 ${{ env.gracefulShutdownTimeout }} \
                 ${enablePasswordless} \
-                ${dbIdentity}\
+                ${dbIdentity} \
                 ${virtualNetworkNewOrExisting} \
                 ${virtualNetworkName} \
-                ${subnetName}"
+                ${subnetName} "
 
             - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
