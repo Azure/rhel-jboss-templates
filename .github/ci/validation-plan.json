@@ -4,39 +4,60 @@
       "workflow": "validate-payg-singlenode.yaml",
       "combinations": [
         {
-          "databaseType": "mssqlserver",
-          "jdkVersion": "eap8-openjdk17",
-          "timeWaitBeforeDelete": "0"
+          "name": "SQL Server with EAP 8 and OpenJDK 17",
+          "inputs": {
+            "databaseType": "mssqlserver",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
         },
         {
-          "databaseType": "postgresql(flexible)",
-          "jdkVersion": "eap8-openjdk11",
-          "timeWaitBeforeDelete": "0"
+          "name": "PostgreSQL Flexible with EAP 8 and OpenJDK 11",
+          "inputs": {
+            "databaseType": "postgresql(flexible)",
+            "jdkVersion": "eap8-openjdk11",
+            "timeWaitBeforeDelete": "0"
+          }
         },
         {
-          "databaseType": "mysql(flexible)",
-          "jdkVersion": "eap74-openjdk17",
-          "timeWaitBeforeDelete": "0"
+          "name": "MySQL Flexible with EAP 7.4 and OpenJDK 17",
+          "inputs": {
+            "databaseType": "mysql(flexible)",
+            "jdkVersion": "eap74-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
         },
         {
-          "databaseType": "mssqlserver-passwordless",
-          "jdkVersion": "eap8-openjdk17",
-          "timeWaitBeforeDelete": "0"
+          "name": "SQL Server Passwordless with EAP 8 and OpenJDK 17",
+          "inputs": {
+            "databaseType": "mssqlserver-passwordless",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
         },
         {
-          "databaseType": "postgresql-passwordless(flexible)",
-          "jdkVersion": "eap8-openjdk11",
-          "timeWaitBeforeDelete": "0"
+          "name": "PostgreSQL Passwordless Flexible with EAP 8 and OpenJDK 11",
+          "inputs": {
+            "databaseType": "postgresql-passwordless(flexible)",
+            "jdkVersion": "eap8-openjdk11",
+            "timeWaitBeforeDelete": "0"
+          }
         },
         {
-          "databaseType": "mysql-passwordless(flexible)",
-          "jdkVersion": "eap74-openjdk17",
-          "timeWaitBeforeDelete": "0"
+          "name": "MySQL Passwordless Flexible with EAP 7.4 and OpenJDK 17",
+          "inputs": {
+            "databaseType": "mysql-passwordless(flexible)",
+            "jdkVersion": "eap74-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
         },
         {
-          "databaseType": "none",
-          "jdkVersion": "eap8-openjdk17",
-          "timeWaitBeforeDelete": "0"
+          "name": "No Database with EAP 8 and OpenJDK 17",
+          "inputs": {
+            "databaseType": "none",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
         }
       ]
     },
@@ -44,41 +65,62 @@
       "workflow": "validate-byos-singlenode.yaml",
       "combinations": [
         {
-          "databaseType": "mssqlserver",
-          "jdkVersion": "eap8-openjdk17",
-          "timeWaitBeforeDelete": "0"
+          "name": "BYOS SQL Server with EAP 8 and OpenJDK 17",
+          "inputs": {
+            "databaseType": "mssqlserver",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
         },
         {
-          "databaseType": "postgresql(flexible)",
-          "jdkVersion": "eap8-openjdk11",
-          "timeWaitBeforeDelete": "0"
+          "name": "BYOS PostgreSQL Flexible with EAP 8 and OpenJDK 11",
+          "inputs": {
+            "databaseType": "postgresql(flexible)",
+            "jdkVersion": "eap8-openjdk11",
+            "timeWaitBeforeDelete": "0"
+          }
         },
         {
-          "databaseType": "mysql(flexible)",
-          "jdkVersion": "eap74-openjdk17",
-          "timeWaitBeforeDelete": "0"
+          "name": "BYOS MySQL Flexible with EAP 7.4 and OpenJDK 17",
+          "inputs": {
+            "databaseType": "mysql(flexible)",
+            "jdkVersion": "eap74-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
         },
         {
-          "databaseType": "mssqlserver-passwordless",
-          "jdkVersion": "eap8-openjdk17",
-          "timeWaitBeforeDelete": "0"
+          "name": "BYOS SQL Server Passwordless with EAP 8 and OpenJDK 17",
+          "inputs": {
+            "databaseType": "mssqlserver-passwordless",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
         },
         {
-          "databaseType": "postgresql-passwordless(flexible)",
-          "jdkVersion": "eap8-openjdk11",
-          "timeWaitBeforeDelete": "0"
+          "name": "BYOS PostgreSQL Passwordless Flexible with EAP 8 and OpenJDK 11",
+          "inputs": {
+            "databaseType": "postgresql-passwordless(flexible)",
+            "jdkVersion": "eap8-openjdk11",
+            "timeWaitBeforeDelete": "0"
+          }
         },
         {
-          "databaseType": "mysql-passwordless(flexible)",
-          "jdkVersion": "eap74-openjdk17",
-          "timeWaitBeforeDelete": "0"
+          "name": "BYOS MySQL Passwordless Flexible with EAP 7.4 and OpenJDK 17",
+          "inputs": {
+            "databaseType": "mysql-passwordless(flexible)",
+            "jdkVersion": "eap74-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
         },
         {
-          "databaseType": "none",
-          "jdkVersion": "eap8-openjdk17",
-          "timeWaitBeforeDelete": "0"
+          "name": "BYOS No Database with EAP 8 and OpenJDK 17",
+          "inputs": {
+            "databaseType": "none",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
         }
       ]
     }
   ]
-} 
+}

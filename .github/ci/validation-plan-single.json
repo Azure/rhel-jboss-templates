@@ -5,14 +5,16 @@
       "combinations": [
         {
           "name": "Support existing Bootstrap StorageAccount",
-          "databaseType": "none",
-          "jdkVersion": "eap8-openjdk17",
-          "timeWaitBeforeDelete": "0",
-          "configurations_for_ci": {
+          "inputs": {
+            "databaseType": "none",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0",
+            "configurations_for_ci": {
 
+            }
           }
         }
       ]
     }
   ]
-} 
+}
