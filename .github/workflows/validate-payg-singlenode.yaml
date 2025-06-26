@@ -128,6 +128,7 @@ jobs:
 
             - name: Prepare parameter file
               run: |
+                ## Prepare Database parameters
                 databaseType=${{ steps.database-parameters.outputs.databaseType }}
                 enableDB=${{ steps.database-parameters.outputs.enableDB }}
                 enablePasswordless=${{ steps.database-parameters.outputs.enablePasswordless }}
@@ -136,45 +137,29 @@ jobs:
                 dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
                 dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
 
-
                 ## Prepare Vnet parameters
                 if [ "${{ env.virtualNetworkNewOrExisting }}" == "existing" ]; then
+                  virtualNetworkResourceGroupName=${resourceGroup}
                   virtualNetworkNewOrExisting=${{ env.virtualNetworkNewOrExisting }}
                   virtualNetworkName=${{ env.virtualNetworkName }}
                   subnetName=${{ env.subnetName }}
                 else
+                  virtualNetworkResourceGroupName=${resourceGroup}
                   virtualNetworkNewOrExisting="new"
                   virtualNetworkName="VirtualNetwork"
                   subnetName="Subnet-1"
                 fi
 
-                echo "generate parameter file for single"
-                bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json  \
-                ${{ github.repository_owner }} \
-                ${{ github.sha }} \
-                ${location} \
-                ${vmName} \
-                ${adminUsername} \
-                ${password} \
-                ${resourceGroup} \
-                ${singleStorageAccountName} \
-                ${resourceGroup} \
-                ${jbossEAPUserName} \
-                ${jbossEAPPassword} \
-                ${enableDB} \
-                ${databaseType} \
-                java:jboss/datasources/JavaEECafeDB \
-                ${dsConnectionURL} \
-                ${dbUser} \
-                ${dbPassword} \
-                ${{ inputs.jdkVersion }} \
-                ${{ env.gracefulShutdownTimeout }} \
-                ${enablePasswordless} \
-                ${dbIdentity} \
-                ${virtualNetworkNewOrExisting} \
-                ${virtualNetworkName} \
-                ${subnetName} "
+                ## Prepare Other parameters
+                gitUserName=${{ github.repository_owner }}
+                testbranchName=${{ github.sha }}
+                storageAccountResourceGroupName=${resourceGroup}
+                jdbcDataSourceJNDIName="java:jboss/datasources/JavaEECafeDB"
+                jdkVersion=${{ inputs.jdkVersion }}
+                gracefulShutdownTimeout="${{ env.gracefulShutdownTimeout }}"
+                
+                ## generate parameter file 
+                envsubst < ./${{ env.offerName }}/src/test/parameters-template.json > ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
 
             - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
