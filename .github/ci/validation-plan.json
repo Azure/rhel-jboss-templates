@@ -2,9 +2,9 @@
   "validation_combinations": [
     {
       "workflow": "validate-payg-singlenode.yaml",
-      "combinations": [
+      "scenarios": [
         {
-          "name": "SQL Server with EAP 8 and OpenJDK 17",
+          "scenario": "SQL Server with EAP 8 and OpenJDK 17",
           "inputs": {
             "databaseType": "mssqlserver",
             "jdkVersion": "eap8-openjdk17",
@@ -12,7 +12,7 @@
           }
         },
         {
-          "name": "PostgreSQL Flexible with EAP 8 and OpenJDK 11",
+          "scenario": "PostgreSQL Flexible with EAP 8 and OpenJDK 11",
           "inputs": {
             "databaseType": "postgresql(flexible)",
             "jdkVersion": "eap8-openjdk11",
@@ -20,7 +20,7 @@
           }
         },
         {
-          "name": "MySQL Flexible with EAP 7.4 and OpenJDK 17",
+          "scenario": "MySQL Flexible with EAP 7.4 and OpenJDK 17",
           "inputs": {
             "databaseType": "mysql(flexible)",
             "jdkVersion": "eap74-openjdk17",
@@ -28,7 +28,7 @@
           }
         },
         {
-          "name": "SQL Server Passwordless with EAP 8 and OpenJDK 17",
+          "scenario": "SQL Server Passwordless with EAP 8 and OpenJDK 17",
           "inputs": {
             "databaseType": "mssqlserver-passwordless",
             "jdkVersion": "eap8-openjdk17",
@@ -36,7 +36,7 @@
           }
         },
         {
-          "name": "PostgreSQL Passwordless Flexible with EAP 8 and OpenJDK 11",
+          "scenario": "PostgreSQL Passwordless Flexible with EAP 8 and OpenJDK 11",
           "inputs": {
             "databaseType": "postgresql-passwordless(flexible)",
             "jdkVersion": "eap8-openjdk11",
@@ -44,7 +44,7 @@
           }
         },
         {
-          "name": "MySQL Passwordless Flexible with EAP 7.4 and OpenJDK 17",
+          "scenario": "MySQL Passwordless Flexible with EAP 7.4 and OpenJDK 17",
           "inputs": {
             "databaseType": "mysql-passwordless(flexible)",
             "jdkVersion": "eap74-openjdk17",
@@ -52,7 +52,7 @@
           }
         },
         {
-          "name": "No Database with EAP 8 and OpenJDK 17",
+          "scenario": "No Database with EAP 8 and OpenJDK 17",
           "inputs": {
             "databaseType": "none",
             "jdkVersion": "eap8-openjdk17",
@@ -63,9 +63,9 @@
     },
     {
       "workflow": "validate-byos-singlenode.yaml",
-      "combinations": [
+      "scenarios": [
         {
-          "name": "BYOS SQL Server with EAP 8 and OpenJDK 17",
+          "scenario": "BYOS SQL Server with EAP 8 and OpenJDK 17",
           "inputs": {
             "databaseType": "mssqlserver",
             "jdkVersion": "eap8-openjdk17",
@@ -73,7 +73,7 @@
           }
         },
         {
-          "name": "BYOS PostgreSQL Flexible with EAP 8 and OpenJDK 11",
+          "scenario": "BYOS PostgreSQL Flexible with EAP 8 and OpenJDK 11",
           "inputs": {
             "databaseType": "postgresql(flexible)",
             "jdkVersion": "eap8-openjdk11",
@@ -81,7 +81,7 @@
           }
         },
         {
-          "name": "BYOS MySQL Flexible with EAP 7.4 and OpenJDK 17",
+          "scenario": "BYOS MySQL Flexible with EAP 7.4 and OpenJDK 17",
           "inputs": {
             "databaseType": "mysql(flexible)",
             "jdkVersion": "eap74-openjdk17",
@@ -89,7 +89,7 @@
           }
         },
         {
-          "name": "BYOS SQL Server Passwordless with EAP 8 and OpenJDK 17",
+          "scenario": "BYOS SQL Server Passwordless with EAP 8 and OpenJDK 17",
           "inputs": {
             "databaseType": "mssqlserver-passwordless",
             "jdkVersion": "eap8-openjdk17",
@@ -97,7 +97,7 @@
           }
         },
         {
-          "name": "BYOS PostgreSQL Passwordless Flexible with EAP 8 and OpenJDK 11",
+          "scenario": "BYOS PostgreSQL Passwordless Flexible with EAP 8 and OpenJDK 11",
           "inputs": {
             "databaseType": "postgresql-passwordless(flexible)",
             "jdkVersion": "eap8-openjdk11",
@@ -105,7 +105,7 @@
           }
         },
         {
-          "name": "BYOS MySQL Passwordless Flexible with EAP 7.4 and OpenJDK 17",
+          "scenario": "BYOS MySQL Passwordless Flexible with EAP 7.4 and OpenJDK 17",
           "inputs": {
             "databaseType": "mysql-passwordless(flexible)",
             "jdkVersion": "eap74-openjdk17",
@@ -113,7 +113,7 @@
           }
         },
         {
-          "name": "BYOS No Database with EAP 8 and OpenJDK 17",
+          "scenario": "BYOS No Database with EAP 8 and OpenJDK 17",
           "inputs": {
             "databaseType": "none",
             "jdkVersion": "eap8-openjdk17",

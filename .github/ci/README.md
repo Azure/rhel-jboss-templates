@@ -1,22 +1,22 @@
 # CI Validation Configuration
 
-This directory contains JSON configuration files that define validation combinations for the CI workflow orchestrator.
+This directory contains JSON configuration files that define validation scenarios for the CI workflow orchestrator.
 
 ## Configuration Structure
 
-The validation plan files support two structures:
+The validation plan files use the following structure:
 
-### New Structure (Recommended)
-With named combinations that provide better reporting and clarity:
+### Scenarios Structure
+Each validation plan defines scenarios with descriptive names:
 
 ```json
 {
   "validation_combinations": [
     {
       "workflow": "validate-payg-singlenode.yaml",
-      "combinations": [
+      "scenarios": [
         {
-          "name": "SQL Server with EAP 8 and OpenJDK 17",
+          "scenario": "SQL Server with EAP 8 and OpenJDK 17",
           "inputs": {
             "databaseType": "mssqlserver",
             "jdkVersion": "eap8-openjdk17",
@@ -29,49 +29,27 @@ With named combinations that provide better reporting and clarity:
 }
 ```
 
-### Legacy Structure (Still Supported)
-Direct input structure without names:
-
-```json
-{
-  "validation_combinations": [
-    {
-      "workflow": "validate-payg-singlenode.yaml",
-      "combinations": [
-        {
-          "databaseType": "mssqlserver",
-          "jdkVersion": "eap8-openjdk17",
-          "timeWaitBeforeDelete": "0"
-        }
-      ]
-    }
-  ]
-}
-```
-
 ## How It Works
 
 1. **Orchestrator Workflow**: The `ci-validation-orchestrator.yaml` workflow reads the plan file specified in the workflow dispatch input.
 
-2. **Structure Detection**: The orchestrator automatically detects whether a combination uses the new structure (with `name` and `inputs`) or the legacy structure.
+2. **Scenario Processing**: Each scenario in the `scenarios` array contains a descriptive `scenario` name and an `inputs` object.
 
-3. **Input Extraction**: For the new structure, only the content of the `inputs` object is passed to the target workflow. The `name` is used for logging and reporting purposes only.
+3. **Input Extraction**: Only the content of the `inputs` object is passed to the target workflow. The `scenario` name is used for logging and reporting purposes only.
 
-4. **Backward Compatibility**: Existing validation plans using the legacy structure continue to work without modification.
+## Benefits of the Scenarios Structure
 
-## Benefits of the New Structure
-
-- **Better Reporting**: Combination names appear in the validation reports instead of raw parameter lists
-- **Improved Logging**: Clearer identification of which combination is being executed
-- **Documentation**: Names serve as inline documentation for what each combination tests
+- **Better Reporting**: Scenario names appear in the validation reports instead of raw parameter lists
+- **Improved Logging**: Clearer identification of which scenario is being executed
+- **Documentation**: Scenario names serve as inline documentation for what each scenario tests
 - **Maintainability**: Easier to understand and maintain complex validation scenarios
+- **Semantic Clarity**: "Scenarios" better describes what is being tested
 
 ## Available Files
 
-- `validation-plan.json`: Complete validation plan (legacy structure)
-- `validation-plan-build.json`: Build-only validation plan (updated to new structure)
-- `validation-plan-with-names.json`: Example of the new structure with names
-- `validation-plan-single.json`: Single validation example
+- `validation-plan.json`: Complete validation plan with multiple scenarios
+- `validation-plan-build.json`: Build-only validation plan
+- `validation-plan-single.json`: Single validation scenario example
 - `validation-empty.json`: Empty template
 
 ## Usage
@@ -80,5 +58,12 @@ To use a validation plan, specify the file path when triggering the orchestrator
 
 ```yaml
 with:
-  plan_file: '.github/ci/validation-plan-with-names.json'
+  plan_file: '.github/ci/validation-plan.json'
 ```
+
+## Structure Requirements
+
+- Each plan must have a `validation_combinations` array
+- Each item in the array must have a `workflow` and `scenarios` field
+- Each scenario must have a `scenario` name and an `inputs` object
+- Only the `inputs` object content is passed to the target workflow

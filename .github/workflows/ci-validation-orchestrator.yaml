@@ -31,7 +31,7 @@ jobs:
           # Create matrix from plan
           MATRIX=$(jq -c '.validation_combinations | map({
             workflow: .workflow,
-            combinations: .combinations
+            scenarios: .scenarios
           })' "$PLAN_FILE")
           
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
@@ -51,36 +51,25 @@ jobs:
         with:
           script: |
             const workflow = '${{ matrix.workflow }}';
-            const combinations = ${{ toJSON(matrix.combinations) }};
+            const scenarios = ${{ toJSON(matrix.scenarios) }};
             const workflowRuns = [];
             
             console.log(`Starting to trigger workflow: ${workflow}`);
-            console.log(`Number of combinations to process: ${combinations.length}`);
+            console.log(`Number of scenarios to process: ${scenarios.length}`);
             console.log(`Current owner: ${context.repo.owner}`);
             console.log(`Current repo: ${context.repo.repo}`);
             
-            for (const combo of combinations) {
+            for (const scenario of scenarios) {
               try {
-                // Check if combination has the new structure with name and inputs
-                let combinationInputs;
-                let combinationName;
+                const scenarioName = scenario.scenario;
+                const scenarioInputs = scenario.inputs;
                 
-                if (combo.inputs && combo.name) {
-                  // New structure: {name: "...", inputs: {...}}
-                  combinationInputs = combo.inputs;
-                  combinationName = combo.name;
-                  console.log(`Triggering ${workflow} with combination "${combinationName}":`, JSON.stringify(combinationInputs, null, 2));
-                } else {
-                  // Legacy structure: direct inputs
-                  combinationInputs = combo;
-                  combinationName = `Combination ${combinations.indexOf(combo) + 1}`;
-                  console.log(`Triggering ${workflow} with combination:`, JSON.stringify(combinationInputs, null, 2));
-                }
+                console.log(`Triggering ${workflow} with scenario "${scenarioName}":`, JSON.stringify(scenarioInputs, null, 2));
                 
                 // The github rest api for workflow dispatch requires all inputs to be strings.
                 // We need to convert any object values to JSON strings.
                 const inputs = Object.fromEntries(
-                  Object.entries(combinationInputs).map(([key, value]) => {
+                  Object.entries(scenarioInputs).map(([key, value]) => {
                     if (typeof value === 'object' && value !== null) {
                       return [key, JSON.stringify(value)];
                     }
@@ -149,8 +138,8 @@ jobs:
                 
                 workflowRuns.push({
                   workflow: workflow,
-                  combination: combinationInputs,
-                  combinationName: combinationName,
+                  scenario: scenarioInputs,
+                  scenarioName: scenarioName,
                   runId: run.id,
                   runUrl: run.html_url,
                   startTime: run.created_at
@@ -158,7 +147,7 @@ jobs:
                 
                 console.log(`Successfully tracked workflow run: ${run.id}`);
               } catch (error) {
-                console.error(`Error processing combination:`, error);
+                console.error(`Error processing scenario:`, error);
                 console.error(`Error details:`, JSON.stringify(error, null, 2));
               }
             }
@@ -228,8 +217,8 @@ jobs:
                 console.log(`Workflow ${run.workflow} did not complete within the maximum wait time`);
                 results.push({
                   workflow: run.workflow,
-                  combination: run.combination,
-                  combinationName: run.combinationName,
+                  scenario: run.scenario,
+                  scenarioName: run.scenarioName,
                   status: 'timeout',
                   runId: run.runId,
                   runUrl: run.runUrl,
@@ -248,8 +237,8 @@ jobs:
               
               results.push({
                 workflow: run.workflow,
-                combination: run.combination,
-                combinationName: run.combinationName,
+                scenario: run.scenario,
+                scenarioName: run.scenarioName,
                 status: runData.data.conclusion,
                 runId: run.runId,
                 runUrl: run.runUrl,
@@ -288,15 +277,15 @@ jobs:
               echo ${row} | base64 --decode | jq -r "$1"
             }
             workflow=$(_jq '.workflow')
-            combination_name=$(_jq '.combinationName // empty')
-            combination=$(_jq '.combination | if type=="object" then to_entries | map("\(.key): \(.value)") | join(", ") else tostring end')
+            scenario_name=$(_jq '.scenarioName // empty')
+            scenario=$(_jq '.scenario | if type=="object" then to_entries | map("\(.key): \(.value)") | join(", ") else tostring end')
             status=$(_jq '.status')
             runUrl=$(_jq '.runUrl')
             startTime=$(_jq '.startTime')
             endTime=$(_jq '.endTime')
             
-            # Use combination name if available, otherwise use the combination details
-            display_combination="${combination_name:-${combination}}"
+            # Use scenario name if available, otherwise use the scenario details
+            display_scenario="${scenario_name:-${scenario}}"
             
             # Calculate duration
             start=$(date -d "$startTime" +%s)
@@ -315,7 +304,7 @@ jobs:
             fi
             
             # Create table row
-            rows+="| ${workflow} | \`${display_combination}\` | ${status} | ${duration_str} | [View Run](${runUrl}) |\n"
+            rows+="| ${workflow} | \`${display_scenario}\` | ${status} | ${duration_str} | [View Run](${runUrl}) |\n"
           done
           
           # Create a temporary file with the content
@@ -330,8 +319,8 @@ jobs:
             echo ""
             echo "## Detailed Results"
             echo ""
-            echo "| Workflow | Combination | Status | Duration | Run URL |"
-            echo "|----------|-------------|---------|-----------|----------|"
+            echo "| Workflow | Scenario | Status | Duration | Run URL |"
+            echo "|----------|----------|---------|-----------|----------|"
             echo -e "${rows}"
           } > "${TIMESTAMP}-report.md"
 

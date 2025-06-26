@@ -2,9 +2,9 @@
   "validation_combinations": [
     {
       "workflow": "validate-payg-singlenode.yaml",
-      "combinations": [
+      "scenarios": [
         {
-          "name": "Support existing Bootstrap StorageAccount",
+          "scenario": "Support existing Bootstrap StorageAccount",
           "inputs": {
             "databaseType": "none",
             "jdkVersion": "eap8-openjdk17",

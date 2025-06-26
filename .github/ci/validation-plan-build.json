@@ -2,15 +2,15 @@
   "validation_combinations": [
     {
       "workflow": "build-artifact.yaml",
-      "combinations": [
+      "scenarios": [
         {
-          "name": "EAP RHEL PAYG Multi-VM Build",
+          "scenario": "EAP RHEL PAYG Multi-VM Build",
           "inputs": {
             "offerName": "eap-rhel-payg-multivm"
           }
         },
         {
-          "name": "EAP RHEL BYOS Build",
+          "scenario": "EAP RHEL BYOS Build",
           "inputs": {
             "offerName": "eap-rhel-byos"
           }
