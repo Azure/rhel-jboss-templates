@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 #read arguments from stdin
-read parametersPath gitUserName testbranchName location vmName adminUsername password virtualNetworkResourceGroupName storageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword enableDB databaseType jdbcDataSourceJNDIName dsConnectionURL dbUser dbPassword jdkVersion gracefulShutdownTimeout enablePswlessConnection dbIdentity
+read parametersPath gitUserName testbranchName location vmName adminUsername password virtualNetworkResourceGroupName storageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword enableDB databaseType jdbcDataSourceJNDIName dsConnectionURL dbUser dbPassword jdkVersion gracefulShutdownTimeout enablePswlessConnection dbIdentity virtualNetworkNewOrExisting virtualNetworkName subnetName
  
 cat <<EOF > ${parametersPath}
 {
@@ -31,10 +31,13 @@ cat <<EOF > ${parametersPath}
             "value": "Standard_DS2_v2"
         },
         "virtualNetworkNewOrExisting": {
-            "value": "new"
+            "value": "${virtualNetworkNewOrExisting}"
+        },
+        "virtualNetworkResourceGroupName": {
+            "value": "${virtualNetworkResourceGroupName}"
         },
         "virtualNetworkName": {
-            "value": "VirtualNetwork"
+            "value": "${virtualNetworkName}"
         },
         "addressPrefixes": {
             "value": [
@@ -42,13 +45,10 @@ cat <<EOF > ${parametersPath}
             ]
         },
         "subnetName": {
-            "value": "Subnet-1"
+            "value": "${subnetName}"
         },
         "subnetPrefix": {
             "value": "10.0.0.0/24"
-        },
-        "virtualNetworkResourceGroupName": {
-            "value": "${virtualNetworkResourceGroupName}"
         },
         "bootDiagnostics": {
             "value": "on"

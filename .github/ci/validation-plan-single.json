@@ -10,7 +10,9 @@
             "jdkVersion": "eap8-openjdk17",
             "timeWaitBeforeDelete": "0",
             "configurations_for_ci": {
-
+              "virtualNetworkNewOrExisting": "existing",
+              "virtualNetworkName": "myvirtualNetworkName",
+              "subnetName": "mySubnet"
             }
           }
         }

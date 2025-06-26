@@ -69,6 +69,7 @@ env:
 jobs:
     deploy-single:
         runs-on: ubuntu-latest
+        env: ${{ fromJson(inputs.configurations_for_ci) }}
         steps:
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
@@ -93,6 +94,18 @@ jobs:
               run: |
                 az group create -n ${{ env.resourceGroup }} -l ${{ env.location }}
 
+            - name: Provision Azure Vnet
+              id: vnet-provision
+              if: ${{ env.virtualNetworkNewOrExisting == 'existing' }}
+              run: |
+                echo "Provisioning Azure Vnet with subnet"
+                az network vnet create \
+                  --resource-group ${{ env.resourceGroup }} \
+                  --name ${{ env.virtualNetworkName }} \
+                  --address-prefix 10.0.0.0/28 \
+                  --subnet-name ${{ env.subnetName }} \
+                  --subnet-prefix 10.0.0.0/29
+                  
             - name: Provision database
               id: database-provision
               uses: ./.github/actions/database-provision
@@ -123,6 +136,18 @@ jobs:
                 dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
                 dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
 
+
+                ## Prepare Vnet parameters
+                if [ "${{ env.virtualNetworkNewOrExisting }}" == "existing" ]; then
+                  virtualNetworkNewOrExisting=${{ env.virtualNetworkNewOrExisting }}
+                  virtualNetworkName=${{ env.virtualNetworkName }}
+                  subnetName=${{ env.subnetName }}
+                else
+                  virtualNetworkNewOrExisting="new"
+                  virtualNetworkName="VirtualNetwork"
+                  subnetName="Subnet-1"
+                fi
+
                 echo "generate parameter file for single"
                 bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
                 <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json  \
@@ -146,7 +171,10 @@ jobs:
                 ${{ inputs.jdkVersion }} \
                 ${{ env.gracefulShutdownTimeout }} \
                 ${enablePasswordless} \
-                ${dbIdentity}"
+                ${dbIdentity}\
+                ${virtualNetworkNewOrExisting} \
+                ${virtualNetworkName} \
+                ${subnetName}"
 
             - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
