@@ -130,34 +130,34 @@ jobs:
 
             - name: Prepare parameter file
               run: |
-                databaseType=${{ steps.database-parameters.outputs.databaseType }}
-                enableDB=${{ steps.database-parameters.outputs.enableDB }}
-                enablePswlessConnection=${{ steps.database-parameters.outputs.enablePswlessConnection }}
-                dbUser=${{ steps.database-parameters.outputs.dbUser }}
-                dbPassword=${{ env.dbPassword }}
-                dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
-                dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
+                export databaseType=${{ steps.database-parameters.outputs.databaseType }}
+                export enableDB=${{ steps.database-parameters.outputs.enableDB }}
+                export enablePswlessConnection=${{ steps.database-parameters.outputs.enablePswlessConnection }}
+                export dbUser=${{ steps.database-parameters.outputs.dbUser }}
+                export dbPassword=${{ env.dbPassword }}
+                export dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
+                export dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
                 
                 ## Prepare Vnet parameters
                 if [ "${{ env.virtualNetworkNewOrExisting }}" == "existing" ]; then
-                  virtualNetworkResourceGroupName=${resourceGroup}
-                  virtualNetworkNewOrExisting=${{ env.virtualNetworkNewOrExisting }}
-                  virtualNetworkName=${{ env.virtualNetworkName }}
-                  subnetName=${{ env.subnetName }}
+                  export virtualNetworkResourceGroupName=${resourceGroup}
+                  export virtualNetworkNewOrExisting=${{ env.virtualNetworkNewOrExisting }}
+                  export virtualNetworkName=${{ env.virtualNetworkName }}
+                  export subnetName=${{ env.subnetName }}
                 else
-                  virtualNetworkResourceGroupName=${resourceGroup}
-                  virtualNetworkNewOrExisting="new"
-                  virtualNetworkName="VirtualNetwork"
-                  subnetName="Subnet-1"
+                  export virtualNetworkResourceGroupName=${resourceGroup}
+                  export virtualNetworkNewOrExisting="new"
+                  export virtualNetworkName="VirtualNetwork"
+                  export subnetName="Subnet-1"
                 fi
 
                 ## Prepare Other parameters
-                gitUserName=${{ github.repository_owner }}
-                testbranchName=${{ github.sha }}
-                storageAccountResourceGroupName=${resourceGroup}
-                jdbcDataSourceJNDIName="java:jboss/datasources/JavaEECafeDB"
-                jdkVersion=${{ inputs.jdkVersion }}
-                gracefulShutdownTimeout="${{ env.gracefulShutdownTimeout }}"
+                export gitUserName=${{ github.repository_owner }}
+                export testbranchName=${{ github.sha }}
+                export storageAccountResourceGroupName=${resourceGroup}
+                export jdbcDataSourceJNDIName="java:jboss/datasources/JavaEECafeDB"
+                export jdkVersion=${{ inputs.jdkVersion }}
+                export gracefulShutdownTimeout="${{ env.gracefulShutdownTimeout }}"
                 
                 ## generate parameter file 
                 parameter_template="./${{ env.offerName }}/src/test/scripts/parameters-template.json"
