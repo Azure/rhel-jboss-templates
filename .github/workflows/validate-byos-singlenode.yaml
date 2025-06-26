@@ -95,6 +95,19 @@ jobs:
             - name: Create Resource Group
               run: |
                 az group create -n ${{ env.resourceGroup }} -l ${{ env.location }}
+
+            - name: Provision Azure Vnet
+              id: vnet-provision
+              if: ${{ env.virtualNetworkNewOrExisting == 'existing' }}
+              run: |
+                echo "Provisioning Azure Vnet with subnet"
+                az network vnet create \
+                  --resource-group ${{ env.resourceGroup }} \
+                  --name ${{ env.virtualNetworkName }} \
+                  --address-prefix 10.0.0.0/28 \
+                  --subnet-name ${{ env.subnetName }} \
+                  --subnet-prefix 10.0.0.0/29
+
             - name: Provision database
               id: database-provision
               uses: ./.github/actions/database-provision
@@ -124,36 +137,32 @@ jobs:
                 dbPassword=${{ env.dbPassword }}
                 dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
                 dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
-
                 
-                echo "generate parameter file for single"
-                bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json  \
-                ${{ github.repository_owner }} \
-                ${{ github.sha }} \
-                ${location} \
-                ${vmName} \
-                ${adminUsername} \
-                ${password} \
-                ${resourceGroup} \
-                ${singleStorageAccountName} \
-                ${resourceGroup} \
-                ${jbossEAPUserName} \
-                ${jbossEAPPassword} \
-                ${rhsmUserName} \
-                ${rhsmPassword} \
-                ${rhsmPoolEAP} \
-                ${rhsmPoolRHEL} \
-                ${enableDB} \
-                ${databaseType} \
-                java:jboss/datasources/JavaEECafeDB \
-                ${dsConnectionURL} \
-                ${dbUser} \
-                ${dbPassword} \
-                ${{ inputs.jdkVersion }} \
-                ${{ env.gracefulShutdownTimeout }} \
-                ${enablePasswordless} \
-                ${dbIdentity}"
+                ## Prepare Vnet parameters
+                if [ "${{ env.virtualNetworkNewOrExisting }}" == "existing" ]; then
+                  virtualNetworkResourceGroupName=${resourceGroup}
+                  virtualNetworkNewOrExisting=${{ env.virtualNetworkNewOrExisting }}
+                  virtualNetworkName=${{ env.virtualNetworkName }}
+                  subnetName=${{ env.subnetName }}
+                else
+                  virtualNetworkResourceGroupName=${resourceGroup}
+                  virtualNetworkNewOrExisting="new"
+                  virtualNetworkName="VirtualNetwork"
+                  subnetName="Subnet-1"
+                fi
+
+                ## Prepare Other parameters
+                gitUserName=${{ github.repository_owner }}
+                testbranchName=${{ github.sha }}
+                storageAccountResourceGroupName=${resourceGroup}
+                jdbcDataSourceJNDIName="java:jboss/datasources/JavaEECafeDB"
+                jdkVersion=${{ inputs.jdkVersion }}
+                gracefulShutdownTimeout="${{ env.gracefulShutdownTimeout }}"
+                
+                ## generate parameter file 
+                parameter_template="./${{ env.offerName }}/src/test/scripts/parameters-template.json"
+                parameter_output="./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json"
+                envsubst < "$parameter_template" > "$parameter_output"
 
             - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
