@@ -182,7 +182,7 @@ jobs:
                 export dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
                 export dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
                 
-                ## Prepare Other parameters                
+                ## Prepare other parameters                
                 export gitUserName=${{ github.repository_owner }}
                 export testbranchName=${{ github.sha }}
                 export storageAccountResourceGroupName=${resourceGroup}
@@ -313,7 +313,7 @@ jobs:
                 export dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
                 export dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
                 
-                ## Prepare Other parameters
+                ## Prepare other parameters
                 export gitUserName=${{ github.repository_owner }}
                 export testbranchName=${{ github.sha }}
                 export storageAccountResourceGroupName=${resourceGroup}

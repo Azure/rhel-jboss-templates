@@ -1,16 +1,9 @@
-#!/usr/bin/env bash
-set -Eeuo pipefail
-
-#read arguments from stdin
-read parametersPath gitUserName testbranchName location vmName asName adminUsername password numberOfInstances operatingMode virtualNetworkResourceGroupName bootStorageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword enableDB databaseType jdbcDataSourceJNDIName dsConnectionURL dbUser dbPassword jdkVersion gracefulShutdownTimeout enablePswlessConnection dbIdentity
- 
-cat <<EOF > ${parametersPath}
 {
-    "\$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "artifactsLocation": {
-            "value": "https://raw.githubusercontent.com/${gitUserName}/rhel-jboss-templates/${testbranchName}/eap-rhel-payg-multivm/src/main/"
+            "value": "https://raw.githubusercontent.com/${gitUserName}/rhel-jboss-templates/${testbranchName}/eap-rhel-byos-multivm/src/main/"
         },
         "location": {
             "value": "${location}"
@@ -35,9 +28,6 @@ cat <<EOF > ${parametersPath}
         },
         "numberOfInstances": {
             "value": ${numberOfInstances}
-        },
-        "operatingMode": {
-            "value": "${operatingMode}"
         },
         "virtualNetworkNewOrExisting": {
             "value": "new"
@@ -83,11 +73,26 @@ cat <<EOF > ${parametersPath}
         "storageAccountResourceGroupName": {
             "value": "${storageAccountResourceGroupName}"
         },
+        "operatingMode": {
+            "value": "${operatingMode}"
+        },
         "jbossEAPUserName": {
             "value": "${jbossEAPUserName}"
         },
         "jbossEAPPassword": {
             "value": "${jbossEAPPassword}"
+        },
+        "rhsmUserName": {
+            "value": "${rhsmUserName}"
+        },
+        "rhsmPassword": {
+            "value": "${rhsmPassword}"
+        },
+        "rhsmPoolEAP": {
+            "value": "${rhsmPoolEAP}"
+        },
+        "rhsmPoolRHEL": {
+            "value": "${rhsmPoolRHEL}"
         },
         "enableAppGWIngress": {
             "value": true
@@ -124,4 +129,3 @@ cat <<EOF > ${parametersPath}
         }
     }
 }
-EOF

@@ -150,7 +150,7 @@ jobs:
                   export subnetName="Subnet-1"
                 fi
 
-                ## Prepare Other parameters
+                ## Prepare other parameters
                 export gitUserName=${{ github.repository_owner }}
                 export testbranchName=${{ github.sha }}
                 export storageAccountResourceGroupName=${resourceGroup}
