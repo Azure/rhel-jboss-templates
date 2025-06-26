@@ -61,12 +61,26 @@ jobs:
             
             for (const combo of combinations) {
               try {
-                console.log(`Triggering ${workflow} with combination:`, JSON.stringify(combo, null, 2));
+                // Check if combination has the new structure with name and inputs
+                let combinationInputs;
+                let combinationName;
+                
+                if (combo.inputs && combo.name) {
+                  // New structure: {name: "...", inputs: {...}}
+                  combinationInputs = combo.inputs;
+                  combinationName = combo.name;
+                  console.log(`Triggering ${workflow} with combination "${combinationName}":`, JSON.stringify(combinationInputs, null, 2));
+                } else {
+                  // Legacy structure: direct inputs
+                  combinationInputs = combo;
+                  combinationName = `Combination ${combinations.indexOf(combo) + 1}`;
+                  console.log(`Triggering ${workflow} with combination:`, JSON.stringify(combinationInputs, null, 2));
+                }
                 
                 // The github rest api for workflow dispatch requires all inputs to be strings.
                 // We need to convert any object values to JSON strings.
                 const inputs = Object.fromEntries(
-                  Object.entries(combo).map(([key, value]) => {
+                  Object.entries(combinationInputs).map(([key, value]) => {
                     if (typeof value === 'object' && value !== null) {
                       return [key, JSON.stringify(value)];
                     }
@@ -135,7 +149,8 @@ jobs:
                 
                 workflowRuns.push({
                   workflow: workflow,
-                  combination: combo,
+                  combination: combinationInputs,
+                  combinationName: combinationName,
                   runId: run.id,
                   runUrl: run.html_url,
                   startTime: run.created_at
@@ -214,6 +229,7 @@ jobs:
                 results.push({
                   workflow: run.workflow,
                   combination: run.combination,
+                  combinationName: run.combinationName,
                   status: 'timeout',
                   runId: run.runId,
                   runUrl: run.runUrl,
@@ -233,6 +249,7 @@ jobs:
               results.push({
                 workflow: run.workflow,
                 combination: run.combination,
+                combinationName: run.combinationName,
                 status: runData.data.conclusion,
                 runId: run.runId,
                 runUrl: run.runUrl,
@@ -271,11 +288,15 @@ jobs:
               echo ${row} | base64 --decode | jq -r "$1"
             }
             workflow=$(_jq '.workflow')
+            combination_name=$(_jq '.combinationName // empty')
             combination=$(_jq '.combination | if type=="object" then to_entries | map("\(.key): \(.value)") | join(", ") else tostring end')
             status=$(_jq '.status')
             runUrl=$(_jq '.runUrl')
             startTime=$(_jq '.startTime')
             endTime=$(_jq '.endTime')
+            
+            # Use combination name if available, otherwise use the combination details
+            display_combination="${combination_name:-${combination}}"
             
             # Calculate duration
             start=$(date -d "$startTime" +%s)
@@ -294,7 +315,7 @@ jobs:
             fi
             
             # Create table row
-            rows+="| ${workflow} | \`${combination}\` | ${status} | ${duration_str} | [View Run](${runUrl}) |\n"
+            rows+="| ${workflow} | \`${display_combination}\` | ${status} | ${duration_str} | [View Run](${runUrl}) |\n"
           done
           
           # Create a temporary file with the content

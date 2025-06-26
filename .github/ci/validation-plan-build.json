@@ -4,13 +4,18 @@
       "workflow": "build-artifact.yaml",
       "combinations": [
         {
-          "offerName": "eap-rhel-payg-multivm"
+          "name": "EAP RHEL PAYG Multi-VM Build",
+          "inputs": {
+            "offerName": "eap-rhel-payg-multivm"
+          }
         },
         {
-          "offerName": "eap-rhel-byos"
+          "name": "EAP RHEL BYOS Build",
+          "inputs": {
+            "offerName": "eap-rhel-byos"
           }
         }
       ]
     }
   ]
-} 
+}
