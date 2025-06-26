@@ -169,42 +169,33 @@ jobs:
                 dbInstanceName: ${{ env.dbInstanceName }}
             - name: Prepare parameter file
               run: |
-                databaseType=${{ steps.database-parameters.outputs.databaseType }}
-                enableDB=${{ steps.database-parameters.outputs.enableDB }}
-                enablePswlessConnection=${{ steps.database-parameters.outputs.enablePswlessConnection }}
-                dbUser=${{ steps.database-parameters.outputs.dbUser }}
-                dbPassword=${{ env.dbPassword }}
-                dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
-                dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
+                ## Prepare parameters for domain mode
+                export operatingMode=${domainOperatingMode}
+                export bootStorageAccountName=${domainBootStorageAccountName}
+                
+                ## Prepare parameters for database
+                export databaseType=${{ steps.database-parameters.outputs.databaseType }}
+                export enableDB=${{ steps.database-parameters.outputs.enableDB }}
+                export enablePswlessConnection=${{ steps.database-parameters.outputs.enablePswlessConnection }}
+                export dbUser=${{ steps.database-parameters.outputs.dbUser }}
+                export dbPassword=${{ env.dbPassword }}
+                export dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
+                export dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
+                
+                ## Prepare Other parameters                
+                export gitUserName=${{ github.repository_owner }}
+                export testbranchName=${{ github.sha }}
+                export storageAccountResourceGroupName=${resourceGroup}
+                export jdbcDataSourceJNDIName="java:jboss/datasources/JavaEECafeDB"\
+                export virtualNetworkResourceGroupName=${resourceGroup}
+                export jdkVersion=${{ inputs.jdkVersion }}
+                export gracefulShutdownTimeout="${{ env.gracefulShutdownTimeout }}"
+                
+                ## generate parameter file 
+                parameter_template="./${{ env.offerName }}/src/test/scripts/parameters-template.json"
+                parameter_output="./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json"
+                envsubst < "$parameter_template" > "$parameter_output"
 
-                echo "generate parameter file for domain mode"
-                # Generate parameters for db template deployment
-                bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
-                ${{ github.repository_owner }} \
-                ${{ github.sha }} \
-                ${location} \
-                ${vmName} \
-                ${asName} \
-                ${adminUsername} \
-                ${password} \
-                ${numberOfInstances} \
-                ${domainOperatingMode} \
-                ${resourceGroup} \
-                ${domainBootStorageAccountName} \
-                ${resourceGroup} \
-                ${jbossEAPUserName} \
-                ${jbossEAPPassword} \
-                ${enableDB} \
-                ${databaseType} \
-                java:jboss/datasources/JavaEECafeDB \
-                ${dsConnectionURL} \
-                ${dbUser} \
-                ${dbPassword} \
-                ${{ inputs.jdkVersion }} \
-                ${{ env.gracefulShutdownTimeout }} \
-                ${enablePswlessConnection} \
-                ${dbIdentity}"
             - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
               if: success()
@@ -308,44 +299,34 @@ jobs:
                 dbInstanceName: ${{ env.dbInstanceName }}
             - name: Prepare parameter file
               run: |
-                databaseType=${{ steps.database-parameters.outputs.databaseType }}
-                enableDB=${{ steps.database-parameters.outputs.enableDB }}
-                enablePswlessConnection=${{ steps.database-parameters.outputs.enablePswlessConnection }}
-                dbUser=${{ steps.database-parameters.outputs.dbUser }}
-                dbPassword=${{ env.dbPassword }}
-                dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
-                dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
+                
+                ## Prepare parameters for standalone mode
+                export operatingMode=${standaloneOperatingMode}
+                export bootStorageAccountName=${standaloneBootStorageAccountName}
+                
+                ## Prepare parameters for database
+                export databaseType=${{ steps.database-parameters.outputs.databaseType }}
+                export enableDB=${{ steps.database-parameters.outputs.enableDB }}
+                export enablePswlessConnection=${{ steps.database-parameters.outputs.enablePswlessConnection }}
+                export dbUser=${{ steps.database-parameters.outputs.dbUser }}
+                export dbPassword=${{ env.dbPassword }}
+                export dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
+                export dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
+                
+                ## Prepare Other parameters
+                export gitUserName=${{ github.repository_owner }}
+                export testbranchName=${{ github.sha }}
+                export storageAccountResourceGroupName=${resourceGroup}
+                export jdbcDataSourceJNDIName="java:jboss/datasources/JavaEECafeDB"\
+                export virtualNetworkResourceGroupName=${resourceGroup}
+                export jdkVersion=${{ inputs.jdkVersion }}
+                export gracefulShutdownTimeout="${{ env.gracefulShutdownTimeout }}"
+                
+                ## generate parameter file 
+                parameter_template="./${{ env.offerName }}/src/test/scripts/parameters-template.json"
+                parameter_output="./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json"
+                envsubst < "$parameter_template" > "$parameter_output"
 
-                echo "generate parameter file for standalone mode"
-                bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
-                ${{ github.repository_owner }} \
-                ${{ github.sha }} \
-                ${location} \
-                ${vmName} \
-                ${asName} \
-                ${adminUsername} \
-                ${password} \
-                ${numberOfInstances} \
-                ${standaloneOperatingMode} \
-                ${resourceGroup} \
-                ${standaloneBootStorageAccountName} \
-                ${resourceGroup} \
-                ${jbossEAPUserName} \
-                ${jbossEAPPassword} \
-                ${rhsmUserName} \
-                ${rhsmPassword} \
-                ${rhsmPoolEAP} \
-                ${enableDB} \
-                ${databaseType} \
-                java:jboss/datasources/JavaEECafeDB \
-                ${dsConnectionURL} \
-                ${dbUser} \
-                ${dbPassword} \
-                ${{ inputs.jdkVersion }} \
-                ${{ env.gracefulShutdownTimeout }} \
-                ${enablePswlessConnection} \
-                ${dbIdentity}"
             - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
               if: success()
