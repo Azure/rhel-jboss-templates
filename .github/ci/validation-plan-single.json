@@ -8,7 +8,7 @@
           "databaseType": "none",
           "jdkVersion": "eap8-openjdk17",
           "timeWaitBeforeDelete": "0",
-          "configuration_for_ci": {
+          "configurations_for_ci": {
 
           }
         }
