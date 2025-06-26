@@ -4,7 +4,7 @@
       "workflow": "validate-payg-singlenode.yaml",
       "scenarios": [
         {
-          "scenario": "Support existing Bootstrap StorageAccount",
+          "scenario": "Support bringing your own VNET",
           "inputs": {
             "databaseType": "none",
             "jdkVersion": "eap8-openjdk17",
