@@ -53,7 +53,7 @@ sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
 
 if [ "$(echo "$enablePswlessConnection" | tr '[:upper:]' '[:lower:]')" = "true" ]; then
   # Create data source
-  dsConnectionString="$dsConnectionString;authentication=ActiveDirectoryMsi;msiClientId=${uamiClientId}"
+  dsConnectionString="$dsConnectionString;authentication=ActiveDirectoryMSI;msiClientId=${uamiClientId}"
 
   echo "data-source add --driver-name=sqlserver --name=${jdbcDataSourceName} --jndi-name=${jdbcDSJNDIName} --connection-url=${dsConnectionString} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLExceptionSorter" | log
   sudo -u jboss $eapRootPath/bin/jboss-cli.sh --connect --echo-command \
