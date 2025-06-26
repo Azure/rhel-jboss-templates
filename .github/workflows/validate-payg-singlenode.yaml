@@ -142,6 +142,9 @@ jobs:
                   virtualNetworkNewOrExisting=${{ env.virtualNetworkNewOrExisting }}
                   virtualNetworkName=${{ env.virtualNetworkName }}
                   subnetName=${{ env.subnetName }}
+                  echo virtualNetworkNewOrExisting=${virtualNetworkNewOrExisting}
+                  echo virtualNetworkName=${virtualNetworkName}
+                  echo subnetName=${subnetName}
                 else
                   virtualNetworkNewOrExisting="new"
                   virtualNetworkName="VirtualNetwork"
