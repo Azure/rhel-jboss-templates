@@ -178,7 +178,7 @@ jobs:
               run: |
                 databaseType=${{ steps.database-parameters.outputs.databaseType }}
                 enableDB=${{ steps.database-parameters.outputs.enableDB }}
-                enablePasswordless=${{ steps.database-parameters.outputs.enablePasswordless }}
+                enablePswlessConnection=${{ steps.database-parameters.outputs.enablePswlessConnection }}
                 dbUser=${{ steps.database-parameters.outputs.dbUser }}
                 dbPassword=${{ env.dbPassword }}
                 dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
@@ -214,7 +214,7 @@ jobs:
                 ${dbPassword} \
                 ${{ inputs.jdkVersion }} \
                 ${{ env.gracefulShutdownTimeout }} \
-                ${enablePasswordless} \
+                ${enablePswlessConnection} \
                 ${dbIdentity}"
 
             - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
@@ -330,7 +330,7 @@ jobs:
               run: |
                 databaseType=${{ steps.database-parameters.outputs.databaseType }}
                 enableDB=${{ steps.database-parameters.outputs.enableDB }}
-                enablePasswordless=${{ steps.database-parameters.outputs.enablePasswordless }}
+                enablePswlessConnection=${{ steps.database-parameters.outputs.enablePswlessConnection }}
                 dbUser=${{ steps.database-parameters.outputs.dbUser }}
                 dbPassword=${{ env.dbPassword }}
                 dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
@@ -365,7 +365,7 @@ jobs:
                 ${dbPassword} \
                 ${{ inputs.jdkVersion }} \
                 ${{ env.gracefulShutdownTimeout }} \
-                ${enablePasswordless} \
+                ${enablePswlessConnection} \
                 ${dbIdentity}"
 
             - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json

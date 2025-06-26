@@ -20,9 +20,9 @@ outputs:
   enableDB:
     description: "enableDB"
     value: ${{ steps.database-parameters.outputs.enableDB }}
-  enablePasswordless:
-    description: "enablePasswordless"
-    value: ${{ steps.database-parameters.outputs.enablePasswordless }}
+  enablePswlessConnection:
+    description: "enablePswlessConnection"
+    value: ${{ steps.database-parameters.outputs.enablePswlessConnection }}
   databaseType:
     description: "databaseType"
     value: ${{ steps.database-parameters.outputs.databaseType }}
@@ -48,7 +48,7 @@ runs:
         dsConnectionURL=jdbc:postgresql://contoso.postgres.database:5432/testdb
         dbUser=contosoDbUser
         dbPassword=contosoDbPwd
-        enablePasswordless=false
+        enablePswlessConnection=false
         dbIdentity={}
         serverHost=${{ inputs.serverHost }}
         uamiId=${{ inputs.uamiId }}
@@ -59,7 +59,7 @@ runs:
           dbUser=testuser@${{ inputs.dbInstanceName }}
         elif ${{ inputs.databaseType == 'mssqlserver-passwordless' }}; then
           enableDB=true
-          enablePasswordless=true
+          enablePswlessConnection=true
           databaseType=mssqlserver
           dsConnectionURL="jdbc:sqlserver://$serverHost:1433;database=testdb"
           dbUser=testuser@${{ inputs.dbInstanceName }} 
@@ -83,7 +83,7 @@ runs:
           dbUser=testuser
         elif ${{ inputs.databaseType == 'mysql-passwordless(flexible)' }}; then
           enableDB=true
-          enablePasswordless=true
+          enablePswlessConnection=true
           dbUser=$(basename "$uamiId")
           dbIdentity=$(jq -n \
                         --arg uamiId "$uamiId" \
@@ -102,7 +102,7 @@ runs:
           dbUser=testuser
         elif ${{ inputs.databaseType == 'postgresql-passwordless(flexible)' }}; then
           enableDB=true
-          enablePasswordless=true
+          enablePswlessConnection=true
           dbUser=$(basename "$uamiId")
           dbIdentity=$(jq -n \
                         --arg uamiId "$uamiId" \
@@ -117,7 +117,7 @@ runs:
         fi
         
         echo "enableDB=$enableDB" >> "$GITHUB_OUTPUT"
-        echo "enablePasswordless=$enablePasswordless" >> "$GITHUB_OUTPUT"
+        echo "enablePswlessConnection=$enablePswlessConnection" >> "$GITHUB_OUTPUT"
         echo "databaseType=$databaseType" >> "$GITHUB_OUTPUT"
         echo "dsConnectionURL=$dsConnectionURL" >> "$GITHUB_OUTPUT"
         echo "dbUser=$dbUser" >> "$GITHUB_OUTPUT"
