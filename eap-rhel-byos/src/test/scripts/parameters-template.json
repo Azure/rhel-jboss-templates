@@ -30,7 +30,7 @@
             "value": "${virtualNetworkResourceGroupName}"
         },
         "virtualNetworkName": {
-            "value": "{virtualNetworkName}"
+            "value": "${virtualNetworkName}"
         },
         "addressPrefixes": {
             "value": [
