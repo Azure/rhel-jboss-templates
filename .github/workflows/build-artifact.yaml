@@ -58,12 +58,6 @@ jobs:
       - name: Checkout rhel-jboss-templates
         uses: actions/checkout@v4
 
-      - name: output the env var
-        run: |
-          echo "The value env-in-workflow is ${{ env.env-in-workflow }}"
-          echo "The value env-out-workflow2 is ${{ env.env-out-workflow2 }}"
-          echo "The value env-out-workflow3 is ${{ env.env-out-workflow3 }}"
-
       - name: build
         id: build
         uses: ./.github/actions/build
