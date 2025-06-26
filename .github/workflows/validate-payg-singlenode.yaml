@@ -159,7 +159,7 @@ jobs:
                 gracefulShutdownTimeout="${{ env.gracefulShutdownTimeout }}"
                 
                 ## generate parameter file 
-                envsubst < ./${{ env.offerName }}/src/test/parameters-template.json > ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
+                envsubst < ./${{ env.offerName }}/src/test/scripts/parameters-template.json > ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
 
             - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
