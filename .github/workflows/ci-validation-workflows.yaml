@@ -7,7 +7,7 @@ on:
       plan_file:
         description: 'Path to the validation plan file'
         required: true
-        default: '.github/ci/validation-plan-multivm.json'
+        default: '.github/ci/validation-plan-multivm-payg.json'
         type: string
 
 jobs:
