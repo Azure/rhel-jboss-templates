@@ -31,6 +31,7 @@ jobs:
           # Create matrix from plan
           MATRIX=$(jq -c '.validation_scenarios | map({
             workflow: .workflow,
+            run_mode: (.run_mode // "parallel"),
             scenarios: .scenarios
           })' "$PLAN_FILE")
           
@@ -51,104 +52,246 @@ jobs:
         with:
           script: |
             const workflow = '${{ matrix.workflow }}';
+            const runMode = '${{ matrix.run_mode }}';
             const scenarios = ${{ toJSON(matrix.scenarios) }};
             const workflowRuns = [];
             
             console.log(`Starting to trigger workflow: ${workflow}`);
+            console.log(`Run mode: ${runMode}`);
             console.log(`Number of scenarios to process: ${scenarios.length}`);
             console.log(`Current owner: ${context.repo.owner}`);
             console.log(`Current repo: ${context.repo.repo}`);
             
-            for (const scenario of scenarios) {
-              try {
-                const scenarioName = scenario.scenario;
-                const scenarioInputs = scenario.inputs;
-                
-                console.log(`Triggering ${workflow} with scenario "${scenarioName}":`, JSON.stringify(scenarioInputs, null, 2));
-                
-                // The github rest api for workflow dispatch requires all inputs to be strings.
-                // We need to convert any object values to JSON strings.
-                const inputs = Object.fromEntries(
-                  Object.entries(scenarioInputs).map(([key, value]) => {
-                    if (typeof value === 'object' && value !== null) {
-                      return [key, JSON.stringify(value)];
-                    }
-                    return [key, value];
-                  })
-                );
+            if (runMode === 'serial') {
+              console.log('Running scenarios in serial mode');
+              
+              for (const scenario of scenarios) {
+                try {
+                  const scenarioName = scenario.scenario;
+                  const scenarioInputs = scenario.inputs;
+                  
+                  console.log(`Triggering ${workflow} with scenario "${scenarioName}":`, JSON.stringify(scenarioInputs, null, 2));
+                  
+                  // The github rest api for workflow dispatch requires all inputs to be strings.
+                  // We need to convert any object values to JSON strings.
+                  const inputs = Object.fromEntries(
+                    Object.entries(scenarioInputs).map(([key, value]) => {
+                      if (typeof value === 'object' && value !== null) {
+                        return [key, JSON.stringify(value)];
+                      }
+                      return [key, value];
+                    })
+                  );
 
-                // Trigger the workflow
-                const dispatchResponse = await github.rest.actions.createWorkflowDispatch({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  workflow_id: workflow,
-                  ref: context.ref,
-                  inputs: inputs
-                });
-                
-                console.log(`Workflow dispatch response:`, JSON.stringify(dispatchResponse.data, null, 2));
-                
-                // Wait for 5 seconds for the workflow to be created
-                console.log('Waiting 5 seconds for workflow to be created...');
-                await new Promise(resolve => setTimeout(resolve, 5000));
-                
-                // Get the latest workflow run
-                let attempts = 0;
-                const maxAttempts = 5;
-                let run = null;
-                
-                while (attempts < maxAttempts) {
-                  console.log(`Attempt ${attempts + 1} to find workflow run...`);
-                  const runs = await github.rest.actions.listWorkflowRuns({
+                  // Trigger the workflow
+                  const dispatchResponse = await github.rest.actions.createWorkflowDispatch({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
-                    workflow_id: workflow
+                    workflow_id: workflow,
+                    ref: context.ref,
+                    inputs: inputs
                   });
                   
-                  if (runs.data.workflow_runs && runs.data.workflow_runs.length > 0) {
-                    const potentialRun = runs.data.workflow_runs[0];
-                    // Get detailed run information
-                    const runDetails = await github.rest.actions.getWorkflowRun({
+                  console.log(`Workflow dispatch response:`, JSON.stringify(dispatchResponse.data, null, 2));
+                  
+                  // Wait for 5 seconds for the workflow to be created
+                  console.log('Waiting 5 seconds for workflow to be created...');
+                  await new Promise(resolve => setTimeout(resolve, 5000));
+                  
+                  // Get the latest workflow run
+                  let attempts = 0;
+                  const maxAttempts = 5;
+                  let run = null;
+                  
+                  while (attempts < maxAttempts) {
+                    console.log(`Attempt ${attempts + 1} to find workflow run...`);
+                    const runs = await github.rest.actions.listWorkflowRuns({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
-                      run_id: potentialRun.id
+                      workflow_id: workflow
                     });
                     
-                    console.log(`Found workflow run:`, JSON.stringify({
-                      id: runDetails.data.id,
-                      status: runDetails.data.status,
-                      created_at: runDetails.data.created_at,
-                      head_branch: runDetails.data.head_branch,
-                      html_url: runDetails.data.html_url
-                    }, null, 2));
+                    if (runs.data.workflow_runs && runs.data.workflow_runs.length > 0) {
+                      const potentialRun = runs.data.workflow_runs[0];
+                      // Get detailed run information
+                      const runDetails = await github.rest.actions.getWorkflowRun({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        run_id: potentialRun.id
+                      });
+                      
+                      console.log(`Found workflow run:`, JSON.stringify({
+                        id: runDetails.data.id,
+                        status: runDetails.data.status,
+                        created_at: runDetails.data.created_at,
+                        head_branch: runDetails.data.head_branch,
+                        html_url: runDetails.data.html_url
+                      }, null, 2));
+                      
+                      run = runDetails.data;
+                      break;
+                    }
                     
-                    run = runDetails.data;
-                    break;
+                    console.log('No matching workflow run found, waiting 5 seconds...');
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    attempts++;
                   }
                   
-                  console.log('No matching workflow run found, waiting 5 seconds...');
+                  if (!run) {
+                    console.log('Failed to find workflow run after all attempts');
+                    continue;
+                  }
+                  
+                  // Wait for this workflow to complete before triggering the next one
+                  console.log(`Waiting for workflow run ${run.id} to complete...`);
+                  let status = run.status;
+                  let waitAttempts = 0;
+                  const maxWaitAttempts = 60; // 60 minutes maximum wait time
+                  
+                  while (status !== 'completed' && waitAttempts < maxWaitAttempts) {
+                    // Wait for 60 seconds between checks
+                    await new Promise(resolve => setTimeout(resolve, 60000));
+                    
+                    // Get the workflow run status
+                    const runData = await github.rest.actions.getWorkflowRun({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      run_id: run.id
+                    });
+                    
+                    status = runData.data.status;
+                    console.log(`Workflow ${workflow} status: ${status} (wait attempt ${waitAttempts + 1}/${maxWaitAttempts})`);
+                    
+                    // If the workflow is still queued or in progress, continue waiting
+                    if (status === 'queued' || status === 'in_progress') {
+                      waitAttempts++;
+                      continue;
+                    }
+                    
+                    // If the workflow is completed, break the loop
+                    if (status === 'completed') {
+                      console.log(`Workflow ${workflow} completed with conclusion: ${runData.data.conclusion}`);
+                      break;
+                    }
+                    
+                    // If we get here, the status is something unexpected
+                    console.log(`Unexpected status for workflow ${workflow}: ${status}`);
+                    waitAttempts++;
+                  }
+                  
+                  if (status !== 'completed') {
+                    console.log(`Workflow ${workflow} did not complete within the maximum wait time. Moving to next scenario.`);
+                  }
+                  
+                  workflowRuns.push({
+                    workflow: workflow,
+                    scenario: scenarioInputs,
+                    scenarioName: scenarioName,
+                    runId: run.id,
+                    runUrl: run.html_url,
+                    startTime: run.created_at
+                  });
+                  
+                  console.log(`Successfully processed workflow run: ${run.id}`);
+                } catch (error) {
+                  console.error(`Error processing scenario:`, error);
+                  console.error(`Error details:`, JSON.stringify(error, null, 2));
+                }
+              }
+            } else {
+              console.log('Running scenarios in parallel mode');
+              
+              for (const scenario of scenarios) {
+                try {
+                  const scenarioName = scenario.scenario;
+                  const scenarioInputs = scenario.inputs;
+                  
+                  console.log(`Triggering ${workflow} with scenario "${scenarioName}":`, JSON.stringify(scenarioInputs, null, 2));
+                  
+                  // The github rest api for workflow dispatch requires all inputs to be strings.
+                  // We need to convert any object values to JSON strings.
+                  const inputs = Object.fromEntries(
+                    Object.entries(scenarioInputs).map(([key, value]) => {
+                      if (typeof value === 'object' && value !== null) {
+                        return [key, JSON.stringify(value)];
+                      }
+                      return [key, value];
+                    })
+                  );
+
+                  // Trigger the workflow
+                  const dispatchResponse = await github.rest.actions.createWorkflowDispatch({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    workflow_id: workflow,
+                    ref: context.ref,
+                    inputs: inputs
+                  });
+                  
+                  console.log(`Workflow dispatch response:`, JSON.stringify(dispatchResponse.data, null, 2));
+                  
+                  // Wait for 5 seconds for the workflow to be created
+                  console.log('Waiting 5 seconds for workflow to be created...');
                   await new Promise(resolve => setTimeout(resolve, 5000));
-                  attempts++;
+                  
+                  // Get the latest workflow run
+                  let attempts = 0;
+                  const maxAttempts = 5;
+                  let run = null;
+                  
+                  while (attempts < maxAttempts) {
+                    console.log(`Attempt ${attempts + 1} to find workflow run...`);
+                    const runs = await github.rest.actions.listWorkflowRuns({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      workflow_id: workflow
+                    });
+                    
+                    if (runs.data.workflow_runs && runs.data.workflow_runs.length > 0) {
+                      const potentialRun = runs.data.workflow_runs[0];
+                      // Get detailed run information
+                      const runDetails = await github.rest.actions.getWorkflowRun({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        run_id: potentialRun.id
+                      });
+                      
+                      console.log(`Found workflow run:`, JSON.stringify({
+                        id: runDetails.data.id,
+                        status: runDetails.data.status,
+                        created_at: runDetails.data.created_at,
+                        head_branch: runDetails.data.head_branch,
+                        html_url: runDetails.data.html_url
+                      }, null, 2));
+                      
+                      run = runDetails.data;
+                      break;
+                    }
+                    
+                    console.log('No matching workflow run found, waiting 5 seconds...');
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    attempts++;
+                  }
+                  
+                  if (!run) {
+                    console.log('Failed to find workflow run after all attempts');
+                    continue;
+                  }
+                  
+                  workflowRuns.push({
+                    workflow: workflow,
+                    scenario: scenarioInputs,
+                    scenarioName: scenarioName,
+                    runId: run.id,
+                    runUrl: run.html_url,
+                    startTime: run.created_at
+                  });
+                  
+                  console.log(`Successfully tracked workflow run: ${run.id}`);
+                } catch (error) {
+                  console.error(`Error processing scenario:`, error);
+                  console.error(`Error details:`, JSON.stringify(error, null, 2));
                 }
-                
-                if (!run) {
-                  console.log('Failed to find workflow run after all attempts');
-                  continue;
-                }
-                
-                workflowRuns.push({
-                  workflow: workflow,
-                  scenario: scenarioInputs,
-                  scenarioName: scenarioName,
-                  runId: run.id,
-                  runUrl: run.html_url,
-                  startTime: run.created_at
-                });
-                
-                console.log(`Successfully tracked workflow run: ${run.id}`);
-              } catch (error) {
-                console.error(`Error processing scenario:`, error);
-                console.error(`Error details:`, JSON.stringify(error, null, 2));
               }
             }
             
@@ -172,9 +315,36 @@ jobs:
             const results = [];
             
             for (const run of workflowRuns) {
+              console.log(`Processing workflow ${run.workflow} run ${run.runId}...`);
+              
+              // Get the current workflow run status
+              const runData = await github.rest.actions.getWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: run.runId
+              });
+              
+              let status = runData.data.status;
+              
+              // If the workflow is already completed (likely from serial execution), use it directly
+              if (status === 'completed') {
+                console.log(`Workflow ${run.workflow} is already completed with conclusion: ${runData.data.conclusion}`);
+                results.push({
+                  workflow: run.workflow,
+                  scenario: run.scenario,
+                  scenarioName: run.scenarioName,
+                  status: runData.data.conclusion,
+                  runId: run.runId,
+                  runUrl: run.runUrl,
+                  startTime: run.startTime,
+                  endTime: runData.data.updated_at
+                });
+                continue;
+              }
+              
+              // For workflows that are still running (parallel mode), wait for completion
               console.log(`Waiting for workflow ${run.workflow} run ${run.runId}...`);
               
-              let status = 'queued';
               let attempts = 0;
               const maxAttempts = 60; // 60 minutes maximum wait time
               
@@ -229,7 +399,7 @@ jobs:
               }
               
               // Get the final workflow run data
-              const runData = await github.rest.actions.getWorkflowRun({
+              const finalRunData = await github.rest.actions.getWorkflowRun({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 run_id: run.runId
@@ -239,11 +409,11 @@ jobs:
                 workflow: run.workflow,
                 scenario: run.scenario,
                 scenarioName: run.scenarioName,
-                status: runData.data.conclusion,
+                status: finalRunData.data.conclusion,
                 runId: run.runId,
                 runUrl: run.runUrl,
                 startTime: run.startTime,
-                endTime: runData.data.updated_at
+                endTime: finalRunData.data.updated_at
               });
             }
             
@@ -322,6 +492,10 @@ jobs:
             echo "| Workflow | Scenario | Status | Duration | Run URL |"
             echo "|----------|----------|---------|-----------|----------|"
             echo -e "${rows}"
+            echo ""
+            echo "## Execution Notes"
+            echo "- Workflows marked with \`run_mode: serial\` are executed one after another"
+            echo "- Other workflows are executed in parallel"
           } > "${TIMESTAMP}-report.md"
 
       - name: Upload report

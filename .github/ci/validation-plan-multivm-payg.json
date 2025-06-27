@@ -2,6 +2,7 @@
   "validation_scenarios": [
     {
       "workflow": "validate-byos-multivm.yaml",
+      "run_mode": "serial",
       "scenarios": [
         {
           "scenario": "Disable app gateway ingress with EAP 8 and OpenJDK 17",
