@@ -1,5 +1,5 @@
 name: CI Validation Orchestrator
-run-name: Running validation workflows with different combinations
+run-name: Running validation workflows with different scenarios
 
 on:
   workflow_dispatch:
@@ -29,7 +29,7 @@ jobs:
           fi
           
           # Create matrix from plan
-          MATRIX=$(jq -c '.validation_combinations | map({
+          MATRIX=$(jq -c '.validation_scenarios | map({
             workflow: .workflow,
             scenarios: .scenarios
           })' "$PLAN_FILE")

@@ -11,7 +11,7 @@ Each validation plan defines scenarios with descriptive names:
 
 ```json
 {
-  "validation_combinations": [
+  "validation_scenarios": [
     {
       "workflow": "validate-payg-singlenode.yaml",
       "scenarios": [
@@ -63,7 +63,7 @@ with:
 
 ## Structure Requirements
 
-- Each plan must have a `validation_combinations` array
+- Each plan must have a `validation_scenarios` array
 - Each item in the array must have a `workflow` and `scenarios` field
 - Each scenario must have a `scenario` name and an `inputs` object
 - Only the `inputs` object content is passed to the target workflow

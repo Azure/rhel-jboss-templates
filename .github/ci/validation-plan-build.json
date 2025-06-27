@@ -1,5 +1,5 @@
 {
-  "validation_combinations": [
+  "validation_scenarios": [
     {
       "workflow": "build-artifact.yaml",
       "scenarios": [
