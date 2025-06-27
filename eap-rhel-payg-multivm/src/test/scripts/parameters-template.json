@@ -35,8 +35,11 @@
         "virtualNetworkNewOrExisting": {
             "value": "new"
         },
+        "virtualNetworkResourceGroupName": {
+            "value": "${virtualNetworkResourceGroupName}"
+        },
         "virtualNetworkName": {
-            "value": "VirtualNetwork"
+            "value": "${virtualNetworkName}"
         },
         "addressPrefixes": {
             "value": [
@@ -44,19 +47,16 @@
             ]
         },
         "subnetName": {
-            "value": "jboss-subnet"
+            "value": "${subnetName}"
         },
         "subnetPrefix": {
             "value": "10.0.0.0/28"
         },
         "subnetForAppGateway": {
-            "value": "jboss-appgateway-subnet"
+            "value": "${subnetForAppGateway}"
         },
         "subnetPrefixForAppGateway": {
             "value": "10.0.1.0/24"
-        },
-        "virtualNetworkResourceGroupName": {
-            "value": "${virtualNetworkResourceGroupName}"
         },
         "bootDiagnostics": {
             "value": "on"
