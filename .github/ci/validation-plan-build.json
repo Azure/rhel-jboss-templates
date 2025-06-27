@@ -2,6 +2,7 @@
   "validation_scenarios": [
     {
       "workflow": "build-artifact.yaml",
+      "run_mode": "serial",
       "scenarios": [
         {
           "scenario": "EAP RHEL PAYG Multi-VM Build",
