@@ -17,6 +17,24 @@
           }
         }
       ]
+    },
+    {
+      "workflow": "validate-byos-singlenode.yaml",
+      "scenarios": [
+        {
+          "scenario": "Support bringing your own VNET",
+          "inputs": {
+            "databaseType": "none",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0",
+            "configurations_for_ci": {
+              "virtualNetworkNewOrExisting": "existing",
+              "virtualNetworkName": "myvirtualNetworkName",
+              "subnetName": "mySubnet"
+            }
+          }
+        }
+      ]
     }
   ]
 }
