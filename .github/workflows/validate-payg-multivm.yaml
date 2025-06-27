@@ -205,13 +205,13 @@ jobs:
                   export virtualNetworkNewOrExisting=${{ env.virtualNetworkNewOrExisting }}
                   export virtualNetworkResourceGroupName=${resourceGroup}
                   export virtualNetworkName=${{ env.virtualNetworkName }}
-                  export subnetName=${{ env.subnetForCluster }}
+                  export subnetForCluster=${{ env.subnetForCluster }}
                   export subnetForAppGateway=${{ env.subnetForAppGateway }}
                 else
                   export virtualNetworkNewOrExisting="new"
                   export virtualNetworkResourceGroupName=${resourceGroup}
                   export virtualNetworkName="VirtualNetwork"
-                  export subnetName="jboss-subnet-for-cluster"
+                  export subnetForCluster="jboss-subnet-for-cluster"
                   export subnetForAppGateway="jboss-subnet-for-appgateway"
                 fi
                 
@@ -350,13 +350,13 @@ jobs:
                   export virtualNetworkNewOrExisting=${{ env.virtualNetworkNewOrExisting }}
                   export virtualNetworkResourceGroupName=${resourceGroup}
                   export virtualNetworkName=${{ env.virtualNetworkName }}
-                  export subnetName=${{ env.subnetForCluster }}
+                  export subnetForCluster=${{ env.subnetForCluster }}
                   export subnetForAppGateway=${{ env.subnetForAppGateway }}
                 else
                   export virtualNetworkNewOrExisting="new"
                   export virtualNetworkResourceGroupName=${resourceGroup}
                   export virtualNetworkName="VirtualNetwork"
-                  export subnetName="jboss-subnet-for-cluster"
+                  export subnetForCluster="jboss-subnet-for-cluster"
                   export subnetForAppGateway="jboss-subnet-for-appgateway"
                 fi
                 

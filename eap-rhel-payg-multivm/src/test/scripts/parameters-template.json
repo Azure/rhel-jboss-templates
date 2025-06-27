@@ -33,7 +33,7 @@
             "value": "${operatingMode}"
         },
         "virtualNetworkNewOrExisting": {
-            "value": "new"
+            "value": "${virtualNetworkNewOrExisting}"
         },
         "virtualNetworkResourceGroupName": {
             "value": "${virtualNetworkResourceGroupName}"
@@ -47,7 +47,7 @@
             ]
         },
         "subnetName": {
-            "value": "${subnetName}"
+            "value": "${subnetForCluster}"
         },
         "subnetPrefix": {
             "value": "10.0.0.0/28"

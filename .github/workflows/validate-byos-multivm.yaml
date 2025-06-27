@@ -136,6 +136,24 @@ jobs:
                 dbInstanceName: ${{ env.dbInstanceName }}
                 dbPassword: ${{ env.dbPassword }}
 
+            - name: Provision Azure Vnet
+              id: vnet-provision
+              if: ${{ env.virtualNetworkNewOrExisting == 'existing' }}
+              run: |
+                echo "Provisioning Azure Vnet with subnet"
+                az network vnet create \
+                  --resource-group ${{ env.resourceGroup }} \
+                  --name ${{ env.virtualNetworkName }} \
+                  --address-prefix 10.0.0.0/28 \
+                  --subnet-name ${{ env.subnetForCluster }} \
+                  --subnet-prefix 10.0.0.0/29
+
+                az network vnet subnet create \
+                  --resource-group ${{ env.resourceGroup }} \
+                  --name ${{ env.virtualNetworkName }} \
+                  --subnet-name ${{ env.subnetForAppGateway }} \
+                  --address-prefix 10.0.0.0/30
+
     deploy-multivm-domain:
         needs: 
           - preflight
@@ -189,12 +207,26 @@ jobs:
                 export dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
                 export dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
                 
+                ## Prepare parameters for Vnet
+                if [ "${{ env.virtualNetworkNewOrExisting }}" == "existing" ]; then
+                  export virtualNetworkNewOrExisting=${{ env.virtualNetworkNewOrExisting }}
+                  export virtualNetworkResourceGroupName=${resourceGroup}
+                  export virtualNetworkName=${{ env.virtualNetworkName }}
+                  export subnetForCluster=${{ env.subnetForCluster }}
+                  export subnetForAppGateway=${{ env.subnetForAppGateway }}
+                else
+                  export virtualNetworkNewOrExisting="new"
+                  export virtualNetworkResourceGroupName=${resourceGroup}
+                  export virtualNetworkName="VirtualNetwork"
+                  export subnetForCluster="jboss-subnet-for-cluster"
+                  export subnetForAppGateway="jboss-subnet-for-appgateway"
+                fi
+                
                 ## Prepare other parameters                
                 export gitUserName=${{ github.repository_owner }}
                 export testbranchName=${{ github.sha }}
                 export storageAccountResourceGroupName=${resourceGroup}
                 export jdbcDataSourceJNDIName="java:jboss/datasources/JavaEECafeDB"\
-                export virtualNetworkResourceGroupName=${resourceGroup}
                 export jdkVersion=${{ inputs.jdkVersion }}
                 export gracefulShutdownTimeout="${{ env.gracefulShutdownTimeout }}"
                 
@@ -327,12 +359,26 @@ jobs:
                 export dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
                 export dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
                 
+                ## Prepare parameters for Vnet
+                if [ "${{ env.virtualNetworkNewOrExisting }}" == "existing" ]; then
+                  export virtualNetworkNewOrExisting=${{ env.virtualNetworkNewOrExisting }}
+                  export virtualNetworkResourceGroupName=${resourceGroup}
+                  export virtualNetworkName=${{ env.virtualNetworkName }}
+                  export subnetForCluster=${{ env.subnetForCluster }}
+                  export subnetForAppGateway=${{ env.subnetForAppGateway }}
+                else
+                  export virtualNetworkNewOrExisting="new"
+                  export virtualNetworkResourceGroupName=${resourceGroup}
+                  export virtualNetworkName="VirtualNetwork"
+                  export subnetForCluster="jboss-subnet-for-cluster"
+                  export subnetForAppGateway="jboss-subnet-for-appgateway"
+                fi
+                
                 ## Prepare other parameters
                 export gitUserName=${{ github.repository_owner }}
                 export testbranchName=${{ github.sha }}
                 export storageAccountResourceGroupName=${resourceGroup}
                 export jdbcDataSourceJNDIName="java:jboss/datasources/JavaEECafeDB"\
-                export virtualNetworkResourceGroupName=${resourceGroup}
                 export jdkVersion=${{ inputs.jdkVersion }}
                 export gracefulShutdownTimeout="${{ env.gracefulShutdownTimeout }}"
 
