@@ -31,7 +31,7 @@
       ]
     },
     {
-      "workflow": "validate-pagy-multivm.yaml",
+      "workflow": "validate-payg-multivm.yaml",
       "scenarios": [
         {
           "scenario": "Disable app gateway ingress with EAP 8 and OpenJDK 17",
