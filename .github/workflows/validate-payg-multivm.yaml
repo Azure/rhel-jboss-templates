@@ -276,7 +276,7 @@ jobs:
                 curl --digest -L -D - http://${publicip}:9990/management --header "Content-Type: application/json" -u ${jbossEAPUserName}:${jbossEAPPassword} -d "{\"operation\" : \"add\", \"address\" : {\"deployment\" : \"javaee-cafe.war\"}, \"content\" : [{\"url\" : \"${appbloburl}\"}],\"json.pretty\":1}"
                 curl --digest -L -D - http://${publicip}:9990/management --header "Content-Type: application/json" -u ${jbossEAPUserName}:${jbossEAPPassword} -d "{\"operation\" : \"add\", \"address\" : {\"server-group\" : \"main-server-group\",\"deployment\":\"javaee-cafe.war\"},\"json.pretty\":1}"
                 curl --digest -L -D - http://${publicip}:9990/management --header "Content-Type: application/json" -u ${jbossEAPUserName}:${jbossEAPPassword} -d "{\"operation\" : \"deploy\", \"address\" : {\"server-group\" : \"main-server-group\",\"deployment\":\"javaee-cafe.war\"},\"json.pretty\":1}"
-            - name: Query public ip of Application Gateway
+            - name: Query external public ip to access applications
               id: query_external_public_ip
               uses: azure/cli@v2
               with:
@@ -289,7 +289,10 @@ jobs:
                       echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
                   else
                       echo "Application Gateway Ingress is disabled"
-                  
+                      # Querying public ip address of the first application vm
+                      echo "Querying public ip address of the first application vm"
+                      publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?ends_with(name, '1-pubIp')].ipAddress" -o tsv)
+                      echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"              
                   fi
             - name: Verify cafe application is accessible
               uses: ./.github/actions/url-health-check
@@ -397,7 +400,7 @@ jobs:
                   --name ${{ env.offerName }}-${{ github.job }} \
                   --parameters @./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
                   --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
-            - name: Query public ip of Application Gateway
+            - name: Query external public ip to access applications
               id: query_external_public_ip
               uses: azure/cli@v2
               with:
@@ -409,8 +412,11 @@ jobs:
                     publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
                     echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
                   else
-                    echo "Application Gateway Ingress is disabled"
-                  
+                      echo "Application Gateway Ingress is disabled"
+                      # Querying public ip address of the first application vm
+                      echo "Querying public ip address of the first application vm"
+                      publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?ends_with(name, '1-pubIp')].ipAddress" -o tsv)
+                      echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"              
                   fi
             - name: Verify eap-session-replication application is accessible
               uses: ./.github/actions/url-health-check
