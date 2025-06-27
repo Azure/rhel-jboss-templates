@@ -71,6 +71,7 @@ env:
     scriptLocation: https://raw.githubusercontent.com/${{ secrets.USER_NAME }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
     offerName: "eap-rhel-payg-multivm"
     gracefulShutdownTimeout: "-1"
+    enableAppGWIngress: true
 
 jobs:
     preflight:
@@ -276,25 +277,31 @@ jobs:
                 curl --digest -L -D - http://${publicip}:9990/management --header "Content-Type: application/json" -u ${jbossEAPUserName}:${jbossEAPPassword} -d "{\"operation\" : \"add\", \"address\" : {\"server-group\" : \"main-server-group\",\"deployment\":\"javaee-cafe.war\"},\"json.pretty\":1}"
                 curl --digest -L -D - http://${publicip}:9990/management --header "Content-Type: application/json" -u ${jbossEAPUserName}:${jbossEAPPassword} -d "{\"operation\" : \"deploy\", \"address\" : {\"server-group\" : \"main-server-group\",\"deployment\":\"javaee-cafe.war\"},\"json.pretty\":1}"
             - name: Query public ip of Application Gateway
-              id: query_app_gateway_public_ip
+              id: query_external_public_ip
               uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
-                  # query public ip address of Application Gateway
-                  publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)                  
-                  echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
+                  if [ "${{ env.enableAppGWIngress }}" == "true" ]; then
+                      # query public ip address of Application Gateway
+                      echo "Application Gateway Ingress is enabled"
+                      publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
+                      echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "Application Gateway Ingress is disabled"
+                  
+                  fi
             - name: Verify cafe application is accessible
               uses: ./.github/actions/url-health-check
               with:
-                appEndpoint: "http://${{steps.query_app_gateway_public_ip.outputs.publicip}}/javaee-cafe/"
+                appEndpoint: "http://${{steps.query_external_public_ip.outputs.publicip}}/javaee-cafe/"
                 maxRetries: 10
                 retryInterval: 15
 
             - name: Verify eap-session-replication application is accessible
               uses: ./.github/actions/url-health-check
               with:
-                appEndpoint: "http://${{steps.query_app_gateway_public_ip.outputs.publicip}}/eap-session-replication/"
+                appEndpoint: "http://${{steps.query_external_public_ip.outputs.publicip}}/eap-session-replication/"
                 maxRetries: 10
                 retryInterval: 15
 
@@ -391,19 +398,24 @@ jobs:
                   --parameters @./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
                   --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
             - name: Query public ip of Application Gateway
-              id: query_app_gateway_public_ip
+              id: query_external_public_ip
               uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
+                  if [ "${{ env.enableAppGWIngress }}" == "true" ]; then
                     # query public ip address of Application Gateway
+                    echo "Application Gateway Ingress is enabled"
                     publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
-                    
                     echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
+                  else
+                    echo "Application Gateway Ingress is disabled"
+                  
+                  fi
             - name: Verify eap-session-replication application is accessible
               uses: ./.github/actions/url-health-check
               with:
-                appEndpoint: "http://${{steps.query_app_gateway_public_ip.outputs.publicip}}/eap-session-replication/"
+                appEndpoint: "http://${{steps.query_external_public_ip.outputs.publicip}}/eap-session-replication/"
                 maxRetries: 10
                 retryInterval: 15
 

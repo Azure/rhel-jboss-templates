@@ -83,7 +83,7 @@
             "value": "${jbossEAPPassword}"
         },
         "enableAppGWIngress": {
-            "value": true
+            "value": ${enableAppGWIngress}
         },
         "enableDB": {
             "value": ${enableDB}

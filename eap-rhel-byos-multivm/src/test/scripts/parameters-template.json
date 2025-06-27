@@ -95,7 +95,7 @@
             "value": "${rhsmPoolRHEL}"
         },
         "enableAppGWIngress": {
-            "value": true
+            "value": ${enableAppGWIngress}
         },
         "enableDB": {
             "value": ${enableDB}
