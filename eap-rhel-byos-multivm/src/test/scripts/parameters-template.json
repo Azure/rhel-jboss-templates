@@ -1,12 +1,5 @@
-#!/usr/bin/env bash
-set -Eeuo pipefail
-
-#read arguments from stdin
-read parametersPath gitUserName testbranchName location vmName asName adminUsername password numberOfInstances operatingMode virtualNetworkResourceGroupName bootStorageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword rhsmUserName rhsmPassword rhsmPoolEAP rhsmPoolRHEL enableDB databaseType jdbcDataSourceJNDIName dsConnectionURL dbUser dbPassword jdkVersion gracefulShutdownTimeout enablePswlessConnection dbIdentity
- 
-cat <<EOF > ${parametersPath}
 {
-    "\$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "artifactsLocation": {
@@ -37,10 +30,13 @@ cat <<EOF > ${parametersPath}
             "value": ${numberOfInstances}
         },
         "virtualNetworkNewOrExisting": {
-            "value": "new"
+            "value": "${virtualNetworkNewOrExisting}"
+        },
+        "virtualNetworkResourceGroupName": {
+            "value": "${virtualNetworkResourceGroupName}"
         },
         "virtualNetworkName": {
-            "value": "VirtualNetwork"
+            "value": "${virtualNetworkName}"
         },
         "addressPrefixes": {
             "value": [
@@ -48,19 +44,16 @@ cat <<EOF > ${parametersPath}
             ]
         },
         "subnetName": {
-            "value": "jboss-subnet"
+            "value": "${subnetForCluster}"
         },
         "subnetPrefix": {
             "value": "10.0.0.0/28"
         },
         "subnetForAppGateway": {
-            "value": "jboss-appgateway-subnet"
+            "value": "${subnetForAppGateway}"
         },
         "subnetPrefixForAppGateway": {
             "value": "10.0.1.0/24"
-        },
-        "virtualNetworkResourceGroupName": {
-            "value": "${virtualNetworkResourceGroupName}"
         },
         "bootDiagnostics": {
             "value": "on"
@@ -102,7 +95,7 @@ cat <<EOF > ${parametersPath}
             "value": "${rhsmPoolRHEL}"
         },
         "enableAppGWIngress": {
-            "value": true
+            "value": ${enableAppGWIngress}
         },
         "enableDB": {
             "value": ${enableDB}
@@ -136,4 +129,3 @@ cat <<EOF > ${parametersPath}
         }
     }
 }
-EOF
