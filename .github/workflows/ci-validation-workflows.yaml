@@ -1,4 +1,4 @@
-name: CI Validation Orchestrator
+name: CI Validation Workflows
 run-name: Running validation workflows with different scenarios
 
 on:
