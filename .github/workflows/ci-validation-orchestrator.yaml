@@ -176,12 +176,12 @@ jobs:
               
               let status = 'queued';
               let attempts = 0;
-              const maxAttempts = 40; // 20 minutes maximum wait time
+              const maxAttempts = 60; // 60 minutes maximum wait time
               
               while (status !== 'completed' && attempts < maxAttempts) {
                 try {
-                  // Wait for 30 seconds between checks
-                  await new Promise(resolve => setTimeout(resolve, 30000));
+                  // Wait for 60 seconds between checks
+                  await new Promise(resolve => setTimeout(resolve, 60000));
                   
                   // Get the workflow run status
                   const runData = await github.rest.actions.getWorkflowRun({
