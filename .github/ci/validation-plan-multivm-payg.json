@@ -16,6 +16,14 @@
           }
         },
         {
+          "scenario": "Support passwordless for MYSQL",
+          "inputs": {
+            "databaseType": "mysql-passwordless(flexible)",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
+        },
+        {
           "scenario": "Bring your own VNET with EAP 8 and OpenJDK 17",
           "inputs": {
             "databaseType": "none",

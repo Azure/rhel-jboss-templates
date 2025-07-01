@@ -86,11 +86,9 @@ You can control how scenarios within a workflow are executed by using the option
 
 ## Available Files
 
-- `validation-plan.json`: Complete validation plan with multiple scenarios
-- `validation-plan-build.json`: Build-only validation plan
 - `validation-plan-single.json`: Single validation scenario example
 - `validation-plan-multivm-payg.json`: Multi-VM PAYG validation plan with serial execution mode
-- `validation-empty.json`: Empty template
+- `validation-plan-multivm-byos.json`: Multi-VM BYOS validation plan with serial execution mode
 
 ## Usage
 

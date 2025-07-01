@@ -15,6 +15,22 @@
               "subnetName": "mySubnet"
             }
           }
+        },
+        {
+          "scenario": "Support passwordless for MYSQL",
+          "inputs": {
+            "databaseType": "mysql-passwordless(flexible)",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
+        },
+        {
+          "scenario": "Support database for PostgreSQL",
+          "inputs": {
+            "databaseType": "postgresql(flexible)",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
         }
       ]
     },
@@ -32,6 +48,22 @@
               "virtualNetworkName": "myvirtualNetworkName",
               "subnetName": "mySubnet"
             }
+          }
+        },
+        {
+          "scenario": "Support passwordless for MYSQL",
+          "inputs": {
+            "databaseType": "mysql-passwordless(flexible)",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
+        },
+        {
+          "scenario": "Support database for PostgreSQL",
+          "inputs": {
+            "databaseType": "postgresql(flexible)",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0"
           }
         }
       ]
