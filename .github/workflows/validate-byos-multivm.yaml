@@ -113,6 +113,7 @@ jobs:
     deploy-resources:
         needs: create-all-resource-groups
         runs-on: ubuntu-latest
+        env: ${{ fromJson(inputs.configurations_for_ci) }}
         outputs:
           uamiId: ${{ steps.database-provision.outputs.uamiId }}
           serverHost: ${{ steps.database-provision.outputs.serverHost }}
