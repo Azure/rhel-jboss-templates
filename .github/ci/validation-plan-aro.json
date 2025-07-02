@@ -1,0 +1,18 @@
+{
+  "validation_scenarios": [
+    {
+      "workflow": "validate-eap-aro.yaml",
+      "scenarios": [
+        {
+          "scenario": "Deploy with Existing ARO Cluster",
+          "inputs": {
+            "configurations_for_ci": {
+              "createAROClusterForCI": "true",
+              "clusterNameForCI": "my-existing-aro-cluster"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

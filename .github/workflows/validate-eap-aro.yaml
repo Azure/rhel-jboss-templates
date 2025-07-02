@@ -85,15 +85,15 @@ jobs:
         with:
           creds: ${{ env.azureCredentials }}
       - name: Provision ARO Cluster as an existing cluster for deployment
-        if: ${{ env.createCluster == 'false' }}
+        if: ${{ env.createAROClusterForCI == 'true' }}
         run: |
-          echo "Provisioning an ARO cluster: ${{ env.clusterName }} as an existing cluster for deployment"
+          echo "Provisioning an ARO cluster: ${{ env.clusterNameForCI }} as an existing cluster for deployment"
           VIRTUALNETWORK=vnet-for-existing-aro-cluster
           az group create --name ${{ env.resourceGroup }} --location ${{ env.location }}
           az network vnet create --resource-group ${{ env.resourceGroup }} --name $VIRTUALNETWORK --address-prefixes 10.0.0.0/22
           az network vnet subnet create --resource-group ${{ env.resourceGroup }} --vnet-name $VIRTUALNETWORK --name master-subnet --address-prefixes 10.0.0.0/23
           az network vnet subnet create --resource-group ${{ env.resourceGroup }} --vnet-name $VIRTUALNETWORK --name worker-subnet --address-prefixes 10.0.2.0/23
-          az aro create --resource-group ${{ env.resourceGroup }} --name ${{ env.clusterName }} --vnet $VIRTUALNETWORK --master-subnet master-subnet --worker-subnet worker-subnet
+          az aro create --resource-group ${{ env.resourceGroup }} --name ${{ env.clusterNameForCI }} --vnet $VIRTUALNETWORK --master-subnet master-subnet --worker-subnet worker-subnet
 
       - name: Prepare parameter file
         id: prepare-parameter-file
@@ -127,10 +127,10 @@ jobs:
               export clusterRGName="${{ github.event.inputs.clusterRGName }}"
           fi
           
-          if ${{ env.createCluster == 'false' }}; then
+          if ${{ env.createAROClusterForCI == 'true' }}; then
             echo "Deploy with an existing ARO cluster"
             export createCluster=false
-            export clusterName=${{ env.clusterName }}
+            export clusterName=${{ env.clusterNameForCI }}
             export clusterRGName=${{ env.resourceGroup }}
           else
             echo "Deploy with a new ARO cluster"
