@@ -1,10 +1,10 @@
 name: CI Validation Workflows
-run-name: Running validation workflows with different scenarios
+run-name: Running validation workflows with plan:${{ inputs.ci_plan }}
 
 on:
   workflow_dispatch:
     inputs:
-      plan_file:
+      ci_plan:
         description: 'Path to the validation plan file'
         required: true
         type: choice
@@ -26,7 +26,7 @@ jobs:
       - name: Read validation plan
         id: set-matrix
         run: |
-          case "${{ inputs.plan_file }}" in
+          case "${{ inputs.ci_plan }}" in
             single-plan)
               PLAN_FILE=".github/ci/validation-plan-single.json"
               ;;
