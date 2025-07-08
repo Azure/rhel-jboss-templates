@@ -2,6 +2,8 @@ name: CI Validation Multi-VM PAYG
 run-name: Running validation workflows with plan:${{ inputs.ci_plan }}
 
 on:
+  schedule:
+    - cron: '0 12 1 * *'  # Runs on the 1st of every month at 12:00 PM (noon) UTC
   workflow_dispatch:
     inputs:
       ci_plan:
@@ -26,5 +28,5 @@ jobs:
         id: ci-validation
         uses: ./.github/actions/ci
         with:
-          ci_plan: ${{ inputs.ci_plan }}
+          ci_plan: ${{ inputs.ci_plan || 'multivm-payg-plan' }}
           github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -2,6 +2,8 @@ name: CI Validation Single VMs
 run-name: Running validation workflows with plan:${{ inputs.ci_plan }}
 
 on:
+  schedule:
+    - cron: '0 0 1 * *'  # Runs on the 1st of every month at midnight UTC
   workflow_dispatch:
     inputs:
       ci_plan:
@@ -26,5 +28,5 @@ jobs:
         id: ci-validation
         uses: ./.github/actions/ci
         with:
-          ci_plan: ${{ inputs.ci_plan }}
+          ci_plan: ${{ inputs.ci_plan || 'single-plan' }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
