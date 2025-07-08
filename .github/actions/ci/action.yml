@@ -32,6 +32,9 @@ runs:
           single-plan)
             PLAN_FILE=".github/ci/validation-plan-single.json"
             ;;
+          build)
+            PLAN_FILE=".github/ci/validation-plan-build.json"
+            ;;
           multivm-byos-plan)
             PLAN_FILE=".github/ci/validation-plan-multivm-byos.json"
             ;;

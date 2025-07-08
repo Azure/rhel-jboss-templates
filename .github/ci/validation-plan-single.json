@@ -4,6 +4,27 @@
       "workflow": "validate-payg-singlenode.yaml",
       "scenarios": [
         {
+          "scenario": "Support bringing your own VNET",
+          "inputs": {
+            "databaseType": "none",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0",
+            "configurations_for_ci": {
+              "virtualNetworkNewOrExisting": "existing",
+              "virtualNetworkName": "myvirtualNetworkName",
+              "subnetName": "mySubnet"
+            }
+          }
+        },
+        {
+          "scenario": "Support passwordless for MYSQL",
+          "inputs": {
+            "databaseType": "mysql-passwordless(flexible)",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
+        },
+        {
           "scenario": "Support database for PostgreSQL",
           "inputs": {
             "databaseType": "postgresql(flexible)",
@@ -16,6 +37,27 @@
     {
       "workflow": "validate-byos-singlenode.yaml",
       "scenarios": [
+        {
+          "scenario": "Support bringing your own VNET",
+          "inputs": {
+            "databaseType": "none",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0",
+            "configurations_for_ci": {
+              "virtualNetworkNewOrExisting": "existing",
+              "virtualNetworkName": "myvirtualNetworkName",
+              "subnetName": "mySubnet"
+            }
+          }
+        },
+        {
+          "scenario": "Support passwordless for MYSQL",
+          "inputs": {
+            "databaseType": "mysql-passwordless(flexible)",
+            "jdkVersion": "eap8-openjdk17",
+            "timeWaitBeforeDelete": "0"
+          }
+        },
         {
           "scenario": "Support database for PostgreSQL",
           "inputs": {

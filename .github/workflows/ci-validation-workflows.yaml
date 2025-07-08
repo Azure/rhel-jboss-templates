@@ -12,7 +12,8 @@ on:
           - single-plan
           - multivm-byos-plan
           - multivm-payg-plan
-        default: single-plan
+          - build
+        default: build
 
 jobs:
   execute-validation:
