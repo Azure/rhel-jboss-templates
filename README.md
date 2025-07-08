@@ -2,7 +2,7 @@
 
 This repo contains JBoss EAP Marketplace templates for use on Azure Marketplace. Each subdirectory corresponds to one of the offered plans.
 
-## CI
+## CI Status
 [![CI Validation Build](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/ci-validation-build.yaml/badge.svg)](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/ci-validation-build.yaml)
 
 [![CI Validation Multi-VM BYOS](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/ci-validation-multivm-byos.yaml/badge.svg)](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/ci-validation-multivm-byos.yaml)
