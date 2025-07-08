@@ -1,4 +1,4 @@
-name: CI Validation Workflows
+name: CI Validation Single VMs
 run-name: Running validation workflows with plan:${{ inputs.ci_plan }}
 
 on:
