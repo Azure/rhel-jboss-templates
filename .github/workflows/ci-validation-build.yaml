@@ -1,0 +1,30 @@
+name: CI Validation Workflows
+run-name: Running validation workflows with plan:${{ inputs.ci_plan }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      ci_plan:
+        description: 'Path to the validation plan file'
+        required: true
+        type: choice
+        options:
+          - build
+        default: build
+
+jobs:
+  execute-validation:
+    runs-on: ubuntu-latest
+    outputs:
+      results: ${{ steps.ci-validation.outputs.results }}
+      report_url: ${{ steps.ci-validation.outputs.report_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Execute CI Validation
+        id: ci-validation
+        uses: ./.github/actions/ci
+        with:
+          ci_plan: ${{ inputs.ci_plan }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}

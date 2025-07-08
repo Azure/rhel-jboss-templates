@@ -10,10 +10,7 @@ on:
         type: choice
         options:
           - single-plan
-          - multivm-byos-plan
-          - multivm-payg-plan
-          - build
-        default: build
+        default: single-plan
 
 jobs:
   execute-validation:
