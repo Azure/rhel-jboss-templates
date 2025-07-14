@@ -582,3 +582,70 @@ runs:
         echo "::notice::📊 Validation Report URL: $REPORT_URL"
         echo "::notice::📊 Raw Report URL: $RAW_REPORT_URL"
         echo "report_url=$REPORT_URL" >> $GITHUB_OUTPUT
+    
+    - name: Check workflow results and fail if any failed
+      shell: bash
+      run: |
+        RESULTS='${{ steps.collect-results.outputs.results }}'
+        
+        # Parse results and check for failures
+        failed_workflows=()
+        timeout_workflows=()
+        total=0
+        success=0
+        failure=0
+        timeout=0
+        
+        for row in $(echo "$RESULTS" | jq -r '.[] | @base64'); do
+          _jq() {
+            echo ${row} | base64 --decode | jq -r "$1"
+          }
+          workflow=$(_jq '.workflow')
+          scenario_name=$(_jq '.scenarioName // empty')
+          scenario=$(_jq '.scenario | if type=="object" then to_entries | map("\(.key): \(.value)") | join(", ") else tostring end')
+          status=$(_jq '.status')
+          runUrl=$(_jq '.runUrl')
+          
+          # Use scenario name if available, otherwise use the scenario details
+          display_scenario="${scenario_name:-${scenario}}"
+          
+          # Count status and track failed workflows
+          total=$((total+1))
+          if [ "$status" = "success" ]; then
+            success=$((success+1))
+          elif [ "$status" = "failure" ]; then
+            failure=$((failure+1))
+            failed_workflows+=("${workflow} (${display_scenario}): ${runUrl}")
+          elif [ "$status" = "timeout" ]; then
+            timeout=$((timeout+1))
+            timeout_workflows+=("${workflow} (${display_scenario}): ${runUrl}")
+          fi
+        done
+        
+        # Display summary
+        echo "::notice::📊 Workflow Execution Summary:"
+        echo "::notice::  Total: ${total}, Success: ${success}, Failed: ${failure}, Timeout: ${timeout}"
+        
+        # If there are failed workflows, display them and fail the CI
+        if [ ${#failed_workflows[@]} -gt 0 ]; then
+          echo "::error::❌ The following workflows failed:"
+          for failed in "${failed_workflows[@]}"; do
+            echo "::error::  - ${failed}"
+          done
+        fi
+        
+        # If there are timeout workflows, display them and fail the CI
+        if [ ${#timeout_workflows[@]} -gt 0 ]; then
+          echo "::error::⏰ The following workflows timed out:"
+          for timeout in "${timeout_workflows[@]}"; do
+            echo "::error::  - ${timeout}"
+          done
+        fi
+        
+        # Fail the CI workflow if any workflow failed or timed out
+        if [ ${#failed_workflows[@]} -gt 0 ] || [ ${#timeout_workflows[@]} -gt 0 ]; then
+          echo "::error::❌ CI workflow failed because ${#failed_workflows[@]} workflow(s) failed and ${#timeout_workflows[@]} workflow(s) timed out."
+          exit 1
+        fi
+        
+        echo "::notice::✅ All workflows completed successfully!"
