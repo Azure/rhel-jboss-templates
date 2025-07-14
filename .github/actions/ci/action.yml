@@ -454,6 +454,8 @@ runs:
         success=0
         failure=0
         timeout=0
+        cancelled=0
+        other_failed=0
         for row in $(echo "$RESULTS" | jq -r '.[] | @base64'); do
           _jq() {
             echo ${row} | base64 --decode | jq -r "$1"
@@ -483,6 +485,11 @@ runs:
             failure=$((failure+1))
           elif [ "$status" = "timeout" ]; then
             timeout=$((timeout+1))
+          elif [ "$status" = "cancelled" ]; then
+            cancelled=$((cancelled+1))
+          else
+            # Any other non-success status
+            other_failed=$((other_failed+1))
           fi
           
           # Create table row
@@ -498,6 +505,8 @@ runs:
           echo "- Successful: ${success}"
           echo "- Failed: ${failure}"
           echo "- Timed Out: ${timeout}"
+          echo "- Cancelled: ${cancelled}"
+          echo "- Other Failed: ${other_failed}"
           echo ""
           echo "## Detailed Results"
           echo ""
