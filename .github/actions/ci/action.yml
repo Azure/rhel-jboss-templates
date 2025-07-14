@@ -28,14 +28,18 @@ runs:
       shell: bash
       run: |
         PLAN_FILE="${{ inputs.ci_file }}"
+        echo "Looking for plan file: $PLAN_FILE"
         
         if [ ! -f "$PLAN_FILE" ]; then
           echo "Error: Plan file $PLAN_FILE not found"
+          echo "Current working directory: $(pwd)"
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          echo "Listing current directory:"
+          ls -la
           exit 1
         fi
-          echo "Error: Plan file $PLAN_FILE not found"
-          exit 1
-        fi
+        
+        echo "Successfully found plan file: $PLAN_FILE"
         
         # Create matrix from plan
         MATRIX=$(jq -c '.validation_scenarios | map({
