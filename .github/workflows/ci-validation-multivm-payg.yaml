@@ -29,7 +29,7 @@ jobs:
         run: |
           case "${{ inputs.ci_plan || 'multivm-payg-plan' }}" in
             multivm-payg-plan)
-              CI_FILE="${GITHUB_WORKSPACE}/.github/ci/validation-plan-multivm-payg.json"
+              CI_FILE=".github/ci/validation-plan-multivm-payg.json"
               ;;
             *)
               echo "Unknown plan option: ${{ inputs.ci_plan }}"
@@ -37,7 +37,6 @@ jobs:
               ;;
           esac
           echo "ci_file=$CI_FILE" >> $GITHUB_OUTPUT
-          echo "Set CI_FILE to: $CI_FILE"
       
       - name: Execute CI Validation
         id: ci-validation
