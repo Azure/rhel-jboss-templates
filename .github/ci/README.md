@@ -1,6 +1,15 @@
 # CI Validation Configuration
 
-This directory contains JSON configuration files that define validation scenarios for the CI workflow orchestrator.
+This directory contains JSON configuration files that define validation scenarios for the CI workflow orchestrator. The validation system uses a reusable GitHub Action located at `.github/actions/ci/action.yml` to execute these plans.
+
+## System Architecture
+
+The CI validation system consists of:
+
+1. **Validation Plan Files** (this directory): JSON files defining what to test
+2. **CI Action** (`/.github/actions/ci/action.yml`): Reusable composite action that executes the plans
+3. **CI Workflows** (`/.github/workflows/ci-validation-*.yaml`): Workflows that trigger the action with specific plans
+4. **Target Workflows** (`/.github/workflows/validate-*.yaml`): The actual validation workflows that get executed
 
 ## Configuration Structure
 
@@ -67,13 +76,21 @@ You can control how scenarios within a workflow are executed by using the option
 
 ## How It Works
 
-1. **Orchestrator Workflow**: The `ci-validation-workflows.yaml` workflow reads the plan file specified in the workflow dispatch input.
+1. **CI Workflows**: The `ci-validation-*.yaml` workflows are triggered (manually or scheduled)
 
-2. **Scenario Processing**: Each scenario in the `scenarios` array contains a descriptive `scenario` name and an `inputs` object.
+2. **Plan File Mapping**: Each CI workflow maps its input to a specific validation plan file in this directory
 
-3. **Execution Mode**: The optional `run_mode` property controls whether scenarios are executed serially or in parallel.
+3. **Action Execution**: The workflow calls the CI action (`/.github/actions/ci/action.yml`) with the plan file path
 
-4. **Input Extraction**: Only the content of the `inputs` object is passed to the target workflow. The `scenario` name is used for logging and reporting purposes only.
+4. **Plan Processing**: The action reads the validation plan and processes each scenario
+
+5. **Execution Mode**: The optional `run_mode` property controls whether scenarios are executed serially or in parallel
+
+6. **Workflow Triggering**: The action triggers the specified target workflows with the scenario inputs
+
+7. **Monitoring**: The action monitors workflow execution and waits for completion
+
+8. **Reporting**: Results are compiled into comprehensive reports and stored in the `ci` branch
 
 ## Benefits of the Scenarios Structure
 
@@ -86,17 +103,51 @@ You can control how scenarios within a workflow are executed by using the option
 
 ## Available Files
 
-- `validation-plan-single.json`: Single validation scenario example
+- `validation-plan-single.json`: Single VM validation scenarios
+- `validation-plan-build.json`: Build-only validation scenarios  
 - `validation-plan-multivm-payg.json`: Multi-VM PAYG validation plan with serial execution mode
-- `validation-plan-multivm-byos.json`: Multi-VM BYOS validation plan with serial execution mode
+- `validation-plan-multivm-byos.json`: Multi-VM BYOS validation plan
 
-## Usage
+## CI Action Usage
 
-To use a validation plan, specify the file path when triggering the CI validation workflow:
+The validation plans are consumed by the CI action located at `/.github/actions/ci/action.yml`. 
+
+### Action Inputs
+
+| Input | Description | Required |
+|-------|-------------|----------|
+| `ci_file` | Path to the validation plan file | Yes |
+| `github_token` | GitHub token for API access | Yes |
+
+### Action Outputs
+
+| Output | Description |
+|--------|-------------|
+| `results` | JSON string containing the results of all workflow executions |
+| `report_timestamp` | Timestamp of the generated report |
+| `report_url` | URL to the generated report on the CI branch |
+
+### Example Usage in CI Workflows
 
 ```yaml
-with:
-  plan_file: '.github/ci/validation-plan-multivm-payg.json'
+- name: Set validation plan file
+  id: set-plan-file
+  run: |
+    case "${{ inputs.ci_plan }}" in
+      single-plan)
+        CI_FILE=".github/ci/validation-plan-single.json"
+        ;;
+      multivm-payg-plan)
+        CI_FILE=".github/ci/validation-plan-multivm-payg.json"
+        ;;
+    esac
+    echo "ci_file=$CI_FILE" >> $GITHUB_OUTPUT
+
+- name: Execute CI Validation
+  uses: ./.github/actions/ci
+  with:
+    ci_file: ${{ steps.set-plan-file.outputs.ci_file }}
+    github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ## Structure Requirements
@@ -120,3 +171,51 @@ with:
 - Longer overall execution time but better resource management
 - Includes waiting and monitoring between scenarios
 - Recommended for resource-intensive workloads or debugging
+
+## Report Generation
+
+The CI action generates comprehensive reports that include:
+
+- **Summary Statistics**: Total workflows, success/failure counts including cancelled and timeout scenarios
+- **Detailed Results**: Individual workflow results with duration and status  
+- **Execution URLs**: Direct links to workflow runs
+- **Execution Notes**: Information about serial vs parallel execution
+
+Reports are:
+1. Uploaded as GitHub Actions artifacts
+2. Committed to the `ci` branch in the `ci-report/` directory
+3. Accessible via the repository's CI branch
+
+### Status Tracking
+
+The system tracks all execution outcomes:
+- **Success**: Workflows completed successfully
+- **Failure**: Workflows failed during execution  
+- **Timeout**: Workflows exceeded the 60-minute timeout limit
+- **Cancelled**: Workflows manually cancelled by users
+- **Other Failed**: Workflows with any other non-success status
+
+## Error Handling
+
+The CI action includes robust error handling:
+- **Timeout Protection**: 60-minute maximum wait time per workflow
+- **Retry Logic**: Multiple attempts to find and track workflow runs
+- **Graceful Degradation**: Continues processing other scenarios if one fails
+- **Comprehensive Logging**: Detailed console output for debugging
+- **Failure Detection**: CI workflow fails if any triggered workflow fails, times out, or is cancelled
+
+## Troubleshooting
+
+### Common Issues
+1. **Plan file not found**: Ensure the validation plan file exists at the specified path
+2. **Permission errors**: Verify the GitHub token has necessary permissions
+3. **Workflow not found**: Check that target workflows exist and are spelled correctly
+4. **Git errors**: Ensure the repository allows pushes to the `ci` branch
+5. **Invalid file path**: Verify the file path is correct and accessible from the repository root
+
+### Debug Information
+The CI action provides extensive logging. Check the action logs for:
+- Plan file reading and parsing
+- Workflow dispatch responses  
+- Workflow run tracking
+- Report generation steps
