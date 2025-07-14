@@ -20,10 +20,10 @@ inputs:
   dbPassword:
     description: "dbPassword"
     required: true
-  scriptLocation:
-    description: "scriptLocation"
+  databaseName:
+    description: "databaseName"
     required: true
-    default: "https://raw.githubusercontent.com/azure-javaee/rhel-jboss-templates/main/utilities/"
+    default: "testdb"
 
 outputs:
   serverHost:
@@ -58,7 +58,7 @@ runs:
           --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
         az sql db create --resource-group ${{ inputs.resourceGroup }} \
                          --server ${{ inputs.dbInstanceName }} \
-                         --name testdb
+                         --name ${{ inputs.databaseName }}
         
         echo "serverHost=${host}" >> "$GITHUB_ENV"
 
@@ -94,36 +94,10 @@ runs:
           --name "AllowAllAzureIps" --start-ip-address 0.0.0.0 --end-ip-address 0.0.0.0
         az sql db create --resource-group ${{ inputs.resourceGroup }} \
                          --server ${{ inputs.dbInstanceName }} \
-                         --name testdb
+                         --name ${{ inputs.databaseName }}
         
         echo "serverHost=${host}" >> "$GITHUB_ENV"
         echo "uamiId=${uamiId}" >> "$GITHUB_ENV"
-
-    - name: Deploy an Oracle database server on Azure VM
-      id: deploy-oracle
-      if: ${{ inputs.databaseType == 'oracle' }}
-      shell: bash
-      run: |
-        az vm create \
-          --resource-group ${{ inputs.resourceGroup }} \
-          --name ${{ inputs.dbInstanceName }} \
-          --image Oracle:oracle-database-19-3:oracle-database-19-0904:latest --size Standard_DS2_v2 \
-          --admin-username azureuser --generate-ssh-keys \
-          --nsg-rule NONE --enable-agent true \
-          --vnet-name ${{ inputs.dbInstanceName }}VNET --enable-auto-update false \
-          --tags SkipASMAzSecPack=true SkipNRMSCorp=true SkipNRMSDatabricks=true SkipNRMSDB=true SkipNRMSHigh=true SkipNRMSMedium=true SkipNRMSRDPSSH=true SkipNRMSSAW=true SkipNRMSMgmt=true
-        az vm disk attach --name oradata01 --new --resource-group ${{ inputs.resourceGroup }} --vm-name ${{ inputs.dbInstanceName }} --size-gb 64 --sku StandardSSD_LRS
-        az vm open-port -g ${{ inputs.resourceGroup }} -n ${{ inputs.dbInstanceName }} --port 1521,5502 --priority 100
-        az vm extension set --name CustomScript \
-          --extension-instance-name install-oracle \
-          --resource-group ${{ inputs.resourceGroup }} \
-          --vm-name ${{ inputs.dbInstanceName }} \
-          --publisher Microsoft.Azure.Extensions --version 2.0 \
-          --settings "{\"fileUris\": [\"${{ env.scriptLocation }}install-oracle-main.sh\", \"${{ env.scriptLocation }}install-oracle.sh\"]}" \
-          --protected-settings "{\"commandToExecute\":\"bash install-oracle-main.sh ${{ inputs.dbPassword }}\"}"
-        host=$(az vm show -g ${{ inputs.resourceGroup }} -n ${{ inputs.dbInstanceName }} -d --query publicIps -o tsv)
-        
-        echo "serverHost=${host}" >> "$GITHUB_ENV"
 
     - name: Deploy an instance of Azure Database for MySQL
       id: deploy-mysql
@@ -162,9 +136,9 @@ runs:
         
         wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
         mysql -h $host -u myadmin -p${{ inputs.dbPassword }} --ssl-ca=DigiCertGlobalRootCA.crt.pem << EOF
-        CREATE DATABASE testdb;
+        CREATE DATABASE ${{ inputs.databaseName }};
         CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ inputs.dbPassword }}';
-        GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
+        GRANT ALL PRIVILEGES ON ${{ inputs.databaseName }} . * TO 'testuser'@'%';
         FLUSH PRIVILEGES;
         EOF
         
@@ -207,9 +181,9 @@ runs:
 
         wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
         mysql -h $host -u myadmin -p${{ inputs.dbPassword }} --ssl-ca=DigiCertGlobalRootCA.crt.pem << EOF
-        CREATE DATABASE testdb;
+        CREATE DATABASE ${{ inputs.databaseName }};
         CREATE USER 'testuser'@'%' IDENTIFIED BY '${{ inputs.dbPassword }}';
-        GRANT ALL PRIVILEGES ON testdb . * TO 'testuser'@'%';
+        GRANT ALL PRIVILEGES ON ${{ inputs.databaseName }} . * TO 'testuser'@'%';
         FLUSH PRIVILEGES;
         EOF
 
@@ -247,7 +221,7 @@ runs:
           --query "fullyQualifiedDomainName" -o tsv)
         az postgres flexible-server db create --resource-group ${{ inputs.resourceGroup }} \
                                               --server-name ${{ inputs.dbInstanceName }} \
-                                              --database-name testdb
+                                              --database-name ${{ inputs.databaseName }}
 
         echo "serverHost=${host}" >> "$GITHUB_ENV"
     - name: Deploy an instance of Azure Database for PostgreSQL passwordless
@@ -283,7 +257,7 @@ runs:
           --query "fullyQualifiedDomainName" -o tsv)
         az postgres flexible-server db create --resource-group ${{ inputs.resourceGroup }} \
                                               --server-name ${{ inputs.dbInstanceName }} \
-                                              --database-name testdb
+                                              --database-name ${{ inputs.databaseName }}
 
         echo "serverHost=${host}" >> "$GITHUB_ENV"
         echo "uamiId=${uamiId}" >> "$GITHUB_ENV"

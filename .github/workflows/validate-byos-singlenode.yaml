@@ -12,7 +12,6 @@ on:
         options:
         - mssqlserver
         - mssqlserver-passwordless
-        - oracle
         - mysql(flexible)
         - mysql-passwordless(flexible)
         - postgresql(flexible)
