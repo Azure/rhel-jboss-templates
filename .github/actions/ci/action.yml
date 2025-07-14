@@ -591,10 +591,14 @@ runs:
         # Parse results and check for failures
         failed_workflows=()
         timeout_workflows=()
+        cancelled_workflows=()
+        other_failed_workflows=()
         total=0
         success=0
         failure=0
         timeout=0
+        cancelled=0
+        other_failed=0
         
         for row in $(echo "$RESULTS" | jq -r '.[] | @base64'); do
           _jq() {
@@ -619,12 +623,19 @@ runs:
           elif [ "$status" = "timeout" ]; then
             timeout=$((timeout+1))
             timeout_workflows+=("${workflow} (${display_scenario}): ${runUrl}")
+          elif [ "$status" = "cancelled" ]; then
+            cancelled=$((cancelled+1))
+            cancelled_workflows+=("${workflow} (${display_scenario}): ${runUrl}")
+          else
+            # Any other non-success status should be treated as a failure
+            other_failed=$((other_failed+1))
+            other_failed_workflows+=("${workflow} (${display_scenario}) [${status}]: ${runUrl}")
           fi
         done
         
         # Display summary
         echo "::notice::📊 Workflow Execution Summary:"
-        echo "::notice::  Total: ${total}, Success: ${success}, Failed: ${failure}, Timeout: ${timeout}"
+        echo "::notice::  Total: ${total}, Success: ${success}, Failed: ${failure}, Timeout: ${timeout}, Cancelled: ${cancelled}, Other Failed: ${other_failed}"
         
         # If there are failed workflows, display them and fail the CI
         if [ ${#failed_workflows[@]} -gt 0 ]; then
@@ -642,9 +653,25 @@ runs:
           done
         fi
         
-        # Fail the CI workflow if any workflow failed or timed out
-        if [ ${#failed_workflows[@]} -gt 0 ] || [ ${#timeout_workflows[@]} -gt 0 ]; then
-          echo "::error::❌ CI workflow failed because ${#failed_workflows[@]} workflow(s) failed and ${#timeout_workflows[@]} workflow(s) timed out."
+        # If there are cancelled workflows, display them and fail the CI
+        if [ ${#cancelled_workflows[@]} -gt 0 ]; then
+          echo "::error::🚫 The following workflows were cancelled:"
+          for cancelled in "${cancelled_workflows[@]}"; do
+            echo "::error::  - ${cancelled}"
+          done
+        fi
+        
+        # If there are other failed workflows, display them and fail the CI
+        if [ ${#other_failed_workflows[@]} -gt 0 ]; then
+          echo "::error::❌ The following workflows failed with other statuses:"
+          for other_failed in "${other_failed_workflows[@]}"; do
+            echo "::error::  - ${other_failed}"
+          done
+        fi
+        
+        # Fail the CI workflow if any workflow failed, timed out, was cancelled, or had other failure statuses
+        if [ ${#failed_workflows[@]} -gt 0 ] || [ ${#timeout_workflows[@]} -gt 0 ] || [ ${#cancelled_workflows[@]} -gt 0 ] || [ ${#other_failed_workflows[@]} -gt 0 ]; then
+          echo "::error::❌ CI workflow failed because ${#failed_workflows[@]} workflow(s) failed, ${#timeout_workflows[@]} workflow(s) timed out, ${#cancelled_workflows[@]} workflow(s) were cancelled, and ${#other_failed_workflows[@]} workflow(s) had other failure statuses."
           exit 1
         fi
         
