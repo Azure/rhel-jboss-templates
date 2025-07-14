@@ -232,8 +232,8 @@ module byosSingleStartPid './modules/_pids/_pid.bicep' = {
   ]
 }
 
-resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage} = if ((storageNewOrExisting == 'new') && (bootDiagnostics == 'on')) {
-  name: bootStorageName_var_error
+resource bootStorageName 'Microsoft.Storage/storageAccounts@${azure.apiVersionForStorage}' = if ((storageNewOrExisting == 'new') && (bootDiagnostics == 'on')) {
+  name: bootStorageName_var
   location: location
   sku: {
     name: storageAccountType
