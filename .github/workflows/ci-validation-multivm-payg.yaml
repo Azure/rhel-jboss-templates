@@ -24,9 +24,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
+      - name: Set validation plan file
+        id: set-plan-file
+        run: |
+          case "${{ inputs.ci_plan || 'multivm-payg-plan' }}" in
+            multivm-payg-plan)
+              CI_FILE=".github/ci/validation-plan-multivm-payg.json"
+              ;;
+            *)
+              echo "Unknown plan option: ${{ inputs.ci_plan }}"
+              exit 1
+              ;;
+          esac
+          echo "ci_file=$CI_FILE" >> $GITHUB_OUTPUT
+      
       - name: Execute CI Validation
         id: ci-validation
         uses: ./.github/actions/ci
         with:
-          ci_plan: ${{ inputs.ci_plan || 'multivm-payg-plan' }}
+          ci_file: ${{ steps.set-plan-file.outputs.ci_file }}
           github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,10 +1,9 @@
 name: 'CI Validation Workflows'
 description: 'Execute validation workflows based on a validation plan'
 inputs:
-  ci_plan:
+  ci_file:
     description: 'Path to the validation plan file'
     required: true
-    default: 'single-plan'
   github_token:
     description: 'GitHub token for API access'
     required: true
@@ -28,26 +27,12 @@ runs:
       id: set-matrix
       shell: bash
       run: |
-        case "${{ inputs.ci_plan }}" in
-          single-plan)
-            PLAN_FILE=".github/ci/validation-plan-single.json"
-            ;;
-          build)
-            PLAN_FILE=".github/ci/validation-plan-build.json"
-            ;;
-          multivm-byos-plan)
-            PLAN_FILE=".github/ci/validation-plan-multivm-byos.json"
-            ;;
-          multivm-payg-plan)
-            PLAN_FILE=".github/ci/validation-plan-multivm-payg.json"
-            ;;
-          *)
-            echo "Unknown plan option"
-            exit 1
-            ;;
-        esac
+        PLAN_FILE="${{ inputs.ci_file }}"
         
         if [ ! -f "$PLAN_FILE" ]; then
+          echo "Error: Plan file $PLAN_FILE not found"
+          exit 1
+        fi
           echo "Error: Plan file $PLAN_FILE not found"
           exit 1
         fi
