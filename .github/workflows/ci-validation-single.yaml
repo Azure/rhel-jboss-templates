@@ -29,7 +29,7 @@ jobs:
         run: |
           case "${{ inputs.ci_plan || 'single-plan' }}" in
             single-plan)
-              CI_FILE=".github/ci/validation-plan-single.json"
+              CI_FILE="${GITHUB_WORKSPACE}/.github/ci/validation-plan-single.json"
               ;;
             *)
               echo "Unknown plan option: ${{ inputs.ci_plan }}"
@@ -37,6 +37,7 @@ jobs:
               ;;
           esac
           echo "ci_file=$CI_FILE" >> $GITHUB_OUTPUT
+          echo "Set CI_FILE to: $CI_FILE"
       
       - name: Execute CI Validation
         id: ci-validation
