@@ -167,7 +167,7 @@ runs:
                   console.log(`Waiting for workflow run ${run.id} to complete...`);
                   let status = run.status;
                   let waitAttempts = 0;
-                  const maxWaitAttempts = 60; // 60 minutes maximum wait time
+                  const maxWaitAttempts = 90; // 90 minutes maximum wait time
                   
                   while (status !== 'completed' && waitAttempts < maxWaitAttempts) {
                     // Wait for 60 seconds between checks
