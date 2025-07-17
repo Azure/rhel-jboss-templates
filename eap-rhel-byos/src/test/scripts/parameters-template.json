@@ -103,6 +103,8 @@
         "enablePswlessConnection": {
             "value": ${enablePswlessConnection}
         },
-
+        "dbIdentity": {
+            "value": ${dbIdentity}
+        }
     }
 }
