@@ -747,7 +747,7 @@
                                     "regex": "^(?=.{1,128}$)[a-zA-Z](?!.*--)(?!.*@@)(?!.*-@)(?!.*@-)[a-zA-Z0-9-@]*[a-zA-Z0-9]$",
                                     "validationMessage": "The value must be 1-128 characters long and must only contain letters, numbers, hyphen (-) and the at sign, no hyphen allowed at the beginning and the end of the database username."
                                 },
-                                "visible": true
+                                "visible": "[not(bool(steps('section_database').databaseConnectionInfo.enablePswlessConnection))]"
                             },
                             {
                                 "name": "dbPassword",
