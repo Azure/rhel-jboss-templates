@@ -49,7 +49,7 @@ runs:
         az sql server create \
           --resource-group ${{ inputs.resourceGroup }} \
           --name ${{ inputs.dbInstanceName }} \
-          --admin-user {{ inputs.dbAdminUser }} --admin-password ${{ inputs.dbPassword }} \
+          --admin-user ${{ inputs.dbAdminUser }} --admin-password ${{ inputs.dbPassword }} \
           --location ${{ inputs.location }}
         host=$(az sql server show \
           --resource-group ${{ inputs.resourceGroup }} \
@@ -80,7 +80,7 @@ runs:
         az sql server create \
           --resource-group ${{ inputs.resourceGroup }} \
           --name ${{ inputs.dbInstanceName }} \
-          --admin-user {{ inputs.dbAdminUser }} \
+          --admin-user ${{ inputs.dbAdminUser }} \
           --admin-password ${{ inputs.dbPassword }} \
           --assign-identity \
           --external-admin-principal-type Application \
@@ -141,8 +141,8 @@ runs:
         wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
         mysql -h $host -u myadmin -p${{ inputs.dbPassword }} --ssl-ca=DigiCertGlobalRootCA.crt.pem << EOF
         CREATE DATABASE ${{ inputs.databaseName }};
-        CREATE USER '{{ inputs.dbAdminUser }}'@'%' IDENTIFIED BY '${{ inputs.dbPassword }}';
-        GRANT ALL PRIVILEGES ON ${{ inputs.databaseName }} . * TO '{{ inputs.dbAdminUser }}'@'%';
+        CREATE USER '${{ inputs.dbAdminUser }}'@'%' IDENTIFIED BY '${{ inputs.dbPassword }}';
+        GRANT ALL PRIVILEGES ON ${{ inputs.databaseName }} . * TO '${{ inputs.dbAdminUser }}'@'%';
         FLUSH PRIVILEGES;
         EOF
         
@@ -186,8 +186,8 @@ runs:
         wget --no-check-certificate https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
         mysql -h $host -u myadmin -p${{ inputs.dbPassword }} --ssl-ca=DigiCertGlobalRootCA.crt.pem << EOF
         CREATE DATABASE ${{ inputs.databaseName }};
-        CREATE USER '{{ inputs.dbAdminUser }}'@'%' IDENTIFIED BY '${{ inputs.dbPassword }}';
-        GRANT ALL PRIVILEGES ON ${{ inputs.databaseName }} . * TO '{{ inputs.dbAdminUser }}'@'%';
+        CREATE USER '${{ inputs.dbAdminUser }}'@'%' IDENTIFIED BY '${{ inputs.dbPassword }}';
+        GRANT ALL PRIVILEGES ON ${{ inputs.databaseName }} . * TO '${{ inputs.dbAdminUser }}'@'%';
         FLUSH PRIVILEGES;
         EOF
 
@@ -215,7 +215,7 @@ runs:
         az postgres flexible-server create \
           --resource-group ${{ inputs.resourceGroup }} \
           --name ${{ inputs.dbInstanceName }} \
-          --admin-user {{ inputs.dbAdminUser }} --admin-password ${{ inputs.dbPassword }} \
+          --admin-user ${{ inputs.dbAdminUser }} --admin-password ${{ inputs.dbPassword }} \
           --public-access 0.0.0.0 \
           --location ${{ inputs.location }} \
           --yes
