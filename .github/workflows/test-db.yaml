@@ -122,6 +122,7 @@ jobs:
       name: resources-cleanup after ${{ github.event.inputs.timeWaitBeforeDelete }}
       needs:
         - deploy
+        - get-db-output
       if: always()
       runs-on: ubuntu-latest
       steps:
