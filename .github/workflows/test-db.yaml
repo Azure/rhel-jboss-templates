@@ -65,6 +65,9 @@ jobs:
               id: azure-login
               with:
                 creds: ${{ env.azureCredentials }}
+            - name: Create Resource Group
+              run: |
+                az group create -n ${{ env.resourceGroup }} -l ${{ env.location }}
             - name: Provision database
               id: database-provision
               uses: ./.github/actions/database-provision
