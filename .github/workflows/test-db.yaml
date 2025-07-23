@@ -61,13 +61,6 @@ jobs:
         steps:
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
-            - name: build
-              id: build
-              uses: ./.github/actions/build
-              with:
-                offerName: ${{ env.offerName }}
-                token: ${{ secrets.GITHUB_TOKEN }}
-                workflowType: "build"
             - uses: azure/login@v1
               id: azure-login
               with:
