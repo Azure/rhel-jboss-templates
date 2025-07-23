@@ -100,7 +100,6 @@ jobs:
                 echo "enablePswlessConnection: ${{ steps.database-parameters.outputs.enablePswlessConnection }}"
                 echo "databaseType: ${{ steps.database-parameters.outputs.databaseType }}"
                 echo "dsConnectionURL: ${{ steps.database-parameters.outputs.dsConnectionURL }}"
-                echo "dbUser: ${{ steps.database-parameters.outputs.dbUser }}"
                 echo "dbIdentity: ${{ steps.database-parameters.outputs.dbIdentity }}"
     get-db-output:
       needs: deploy
@@ -111,9 +110,9 @@ jobs:
           run: |
             echo "enableDB=${{ needs.deploy.outputs.enableDB }}"
             echo "enablePswlessConnection=${{ needs.deploy.outputs.enablePswlessConnection }}" 
-            echo "databaseType=${{ needs.deploy.outputs.databaseType }}" 
-            echo "dsConnectionURL=${{ needs.deploy.outputs.dsConnectionURL }}"
+            echo "databaseType=${{ needs.deploy.outputs.databaseType }}"
             echo "dbUser=${{ needs.deploy.outputs.dbUser }}"
+            echo "dsConnectionURL=${{ needs.deploy.outputs.dsConnectionURL }}"
             echo "dbIdentity=${{ needs.deploy.outputs.dbIdentity }}" 
         
 
