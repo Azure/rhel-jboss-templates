@@ -48,7 +48,7 @@ env:
     azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
     location: eastus2
     resourceGroup: single-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
-    dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
+    dbInstanceName: weblogicdb-${{ github.run_id }}-${{ github.run_number }}
     dbPassword: ${{ secrets.DATABASE_PASSWORD }}
     uamiName: uami${{ github.run_id }}${{ github.run_number }}
     singleStorageAccountName: singlesa
