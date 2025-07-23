@@ -1,0 +1,124 @@
+name: Test db
+run-name: Validate byos offer with `jdk`:${{ inputs.jdkVersion }} and `db`:${{ inputs.databaseType }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      databaseType:
+        description: 'Database connection'
+        required: true
+        default: 'mssqlserver'
+        type: choice
+        options:
+        - mssqlserver
+        - mssqlserver-passwordless
+        - mysql(flexible)
+        - mysql-passwordless(flexible)
+        - postgresql(flexible)
+        - postgresql-passwordless(flexible)
+        - none
+      jdkVersion:
+        description: 'jdkVersion'
+        required: true
+        default: 'eap8-openjdk17'
+        type: choice
+        options:
+          - eap8-openjdk17
+          - eap8-openjdk11
+          - eap74-openjdk17
+          - eap74-openjdk11
+          - eap74-openjdk8
+      timeWaitBeforeDelete:
+        description: 'Choose the wait time before deleting resources: 30m (30 minutes), 2h (2 hours), 5h (5 hours), 0 (immediately)'
+        required: true
+        type: choice
+        default: 0
+        options:
+          - 30m
+          - 2h
+          - 5h
+          - 0
+      configurations_for_ci:
+        description: "JSON string of environment variables used for CI"
+        required: false
+        default: '{}'
+
+env:
+
+    azureCredentials: ${{ secrets.AZURE_CREDENTIALS_BYOS }}
+    location: eastus2
+    resourceGroup: single-${{ github.repository_owner }}-${{ github.run_id }}-${{ github.run_number }}
+    dbInstanceName: db${{ github.run_id }}${{ github.run_number }}
+    dbPassword: ${{ secrets.DATABASE_PASSWORD }}
+    uamiName: uami${{ github.run_id }}${{ github.run_number }}
+    singleStorageAccountName: singlesa
+
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        env: ${{ fromJson(inputs.configurations_for_ci) }}
+        steps:
+            - name: Checkout rhel-jboss-templates
+              uses: actions/checkout@v4
+            - name: build
+              id: build
+              uses: ./.github/actions/build
+              with:
+                offerName: ${{ env.offerName }}
+                token: ${{ secrets.GITHUB_TOKEN }}
+                workflowType: "build"
+            - uses: azure/login@v1
+              id: azure-login
+              with:
+                creds: ${{ env.azureCredentials }}
+            - name: Provision database
+              id: database-provision
+              uses: ./.github/actions/database-provision
+              with:
+                databaseType: ${{ inputs.databaseType }}
+                resourceGroup: ${{ env.resourceGroup }}
+                uamiName: ${{ env.uamiName }}
+                location: ${{ env.location }}
+                dbInstanceName: ${{ env.dbInstanceName }}
+                dbPassword: ${{ env.dbPassword }}
+
+            - name: Get database parameters
+              id: database-parameters
+              uses: ./.github/actions/database-parameters
+              with:
+                databaseType: ${{ inputs.databaseType }}
+                uamiId: ${{ steps.database-provision.outputs.uamiId }}
+                serverHost: ${{ steps.database-provision.outputs.serverHost }}
+                dbInstanceName: ${{ env.dbInstanceName }}
+            - name: echo database parameters
+              run: |
+                echo "enableDB: ${{ steps.database-parameters.outputs.enableDB }}"
+                echo "enablePswlessConnection: ${{ steps.database-parameters.outputs.enablePswlessConnection }}"
+                echo "databaseType: ${{ steps.database-parameters.outputs.databaseType }}"
+                echo "dsConnectionURL: ${{ steps.database-parameters.outputs.dsConnectionURL }}"
+                echo "dbUser: ${{ steps.database-parameters.outputs.dbUser }}"
+                echo "dbIdentity: ${{ steps.database-parameters.outputs.dbIdentity }}"
+
+
+    resources-cleanup:
+      name: resources-cleanup after ${{ github.event.inputs.timeWaitBeforeDelete }}
+      needs:
+        - deploy
+      if: always()
+      runs-on: ubuntu-latest
+      steps:
+        - uses: azure/login@v1
+          id: azure-login
+          with:
+            creds: ${{ env.azureCredentials }}
+        - name: Pause ${{ github.event.inputs.timeWaitBeforeDelete }} before deleting resources
+          run: |
+            echo "Sleeping for ${{ github.event.inputs.timeWaitBeforeDelete }}"
+            sleep ${{ github.event.inputs.timeWaitBeforeDelete }}
+        - name: Delete Resource Group
+          if: always()
+          id: delete-resource-group
+          run: |
+            echo "delete... " $resourceGroup
+            az group delete --yes --no-wait --verbose --name $resourceGroup
