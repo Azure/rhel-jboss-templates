@@ -58,6 +58,13 @@ jobs:
     deploy:
         runs-on: ubuntu-latest
         env: ${{ fromJson(inputs.configurations_for_ci) }}
+        outputs:
+            enableDB: ${{ steps.database-parameters.outputs.enableDB }}
+            enablePswlessConnection: ${{ steps.database-parameters.outputs.enablePswlessConnection }}
+            databaseType: ${{ steps.database-parameters.outputs.databaseType }}
+            dsConnectionURL: ${{ steps.database-parameters.outputs.dsConnectionURL }}
+            dbUser: ${{ steps.database-parameters.outputs.dbUser }}
+            dbIdentity: ${{ steps.database-parameters.outputs.dbIdentity }}
         steps:
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
@@ -95,6 +102,20 @@ jobs:
                 echo "dsConnectionURL: ${{ steps.database-parameters.outputs.dsConnectionURL }}"
                 echo "dbUser: ${{ steps.database-parameters.outputs.dbUser }}"
                 echo "dbIdentity: ${{ steps.database-parameters.outputs.dbIdentity }}"
+    get-db-output:
+      needs: deploy
+      runs-on: ubuntu-latest
+      steps:
+        - name: Get database parameters
+          id: get-db-parameters
+          run: |
+            echo "enableDB=${{ needs.deploy.outputs.enableDB }}"
+            echo "enablePswlessConnection=${{ needs.deploy.outputs.enablePswlessConnection }}" 
+            echo "databaseType=${{ needs.deploy.outputs.databaseType }}" 
+            echo "dsConnectionURL=${{ needs.deploy.outputs.dsConnectionURL }}"
+            echo "dbUser=${{ needs.deploy.outputs.dbUser }}"
+            echo "dbIdentity=${{ needs.deploy.outputs.dbIdentity }}" 
+        
 
 
     resources-cleanup:
