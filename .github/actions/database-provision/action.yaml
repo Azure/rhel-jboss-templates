@@ -219,6 +219,11 @@ runs:
           --public-access 0.0.0.0 \
           --location ${{ inputs.location }} \
           --yes
+        # Wait for the server creation to complete successfully
+        az postgres flexible-server wait \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
+          --created
         host=$(az postgres flexible-server show \
           --resource-group ${{ inputs.resourceGroup }} \
           --name ${{ inputs.dbInstanceName }} \
@@ -247,7 +252,11 @@ runs:
           --public-access 0.0.0.0 \
           --location ${{ inputs.location }} \
           --yes
-
+        # Wait for the server creation to complete successfully
+        az postgres flexible-server wait \
+          --resource-group ${{ inputs.resourceGroup }} \
+          --name ${{ inputs.dbInstanceName }} \
+          --created
         az postgres flexible-server microsoft-entra-admin  create \
           --resource-group ${{ inputs.resourceGroup }} \
           --server-name ${{ inputs.dbInstanceName }}  \
