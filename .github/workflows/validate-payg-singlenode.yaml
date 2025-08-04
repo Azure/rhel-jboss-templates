@@ -203,10 +203,6 @@ jobs:
       if: always()
       runs-on: ubuntu-latest
       steps:
-        - name: sleep 1h
-          run: |
-            echo "sleeping for 1 hour before deleting resources"
-            sleep 1h
         - uses: azure/login@v1
           id: azure-login
           with:
