@@ -5,16 +5,26 @@ log() {
     done
 }
 
-# firewalld installation and configuration
-if ! rpm -qa | grep firewalld 2>&1 > /dev/null ; then
-    sudo yum install firewalld -y
-    sudo systemctl start firewalld
-    sudo systemctl enable firewalld
-fi
+# Clean up duplicate repository configurations
+echo "Cleaning up duplicate repository configurations" | log
+sudo yum clean all | log; flag=${PIPESTATUS[0]}
+
+# Ensure firewalld is running
+echo "Starting and enabling firewalld" | log
+sudo systemctl enable firewalld | log; flag=${PIPESTATUS[0]}
+sudo systemctl start firewalld | log; flag=${PIPESTATUS[0]}
+# Wait for firewalld to be ready
+sleep 3
 
 ## Update JBoss EAP to use latest patch.
-# WALinuxAgent packages need to be excluded from update as it will stop the azure vm extension execution.
-sudo yum update -y --exclude=WALinuxAgent --exclude=WALinuxAgent-udev | log; flag=${PIPESTATUS[0]}
+# WALinuxAgent and related packages need to be excluded from update as it will stop the azure vm extension execution.
+echo "Performing system updates with exclusions" | log
+sudo yum update -y --exclude=WALinuxAgent* --skip-broken | log; flag=${PIPESTATUS[0]}
+
+# Restart firewalld after system updates to ensure it's working
+echo "Restarting firewalld after system updates" | log
+sudo systemctl restart firewalld | log; flag=${PIPESTATUS[0]}
+sleep 3
 
 openport() {
     port=$1
