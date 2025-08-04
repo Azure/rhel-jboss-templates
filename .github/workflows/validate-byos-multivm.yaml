@@ -151,8 +151,8 @@ jobs:
 
                 az network vnet subnet create \
                   --resource-group ${{ env.resourceGroup }} \
-                  --name ${{ env.virtualNetworkName }} \
-                  --vnet-name ${{ env.subnetForAppGateway }} \
+                  --name ${{ env.subnetForAppGateway }} \
+                  --vnet-name  ${{ env.virtualNetworkName }} \
                   --address-prefix 10.0.0.8/29
 
     deploy-multivm-domain:
