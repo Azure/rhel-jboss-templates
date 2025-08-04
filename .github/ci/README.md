@@ -13,7 +13,6 @@ The CI validation system is a comprehensive integration testing framework design
 - **Comprehensive Reporting**: Detailed reports with success/failure statistics and execution URLs
 - **Automated Monitoring**: Real-time tracking of workflow execution with timeout protection
 - **Resource Management**: Efficient cleanup and resource optimization for cost-effective testing
-- **Extensible Architecture**: Easy to add new validation scenarios and target workflows
 
 ### Use Cases
 
@@ -21,7 +20,6 @@ The CI validation system is a comprehensive integration testing framework design
 - **Release Validation**: Comprehensive testing before production releases
 - **Configuration Testing**: Verify different deployment configurations and parameters
 - **Performance Monitoring**: Track deployment times and resource utilization
-- **Compliance Validation**: Ensure deployments meet security and compliance requirements
 
 ## Table of Contents
 
@@ -30,7 +28,6 @@ The CI validation system is a comprehensive integration testing framework design
   - [Scenarios Structure](#scenarios-structure)
   - [Execution Modes](#execution-modes)
 - [How It Works](#how-it-works)
-- [Benefits of the Scenarios Structure](#benefits-of-the-scenarios-structure)
 - [Available Files](#available-files)
   - [File Content Overview](#file-content-overview)
 - [Getting Started](#getting-started)
@@ -47,11 +44,6 @@ The CI validation system is a comprehensive integration testing framework design
   - [Report Format](#report-format)
   - [Accessing Reports](#accessing-reports)
 - [Error Handling](#error-handling)
-- [Troubleshooting](#troubleshooting)
-- [Best Practices](#best-practices)
-- [Advanced Usage](#advanced-usage)
-- [Contributing](#contributing)
-- [Support and Resources](#support-and-resources)
 
 ## System Architecture
 
@@ -122,7 +114,6 @@ You can control how scenarios within a workflow are executed by using the option
 **When to use serial mode:**
 - Resource-intensive scenarios that might conflict if run simultaneously
 - Scenarios that need to run in a specific order
-- Debugging scenarios where you want to isolate issues
 - Limited resource environments where parallel execution might cause failures
 
 ## How It Works
@@ -143,42 +134,12 @@ You can control how scenarios within a workflow are executed by using the option
 
 8. **Reporting**: Results are compiled into comprehensive reports and stored in the `ci` branch
 
-## Benefits of the Scenarios Structure
-
-- **Better Reporting**: Scenario names appear in the validation reports instead of raw parameter lists
-- **Improved Logging**: Clearer identification of which scenario is being executed
-- **Documentation**: Scenario names serve as inline documentation for what each scenario tests
-- **Maintainability**: Easier to understand and maintain complex validation scenarios
-- **Semantic Clarity**: "Scenarios" better describes what is being tested
-- **Execution Control**: Serial execution mode allows for resource management and sequential testing
-
 ## Available Files
 
 - `validation-plan-single.json`: Single VM validation scenarios for both PAYG and BYOS deployments
 - `validation-plan-build.json`: Build-only validation scenarios for template compilation and syntax checking
 - `validation-plan-multivm-payg.json`: Multi-VM PAYG validation plan with serial execution mode
 - `validation-plan-multivm-byos.json`: Multi-VM BYOS validation plan
-
-### File Content Overview
-
-Each validation plan file contains specific test scenarios:
-
-#### Single VM Plans
-- **VNET Integration**: Test custom virtual network configurations
-- **Database Connectivity**: Validate multiple database types (MySQL, PostgreSQL, SQL Server)
-- **Authentication Methods**: Test passwordless database connections
-- **JDK Versions**: Verify different JDK combinations with EAP versions
-
-#### Multi-VM Plans  
-- **Load Balancing**: Test multi-instance deployments with load balancers
-- **High Availability**: Validate clustering and failover scenarios
-- **Resource Scaling**: Test VMSS (Virtual Machine Scale Sets) functionality
-- **Network Security**: Validate security group and network isolation
-
-#### Build Plans
-- **Template Validation**: ARM/Bicep template syntax and structure validation
-- **Resource Dependencies**: Verify resource dependency chains
-- **Parameter Validation**: Test template parameter constraints and defaults
 
 ## Getting Started
 
@@ -216,7 +177,6 @@ The validation plans are consumed by the CI action located at `/.github/actions/
 | Input | Description | Required |
 |-------|-------------|----------|
 | `ci_file` | Path to the validation plan file | Yes |
-| `github_token` | GitHub token for API access | Yes |
 
 ### Action Outputs
 
@@ -294,38 +254,6 @@ The system tracks all execution outcomes:
 - **Cancelled**: Workflows manually cancelled by users
 - **Other Failed**: Workflows with any other non-success status
 
-### Report Format
-
-Reports are generated in JSON format and include:
-
-```json
-{
-  "summary": {
-    "total_workflows": 4,
-    "successful": 3,
-    "failed": 1,
-    "timeout": 0,
-    "cancelled": 0,
-    "other_failed": 0,
-    "total_execution_time": "45m 23s"
-  },
-  "workflows": [
-    {
-      "workflow": "validate-payg-singlenode.yaml",
-      "scenario": "Support bringing your own VNET",
-      "status": "success",
-      "duration": "12m 45s",
-      "run_url": "https://github.com/owner/repo/actions/runs/123456"
-    }
-  ],
-  "execution_details": {
-    "timestamp": "2025-08-04T10:30:00Z",
-    "execution_mode": "mixed",
-    "report_url": "https://github.com/owner/repo/tree/ci/ci-report/report-20250804-103000.json"
-  }
-}
-```
-
 ### Accessing Reports
 
 Reports can be accessed in multiple ways:
@@ -345,128 +273,4 @@ Example: `report-20250804-103000.json` (August 4, 2025 at 10:30:00 UTC)
 
 The CI action includes robust error handling:
 - **Timeout Protection**: 60-minute maximum wait time per workflow
-- **Retry Logic**: Multiple attempts to find and track workflow runs
-- **Graceful Degradation**: Continues processing other scenarios if one fails
-- **Comprehensive Logging**: Detailed console output for debugging
 - **Failure Detection**: CI workflow fails if any triggered workflow fails, times out, or is cancelled
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Plan file not found**: Ensure the validation plan file exists at the specified path
-2. **Permission errors**: Verify the GitHub token has necessary permissions
-3. **Workflow not found**: Check that target workflows exist and are spelled correctly
-4. **Git errors**: Ensure the repository allows pushes to the `ci` branch
-5. **Invalid file path**: Verify the file path is correct and accessible from the repository root
-6. **Resource quota exceeded**: Azure subscription may have hit resource limits
-7. **Authentication failures**: Check Azure service principal credentials and permissions
-8. **Network connectivity issues**: Verify Azure region availability and network policies
-
-### Debug Information
-
-The CI action provides extensive logging. Check the action logs for:
-- Plan file reading and parsing
-- Workflow dispatch responses  
-- Workflow run tracking
-- Report generation steps
-- Azure resource deployment details
-- Network connectivity diagnostics
-
-### Performance Optimization
-
-To optimize CI execution performance:
-
-#### For Serial Execution
-- Use serial mode only when necessary (resource conflicts, debugging)
-- Consider breaking large scenarios into smaller, independent tests
-- Monitor resource usage to identify bottlenecks
-
-#### For Parallel Execution  
-- Ensure scenarios don't compete for the same Azure resources
-- Use different resource groups or regions for parallel scenarios
-- Monitor Azure subscription quotas and limits
-
-### Monitoring and Alerts
-
-#### Built-in Monitoring
-- **Timeout Detection**: Automatic 60-minute timeout per workflow
-- **Status Tracking**: Real-time status updates for all scenarios
-- **Failure Aggregation**: Comprehensive failure reporting and categorization
-
-#### Custom Monitoring
-You can enhance monitoring by:
-1. Setting up GitHub webhooks for workflow status changes
-2. Integrating with external monitoring tools (Azure Monitor, Datadog, etc.)
-3. Creating custom alerts based on failure patterns
-4. Implementing notification systems for critical failures
-
-## Best Practices
-
-### Validation Plan Design
-
-1. **Scenario Naming**: Use descriptive, meaningful scenario names that clearly indicate what is being tested
-2. **Resource Management**: Include cleanup parameters (`timeWaitBeforeDelete: "0"`) for CI scenarios
-3. **Test Isolation**: Design scenarios to be independent and not interfere with each other
-4. **Parameter Validation**: Test edge cases and boundary conditions in your scenarios
-
-### CI/CD Integration
-
-1. **Scheduled Runs**: Set up scheduled CI validations for regular regression testing
-2. **Branch Protection**: Require CI validation success before merging to main branches
-3. **Resource Cleanup**: Ensure all test resources are properly cleaned up after validation
-4. **Cost Management**: Monitor Azure costs associated with CI runs and optimize accordingly
-
-### Security Considerations
-
-1. **Secret Management**: Store sensitive information in GitHub Secrets, not in validation plans
-2. **Least Privilege**: Use Azure service principals with minimal required permissions
-3. **Network Security**: Validate security group rules and network isolation in test scenarios
-4. **Compliance**: Ensure CI environments meet your organization's compliance requirements
-
-## Advanced Usage
-
-### Custom Validation Plans
-
-You can create custom validation plans by:
-
-1. **Copying existing plans**: Start with an existing plan file as a template
-2. **Modifying scenarios**: Adjust input parameters for your specific test cases
-3. **Adding new workflows**: Reference additional target workflows as needed
-4. **Documenting changes**: Update scenario descriptions to reflect your customizations
-
-### Integration with External Tools
-
-The CI system can be integrated with:
-
-- **Azure DevOps**: Trigger validations from Azure DevOps pipelines
-- **Terraform**: Validate Terraform-generated ARM templates  
-- **Monitoring Systems**: Send validation results to external monitoring platforms
-- **Notification Systems**: Set up alerts for validation failures
-
-### Extending the System
-
-To extend the CI validation system:
-
-1. **New Target Workflows**: Create additional `validate-*.yaml` workflows
-2. **Custom Actions**: Develop specialized validation actions for specific scenarios
-3. **Report Formatters**: Add custom report formats (HTML, XML, etc.)
-4. **Integration Hooks**: Implement webhooks for external system integration
-
-## Contributing
-
-When contributing to the CI validation system:
-
-1. **Test Changes**: Validate your changes with a small subset of scenarios first
-2. **Document Updates**: Update this README when adding new features or plans
-3. **Version Control**: Use meaningful commit messages that describe CI changes
-4. **Backward Compatibility**: Ensure changes don't break existing validation plans
-
-## Support and Resources
-
-For additional help and resources:
-
-- **GitHub Issues**: Report bugs or request features via GitHub Issues
-- **Documentation**: Refer to Azure ARM template and GitHub Actions documentation
-- **Community**: Engage with the Azure JBoss community for best practices
-- **Azure Support**: Use Azure support channels for Azure-specific issues
