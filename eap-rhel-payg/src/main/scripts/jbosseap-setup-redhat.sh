@@ -14,7 +14,7 @@ fi
 
 ## Update JBoss EAP to use latest patch.
 # WALinuxAgent packages need to be excluded from update as it will stop the azure vm extension execution.
-sudo yum update -y --exclude=WALinuxAgent | log; flag=${PIPESTATUS[0]}
+sudo yum update -y --exclude=WALinuxAgent --exclude=WALinuxAgent-udev | log; flag=${PIPESTATUS[0]}
 
 openport() {
     port=$1
