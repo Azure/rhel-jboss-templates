@@ -36,12 +36,10 @@ The CI validation system is a comprehensive integration testing framework design
 - [CI Action Usage](#ci-action-usage)
   - [Action Inputs](#action-inputs)
   - [Action Outputs](#action-outputs)
-  - [Example Usage in CI Workflows](#example-usage-in-ci-workflows)
 - [Structure Requirements](#structure-requirements)
 - [Serial vs Parallel Execution](#serial-vs-parallel-execution)
 - [Report Generation](#report-generation)
   - [Status Tracking](#status-tracking)
-  - [Report Format](#report-format)
   - [Accessing Reports](#accessing-reports)
 - [Error Handling](#error-handling)
 
@@ -185,29 +183,6 @@ The validation plans are consumed by the CI action located at `/.github/actions/
 | `results` | JSON string containing the results of all workflow executions |
 | `report_timestamp` | Timestamp of the generated report |
 | `report_url` | URL to the generated report on the CI branch |
-
-### Example Usage in CI Workflows
-
-```yaml
-- name: Set validation plan file
-  id: set-plan-file
-  run: |
-    case "${{ inputs.ci_plan }}" in
-      single-plan)
-        CI_FILE=".github/ci/validation-plan-single.json"
-        ;;
-      multivm-payg-plan)
-        CI_FILE=".github/ci/validation-plan-multivm-payg.json"
-        ;;
-    esac
-    echo "ci_file=$CI_FILE" >> $GITHUB_OUTPUT
-
-- name: Execute CI Validation
-  uses: ./.github/actions/ci
-  with:
-    ci_file: ${{ steps.set-plan-file.outputs.ci_file }}
-    github_token: ${{ secrets.GITHUB_TOKEN }}
-```
 
 ## Structure Requirements
 
