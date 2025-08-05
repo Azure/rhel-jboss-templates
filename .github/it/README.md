@@ -1,6 +1,6 @@
 # Integration Test Validation Configuration
 
-This directory contains JSON configuration files that define validation scenarios for the integration test workflow orchestrator. The validation system uses a reusable GitHub Action located at `.github/actions/ci/action.yml` to execute these plans.
+This directory contains JSON configuration files that define validation scenarios for the integration test workflow orchestrator. The validation system uses a reusable GitHub Action located at `.github/actions/it/action.yml` to execute these plans.
 
 ## Overview
 
@@ -48,8 +48,8 @@ The integration test validation system is a comprehensive testing framework desi
 The integration test validation system consists of:
 
 1. **Validation Plan Files** (this directory): JSON files defining what to test
-2. **Integration Test Action** (`/.github/actions/ci/action.yml`): Reusable composite action that executes the plans
-3. **Integration Test Workflows** (`/.github/workflows/ci-validation-*.yaml`): Workflows that trigger the action with specific plans
+2. **Integration Test Action** (`/.github/actions/it/action.yml`): Reusable composite action that executes the plans
+3. **Integration Test Workflows** (`/.github/workflows/it-validation-*.yaml`): Workflows that trigger the action with specific plans
 4. **Target Workflows** (`/.github/workflows/validate-*.yaml` and `build-artifact.yaml`): The actual validation workflows that get executed
 
 ## Configuration Structure
@@ -116,11 +116,11 @@ You can control how scenarios within a workflow are executed by using the option
 
 ## How It Works
 
-1. **Integration Test Workflows**: The `ci-validation-*.yaml` workflows are triggered (manually or scheduled)
+1. **Integration Test Workflows**: The `it-validation-*.yaml` workflows are triggered (manually or scheduled)
 
 2. **Plan File Mapping**: Each integration test workflow maps its input to a specific validation plan file in this directory
 
-3. **Action Execution**: The workflow calls the integration test action (`/.github/actions/ci/action.yml`) with the plan file path
+3. **Action Execution**: The workflow calls the integration test action (`/.github/actions/it/action.yml`) with the plan file path
 
 4. **Plan Processing**: The action reads the validation plan and processes each scenario
 
@@ -159,7 +159,7 @@ Each validation plan targets specific JBoss EAP deployment scenarios:
 
 2. **Trigger Integration Test Validation**: Use the GitHub Actions interface to manually trigger an integration test validation workflow:
    - Go to the "Actions" tab in the repository
-   - Select the appropriate `ci-validation-*` workflow:
+   - Select the appropriate `it-validation-*` workflow:
      - `CI Validation Single VMs` - for single node deployments
      - `CI Validation Multi VM PAYG` - for multi-VM PAYG deployments
      - `CI Validation Multi VM BYOS` - for multi-VM BYOS deployments
@@ -181,7 +181,7 @@ Before using the integration test validation system, ensure:
 
 ## Integration Test Action Usage
 
-The validation plans are consumed by the integration test action located at `/.github/actions/ci/action.yml`. 
+The validation plans are consumed by the integration test action located at `/.github/actions/it/action.yml`. 
 
 ### Action Inputs
 

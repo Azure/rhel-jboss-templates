@@ -38,8 +38,8 @@ on:
           - 2h
           - 5h
           - 0
-      configurations_for_ci:
-        description: "JSON string of environment variables used for CI"
+      configurations_for_it:
+        description: "JSON string of environment variables used for IT"
         required: false
         default: '{}'
 
@@ -70,7 +70,7 @@ env:
 jobs:
     deploy:
         runs-on: ubuntu-latest
-        env: ${{ fromJson(inputs.configurations_for_ci) }}
+        env: ${{ fromJson(inputs.configurations_for_it) }}
         steps:
             - name: Checkout rhel-jboss-templates
               uses: actions/checkout@v4
