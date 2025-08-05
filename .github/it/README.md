@@ -187,7 +187,7 @@ The validation plans are consumed by the integration test action located at `/.g
 
 | Input | Description | Required |
 |-------|-------------|----------|
-| `ci_file` | Path to the validation plan file | Yes |
+| `it_file` | Path to the validation plan file | Yes |
 | `github_token` | GitHub token for API access | Yes |
 
 ### Action Outputs
