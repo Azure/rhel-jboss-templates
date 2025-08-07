@@ -3,6 +3,9 @@
 This repo contains JBoss EAP Marketplace templates for use on Azure Marketplace. Each subdirectory corresponds to one of the offered plans.
 
 ## IT Status
+
+<!-- Once this has been merged to upstream, replace the hard-coded `azure-javaee` with the actual upstream name. -->
+
 [![IT Build](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/it-validation-build.yaml/badge.svg)](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/it-validation-build.yaml)
 
 [![IT Multi-VM BYOS](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/it-validation-multivm-byos.yaml/badge.svg)](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/it-validation-multivm-byos.yaml)

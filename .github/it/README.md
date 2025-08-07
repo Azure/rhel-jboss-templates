@@ -2,6 +2,10 @@
 
 This directory contains JSON configuration files that define validation scenarios for the integration test workflow orchestrator. The validation system uses a reusable GitHub Action located at `.github/actions/it/action.yml` to execute these plans.
 
+## Prerequisites
+
+The repository secrets set by the [setup-credentials.sh](../workflows/setup-credentials.sh) script must be set with current and valid values before any of these workflows will run.
+
 ## Overview
 
 The integration test validation system is a comprehensive testing framework designed to validate JBoss EAP deployments on Azure across multiple scenarios and configurations. It automates the execution of various deployment scenarios, monitors their progress, and generates detailed reports to ensure the reliability and quality of the Azure JBoss EAP templates.
