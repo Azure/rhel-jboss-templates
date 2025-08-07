@@ -130,7 +130,7 @@ You can control how scenarios within a workflow are executed by using the option
 
 7. **Monitoring**: The action monitors workflow execution and waits for completion
 
-8. **Reporting**: Results are compiled into comprehensive reports and stored in the `ci` branch
+8. **Reporting**: Results are compiled into comprehensive reports and stored in the `it` branch
 
 ## Available Files
 
@@ -160,15 +160,15 @@ Each validation plan targets specific JBoss EAP deployment scenarios:
 2. **Trigger Integration Test Validation**: Use the GitHub Actions interface to manually trigger an integration test validation workflow:
    - Go to the "Actions" tab in the repository
    - Select the appropriate `it-validation-*` workflow:
-     - `CI Validation Single VMs` - for single node deployments
-     - `CI Validation Multi VM PAYG` - for multi-VM PAYG deployments
-     - `CI Validation Multi VM BYOS` - for multi-VM BYOS deployments
-     - `CI Validation Build` - for build-only validation
+     - `IT Validation Single VMs` - for single node deployments
+     - `IT Validation Multi VM PAYG` - for multi-VM PAYG deployments
+     - `IT Validation Multi VM BYOS` - for multi-VM BYOS deployments
+     - `IT Validation Build` - for build-only validation
    - Click "Run workflow" and select your desired validation plan
 
 3. **Monitor Progress**: Track the execution progress in the Actions tab and view real-time logs
 
-4. **Review Results**: Check the generated reports in the `ci` branch under `ci-report/` directory
+4. **Review Results**: Check the generated reports in the `it` branch under `it-report/` directory
 
 ### Prerequisites
 
@@ -177,7 +177,7 @@ Before using the integration test validation system, ensure:
 - [ ] Azure subscription with appropriate permissions
 - [ ] GitHub repository with Actions enabled
 - [ ] Required secrets configured in repository settings (RHSM credentials, Azure service principal, etc.)
-- [ ] Access to the `ci` branch for report storage
+- [ ] Access to the `it` branch for report storage
 
 ## Integration Test Action Usage
 
@@ -196,7 +196,7 @@ The validation plans are consumed by the integration test action located at `/.g
 |--------|-------------|
 | `results` | JSON string containing the results of all workflow executions |
 | `report_timestamp` | Timestamp of the generated report |
-| `report_url` | URL to the generated report on the CI branch |
+| `report_url` | URL to the generated report on the IT branch |
 
 ## Structure Requirements
 
@@ -231,8 +231,8 @@ The integration test action generates comprehensive reports that include:
 
 Reports are:
 1. Uploaded as GitHub Actions artifacts
-2. Committed to the `ci` branch in the `ci-report/` directory
-3. Accessible via the repository's CI branch
+2. Committed to the `it` branch in the `it-report/` directory
+3. Accessible via the repository's IT branch
 
 ### Status Tracking
 
@@ -248,7 +248,7 @@ The system tracks all execution outcomes:
 Reports can be accessed in multiple ways:
 
 1. **GitHub Actions Artifacts**: Download reports directly from the workflow run artifacts
-2. **CI Branch**: Browse reports in the `ci` branch under `ci-report/` directory  
+2. **IT Branch**: Browse reports in the `it` branch under `it-report/` directory  
 3. **Direct Links**: Use the `report_url` output from the integration test action
 4. **API Access**: Programmatically access reports via GitHub API
 
