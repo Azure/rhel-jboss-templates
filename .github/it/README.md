@@ -46,6 +46,7 @@ The integration test validation system is a comprehensive testing framework desi
   - [Status Tracking](#status-tracking)
   - [Accessing Reports](#accessing-reports)
 - [Error Handling](#error-handling)
+- [Trouble Shooting](#trouble-shooting)
 
 ## System Architecture
 
@@ -269,3 +270,24 @@ The integration test action includes robust error handling:
 - **Failure Detection**: Integration test workflow fails if any triggered workflow fails, times out, or is cancelled
 - **Resource Cleanup**: Automatic cleanup of Azure resources after test completion
 - **Credential Management**: Secure handling of RHSM and Azure credentials
+
+## Trouble Shooting
+
+### Debugging with tmate
+
+One of the biggest pain points to develop GitHub actions for our Java EE solution offerings is that it's hard to debug them by direct interacting with the host system on which the actual Actions are running.
+
+I found a GitHub action `tmate` which unlocks the door for debugging GitHub actions using SSH or Web shell, pls refer to [Debugging with tmate](https://github.com/marketplace/actions/debugging-with-tmate) or to the [tmate docs](https://mxschmitt.github.io/action-tmate/) for detailed how-to instructions.
+
+And here is an example where `tmate` was applied in `integration-test` workflow of `liberty-on-aks` repo:
+* https://github.com/WASdev/azure.liberty.aks/pull/62/files#diff-b6766eb8febc0c51651250cd0cdfb44c4f0d3256470d88e62bf82fd46aa73ae0R119-R121
+
+
+## Authentication of the tmate session.
+> Refer to this [issue](https://github.com/mxschmitt/action-tmate/issues/163)’s [comment](https://github.com/mxschmitt/action-tmate/issues/163#issuecomment-1651436411), 
+
+this [action](https://github.com/mxschmitt/action-tmate) uses the ssh public key from the github account as `authorised_keys`.
+So if you have multiple private keys in your local machine, you may need to specify the private key used for `*.tmate.io` in your `~/.ssh/config` file.
+
+![tmate-sshkey.png](tmate-sshkey.png)
+
