@@ -4,7 +4,7 @@ This repo contains JBoss EAP Marketplace templates for use on Azure Marketplace.
 
 ## IT Status
 
-<!-- Once this has been merged to upstream, replace the hard-coded `azure-javaee` with the actual upstream name. -->
+<!-- The badges are hard coded to refer to the repo in which the workflows are actually run.  -->
 
 [![IT Build](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/it-validation-build.yaml/badge.svg)](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/it-validation-build.yaml)
 
