@@ -14,15 +14,22 @@ inputs:
   dbInstanceName:
     description: "dbInstanceName"
     required: true
-
+  dbAdminUser:
+    description: "dbAdminUser"
+    required: false
+    default: "testuser"
+  databaseName:
+    description: "databaseName"
+    required: true
+    default: "testdb"
 
 outputs:
   enableDB:
     description: "enableDB"
     value: ${{ steps.database-parameters.outputs.enableDB }}
-  enablePasswordless:
-    description: "enablePasswordless"
-    value: ${{ steps.database-parameters.outputs.enablePasswordless }}
+  enablePswlessConnection:
+    description: "enablePswlessConnection"
+    value: ${{ steps.database-parameters.outputs.enablePswlessConnection }}
   databaseType:
     description: "databaseType"
     value: ${{ steps.database-parameters.outputs.databaseType }}
@@ -45,24 +52,24 @@ runs:
       run: |
         enableDB=false
         databaseType=mssqlserver
-        dsConnectionURL=jdbc:postgresql://contoso.postgres.database:5432/testdb
+        dsConnectionURL=jdbc:postgresql://contoso.postgres.database:5432/${{ inputs.databaseName }}
         dbUser=contosoDbUser
         dbPassword=contosoDbPwd
-        enablePasswordless=false
+        enablePswlessConnection=false
         dbIdentity={}
         serverHost=${{ inputs.serverHost }}
         uamiId=${{ inputs.uamiId }}
         if ${{ inputs.databaseType == 'mssqlserver' }}; then
           enableDB=true
           databaseType=mssqlserver
-          dsConnectionURL="jdbc:sqlserver://$serverHost:1433;database=testdb"
-          dbUser=testuser@${{ inputs.dbInstanceName }}
+          dsConnectionURL="jdbc:sqlserver://$serverHost:1433\;database=${{ inputs.databaseName }}"
+          dbUser=${{ inputs.dbAdminUser }}@${{ inputs.dbInstanceName }}
         elif ${{ inputs.databaseType == 'mssqlserver-passwordless' }}; then
           enableDB=true
-          enablePasswordless=true
+          enablePswlessConnection=true
           databaseType=mssqlserver
-          dsConnectionURL="jdbc:sqlserver://$serverHost:1433;database=testdb"
-          dbUser=testuser@${{ inputs.dbInstanceName }} 
+          dsConnectionURL="jdbc:sqlserver://$serverHost:1433\;database=${{ inputs.databaseName }}"
+          dbUser=${{ inputs.dbAdminUser }}@${{ inputs.dbInstanceName }} 
           dbIdentity=$(jq -n \
                           --arg uamiId "$uamiId" \
                           '{
@@ -75,15 +82,15 @@ runs:
           enableDB=true
           databaseType=oracle
           dsConnectionURL=jdbc:oracle:thin:@${serverHost}:1521/oratest1
-          dbUser=testuser
+          dbUser=${{ inputs.dbAdminUser }}
         elif ${{ inputs.databaseType == 'mysql(flexible)' }}; then
           enableDB=true
           databaseType=mysql
-          dsConnectionURL=jdbc:mysql://$serverHost:3306/testdb?sslMode=REQUIRED
-          dbUser=testuser
+          dsConnectionURL=jdbc:mysql://$serverHost:3306/${{ inputs.databaseName }}?sslMode=REQUIRED
+          dbUser=${{ inputs.dbAdminUser }}
         elif ${{ inputs.databaseType == 'mysql-passwordless(flexible)' }}; then
           enableDB=true
-          enablePasswordless=true
+          enablePswlessConnection=true
           dbUser=$(basename "$uamiId")
           dbIdentity=$(jq -n \
                         --arg uamiId "$uamiId" \
@@ -94,15 +101,15 @@ runs:
                               }
                           }'| jq -c '.')
           databaseType=mysql
-          dsConnectionURL=jdbc:mysql://$serverHost:3306/testdb
+          dsConnectionURL=jdbc:mysql://$serverHost:3306/${{ inputs.databaseName }}
         elif ${{ inputs.databaseType == 'postgresql(flexible)' }}; then
           enableDB=true
           databaseType=postgresql
-          dsConnectionURL="jdbc:postgresql://$serverHost:5432/testdb"
-          dbUser=testuser
+          dsConnectionURL="jdbc:postgresql://$serverHost:5432/${{ inputs.databaseName }}"
+          dbUser=${{ inputs.dbAdminUser }}
         elif ${{ inputs.databaseType == 'postgresql-passwordless(flexible)' }}; then
           enableDB=true
-          enablePasswordless=true
+          enablePswlessConnection=true
           dbUser=$(basename "$uamiId")
           dbIdentity=$(jq -n \
                         --arg uamiId "$uamiId" \
@@ -113,11 +120,11 @@ runs:
                               }
                           }'| jq -c '.')
           databaseType=postgresql
-          dsConnectionURL="jdbc:postgresql://$serverHost:5432/testdb"
+          dsConnectionURL="jdbc:postgresql://$serverHost:5432/${{ inputs.databaseName }}"
         fi
         
         echo "enableDB=$enableDB" >> "$GITHUB_OUTPUT"
-        echo "enablePasswordless=$enablePasswordless" >> "$GITHUB_OUTPUT"
+        echo "enablePswlessConnection=$enablePswlessConnection" >> "$GITHUB_OUTPUT"
         echo "databaseType=$databaseType" >> "$GITHUB_OUTPUT"
         echo "dsConnectionURL=$dsConnectionURL" >> "$GITHUB_OUTPUT"
         echo "dbUser=$dbUser" >> "$GITHUB_OUTPUT"

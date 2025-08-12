@@ -2,6 +2,18 @@
 
 This repo contains JBoss EAP Marketplace templates for use on Azure Marketplace. Each subdirectory corresponds to one of the offered plans.
 
+## IT Status
+
+<!-- The badges are hard coded to refer to the repo in which the workflows are actually run.  -->
+
+[![IT Build](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/it-validation-build.yaml/badge.svg)](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/it-validation-build.yaml)
+
+[![IT Multi-VM BYOS](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/it-validation-multivm-byos.yaml/badge.svg)](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/it-validation-multivm-byos.yaml)
+
+[![IT Multi-VM PAYG](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/it-validation-multivm-payg.yaml/badge.svg)](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/it-validation-multivm-payg.yaml)
+
+[![IT Single VMs](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/it-validation-single.yaml/badge.svg)](https://github.com/azure-javaee/rhel-jboss-templates/actions/workflows/it-validation-single.yaml)
+
 ## Deployment Description
 
 There are three different types of EAP on VM offers based on their outcomes.

@@ -1,0 +1,26 @@
+{
+  "validation_scenarios": [
+    {
+      "workflow": "build-artifact.yaml",
+      "scenarios": [
+        {
+          "scenario": "build payg",
+          "inputs": {
+            "offerName": "eap-rhel-payg"
+          }
+        }
+      ]
+    },
+    {
+      "workflow": "build-artifact.yaml",
+      "scenarios": [
+        {
+          "scenario": "build byos",
+          "inputs": {
+            "offerName": "eap-rhel-byos"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -85,7 +85,7 @@ else
     mkdir -p "$jdbcDriverModuleDirectory"
 
     # Download JDBC driver
-    jdbcDriverName=postgresql--${jdbcDriverVersion}.jar
+    jdbcDriverName=postgresql-${jdbcDriverVersion}.jar
     curl --retry 5 -Lo ${jdbcDriverModuleDirectory}/${jdbcDriverName} https://jdbc.postgresql.org/download/${jdbcDriverName}
 
     # Create module for JDBC driver

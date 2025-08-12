@@ -28,6 +28,10 @@ on:
           - 2h
           - 5h
           - 0
+      configurations_for_it:
+        description: "JSON string of environment variables used for IT"
+        required: false
+        default: '{}'
 
 env:
   azCliVersion: 2.72.0
@@ -64,6 +68,7 @@ jobs:
       aadClientId: ${{steps.prepare-parameter-file.outputs.aadClientId}}
     needs: preflight
     runs-on: ubuntu-latest
+    env: ${{ fromJson(inputs.configurations_for_it) }}
     steps:
       - name: Checkout rhel-jboss-templates
         uses: actions/checkout@v4
@@ -79,58 +84,72 @@ jobs:
         id: azure-login
         with:
           creds: ${{ env.azureCredentials }}
+      - name: Provision ARO Cluster as an existing cluster for deployment
+        if: ${{ env.createAROClusterForIT == 'true' }}
+        run: |
+          echo "Provisioning an ARO cluster: ${{ env.clusterNameForIT }} as an existing cluster for deployment"
+          VIRTUALNETWORK=vnet-for-existing-aro-cluster
+          az group create --name ${{ env.resourceGroup }} --location ${{ env.location }}
+          az network vnet create --resource-group ${{ env.resourceGroup }} --name $VIRTUALNETWORK --address-prefixes 10.0.0.0/22
+          az network vnet subnet create --resource-group ${{ env.resourceGroup }} --vnet-name $VIRTUALNETWORK --name master-subnet --address-prefixes 10.0.0.0/23
+          az network vnet subnet create --resource-group ${{ env.resourceGroup }} --vnet-name $VIRTUALNETWORK --name worker-subnet --address-prefixes 10.0.2.0/23
+          az aro create --resource-group ${{ env.resourceGroup }} --name ${{ env.clusterNameForIT }} --vnet $VIRTUALNETWORK --master-subnet master-subnet --worker-subnet worker-subnet
+
       - name: Prepare parameter file
         id: prepare-parameter-file
         run: |
-          servicePrincipal=${azureCredentials}
-          aadClientId=$(echo $servicePrincipal | jq -r '.clientId')
+          export servicePrincipal=${azureCredentials}
+          export aadClientId=$(echo $servicePrincipal | jq -r '.clientId')
           echo "aadClientId=${aadClientId}" >> $GITHUB_OUTPUT
-          aadClientSecret=$(echo $servicePrincipal | jq -r '.clientSecret')
-          aadObjectId=$(az ad sp show --id ${aadClientId} --query id -o tsv)
+          export aadClientSecret=$(echo $servicePrincipal | jq -r '.clientSecret')
+          export aadObjectId=$(az ad sp show --id ${aadClientId} --query id -o tsv)
           # rpObjectId=$(az ad sp list --display-name "Azure Red Hat OpenShift RP" --query "[0].id" -o tsv)
-          rpObjectId="ebeeb6e8-af58-4204-9e58-efca7922a3cc"
+          export rpObjectId="ebeeb6e8-af58-4204-9e58-efca7922a3cc"
           
           if [ "${{ github.event.inputs.useExistingCluster }}" == "true" ]; then
             echo "Using existing ARO cluster"
-            createCluster=false
+            export createCluster=false
           else
             echo "Creating new ARO cluster"
-            createCluster=true
+            export createCluster=true
           fi
           
           # if ${{ github.event.inputs.clusterName }} is empty, then set it to the default name
           if [ -z "${{ github.event.inputs.clusterName }}" ]; then
-              clusterName="aro-cluster-${{ github.repository_owner }}"
+              export clusterName="aro-cluster-${{ github.repository_owner }}"
           else
-              clusterName="${{ github.event.inputs.clusterName }}"
+              export clusterName="${{ github.event.inputs.clusterName }}"
           fi
           # if ${{ github.event.inputs.clusterRGName }} is empty, then set it to the default name
           if [ -z "${{ github.event.inputs.clusterRGName }}" ]; then
-              clusterRGName="aro-rg-${{ github.repository_owner }}"
+              export clusterRGName="aro-rg-${{ github.repository_owner }}"
           else
-              clusterRGName="${{ github.event.inputs.clusterRGName }}"
+              export clusterRGName="${{ github.event.inputs.clusterRGName }}"
           fi
           
-          echo "generate parameter file for eap-aro"
-          bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-          <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
-          ${{ github.repository_owner }} \
-          ${{ github.sha }} \
-          ${location} \
-          ${pullSecret} \
-          ${aadClientId} \
-          ${aadClientSecret} \
-          ${aadObjectId} \
-          ${rpObjectId} \
-          "Standard_D8s_v3" \
-          "Standard_D4s_v3" \
-          3 \
-          ${conRegAccUserName} \
-          ${conRegAccPwd} \
-          ${createCluster} \
-          ${clusterName} \
-          ${clusterRGName}
-          "
+          if ${{ env.createAROClusterForIT == 'true' }}; then
+            echo "Deploy with an existing ARO cluster"
+            export createCluster=false
+            export clusterName=${{ env.clusterNameForIT }}
+            export clusterRGName=${{ env.resourceGroup }}
+          else
+            echo "Deploy with a new ARO cluster"
+            export createCluster=true
+            export clusterName="aro-cluster-${{ github.run_id }}-${{ github.run_number }}"
+            export clusterRGName=${{ env.resourceGroup }}
+          fi
+          
+          ## Prepare other parameters
+          export gitUserName=${{ github.repository_owner }}
+          export testbranchName=${{ github.sha }}
+          export vmSize="Standard_D8s_v3"
+          export workerVmSize="Standard_D4s_v3"
+          export workerCount=3
+
+          ## generate parameter file
+          parameter_template="./${{ env.offerName }}/src/test/scripts/parameters-template.json"
+          parameter_output="./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json"
+          envsubst < "$parameter_template" > "$parameter_output"
 
       - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
         uses: actions/upload-artifact@v4.6.2

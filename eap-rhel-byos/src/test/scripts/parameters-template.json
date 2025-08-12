@@ -1,12 +1,5 @@
-#!/usr/bin/env bash
-set -Eeuo pipefail
-
-#read arguments from stdin
-read parametersPath gitUserName testbranchName location vmName adminUsername password virtualNetworkResourceGroupName storageAccountName storageAccountResourceGroupName jbossEAPUserName jbossEAPPassword rhsmUserName rhsmPassword rhsmPoolEAP rhsmPoolRHEL enableDB databaseType jdbcDataSourceJNDIName dsConnectionURL dbUser dbPassword jdkVersion gracefulShutdownTimeout enablePswlessConnection dbIdentity
-
-cat <<EOF > ${parametersPath}
 {
-    "\$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "artifactsLocation": {
@@ -31,10 +24,13 @@ cat <<EOF > ${parametersPath}
             "value": "Standard_DS2_v2"
         },
         "virtualNetworkNewOrExisting": {
-            "value": "new"
+            "value": "${virtualNetworkNewOrExisting}"
+        },
+        "virtualNetworkResourceGroupName": {
+            "value": "${virtualNetworkResourceGroupName}"
         },
         "virtualNetworkName": {
-            "value": "VirtualNetwork"
+            "value": "${virtualNetworkName}"
         },
         "addressPrefixes": {
             "value": [
@@ -42,13 +38,10 @@ cat <<EOF > ${parametersPath}
             ]
         },
         "subnetName": {
-            "value": "Subnet-1"
+            "value": "${subnetName}"
         },
         "subnetPrefix": {
             "value": "10.0.0.0/24"
-        },
-        "virtualNetworkResourceGroupName": {
-            "value": "${virtualNetworkResourceGroupName}"
         },
         "bootDiagnostics": {
             "value": "on"
@@ -115,4 +108,3 @@ cat <<EOF > ${parametersPath}
         }
     }
 }
-EOF

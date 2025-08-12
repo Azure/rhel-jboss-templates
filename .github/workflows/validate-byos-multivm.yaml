@@ -12,7 +12,6 @@ on:
         options:
         - mssqlserver
         - mssqlserver-passwordless
-        - oracle
         - mysql(flexible)
         - mysql-passwordless(flexible)
         - postgresql(flexible)
@@ -39,6 +38,10 @@ on:
           - 2h
           - 5h
           - 0
+      configurations_for_it:
+        description: "JSON string of environment variables used for IT"
+        required: false
+        default: '{}'
 
 env:
     azCliVersion: 2.72.0
@@ -70,6 +73,7 @@ env:
     scriptLocation: https://raw.githubusercontent.com/${{ github.repository_owner }}/rhel-jboss-templates/$GITHUB_REF_NAME/utilities/
     offerName: "eap-rhel-byos-multivm"
     gracefulShutdownTimeout: "-1"
+    enableAppGWIngress: true
 
 jobs:
     preflight:
@@ -108,6 +112,7 @@ jobs:
     deploy-resources:
         needs: create-all-resource-groups
         runs-on: ubuntu-latest
+        env: ${{ fromJson(inputs.configurations_for_it) }}
         outputs:
           uamiId: ${{ steps.database-provision.outputs.uamiId }}
           serverHost: ${{ steps.database-provision.outputs.serverHost }}
@@ -131,6 +136,24 @@ jobs:
                 location: ${{ env.location }}
                 dbInstanceName: ${{ env.dbInstanceName }}
                 dbPassword: ${{ env.dbPassword }}
+
+            - name: Provision Azure Vnet
+              id: vnet-provision
+              if: ${{ env.virtualNetworkNewOrExisting == 'existing' }}
+              run: |
+                echo "Provisioning Azure Vnet with subnet"
+                az network vnet create \
+                  --resource-group ${{ env.resourceGroup }} \
+                  --name ${{ env.virtualNetworkName }} \
+                  --address-prefix 10.0.0.0/28 \
+                  --subnet-name ${{ env.subnetForCluster }} \
+                  --subnet-prefix 10.0.0.0/29
+
+                az network vnet subnet create \
+                  --resource-group ${{ env.resourceGroup }} \
+                  --name ${{ env.subnetForAppGateway }} \
+                  --vnet-name  ${{ env.virtualNetworkName }} \
+                  --address-prefix 10.0.0.8/29
 
     deploy-multivm-domain:
         needs: 
@@ -172,46 +195,46 @@ jobs:
 
             - name: Prepare parameter file
               run: |
-                databaseType=${{ steps.database-parameters.outputs.databaseType }}
-                enableDB=${{ steps.database-parameters.outputs.enableDB }}
-                enablePasswordless=${{ steps.database-parameters.outputs.enablePasswordless }}
-                dbUser=${{ steps.database-parameters.outputs.dbUser }}
-                dbPassword=${{ env.dbPassword }}
-                dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
-                dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
-
-                echo "generate parameter file for domain mode"
-                # Generate parameters for db template deployment
-                bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
-                ${{ github.repository_owner }} \
-                ${{ github.sha }} \
-                ${location} \
-                ${vmName} \
-                ${asName} \
-                ${adminUsername} \
-                ${password} \
-                ${numberOfInstances} \
-                ${domainOperatingMode} \
-                ${resourceGroup} \
-                ${domainBootStorageAccountName} \
-                ${resourceGroup} \
-                ${jbossEAPUserName} \
-                ${jbossEAPPassword} \
-                ${rhsmUserName} \
-                ${rhsmPassword} \
-                ${rhsmPoolEAP} \
-                ${rhsmPoolRHEL} \
-                ${enableDB} \
-                ${databaseType} \
-                java:jboss/datasources/JavaEECafeDB \
-                ${dsConnectionURL} \
-                ${dbUser} \
-                ${dbPassword} \
-                ${{ inputs.jdkVersion }} \
-                ${{ env.gracefulShutdownTimeout }} \
-                ${enablePasswordless} \
-                ${dbIdentity}"
+                ## Prepare parameters for domain mode
+                export operatingMode=${domainOperatingMode}
+                export bootStorageAccountName=${domainBootStorageAccountName}
+                
+                ## Prepare parameters for database
+                export databaseType=${{ steps.database-parameters.outputs.databaseType }}
+                export enableDB=${{ steps.database-parameters.outputs.enableDB }}
+                export enablePswlessConnection=${{ steps.database-parameters.outputs.enablePswlessConnection }}
+                export dbUser=${{ steps.database-parameters.outputs.dbUser }}
+                export dbPassword=${{ env.dbPassword }}
+                export dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
+                export dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
+                
+                ## Prepare parameters for Vnet
+                if [ "${{ env.virtualNetworkNewOrExisting }}" == "existing" ]; then
+                  export virtualNetworkNewOrExisting=${{ env.virtualNetworkNewOrExisting }}
+                  export virtualNetworkResourceGroupName=${resourceGroup}
+                  export virtualNetworkName=${{ env.virtualNetworkName }}
+                  export subnetForCluster=${{ env.subnetForCluster }}
+                  export subnetForAppGateway=${{ env.subnetForAppGateway }}
+                else
+                  export virtualNetworkNewOrExisting="new"
+                  export virtualNetworkResourceGroupName=${resourceGroup}
+                  export virtualNetworkName="VirtualNetwork"
+                  export subnetForCluster="jboss-subnet-for-cluster"
+                  export subnetForAppGateway="jboss-subnet-for-appgateway"
+                fi
+                
+                ## Prepare other parameters                
+                export gitUserName=${{ github.repository_owner }}
+                export testbranchName=${{ github.sha }}
+                export storageAccountResourceGroupName=${resourceGroup}
+                export jdbcDataSourceJNDIName="java:jboss/datasources/JavaEECafeDB"\
+                export jdkVersion=${{ inputs.jdkVersion }}
+                export gracefulShutdownTimeout="${{ env.gracefulShutdownTimeout }}"
+                
+                ## generate parameter file 
+                parameter_template="./${{ env.offerName }}/src/test/scripts/parameters-template.json"
+                parameter_output="./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json"
+                envsubst < "$parameter_template" > "$parameter_output"
 
             - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
@@ -260,27 +283,36 @@ jobs:
                 curl --digest -L -D - http://${publicip}:9990/management --header "Content-Type: application/json" -u ${jbossEAPUserName}:${jbossEAPPassword} -d "{\"operation\" : \"add\", \"address\" : {\"deployment\" : \"javaee-cafe.war\"}, \"content\" : [{\"url\" : \"${appbloburl}\"}],\"json.pretty\":1}"
                 curl --digest -L -D - http://${publicip}:9990/management --header "Content-Type: application/json" -u ${jbossEAPUserName}:${jbossEAPPassword} -d "{\"operation\" : \"add\", \"address\" : {\"server-group\" : \"main-server-group\",\"deployment\":\"javaee-cafe.war\"},\"json.pretty\":1}"
                 curl --digest -L -D - http://${publicip}:9990/management --header "Content-Type: application/json" -u ${jbossEAPUserName}:${jbossEAPPassword} -d "{\"operation\" : \"deploy\", \"address\" : {\"server-group\" : \"main-server-group\",\"deployment\":\"javaee-cafe.war\"},\"json.pretty\":1}"
-            - name: Query public ip of Application Gateway
-              id: query_app_gateway_public_ip
+            - name: Query external public ip to access applications
+              id: query_external_public_ip
               uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
-                  # query public ip address of Application Gateway
-                  publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
-                  echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
+                  if [ "${{ env.enableAppGWIngress }}" == "true" ]; then
+                      # query public ip address of Application Gateway
+                      echo "Application Gateway Ingress is enabled"
+                      publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
+                      echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "Application Gateway Ingress is disabled"
+                      # Querying public ip address of the first application vm
+                      echo "Querying public ip address of the first application vm"
+                      publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?ends_with(name, '1-pubIp')].ipAddress" -o tsv)
+                      echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"              
+                  fi
 
             - name: Verify cafe application is accessible
               uses: ./.github/actions/url-health-check
               with:
-                appEndpoint: "http://${{steps.query_app_gateway_public_ip.outputs.publicip}}/javaee-cafe/"
+                appEndpoint: "http://${{steps.query_external_public_ip.outputs.publicip}}/javaee-cafe/"
                 maxRetries: 10
                 retryInterval: 15
 
             - name: Verify eap-session-replication application is accessible
               uses: ./.github/actions/url-health-check
               with:
-                appEndpoint: "http://${{steps.query_app_gateway_public_ip.outputs.publicip}}/eap-session-replication/"
+                appEndpoint: "http://${{steps.query_external_public_ip.outputs.publicip}}/eap-session-replication/"
                 maxRetries: 10
                 retryInterval: 15
 
@@ -324,45 +356,46 @@ jobs:
 
             - name: Prepare parameter file
               run: |
-                databaseType=${{ steps.database-parameters.outputs.databaseType }}
-                enableDB=${{ steps.database-parameters.outputs.enableDB }}
-                enablePasswordless=${{ steps.database-parameters.outputs.enablePasswordless }}
-                dbUser=${{ steps.database-parameters.outputs.dbUser }}
-                dbPassword=${{ env.dbPassword }}
-                dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
-                dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
+                ## Prepare parameters for standalone mode
+                export operatingMode=${standaloneOperatingMode}
+                export bootStorageAccountName=${standaloneBootStorageAccountName}
+                
+                ## Prepare parameters for database
+                export databaseType=${{ steps.database-parameters.outputs.databaseType }}
+                export enableDB=${{ steps.database-parameters.outputs.enableDB }}
+                export enablePswlessConnection=${{ steps.database-parameters.outputs.enablePswlessConnection }}
+                export dbUser=${{ steps.database-parameters.outputs.dbUser }}
+                export dbPassword=${{ env.dbPassword }}
+                export dsConnectionURL=${{ steps.database-parameters.outputs.dsConnectionURL }}
+                export dbIdentity='${{ steps.database-parameters.outputs.dbIdentity }}'
+                
+                ## Prepare parameters for Vnet
+                if [ "${{ env.virtualNetworkNewOrExisting }}" == "existing" ]; then
+                  export virtualNetworkNewOrExisting=${{ env.virtualNetworkNewOrExisting }}
+                  export virtualNetworkResourceGroupName=${resourceGroup}
+                  export virtualNetworkName=${{ env.virtualNetworkName }}
+                  export subnetForCluster=${{ env.subnetForCluster }}
+                  export subnetForAppGateway=${{ env.subnetForAppGateway }}
+                else
+                  export virtualNetworkNewOrExisting="new"
+                  export virtualNetworkResourceGroupName=${resourceGroup}
+                  export virtualNetworkName="VirtualNetwork"
+                  export subnetForCluster="jboss-subnet-for-cluster"
+                  export subnetForAppGateway="jboss-subnet-for-appgateway"
+                fi
+                
+                ## Prepare other parameters
+                export gitUserName=${{ github.repository_owner }}
+                export testbranchName=${{ github.sha }}
+                export storageAccountResourceGroupName=${resourceGroup}
+                export jdbcDataSourceJNDIName="java:jboss/datasources/JavaEECafeDB"\
+                export jdkVersion=${{ inputs.jdkVersion }}
+                export gracefulShutdownTimeout="${{ env.gracefulShutdownTimeout }}"
 
-                echo "generate parameter file for standalone mode"
-                bash ./${{ env.offerName }}/src/test/scripts/gen-parameters.sh \
-                <<< "./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
-                ${{ github.repository_owner }} \
-                ${{ github.sha }} \
-                ${location} \
-                ${vmName} \
-                ${asName} \
-                ${adminUsername} \
-                ${password} \
-                ${numberOfInstances} \
-                ${standaloneOperatingMode} \
-                ${resourceGroup} \
-                ${standaloneBootStorageAccountName} \
-                ${resourceGroup} \
-                ${jbossEAPUserName} \
-                ${jbossEAPPassword} \
-                ${rhsmUserName} \
-                ${rhsmPassword} \
-                ${rhsmPoolEAP} \
-                ${rhsmPoolRHEL} \
-                ${enableDB} \
-                ${databaseType} \
-                java:jboss/datasources/JavaEECafeDB \
-                ${dsConnectionURL} \
-                ${dbUser} \
-                ${dbPassword} \
-                ${{ inputs.jdkVersion }} \
-                ${{ env.gracefulShutdownTimeout }} \
-                ${enablePasswordless} \
-                ${dbIdentity}"
+                ## generate parameter file 
+                parameter_template="./${{ env.offerName }}/src/test/scripts/parameters-template.json"
+                parameter_output="./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json"
+                envsubst < "$parameter_template" > "$parameter_output"
 
             - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
               uses: actions/upload-artifact@v4.6.2
@@ -382,19 +415,29 @@ jobs:
                   --name ${{ env.offerName }} \
                   --parameters @./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json \
                   --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
-            - name: Query public ip of Application Gateway
-              id: query_app_gateway_public_ip
+            - name: Query external public ip to access applications
+              id: query_external_public_ip
               uses: azure/cli@v2
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
+                  if [ "${{ env.enableAppGWIngress }}" == "true" ]; then
                     # query public ip address of Application Gateway
+                    echo "Application Gateway Ingress is enabled"
                     publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?starts_with(name, 'gwip')].ipAddress" -o tsv)
                     echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "Application Gateway Ingress is disabled"
+                      # Querying public ip address of the first application vm
+                      echo "Querying public ip address of the first application vm"
+                      publicip=$(az network public-ip list --resource-group $resourceGroup --query "[?ends_with(name, '1-pubIp')].ipAddress" -o tsv)
+                      echo "publicip=${publicip}" >> "$GITHUB_OUTPUT"              
+                  fi
+
             - name: Verify eap-session-replication application is accessible
               uses: ./.github/actions/url-health-check
               with:
-                appEndpoint: "http://${{steps.query_app_gateway_public_ip.outputs.publicip}}/eap-session-replication/"
+                appEndpoint: "http://${{steps.query_external_public_ip.outputs.publicip}}/eap-session-replication/"
                 maxRetries: 10
                 retryInterval: 15
 
