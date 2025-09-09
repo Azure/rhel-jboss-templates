@@ -1,5 +1,14 @@
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
+param guidTag string = newGuid()
+
+@description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
+param _artifactsLocation string = deployment().properties.templateLink.uri
+
+@description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured.')
+@secure()
+param _artifactsLocationSasToken string = ''
+
 @description('Location for all resources')
 param location string = resourceGroup().location
 
@@ -169,6 +178,15 @@ var nicName_var = 'nic-${uniqueString(resourceGroup().id)}-${guidValue}'
 var networkSecurityGroupName_var = format('jbosseap-nsg-{0}', guidValue)
 var virtualNetworkName_var = (virtualNetworkNewOrExisting == 'existing') ? virtualNetworkName : '${virtualNetworkName}-${guidValue}'
 var bootStorageName_var = (storageNewOrExisting == 'existing') ? existingStorageAccount : '${storageAccountName}${guidValue}'
+var name_postDeploymentDsName = format('postdeploymentds{0}', guidValue)
+var const_newVNet = (virtualNetworkNewOrExisting == 'new') ? true : false
+
+var obj_uamiForDeploymentScript = !const_newVNet ? {
+  type: 'UserAssigned'
+  userAssignedIdentities: {
+    '${uamiDeployment.outputs.uamiIdForDeploymentScript}': {}
+  }
+} : {}
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -178,13 +196,6 @@ var linuxConfiguration = {
         keyData: adminPasswordOrSSHKey
       }
     ]
-  }
-}
-var name_postDeploymentDsName = format('updateNicPrivateIpStatic-{0}', guidValue)
-var obj_uamiForDeploymentScript = {
-  type: 'UserAssigned'
-  userAssignedIdentities: {
-    '${uamiDeployment.outputs.uamiIdForDeploymentScript}': {}
   }
 }
 
@@ -213,14 +224,15 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
-module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = {
-  name: 'uami-deployment-${guidValue}'
+module uamiDeployment 'modules/_uami/_uamiAndRoles.bicep' = if (!const_newVNet) {
+   name: 'uami-deployment-${guidValue}'
   params: {
     guidValue: guidValue
     location: location
     tagsByResource: _objTagsByResource
   }
 }
+
 
 module byosSingleStartPid './modules/_pids/_pid.bicep' = {
   name: 'byosSingleStartPid-${guidValue}'
@@ -292,6 +304,16 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.
   tags: _objTagsByResource['${identifier.virtualNetworks}']
 }
 
+resource existingVNet 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' existing = if (!const_newVNet) {
+  name: virtualNetworkName.name
+  scope: resourceGroup(virtualNetworkResourceGroupName)
+}
+
+resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVersionForVirtualNetworks}' existing = if (!const_newVNet) {
+  parent: existingVNet
+  name: virtualNetworkName.subnets.jbossSubnet.name
+}
+
 resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetworkInterfaces}' = {
   name: nicName_var
   location: location
@@ -305,7 +327,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName_var, subnetName)
+            id: const_newVNet ? resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName_var, subnetName) : existingSubnet.id
           }
           publicIPAddress: {
             id: resourceId('Microsoft.Network/publicIPAddresses', vmPublicIPAddressName)
@@ -317,6 +339,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
   dependsOn: [
     virtualNetworkName_resource
     vmPublicIP
+    existingSubnet
   ]
   tags: _objTagsByResource['${identifier.networkInterfaces}']
 }
@@ -382,7 +405,9 @@ resource vmPublicIP 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPu
       domainNameLabel: dnsNameforVM
     }
   }
-  tags: _objTagsByResource['${identifier.publicIPAddresses}']
+  tags: const_newVNet ? _objTagsByResource['${identifier.publicIPAddresses}'] : union(_objTagsByResource['${identifier.publicIPAddresses}'], {
+    '${guidTag}': ''
+  })
 }
 
 module dbConnectionStartPid './modules/_pids/_pid.bicep' = if (enableDB) {
@@ -421,23 +446,22 @@ resource vmName_jbosseap_setup_extension 'Microsoft.Compute/virtualMachines/exte
   tags: _objTagsByResource['${identifier.virtualMachinesExtensions}']
 }
 
-module updateNicPrivateIpStatic 'modules/_deployment-scripts/_dsPostDeployment.bicep' = {
+module postDeployment 'modules/_deployment-scripts/_dsPostDeployment.bicep' = if (!const_newVNet) {
   name: name_postDeploymentDsName
   params: {
     name: name_postDeploymentDsName
     location: location
-    _artifactsLocation: artifactsLocation
-    _artifactsLocationSasToken: artifactsLocationSasToken
+    _artifactsLocation: _artifactsLocation
+    _artifactsLocationSasToken: _artifactsLocationSasToken
     identity: obj_uamiForDeploymentScript
     resourceGroupName: resourceGroup().name
-    nicName: nicName_var
-    tagsByResource: _objTagsByResource
+    guidTag: guidTag
   }
   dependsOn: [
-    nicName
-    uamiDeployment
+    vmName_jbosseap_setup_extension
   ]
 }
+
 
 module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
   name: 'dbConnectionEndPid-${guidValue}'
@@ -457,6 +481,7 @@ module byosSingleEndPid './modules/_pids/_pid.bicep' = {
   }
   dependsOn: [
     dbConnectionEndPid
+    postDeployment
   ]
 }
 
