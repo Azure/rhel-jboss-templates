@@ -1,5 +1,7 @@
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
+param guidTag string = newGuid()
+
 @description('User name for the Virtual Machine')
 param adminUsername string = 'jbossuser'
 
@@ -230,6 +232,8 @@ var plan = {
 
 var name_failFastDsName = format('failFast-{0}', guidValue)
 var name_jbossEAPDsName = 'jbosseap-setup-${guidValue}'
+var name_postDeploymentDsName = format('postdeploymentds{0}', guidValue)
+var const_newVNet = (virtualNetworkNewOrExisting == 'new') ? true : false
 var obj_uamiForDeploymentScript = {
   type: 'UserAssigned'
   userAssignedIdentities: {
@@ -485,8 +489,8 @@ resource symbolicname 'Microsoft.Network/privateEndpoints@${azure.apiVersionForP
       }
     ]
     subnet: {
-      id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName_var, subnetName)
-    }
+      id: const_newVNet ? resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName_var, subnetName) : existingSubnet.id
+          }
   }
   dependsOn: [
     eapStorageAccount
@@ -549,7 +553,7 @@ resource virtualNetworkName_resource 'Microsoft.Network/virtualNetworks@${azure.
   }
 }
 
-resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPublicIPAddresses}' = [for i in range(0, numberOfInstances): if (enableAppGWIngress) {
+resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPublicIPAddresses}' = [for i in range(0, numberOfInstances): {
   name: (operatingMode == name_managedDomain) ? ((i == 0) ? '${vmName_var}${name_adminVmName}${name_publicIPAddress}' : '${vmName_var}${i}${name_publicIPAddress}') :'${vmName_var}${i}${name_publicIPAddress}'
   sku: {
     name: 'Standard'
@@ -561,7 +565,9 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPubl
       domainNameLabel: (operatingMode == name_managedDomain) ? ((i == 0) ? '${dnsNameforAdminVm}' : '${dnsNameforManagedVm}${i}') : '${dnsNameforManagedVm}${i}'
     }
   }
-  tags: _objTagsByResource['${identifier.publicIPAddresses}']
+  tags: const_newVNet ? _objTagsByResource['${identifier.publicIPAddresses}'] : union(_objTagsByResource['${identifier.publicIPAddresses}'], {
+    '${guidTag}': ''
+  })
 }]
 
 resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetworkInterfaces}' = [for i in range(0, numberOfInstances): {
@@ -577,7 +583,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName_var, subnetName)
+            id: const_newVNet ? resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName_var, subnetName) : existingSubnet.id
           }
           applicationGatewayBackendAddressPools: enableAppGWIngress ? ((operatingMode == name_managedDomain) ? ((i != 0) ? [
             {
@@ -588,9 +594,9 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
               id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name_appGateway, 'managedNodeBackendPool')
             }
           ]) : null
-          publicIPAddress: enableAppGWIngress ? {
+          publicIPAddress: const_newVNet ? null : {
             id: (operatingMode == name_managedDomain) ? ((i == 0) ? resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${name_adminVmName}${name_publicIPAddress}') : resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${i}${name_publicIPAddress}')) : resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${i}${name_publicIPAddress}')
-          } : null
+          }
         }
       }
     ]
@@ -703,6 +709,25 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
   ]
 }
 
+module postDeployment 'modules/_deployment-scripts/_dsClusterPostDeployment.bicep' = if (!const_newVNet) {
+  name: name_postDeploymentDsName
+  params: {
+    name: name_postDeploymentDsName
+    location: location
+    _artifactsLocation: artifactsLocation
+    _artifactsLocationSasToken: artifactsLocationSasToken
+    identity: obj_uamiForDeploymentScript
+    resourceGroupName: resourceGroup().name
+    tagsByResource: _objTagsByResource
+    guidTag: guidTag
+  }
+  dependsOn: [
+    jbossEAPDeployment
+  ]
+}
+
+// UAMI cleanup is handled automatically by Azure when the deployment completes
+
 module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
   name: 'dbConnectionEndPid-${guidValue}'
   params: {
@@ -736,6 +761,7 @@ module byosMultivmEndPid './modules/_pids/_pid.bicep' = {
   }
   dependsOn: [
     dbConnectionEndPid
+    postDeployment
   ]
 }
 
@@ -749,4 +775,4 @@ output adminConsoles array = [                                                  
 */ for i in range(0, numberOfInstances):                                                                                                                     /*
 */    domainmode ? '' : format('http://{0}:9990', publicIp[i].properties.ipAddress)                                              /*
 */ ]
-output adminConsole string = (operatingMode == name_managedDomain) ? (enableAppGWIngress ? (uri(format('http://{0}:9990', (reference(resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${name_adminVmName}${name_publicIPAddress}')).dnsSettings.fqdn)), '')) : (uri(format('http://{0}:9990', (reference(resourceId('Microsoft.Network/networkInterfaces', '${nicName_var}0')).ipConfigurations[0].properties.privateIPAddress)), ''))) : ''
+output adminConsole string = (operatingMode == name_managedDomain) ? (uri(format('http://{0}:9990', (reference(resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${name_adminVmName}${name_publicIPAddress}')).dnsSettings.fqdn)), '')) : ''
