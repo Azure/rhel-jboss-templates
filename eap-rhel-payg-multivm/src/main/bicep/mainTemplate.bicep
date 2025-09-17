@@ -1,5 +1,7 @@
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
+param guidTag string = newGuid()
+
 @description('User name for the Virtual Machine')
 param adminUsername string = 'jbossuser'
 
@@ -203,6 +205,8 @@ var linuxConfiguration = {
   }
 }
 var name_vmAcceptTerms = format('vmAcceptTerms{0}', guidValue)
+var const_newVNet = (virtualNetworkNewOrExisting == 'new') ? true : false
+
 var imageReference = {
   publisher: 'RedHat'
   offer: 'rh-jboss-eap'
@@ -216,6 +220,7 @@ var imageReference = {
 
 var name_failFastDsName = format('failFast-{0}', guidValue)
 var name_jbossEAPDsName = 'jbosseap-setup-${guidValue}'
+var name_postDeploymentDsName = format('postdeploymentds{0}', guidValue)
 var obj_uamiForDeploymentScript = {
   type: 'UserAssigned'
   userAssignedIdentities: {
@@ -359,14 +364,20 @@ module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep
 }
 
 // Get existing VNET.
-resource existingVnet 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' existing = if (virtualNetworkNewOrExisting != 'new') {
+resource existingVnet 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' existing = if (!const_newVNet) {
   name: virtualNetworkName_var
   scope: resourceGroup(virtualNetworkResourceGroupName)
 }
 
-// Get existing subnet.
-resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVersionForVirtualNetworks}' existing = if (virtualNetworkNewOrExisting != 'new') {
+// Get existing subnet for App Gateway.
+resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVersionForVirtualNetworks}' existing = if (!const_newVNet) {
   name: subnetForAppGateway
+  parent: existingVnet
+}
+
+// Get existing subnet for VMs.
+resource existingVmSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVersionForVirtualNetworks}' existing = if (!const_newVNet) {
+  name: subnetName
   parent: existingVnet
 }
 
@@ -565,7 +576,9 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@${azure.apiVersionForPubl
       domainNameLabel: (operatingMode == name_managedDomain) ? ((i == 0) ? '${dnsNameforAdminVm}' : '${dnsNameforManagedVm}${i}') : '${dnsNameforManagedVm}${i}'
     }
   }
-  tags: _objTagsByResource['${identifier.publicIPAddresses}']
+  tags: !const_newVNet ? union(_objTagsByResource['${identifier.publicIPAddresses}'], {
+    '${guidTag}': ''
+  }) : _objTagsByResource['${identifier.publicIPAddresses}']
 }]
 
 resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetworkInterfaces}' = [for i in range(0, numberOfInstances): {
@@ -581,7 +594,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           subnet: {
-            id: resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName_var, subnetName)
+            id: const_newVNet ? resourceId(virtualNetworkResourceGroupName, 'Microsoft.Network/virtualNetworks/subnets', virtualNetworkName_var, subnetName) : existingVmSubnet.id
           }
           applicationGatewayBackendAddressPools: enableAppGWIngress ? ((operatingMode == name_managedDomain) ? ((i != 0) ? [
             {
@@ -603,6 +616,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
     virtualNetworkName_resource
     appgwDeployment
     publicIp
+    existingVmSubnet
   ]
 }]
 
@@ -619,6 +633,7 @@ module vmAcceptTerms 'modules/_deployment-scripts/_dsVmAcceptTerms.bicep' = {
   }
   dependsOn: [
     nicName
+    uamiDeployment
   ]
 }
 
@@ -719,6 +734,24 @@ module jbossEAPDeployment 'modules/_deployment-scripts/_ds-jbossEAPSetup.bicep' 
   ]
 }
 
+module postDeployment 'modules/_deployment-scripts/_dsPostDeployment.bicep' = if (!const_newVNet) {
+  name: name_postDeploymentDsName
+  params: {
+    name: name_postDeploymentDsName
+    location: location
+    _artifactsLocation: artifactsLocation
+    _artifactsLocationSasToken: artifactsLocationSasToken
+    identity: obj_uamiForDeploymentScript
+    resourceGroupName: resourceGroup().name
+    tagsByResource: _objTagsByResource
+    guidTag: guidTag
+  }
+  dependsOn: [
+    jbossEAPDeployment
+    uamiDeployment
+  ]
+}
+
 module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
   name: 'dbConnectionEndPid-${guidValue}'
   params: {
@@ -727,6 +760,7 @@ module dbConnectionEndPid './modules/_pids/_pid.bicep' = if (enableDB) {
   dependsOn: [
     pids
     jbossEAPDeployment
+    postDeployment
   ]
 }
 
@@ -755,6 +789,7 @@ module paygMultivmEndPid './modules/_pids/_pid.bicep' = {
   }
   dependsOn: [
     dbConnectionEndPid
+    postDeployment
   ]
 }
 
