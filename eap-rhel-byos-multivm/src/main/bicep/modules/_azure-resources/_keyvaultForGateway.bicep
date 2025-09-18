@@ -23,7 +23,7 @@ param guidValue string = ''
 @description('${label.tagsLabel}')
 param tagsByResource object
 
-module keyVaultwithSelfSignedAppGatewaySSLCert '_keyvault/_keyvaultWithNewCertSimple.bicep' = {
+module keyVaultwithSelfSignedAppGatewaySSLCert '_keyvault/_keyvaultWithNewCert.bicep' = {
   name: 'kv-appgw-selfsigned-certificate-deployment-${guidValue}'
   params: {
     guidValue: guidValue

@@ -234,7 +234,12 @@ var name_failFastDsName = format('failFast-{0}', guidValue)
 var name_jbossEAPDsName = 'jbosseap-setup-${guidValue}'
 var name_postDeploymentDsName = format('postdeploymentds{0}', guidValue)
 var const_newVNet = (virtualNetworkNewOrExisting == 'new') ? true : false
-var obj_uamiForDeploymentScript = {
+var obj_uamiForDeploymentScript = !const_newVNet ? {
+  type: 'UserAssigned'
+  userAssignedIdentities: {
+    '${uamiDeployment.outputs.uamiIdForDeploymentScript}': {}
+  }
+} : {
   type: 'UserAssigned'
   userAssignedIdentities: {
     '${uamiDeployment.outputs.uamiIdForDeploymentScript}': {}
@@ -364,16 +369,14 @@ module appgwSecretDeployment 'modules/_azure-resources/_keyvaultForGateway.bicep
   ]
 }
 
-// Get existing VNET.
-resource existingVnet 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' existing = if (virtualNetworkNewOrExisting != 'new') {
-  name: virtualNetworkName_var
+resource existingVNet 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' existing = if (!const_newVNet) {
+  name: virtualNetworkName_var.name
   scope: resourceGroup(virtualNetworkResourceGroupName)
 }
 
-// Get existing subnet.
-resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVersionForVirtualNetworks}' existing = if (virtualNetworkNewOrExisting != 'new') {
-  name: subnetForAppGateway
-  parent: existingVnet
+resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVersionForVirtualNetworks}' existing = if (!const_newVNet) {
+  parent: existingVNet
+  name: virtualNetworkName_var.subnets.jbossSubnet.name
 }
 
 module appgwDeployment 'modules/_appgateway.bicep' = if (enableAppGWIngress) {
@@ -605,6 +608,7 @@ resource nicName 'Microsoft.Network/networkInterfaces@${azure.apiVersionForNetwo
     virtualNetworkName_resource
     appgwDeployment
     publicIp
+    existingSubnet
   ]
 }]
 
@@ -775,4 +779,4 @@ output adminConsoles array = [                                                  
 */ for i in range(0, numberOfInstances):                                                                                                                     /*
 */    domainmode ? '' : format('http://{0}:9990', publicIp[i].properties.ipAddress)                                              /*
 */ ]
-output adminConsole string = (operatingMode == name_managedDomain) ? (uri(format('http://{0}:9990', (reference(resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${name_adminVmName}${name_publicIPAddress}')).dnsSettings.fqdn)), '')) : ''
+output adminConsole string = (operatingMode == name_managedDomain) ? (enableAppGWIngress ? (uri(format('http://{0}:9990', (reference(resourceId('Microsoft.Network/publicIPAddresses', '${vmName_var}${name_adminVmName}${name_publicIPAddress}')).dnsSettings.fqdn)), '')) : (uri(format('http://{0}:9990', (reference(resourceId('Microsoft.Network/networkInterfaces', '${nicName_var}0')).ipConfigurations[0].properties.privateIPAddress)), ''))) : ''
