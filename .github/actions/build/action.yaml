@@ -39,7 +39,7 @@ runs:
         echo "bicepVersion=${BICEP_VERSION}" >> "$GITHUB_ENV"
 
     - name: Set up JDK 11
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@e9fbacdec3bb3b6036605a3e6f7995d66773a8c6 # v3.14.2
       with:
         distribution: 'temurin'
         java-version: '11'
@@ -75,7 +75,7 @@ runs:
         unzip arm-template-toolkit.zip -d ../arm-ttk
 
     - name: Checkout arm-ttk
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       if: ${{ inputs.workflowType == 'validate' }}
       with:
         repository: Azure/arm-ttk
@@ -141,7 +141,7 @@ runs:
         fi
 
     - name: Archive ${{ inputs.offerName }} template
-      uses: actions/upload-artifact@v4.6.2
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       if: ${{ inputs.uploadArtifact == 'true' }}
       with:
         name: ${{steps.artifact_file.outputs.artifactName}}
