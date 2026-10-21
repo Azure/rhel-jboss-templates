@@ -1,0 +1,5 @@
+inventory:
+- source: ServiceTree
+  isProduction: false
+  items:
+  - id: e376bd85-773e-4434-9c49-f698e2fa71cd
