@@ -70,7 +70,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - name: build
               id: build
               uses: ./.github/actions/build
@@ -83,11 +83,11 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                 path: rhel-jboss-templates
             - name: Download artifact for test branch
-              uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
               with:
                 name: ${{needs.preflight.outputs.artifactName}}
                 path: rhel-jboss-templates-dev
@@ -107,7 +107,7 @@ jobs:
                 git status
                 git commit -m "test branch for pipeline"
                 git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git -f
-            - uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d # v1.6.1
+            - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
               id: azure-login
               with:
                 creds: ${{ env.azureCredentials }}
@@ -264,14 +264,14 @@ jobs:
                 ${{ env.gracefulShutdownTimeout }}"
 
             - name: Archive parameters-test-vmss.json
-              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
               if: success()
               with:
                 name: parameters-test-vmss
                 path: rhel-jboss-templates/eap-rhel-payg-vmss/src/test/parameters-test-vmss.json
             - name: Create Resource Group if needed
               if: ${{ inputs.databaseType == 'none' || github.event.client_payload.databaseType == 'none' }}
-              uses: azure/cli@9f7ce6f37c31b777ec6c6b6d1dfe7db79f497956 # v2.2.0
+              uses: azure/cli@9eb25b8360668fb0ecbafa808d40e2197b2f5f52 # v3.0.0
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -279,7 +279,7 @@ jobs:
                     az group create --verbose --name ${{ env.vmssResourceGroup }} --location ${{ env.location }}
             - name: Deploy JBoss EAP VMSS
               id: deploy-vmss
-              uses: azure/cli@9f7ce6f37c31b777ec6c6b6d1dfe7db79f497956 # v2.2.0
+              uses: azure/cli@9eb25b8360668fb0ecbafa808d40e2197b2f5f52 # v3.0.0
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -291,7 +291,7 @@ jobs:
                     --template-file rhel-jboss-templates/eap-rhel-payg-vmss/mainTemplate.json
             - name: Query public ip of Application Gateway
               id: query_app_gateway_public_ip
-              uses: azure/cli@9f7ce6f37c31b777ec6c6b6d1dfe7db79f497956 # v2.2.0
+              uses: azure/cli@9eb25b8360668fb0ecbafa808d40e2197b2f5f52 # v3.0.0
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -324,12 +324,12 @@ jobs:
       if: always()
       runs-on: ubuntu-latest
       steps:
-        - uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d # v1.6.1
+        - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
           id: azure-login
           with:
             creds: ${{ env.azureCredentials }}
         - name: Checkout rhel-jboss-templates
-          uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+          uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
           with:
             path: rhel-jboss-templates
         - name: Pause ${{ github.event.inputs.timeWaitBeforeDelete }} before deleting resources

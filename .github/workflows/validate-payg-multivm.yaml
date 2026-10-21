@@ -80,7 +80,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - name: build
               id: build
               uses: ./.github/actions/build
@@ -94,8 +94,8 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - name: Checkout rhel-jboss-templates
-          uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        - uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d # v1.6.1
+          uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
           id: azure-login
           with:
             creds: ${{ env.azureCredentials }}
@@ -121,8 +121,8 @@ jobs:
           run: |
             echo "resourceGroup=${{ env.dependencyResourceGroup }}" >> $GITHUB_ENV
         - name: Checkout rhel-jboss-templates
-          uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        - uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d # v1.6.1
+          uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
           id: azure-login
           with:
             creds: ${{ env.azureCredentials }}
@@ -165,7 +165,7 @@ jobs:
               run: |
                 echo "resourceGroup=${{ env.domainResourceGroup }}" >> $GITHUB_ENV
             - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - name: build
               id: build
               uses: ./.github/actions/build
@@ -174,7 +174,7 @@ jobs:
                 token: ${{ secrets.GITHUB_TOKEN }}
                 workflowType: "build"
                 uploadArtifact: false
-            - uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d # v1.6.1
+            - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
               id: azure-login
               with:
                 creds: ${{ env.azureCredentials }}
@@ -230,13 +230,13 @@ jobs:
                 envsubst < "$parameter_template" > "$parameter_output"
 
             - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
-              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
               if: success()
               with:
                 name: parameters-test-${{ env.offerName }}-${{ github.job }}
                 path: ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
             - name: Deploy JBoss EAP ${{ env.offerName }}
-              uses: azure/cli@9f7ce6f37c31b777ec6c6b6d1dfe7db79f497956 # v2.2.0
+              uses: azure/cli@9eb25b8360668fb0ecbafa808d40e2197b2f5f52 # v3.0.0
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -257,7 +257,7 @@ jobs:
                 enableDB: ${{ env.enableDB }}
             - name: Query public ip of admin VM
               id: query_admin_public_ip
-              uses: azure/cli@9f7ce6f37c31b777ec6c6b6d1dfe7db79f497956 # v2.2.0
+              uses: azure/cli@9eb25b8360668fb0ecbafa808d40e2197b2f5f52 # v3.0.0
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -278,7 +278,7 @@ jobs:
                 curl --digest -L -D - http://${publicip}:9990/management --header "Content-Type: application/json" -u ${jbossEAPUserName}:${jbossEAPPassword} -d "{\"operation\" : \"deploy\", \"address\" : {\"server-group\" : \"main-server-group\",\"deployment\":\"javaee-cafe.war\"},\"json.pretty\":1}"
             - name: Query external public ip to access applications
               id: query_external_public_ip
-              uses: azure/cli@9f7ce6f37c31b777ec6c6b6d1dfe7db79f497956 # v2.2.0
+              uses: azure/cli@9eb25b8360668fb0ecbafa808d40e2197b2f5f52 # v3.0.0
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -318,7 +318,7 @@ jobs:
               run: |
                 echo "resourceGroup=${{ env.standaloneResourceGroup }}" >> $GITHUB_ENV
             - name: Checkout rhel-jboss-templates
-              uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - name: build
               id: build
               uses: ./.github/actions/build
@@ -327,7 +327,7 @@ jobs:
                 token: ${{ secrets.GITHUB_TOKEN }}
                 workflowType: "build"
                 uploadArtifact: false
-            - uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d # v1.6.1
+            - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
               id: azure-login
               with:
                 creds: ${{ env.azureCredentials }}
@@ -384,13 +384,13 @@ jobs:
                 envsubst < "$parameter_template" > "$parameter_output"
 
             - name: Archive parameters-test-${{ env.offerName }}-${{ github.job }}.json
-              uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
               if: success()
               with:
                 name: parameters-test-${{ env.offerName }}-${{ github.job }}
                 path: ./${{ env.offerName }}/src/test/parameters-test-${{ env.offerName }}-${{ github.job }}.json
             - name: Deploy JBoss EAP ${{ env.offerName }}
-              uses: azure/cli@9f7ce6f37c31b777ec6c6b6d1dfe7db79f497956 # v2.2.0
+              uses: azure/cli@9eb25b8360668fb0ecbafa808d40e2197b2f5f52 # v3.0.0
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -402,7 +402,7 @@ jobs:
                   --template-file ./${{ env.offerName }}/target/arm/mainTemplate.json
             - name: Query external public ip to access applications
               id: query_external_public_ip
-              uses: azure/cli@9f7ce6f37c31b777ec6c6b6d1dfe7db79f497956 # v2.2.0
+              uses: azure/cli@9eb25b8360668fb0ecbafa808d40e2197b2f5f52 # v3.0.0
               with:
                 azcliversion: ${{ env.azCliVersion }}
                 inlineScript: |
@@ -435,7 +435,7 @@ jobs:
       if: always()
       runs-on: ubuntu-latest
       steps:
-        - uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d # v1.6.1
+        - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
           id: azure-login
           with:
             creds: ${{ secrets.AZURE_CREDENTIALS_PAYG }}
