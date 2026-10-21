@@ -44,7 +44,7 @@ runs:
 
     - name: Create a container and uploading cafe app
       id: upload_cafe_app
-      uses: azure/cli@v2
+      uses: azure/cli@9f7ce6f37c31b777ec6c6b6d1dfe7db79f497956 # v2.2.0
       with:
         inlineScript: |
           az storage account create \
